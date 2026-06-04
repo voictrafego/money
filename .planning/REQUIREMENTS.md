@@ -62,30 +62,28 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 
 ## Traceability
 
-Preenchido durante a criação do roadmap.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GARIMPO-01 | — | Pending |
-| GARIMPO-02 | — | Pending |
-| GARIMPO-03 | — | Pending |
-| GARIMPO-04 | — | Pending |
-| PAYOUT-01 | — | Pending |
-| PAYOUT-02 | — | Pending |
-| RANK-01 | — | Pending |
-| RANK-02 | — | Pending |
-| ROE-01 | — | Pending |
-| DY-01 | — | Pending |
-| VAL-01 | — | Pending |
-| ANO-01 | — | Pending |
-| TEST-01 | — | Pending |
-| TEST-02 | — | Pending |
+| GARIMPO-01 | Phase 1 | Pending |
+| GARIMPO-02 | Phase 1 | Pending |
+| GARIMPO-03 | Phase 1 | Pending |
+| GARIMPO-04 | Phase 1 | Pending |
+| PAYOUT-01 | Phase 1 | Pending |
+| RANK-02 | Phase 1 | Pending |
+| ROE-01 | Phase 1 | Pending |
+| DY-01 | Phase 1 | Pending |
+| VAL-01 | Phase 1 | Pending |
+| ANO-01 | Phase 2 | Pending |
+| PAYOUT-02 | Phase 2 | Pending |
+| RANK-01 | Phase 2 | Pending |
+| TEST-01 | Phase 2 | Pending |
+| TEST-02 | Phase 2 | Pending |
 
 **Coverage:**
 - v1 requirements: 14 total
-- Mapped to phases: 0 (a definir no roadmap)
-- Unmapped: 14 ⚠️
+- Mapped to phases: 14 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-06-04*
-*Last updated: 2026-06-04 after initial definition*
+*Last updated: 2026-06-04 after roadmap creation (traceability mapped)*
