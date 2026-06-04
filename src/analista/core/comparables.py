@@ -1,0 +1,142 @@
+"""Análise e valuation por múltiplos — Cap. 11 e 12 do livro.
+
+- Ranking por múltiplos padronizados em [0,100] (Cap. 11, Tabela 27).
+- Regressão P/L = f(Dividend Payout, ROE) por setor para estimar o P/L "justo" e o
+  preço-alvo, identificando empresas subavaliadas por reversão à média (Cap. 12).
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Sequence
+
+import numpy as np
+
+Number = Optional[float]
+
+
+# --------------------------------------------------------------------------- #
+# Cap. 11 — ranking por múltiplos padronizados [0,100]
+# --------------------------------------------------------------------------- #
+# "maior melhor": valor/máx*100 ; "menor melhor": mín/valor*100
+MAIOR_MELHOR = {"ML", "ROE", "EY", "DY"}
+MENOR_MELHOR = {"PL", "PEG"}
+
+
+def padronizar_multiplo(valores: List[Number], maior_melhor: bool) -> List[Number]:
+    finitos = [v for v in valores if v is not None and v > 0]
+    if not finitos:
+        return [None for _ in valores]
+    if maior_melhor:
+        vmax = max(finitos)
+        return [None if v is None else (v / vmax * 100.0) for v in valores]
+    vmin = min(finitos)
+    return [None if v is None or v <= 0 else (vmin / v * 100.0) for v in valores]
+
+
+def ranking_por_multiplos(
+    empresas: List[str],
+    multiplos: Dict[str, List[Number]],
+    pesos: Optional[Dict[str, float]] = None,
+) -> List[Dict[str, object]]:
+    """Ranqueia empresas pela média (ponderada) das notas padronizadas dos múltiplos.
+
+    `multiplos`: {"ML": [...], "ROE": [...], "PL": [...], ...} alinhado a `empresas`.
+    """
+    nomes = list(multiplos.keys())
+    notas: Dict[str, List[Number]] = {}
+    for nome in nomes:
+        notas[nome] = padronizar_multiplo(multiplos[nome], nome in MAIOR_MELHOR)
+
+    pesos = pesos or {n: 1.0 for n in nomes}
+    soma_pesos = sum(pesos.get(n, 1.0) for n in nomes)
+
+    resultado = []
+    for i, emp in enumerate(empresas):
+        comp = [(notas[n][i], pesos.get(n, 1.0)) for n in nomes if notas[n][i] is not None]
+        if comp:
+            nota = sum(v * p for v, p in comp) / sum(p for _, p in comp)
+        else:
+            nota = None
+        resultado.append({"empresa": emp, "nota": nota,
+                           "notas": {n: notas[n][i] for n in nomes}})
+    resultado.sort(key=lambda r: (r["nota"] is not None, r["nota"] or 0), reverse=True)
+    return resultado
+
+
+# --------------------------------------------------------------------------- #
+# Cap. 12 — regressão P/L = f(DP, ROE) e preço-alvo
+# --------------------------------------------------------------------------- #
+@dataclass
+class RegressaoPL:
+    coeficientes: np.ndarray   # [intercepto, b_DP, b_ROE]
+    r2: float
+    n: int
+
+    def prever(self, dp: float, roe: float) -> float:
+        b0, b1, b2 = self.coeficientes
+        return float(b0 + b1 * dp + b2 * roe)
+
+
+def ajustar_regressao_pl(
+    pl: Sequence[float], dp: Sequence[float], roe: Sequence[float]
+) -> Optional[RegressaoPL]:
+    """Ajusta P/L = b0 + b1*DP + b2*ROE por mínimos quadrados (OLS).
+
+    Descarta observações com valores ausentes/negativos de P/L. Requer pelo menos
+    4 empresas para 3 parâmetros.
+    """
+    linhas = [
+        (p, d, r)
+        for p, d, r in zip(pl, dp, roe)
+        if None not in (p, d, r) and p > 0
+    ]
+    if len(linhas) < 4:
+        return None
+    y = np.array([l[0] for l in linhas], dtype=float)
+    X = np.array([[1.0, l[1], l[2]] for l in linhas], dtype=float)
+    coef, _resid, _rank, _sv = np.linalg.lstsq(X, y, rcond=None)
+    y_hat = X @ coef
+    ss_res = float(np.sum((y - y_hat) ** 2))
+    ss_tot = float(np.sum((y - y.mean()) ** 2))
+    r2 = 1 - ss_res / ss_tot if ss_tot > 0 else 0.0
+    return RegressaoPL(coeficientes=coef, r2=r2, n=len(linhas))
+
+
+@dataclass
+class PrecoAlvo:
+    pl_corrente: float
+    pl_esperado: float
+    lpa: float
+    preco_corrente: float
+    preco_alvo: float
+    upside: float
+    subavaliada: bool
+
+
+def preco_alvo_por_regressao(
+    reg: RegressaoPL,
+    dp: float,
+    roe: float,
+    lpa: float,
+    preco_corrente: float,
+) -> Optional[PrecoAlvo]:
+    """Preço-alvo = P/L_esperado * LPA (Cap. 12.2). Upside vs preço corrente.
+
+    Conferência (CTEEP, Cap. 12): P/L esperado ≈ 14,18; LPA 2,6256 → alvo ≈ R$ 37,22.
+    """
+    if reg is None or None in (dp, roe, lpa, preco_corrente) or lpa <= 0:
+        return None
+    pl_esperado = reg.prever(dp, roe)
+    pl_corrente = preco_corrente / lpa
+    preco_alvo = pl_esperado * lpa
+    upside = preco_alvo / preco_corrente - 1.0 if preco_corrente else None
+    return PrecoAlvo(
+        pl_corrente=pl_corrente,
+        pl_esperado=pl_esperado,
+        lpa=lpa,
+        preco_corrente=preco_corrente,
+        preco_alvo=preco_alvo,
+        upside=upside,
+        subavaliada=preco_alvo > preco_corrente,
+    )

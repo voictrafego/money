@@ -1,0 +1,37 @@
+{
+  "_comentario": "Override ticker B3 -> CD_CVM (código da empresa na CVM). Curado a partir do cadastro oficial (cad_cia_aberta). Tem precedência sobre o casamento por nome. Adicione novos tickers aqui para resolução determinística.",
+
+  "ITUB4": 19348,
+  "ITUB3": 19348,
+  "ITSA4": 7617,
+  "ITSA3": 7617,
+  "BBAS3": 1023,
+  "BBDC4": 906,
+  "BBDC3": 906,
+  "SANB11": 20532,
+
+  "EGIE3": 17329,
+  "TAEE11": 20257,
+  "TRPL4": 18376,
+  "CPLE6": 14311,
+  "CMIG4": 2453,
+  "CMIG3": 2453,
+  "CPFE3": 18660,
+  "EQTL3": 20010,
+  "ALUP11": 21490,
+  "SAPR11": 18627,
+
+  "WEGE3": 5410,
+  "ABEV3": 23264,
+  "KLBN11": 12653,
+  "PETR4": 9512,
+  "PETR3": 9512,
+  "VALE3": 4170,
+  "B3SA3": 21610,
+  "GRND3": 19615,
+  "HYPE3": 21431,
+  "CGRA4": 4537,
+  "FESA4": 3069,
+  "DOHL4": 5207,
+  "PEAB3": 18708
+}

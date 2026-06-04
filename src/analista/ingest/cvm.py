@@ -1,0 +1,201 @@
+"""Fundamentos oficiais via Dados Abertos da CVM — grátis.
+
+Demonstrações Financeiras Padronizadas (DFP) em CSV, desde 2010:
+  https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/DADOS/dfp_cia_aberta_{ANO}.zip
+
+Cada ZIP traz BPA, BPP, DRE e DFC (consolidado e individual). Extraímos as contas
+padronizadas por código (CD_CONTA), com fallback por nome (DS_CONTA) para tolerar o
+template diferente das instituições financeiras (bancos).
+"""
+
+from __future__ import annotations
+
+import io
+import os
+import unicodedata
+import zipfile
+from functools import lru_cache
+from typing import Dict, Optional
+
+import pandas as pd
+import requests
+
+CVM_URL = "https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/DADOS/dfp_cia_aberta_{ano}.zip"
+CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "cvm")
+
+
+def _norm(s: str) -> str:
+    s = unicodedata.normalize("NFKD", str(s)).encode("ascii", "ignore").decode().lower()
+    return s.strip()
+
+
+def _cache_path(ano: int) -> str:
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    return os.path.abspath(os.path.join(CACHE_DIR, f"dfp_cia_aberta_{ano}.zip"))
+
+
+def _zip_tem_ano(caminho: str, ano: int) -> bool:
+    """True se o ZIP contém de fato dados do ano (e não o fallback do ano anterior).
+
+    Quando a DFP de um ano ainda não saiu, a CVM responde 200 com o ZIP do ano
+    anterior; os CSVs internos continuam com o sufixo do ano antigo. Conferimos
+    pelo nome dos arquivos.
+    """
+    try:
+        with zipfile.ZipFile(caminho) as z:
+            return any(f"_{ano}.csv" in nome for nome in z.namelist())
+    except (zipfile.BadZipFile, OSError):
+        return False
+
+
+def baixar_dfp(ano: int, timeout: int = 120) -> Optional[str]:
+    """Baixa (e cacheia) o ZIP da DFP do ano. Retorna o caminho local ou None.
+
+    Se o ano ainda não foi publicado, a CVM devolve o ZIP do ano anterior; detectamos
+    pelos nomes dos CSVs e NÃO cacheamos — o ano fica corretamente indisponível.
+    """
+    destino = _cache_path(ano)
+    if os.path.exists(destino) and os.path.getsize(destino) > 0:
+        return destino
+    try:
+        resp = requests.get(CVM_URL.format(ano=ano), timeout=timeout)
+        resp.raise_for_status()
+        with open(destino, "wb") as f:
+            f.write(resp.content)
+    except requests.RequestException:
+        return None
+    if not _zip_tem_ano(destino, ano):
+        os.remove(destino)
+        return None
+    return destino
+
+
+@lru_cache(maxsize=64)
+def _ler_demonstracao(ano: int, prefixo: str) -> Optional[pd.DataFrame]:
+    """Lê um CSV interno do ZIP (ex.: prefixo 'DRE_con', 'BPP_con', 'DFC_MI_con')."""
+    caminho = baixar_dfp(ano)
+    if not caminho:
+        return None
+    nome_csv = f"dfp_cia_aberta_{prefixo}_{ano}.csv"
+    try:
+        with zipfile.ZipFile(caminho) as z:
+            if nome_csv not in z.namelist():
+                return None
+            with z.open(nome_csv) as fh:
+                df = pd.read_csv(
+                    io.TextIOWrapper(fh, encoding="latin-1"),
+                    sep=";",
+                    dtype={"CD_CVM": "Int64", "CD_CONTA": "string"},
+                )
+    except (zipfile.BadZipFile, ValueError, KeyError):
+        return None
+    # apenas o exercício corrente (ÚLTIMO) e contas em valor cheio
+    if "ORDEM_EXERC" in df.columns:
+        df = df[df["ORDEM_EXERC"] == "ÚLTIMO"]
+    return df
+
+
+def _valor_conta(
+    df: Optional[pd.DataFrame],
+    cd_cvm: int,
+    codigos: list,
+    nomes: list,
+    nome_primeiro: bool = False,
+    aplicar_escala: bool = True,
+) -> Optional[float]:
+    """Extrai VL_CONTA por CD_CONTA e/ou nome (DS_CONTA).
+
+    - `nome_primeiro`: tenta o casamento exato por nome ANTES do código (útil quando o
+      código varia entre templates, como o PL em 2.03 para empresas e 2.08 para bancos).
+    - `aplicar_escala`: aplica ESCALA_MOEDA (MIL -> *1000); deve ser False para contas
+      por ação (LPA), que já vêm em R$/ação.
+    """
+    if df is None:
+        return None
+    sub = df[df["CD_CVM"] == cd_cvm]
+    if sub.empty:
+        return None
+    escala = 1000 if (aplicar_escala and sub["ESCALA_MOEDA"].iloc[0] == "MIL") else 1
+    sub = sub.copy()
+    sub["_ds"] = sub["DS_CONTA"].map(_norm)
+    nomes_norm = [_norm(n) for n in nomes]
+
+    def por_codigo():
+        for cod in codigos:
+            achou = sub[sub["CD_CONTA"] == cod]
+            if not achou.empty:
+                return float(achou["VL_CONTA"].iloc[0]) * escala
+        return None
+
+    def por_nome():
+        for alvo in nomes_norm:  # exato
+            achou = sub[sub["_ds"] == alvo]
+            if not achou.empty:
+                return float(achou["VL_CONTA"].iloc[0]) * escala
+        for alvo in nomes_norm:  # contém
+            achou = sub[sub["_ds"].str.contains(alvo, na=False)]
+            if not achou.empty:
+                return float(achou["VL_CONTA"].iloc[0]) * escala
+        return None
+
+    ordem = (por_nome, por_codigo) if nome_primeiro else (por_codigo, por_nome)
+    for fn in ordem:
+        v = fn()
+        if v is not None:
+            return v
+    return None
+
+
+def _consolidado_ou_individual(ano: int, base: str):
+    """Tenta o consolidado; se vazio, usa o individual."""
+    df = _ler_demonstracao(ano, f"{base}_con")
+    if df is None or df.empty:
+        df = _ler_demonstracao(ano, f"{base}_ind")
+    return df
+
+
+def fundamentos_do_ano(cd_cvm: int, ano: int) -> Dict[str, Optional[float]]:
+    """Extrai as contas-chave de uma empresa em um ano."""
+    dre = _consolidado_ou_individual(ano, "DRE")
+    bpa = _consolidado_ou_individual(ano, "BPA")
+    bpp = _consolidado_ou_individual(ano, "BPP")
+    dfc = None
+    for prefixo in ("DFC_MI_con", "DFC_MD_con", "DFC_MI_ind", "DFC_MD_ind"):
+        cand = _ler_demonstracao(ano, prefixo)
+        if cand is not None and not cand.empty:
+            dfc = cand
+            break
+
+    return {
+        "lucro_liquido": _valor_conta(
+            dre, cd_cvm,
+            ["3.11", "3.13", "3.09"],
+            ["Lucro/Prejuízo Consolidado do Período", "Lucro/Prejuízo do Período",
+             "Lucro Líquido do Período", "Lucro Líquido das Operações Continuadas"],
+        ),
+        "vendas_liquidas": _valor_conta(
+            dre, cd_cvm, ["3.01"],
+            ["Receita de Venda de Bens e/ou Serviços", "Receitas da Intermediação Financeira",
+             "Receita de Venda"],
+        ),
+        "patrimonio_liquido": _valor_conta(
+            bpp, cd_cvm, ["2.03", "2.08"],
+            ["Patrimônio Líquido Consolidado", "Patrimônio Líquido"],
+            nome_primeiro=True,
+        ),
+        "ativo_circulante": _valor_conta(bpa, cd_cvm, ["1.01"], ["Ativo Circulante"]),
+        "passivo_circulante": _valor_conta(bpp, cd_cvm, ["2.01"], ["Passivo Circulante"]),
+        "divida_lp": _valor_conta(
+            bpp, cd_cvm, ["2.02.01"],
+            ["Empréstimos e Financiamentos", "Passivo Não Circulante"],
+        ),
+        "ativo_intangivel": _valor_conta(bpa, cd_cvm, ["1.02.04"], ["Intangível"]),
+        "fco": _valor_conta(
+            dfc, cd_cvm, ["6.01"],
+            ["Caixa Líquido Atividades Operacionais",
+             "Caixa Líquido Gerado pelas Atividades Operacionais"],
+        ),
+        # LPA básico por ação ON (R$/ação) — NÃO aplicar escala MIL.
+        "lpa": _valor_conta(dre, cd_cvm, ["3.99.01.01", "3.99.01"],
+                            ["Lucro por Ação"], aplicar_escala=False),
+    }

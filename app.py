@@ -1,0 +1,283 @@
+"""Interface web (Streamlit) do Analista de Dividendos.
+
+Rode com:  ./.venv/bin/streamlit run app.py
+Abre no navegador. Mesma engine do CLI, método do livro Orleans Martins & Felipe Pontes.
+"""
+
+from __future__ import annotations
+
+import os
+
+import pandas as pd
+import streamlit as st
+
+from analista.core import comparables as cmp
+from analista.core import multiples as mult
+from analista.core import screening as sc
+from analista.glossario import h
+from analista.ingest import build, macro
+from analista.report import report
+
+ROOT = os.path.dirname(os.path.abspath(__file__))
+import yaml
+
+st.set_page_config(page_title="Analista de Dividendos", page_icon="💰", layout="wide")
+
+
+@st.cache_data(show_spinner=False)
+def carregar_config():
+    with open(os.path.join(ROOT, "config.yaml"), encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def montar(ticker: str, ano_base: int, n: int):
+    return build.montar_empresa(ticker, ano_base, n)
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def selic_atual():
+    return macro.selic_meta() or 0.105
+
+
+CFG = carregar_config()
+ANO_BASE = CFG["universo"]["ano_base"]
+N_ANOS = CFG["universo"]["anos_historico"]
+
+
+def fmt_pct(x, casas=1):
+    return "—" if x is None else f"{x*100:.{casas}f}%"
+
+
+def fmt_num(x, casas=2):
+    return "—" if x is None else f"{x:.{casas}f}"
+
+
+def fmt_rs(x, casas=2):
+    return "—" if x is None else f"R$ {x:,.{casas}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+# --------------------------------------------------------------------------- #
+st.title("💰 Analista de Ações de Dividendos")
+st.caption("Método do livro *O Investidor em Ações de Dividendos* (Orleans Martins & Felipe Pontes) · "
+           "dados grátis: CVM + Yahoo + Banco Central")
+
+modo = st.sidebar.radio(
+    "O que você quer fazer?",
+    ["🔎 Analisar uma ação", "⛏️ Garimpar carteira (BSD)", "📊 Ranking por múltiplos"],
+    help=h("menu"),
+)
+st.sidebar.markdown("---")
+st.sidebar.metric("Selic (corte do DY)", fmt_pct(selic_atual()), help=h("selic"))
+st.sidebar.caption(f"Janela: {N_ANOS} anos · até {ANO_BASE} (quando já divulgado na CVM)")
+
+
+# =========================================================================== #
+# 1) ANALISAR UMA AÇÃO
+# =========================================================================== #
+if modo.startswith("🔎"):
+    st.subheader("Analisar uma ação a fundo")
+    col1, col2 = st.columns([3, 1])
+    ticker = col1.text_input("Ticker da B3", value="TAEE11", placeholder="ex.: ITUB4, EGIE3, TAEE11",
+                             help=h("ticker")).strip().upper()
+    rodar = col2.button("Analisar", type="primary", use_container_width=True)
+
+    if rodar and ticker:
+        with st.spinner(f"Coletando dados de {ticker} (CVM + Yahoo)..."):
+            c = montar(ticker, ANO_BASE, N_ANOS)
+        if c is None or not c.anos:
+            st.error(f"Não encontrei dados suficientes para {ticker}. "
+                     "Confira o ticker ou adicione o mapeamento em data/ticker_map.json.")
+        else:
+            a = report.analisar_acao(c, CFG)
+
+            st.markdown(f"### {a.ticker} — {a.nome}")
+            st.caption(f"Setor: {a.setor or '—'}  ·  Estágio: {a.estagio}")
+
+            # Veredito colorido
+            v = a.veredito or "Indeterminado"
+            if v.startswith("SUBAVALIADA"):
+                st.success(f"✅ {v}")
+            elif v.startswith("SOBREAVALIADA"):
+                st.error(f"🔺 {v}")
+            else:
+                st.warning(f"➖ {v}")
+
+            # Métricas principais
+            valores = [r.valor_intrinseco for r in (a.ddm_h, a.ddm_constante) if r]
+            intervalo = f"{fmt_rs(min(valores))} – {fmt_rs(max(valores))}" if valores else "—"
+            m1, m2, m3, m4, m5 = st.columns(5)
+            m1.metric("Preço atual", fmt_rs(a.preco_atual), help=h("preco"))
+            m2.metric("Valor intrínseco (DDM)", intervalo, help=h("valor_intrinseco"))
+            m3.metric("Dividend Yield", fmt_pct(a.multiplos.get("DY")), help=h("dy"))
+            m4.metric("ROE", fmt_pct(a.multiplos.get("ROE")), help=h("roe"))
+            m5.metric("Ke (custo capital)", fmt_pct(a.ke), help=h("ke"))
+
+            if a.alertas:
+                for al in a.alertas:
+                    st.warning(f"⚠️ {al}")
+
+            tab1, tab2, tab3 = st.tabs(["📈 Múltiplos & Crescimento", "💵 Valuation (DDM)", "📋 Fundamentos (10 anos)"])
+
+            with tab1:
+                cma, cmb = st.columns(2)
+                with cma:
+                    st.markdown("**Múltiplos (Cap. 10)**", help=h("tab_multiplos"))
+                    rows = []
+                    for k, val in a.multiplos.items():
+                        if k in ("ML", "ROE", "DP (payout)", "DY", "EY"):
+                            rows.append((k, fmt_pct(val)))
+                        else:
+                            rows.append((k, fmt_num(val)))
+                    st.dataframe(pd.DataFrame(rows, columns=["Múltiplo", "Valor"]),
+                                 hide_index=True, use_container_width=True)
+                with cmb:
+                    st.markdown("**Crescimento e custo de capital (Cap. 14/16)**", help=h("tab_crescimento"))
+                    st.dataframe(pd.DataFrame([
+                        ("g histórico (CAGR lucro)", fmt_pct(a.g_historico)),
+                        ("g por fundamentos", fmt_pct(a.g_fundamentos)),
+                        ("g alto adotado", fmt_pct(a.g_alto)),
+                        ("g estável (perpetuidade)", fmt_pct(a.g_estavel)),
+                        ("Beta", fmt_num(a.beta)),
+                        ("Ke (CAPM)", fmt_pct(a.ke)),
+                    ], columns=["Indicador", "Valor"]), hide_index=True, use_container_width=True)
+
+            with tab2:
+                if a.ddm_constante and a.ddm_h:
+                    st.markdown("**Valor intrínseco por Desconto de Dividendos (Cap. 13-17)**", help=h("tab_ddm"))
+                    st.dataframe(pd.DataFrame([
+                        ("Otimista (g constante)", fmt_rs(a.ddm_constante.valor_intrinseco),
+                         fmt_rs(a.ddm_constante.vp_dividendos), fmt_rs(a.ddm_constante.vp_residual)),
+                        ("Conservador (modelo H)", fmt_rs(a.ddm_h.valor_intrinseco),
+                         fmt_rs(a.ddm_h.vp_dividendos), fmt_rs(a.ddm_h.vp_residual)),
+                    ], columns=["Cenário", "Valor intrínseco", "VP dividendos", "VP residual"]),
+                        hide_index=True, use_container_width=True)
+
+                    if a.sensibilidade:
+                        st.markdown("**Sensibilidade do valor (linhas = Ke, colunas = g)**", help=h("tab_sensibilidade"))
+                        sens = CFG["ddm"]["sensibilidade"]
+                        cols = [fmt_pct(a.g_alto + dg) for dg in sens["delta_g"]]
+                        idx = [fmt_pct((a.ke or 0) + dk) for dk in sens["delta_ke"]]
+                        df = pd.DataFrame(
+                            [[fmt_rs(v) for v in linha] for linha in a.sensibilidade],
+                            columns=cols, index=idx)
+                        st.dataframe(df, use_container_width=True)
+                else:
+                    st.info("DDM não calculado (faltou Beta/Ke, payout ou crescimento). Veja os alertas acima.")
+
+            with tab3:
+                anos = c.anos_ordenados()
+                df = pd.DataFrame({
+                    "Ano": anos,
+                    "Lucro Líq. (R$ mi)": [round(c.lucro_liquido.get(x, 0) / 1e6) for x in anos],
+                    "Patrim. Líq. (R$ mi)": [round(c.patrimonio_liquido.get(x, 0) / 1e6) for x in anos],
+                    "FCO (R$ mi)": [round(c.fco.get(x, 0) / 1e6) for x in anos],
+                    "ROE": [fmt_pct(c.roe(x)) for x in anos],
+                    "Payout": [fmt_pct(c.payout(x)) for x in anos],
+                })
+                st.dataframe(df, hide_index=True, use_container_width=True)
+                st.bar_chart(df.set_index("Ano")["Lucro Líq. (R$ mi)"])
+
+
+# =========================================================================== #
+# 2) GARIMPAR CARTEIRA (BSD)
+# =========================================================================== #
+elif modo.startswith("⛏️"):
+    st.subheader("Garimpar uma carteira — ranking Big, Safe Dividend (Cap. 8)", help=h("bsd"))
+    st.caption("Cole vários tickers (separados por vírgula ou espaço). "
+               "BSD > 80 = 'dividendo grande e seguro' (Carlson).")
+    txt = st.text_area("Tickers", value="TAEE11, EGIE3, CMIG4, ALUP11, CPFE3, EQTL3, ITUB4, BBAS3")
+    if st.button("Garimpar", type="primary"):
+        tickers = [t.strip().upper() for t in txt.replace(",", " ").split() if t.strip()]
+        empresas = []
+        prog = st.progress(0.0, text="Coletando dados...")
+        for i, t in enumerate(tickers):
+            c = montar(t, ANO_BASE, N_ANOS)
+            if c is not None and c.anos:
+                empresas.append(c)
+            prog.progress((i + 1) / len(tickers), text=f"Coletando {t}...")
+        prog.empty()
+        if not empresas:
+            st.error("Nenhuma empresa com dados suficientes.")
+        else:
+            selic = selic_atual()
+            csc = CFG["screening"]["custom"]
+            bsd = sc.bsd_ranking(empresas, pesos=CFG["screening"]["bsd"]["pesos"],
+                                 anos_media=CFG["screening"]["bsd"]["anos_media"],
+                                 winsor=CFG["screening"]["bsd"]["winsor"])
+            bsd_map = {b["ticker"]: b for b in bsd}
+            rows = []
+            for c in empresas:
+                rc = sc.filtros_customizados(c, selic=selic, n_anos=N_ANOS,
+                                             volume_min=csc["volume_min_diario"], roe_min=csc["roe_min"])
+                b = bsd_map.get(c.ticker, {})
+                rows.append({
+                    "Ticker": c.ticker,
+                    "BSD": round(b.get("bsd") or 0, 1),
+                    "BSD > 80": "✅" if b.get("acima_de_80") else "",
+                    "Passa filtros": "✅" if rc.passou else "",
+                    "Setor": c.setor,
+                })
+            df = pd.DataFrame(rows).sort_values("BSD", ascending=False)
+            st.dataframe(df, hide_index=True, use_container_width=True)
+            st.bar_chart(df.set_index("Ticker")["BSD"])
+            st.caption("Próximo passo: rode o Ranking nas melhores e depois analise as finalistas a fundo.")
+
+
+# =========================================================================== #
+# 3) RANKING POR MÚLTIPLOS
+# =========================================================================== #
+else:
+    st.subheader("Ranking por múltiplos + preço-alvo (Cap. 11-12)", help=h("ranking"))
+    st.caption("Padroniza os múltiplos em nota 0–100 e estima o preço justo por regressão "
+               "P/L ~ f(payout, ROE). Upside positivo = candidata a estar barata.")
+    txt = st.text_area("Tickers (de preferência do mesmo setor)",
+                       value="TAEE11, EGIE3, CMIG4, ALUP11, CPFE3, EQTL3")
+    if st.button("Rankear", type="primary"):
+        tickers = [t.strip().upper() for t in txt.replace(",", " ").split() if t.strip()]
+        empresas = []
+        prog = st.progress(0.0, text="Coletando dados...")
+        for i, t in enumerate(tickers):
+            c = montar(t, ANO_BASE, N_ANOS)
+            if c is not None and c.anos:
+                empresas.append(c)
+            prog.progress((i + 1) / len(tickers), text=f"Coletando {t}...")
+        prog.empty()
+        if not empresas:
+            st.error("Nenhuma empresa com dados suficientes.")
+        else:
+            nomes, ML, ROE, PL, EY, DP = [], [], [], [], [], []
+            for c in empresas:
+                u = c.ultimo_ano(); lpa = c.lpa(u)
+                nomes.append(c.ticker)
+                ML.append(mult.margem_liquida(c.lucro_liquido.get(u), c.vendas_liquidas.get(u)))
+                ROE.append(c.roe(u))
+                PL.append(mult.preco_lucro(c.preco_atual, lpa))
+                EY.append(mult.earnings_yield(lpa, c.preco_atual))
+                DP.append(c.payout(u))
+            ranking = cmp.ranking_por_multiplos(nomes, {"ML": ML, "ROE": ROE, "PL": PL, "EY": EY})
+            reg = cmp.ajustar_regressao_pl(PL, DP, ROE)
+            alvos = {}
+            if reg:
+                for c in empresas:
+                    u = c.ultimo_ano()
+                    pa = cmp.preco_alvo_por_regressao(reg, c.payout(u), c.roe(u), c.lpa(u), c.preco_atual)
+                    if pa:
+                        alvos[c.ticker] = pa
+            rows = []
+            for r in ranking:
+                pa = alvos.get(r["empresa"])
+                rows.append({
+                    "Ticker": r["empresa"],
+                    "Nota (0–100)": round(r["nota"], 1) if r["nota"] is not None else None,
+                    "Preço atual": fmt_rs(next(c.preco_atual for c in empresas if c.ticker == r["empresa"])),
+                    "Preço-alvo": fmt_rs(pa.preco_alvo) if pa else "—",
+                    "Upside": fmt_pct(pa.upside) if pa and pa.upside is not None else "—",
+                    "Veredito": ("Subavaliada ✅" if pa and pa.subavaliada else "Cara 🔺") if pa else "—",
+                })
+            st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+            if reg:
+                st.caption(f"Regressão: P/L = {reg.coeficientes[0]:.2f} + {reg.coeficientes[1]:.2f}·payout "
+                           f"+ {reg.coeficientes[2]:.2f}·ROE  (R²={reg.r2:.2f}, n={reg.n})")
+            else:
+                st.info("Poucas empresas para a regressão (precisa de ≥4). Os preços-alvo ficam indisponíveis.")

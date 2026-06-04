@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+data/cvm/*.zip
+data/cvm/*.csv
+data/cache/
+out/
+err.log
+*_err.log
+streamlit_boot.log

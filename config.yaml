@@ -1,0 +1,68 @@
+# Parâmetros do analista de dividendos.
+# Defaults seguem o livro (Orleans Martins & Felipe Pontes). Ajuste conforme seu perfil.
+
+universo:
+  anos_historico: 10          # janela de análise de fundamentos (livro usa 10; flexível)
+  ano_base: 2025              # último exercício com DFP na CVM; empresas sem o ano caem p/ o anterior e são sinalizadas
+
+# --- Cap. 8: filtros de garimpo ---
+screening:
+  custom:                     # filtros customizados (8.2)
+    volume_min_diario: 15_000_000   # R$ 15 milhões/dia
+    roe_min: 0.10                   # ROE > 10% em todos os anos
+    exigir_pl_positivo: true        # PL não-negativo em todos os anos
+    exigir_lucro_todos_anos: true
+    exigir_dividendos_todos_anos: true
+    dy_corte: "selic"               # DY > Selic ("selic") ou um float fixo (ex.: 0.06)
+  graham:                     # filtros de Graham (8.3)
+    original:
+      faturamento_min_usd: 100_000_000
+      faturamento_min_usd_concessionaria: 50_000_000
+      liquidez_corrente_min: 2.0
+      anos_lucro: 10
+      crescimento_lucro_min: 0.3333  # >= 1/3 em 10 anos (médias trienais)
+      anos_dividendos: 20
+      pl_max: 15.0
+      pvpa_max: 1.5
+      pl_x_pvpa_max: 22.5
+    flexivel_br:                     # versão flexibilizada para o Brasil (livro)
+      liquidez_corrente_min: null    # relaxado (permite < 2)
+      anos_lucro: 5
+      anos_dividendos: 5
+      pl_max: 20.0
+      pvpa_max: 3.0
+  bsd:                        # Big, Safe Dividend de Carlson (8.4)
+    anos_media: 3             # médias de 3 anos
+    winsor: 0.10              # winsorização a 10% nos extremos
+    corte: 80                 # foco em BSD > 80
+    pesos:                    # somam 100
+      payout: 30
+      cobertura_juros: 10
+      fc_sobre_lucro: 5
+      dividend_yield: 5
+      desempenho_relativo_preco: 10
+      variacao_tangivel_vp: 10
+      crescimento_lucro_lp: 10
+      crescimento_fc_3a: 5
+      crescimento_dividendos_3a: 10
+      crescimento_lucro_3a: 5
+
+# --- Cap. 16: CAPM (custo de capital do acionista) ---
+capm:
+  abordagem: "eua_ajustada"   # "eua_ajustada" (T-Bond+EMBI+inflação) ou "local"
+  rf_us: 0.0192               # T-Bond EUA 10a (livro, fim de 2019)
+  embi_brasil: 0.0214         # risco-país EMBI+ (livro)
+  erp_us: 0.0620              # prêmio de risco histórico EUA (livro)
+  inflacao_br: 0.0440         # expectativa de inflação BR 5a (livro)
+  inflacao_us: 0.0252         # expectativa de inflação EUA 5a (livro)
+  beta_meses: 60              # janela de retornos mensais para o beta
+  indice_mercado: "^BVSP"
+
+# --- Cap. 14/15/17: crescimento e DDM ---
+ddm:
+  n_anos_explicito: 10        # estágio de alto crescimento (livro: 5 a 10)
+  g_estavel: 0.025            # crescimento na perpetuidade <= PIB (Focus/BCB ~2,5%)
+  tributacao_dividendos: 0.0  # toggle: imposto sobre dividendos (ex.: 0.15)
+  sensibilidade:
+    delta_ke: [-0.02, -0.01, 0.0, 0.01, 0.02]
+    delta_g: [-0.01, -0.005, 0.0, 0.005, 0.01]
