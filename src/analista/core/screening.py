@@ -209,7 +209,6 @@ def indicadores_bsd(c: CompanyData, anos_media: int = 3) -> Dict[str, Optional[f
     de Carlson (a fórmula exata estava em figura do livro). Validar contra a Tab. 15.
     """
     anos = c.anos_ordenados()[-anos_media:]
-    ult = c.ultimo_ano()
 
     def media(vals):
         vals = [v for v in vals if v is not None]
@@ -249,10 +248,14 @@ def indicadores_bsd(c: CompanyData, anos_media: int = 3) -> Dict[str, Optional[f
     else:
         var_tangivel = None
 
-    # 7. crescimento esperado do lucro no longo prazo (analistas; proxy = g por fundamentos)
+    # 7. crescimento esperado do lucro no longo prazo (analistas; proxy = g por fundamentos).
+    #    Sem estimativa de analistas, usa a MÉDIA de roe/payout na MESMA janela `anos_media`
+    #    (não ano único — WR-02), ignorando None (incl. roe do 1º ano sem PL inicial — WR-01).
     cresc_lucro_lp = c.g_lucro_esperado
-    if cresc_lucro_lp is None and ult is not None:
-        cresc_lucro_lp = growth.crescimento_por_fundamentos(c.roe(ult), c.payout(ult))
+    if cresc_lucro_lp is None:
+        roe_medio = media([c.roe(a) for a in anos])
+        payout_medio = media([c.payout(a) for a in anos])
+        cresc_lucro_lp = growth.crescimento_por_fundamentos(roe_medio, payout_medio)
 
     # 8/9/10. crescimento de FCO, dividendos e lucro em 3 anos (CAGR)
     def cagr_serie(d: Dict[int, float]):
@@ -292,13 +295,13 @@ def _padronizar_absoluto(
     """Padroniza cada valor para [0,100] por clamp linear contra a banda fixa (lo,hi).
 
     Independente do lote (reproduzível): nota = clamp((v-lo)/(hi-lo), 0, 1) * 100.
-    Valor ausente (None) recebe nota 0 (substituído por neutro 50 na Task 2).
+    Valor ausente (None) recebe nota NEUTRA (50), distinguindo "ausente" de "pior valor" (0).
     """
     span = hi - lo
     notas: List[Optional[float]] = []
     for v in valores:
         if v is None:
-            notas.append(0.0)
+            notas.append(50.0)  # neutro: ausente não é penalizado como pior valor (WR-05)
             continue
         frac = (v - lo) / span if span else 0.0
         if not maior_melhor:
@@ -354,6 +357,8 @@ def bsd_ranking(
     resultado = []
     for i, c in enumerate(empresas):
         bsd = sum(notas[nome][i] * pesos[nome] for nome in nomes) / soma_pesos
+        # fatores com indicador BRUTO ausente (entraram como neutro 50, não como pior valor)
+        faltantes = [nome for nome in nomes if brutos[i].get(nome) is None]
         resultado.append({
             "ticker": c.ticker,
             "nome": c.nome,
@@ -361,6 +366,8 @@ def bsd_ranking(
             "bsd": bsd,
             "acima_de_80": bsd > 80,
             "indicadores": brutos[i],
+            "fatores_faltantes": faltantes,
+            "n_fatores_faltantes": len(faltantes),
         })
     resultado.sort(key=lambda r: r["bsd"] or 0, reverse=True)
     return resultado
