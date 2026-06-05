@@ -185,6 +185,22 @@ PESOS_BSD_PADRAO = {
     "crescimento_lucro_3a": 5,
 }
 
+# CALIBRÁVEL — ajustar as bandas aqui muda o corte 80; não tocar na lógica de padronização.
+# Cada par (lo, hi) é a referência FIXA de um fator: lo → nota 0, hi → nota 100 (maior=melhor
+# nos 10). É o ÚNICO ponto de ajuste do corte absoluto; torna o BSD reproduzível entre lotes.
+REFERENCIA_BSD: Dict[str, tuple] = {
+    "payout": (0.0, 0.80),            # fração do lucro distribuída; payout sustentável até ~80% pontua máximo, acima disso não pontua mais (clamp). Carlson penaliza payout esticado/insustentável.
+    "cobertura_juros": (1.0, 8.0),    # (LL+juros)/juros, "vezes"; 1x mal cobre a dívida (0), >=8x folga confortável (100).
+    "fc_sobre_lucro": (0.5, 1.2),     # FCO/LL; caixa < metade do lucro = baixa qualidade (0), caixa >= 1.2x lucro = lucro "de verdade" (100).
+    "dividend_yield": (0.0, 0.10),    # DY corrente em fração; 0% = 0, 10% a.a. = 100. Não estende acima de 10% para não premiar armadilha de dividendos (Cap. 6).
+    "desempenho_relativo_preco": (-0.20, 0.20),  # excesso 6m vs Ibov; -20% = 0, +20% = 100; em torno de 0 dá nota ~50 (neutro).
+    "variacao_tangivel_vp": (0.0, 0.15),         # CAGR do PL tangível; 0% não cria valor contábil (0), 15% a.a. forte criação de valor (100).
+    "crescimento_lucro_lp": (0.0, 0.15),         # g esperado / proxy ROE×(1−payout); reinvestir a 0% = 0, 15% a.a. = 100.
+    "crescimento_fc_3a": (-0.05, 0.15),          # CAGR do FCO 3a; queda de caixa (-5%) = 0, +15% a.a. = 100; lo levemente negativo tolera ruído.
+    "crescimento_dividendos_3a": (0.0, 0.12),    # CAGR dos proventos 3a; dividendo estagnado (0%) = 0, +12% a.a. = 100 (dividendo CRESCENTE é núcleo do método).
+    "crescimento_lucro_3a": (-0.05, 0.15),       # CAGR do lucro 3a; -5% = 0, +15% a.a. = 100; lo levemente negativo tolera anos atípicos.
+}
+
 
 def indicadores_bsd(c: CompanyData, anos_media: int = 3) -> Dict[str, Optional[float]]:
     """Calcula os 10 indicadores brutos do BSD para uma empresa (médias de `anos_media`).
@@ -270,6 +286,27 @@ def _winsorize(valores: List[float], p: float) -> List[float]:
     return [None if v is None else min(max(v, lo), hi) for v in valores]
 
 
+def _padronizar_absoluto(
+    valores: List[Optional[float]], lo: float, hi: float, maior_melhor: bool = True
+) -> List[Optional[float]]:
+    """Padroniza cada valor para [0,100] por clamp linear contra a banda fixa (lo,hi).
+
+    Independente do lote (reproduzível): nota = clamp((v-lo)/(hi-lo), 0, 1) * 100.
+    Valor ausente (None) recebe nota 0 (substituído por neutro 50 na Task 2).
+    """
+    span = hi - lo
+    notas: List[Optional[float]] = []
+    for v in valores:
+        if v is None:
+            notas.append(0.0)
+            continue
+        frac = (v - lo) / span if span else 0.0
+        if not maior_melhor:
+            frac = 1.0 - frac
+        notas.append(min(max(frac, 0.0), 1.0) * 100.0)
+    return notas
+
+
 def _padronizar_0_100(valores: List[Optional[float]]) -> List[Optional[float]]:
     """Min-max para [0,100] (maior = melhor). Ausentes recebem 0."""
     finitos = [v for v in valores if v is not None]
@@ -292,38 +329,37 @@ def bsd_ranking(
 ) -> List[Dict[str, object]]:
     """Calcula o BSD de Carlson para um conjunto de empresas (8.4).
 
-    Passos: (1) indicadores brutos; (2) winsorização a `winsor`; (3) padronização [0,100]
-    de cada indicador (maior=melhor); (4) média ponderada pelos pesos; (5) re-padronização
-    da média ponderada em [0,100], formando o ranking. Foco em BSD > 80.
+    Passos: (1) indicadores brutos; (2) padronização ABSOLUTA [0,100] de cada indicador
+    contra a banda fixa de `REFERENCIA_BSD` (maior=melhor), reproduzível entre lotes;
+    (3) média ponderada pelos pesos — esse é o BSD final (NÃO há re-padronização min-max do
+    lote). Corte de Carlson: BSD > 80 (absoluto). Foco em BSD > 80.
+
+    A winsorização foi substituída pelo clamp das bandas fixas (que já limita extremos);
+    o parâmetro `winsor` deixou de ter efeito e é mantido só por compatibilidade de assinatura.
     """
     pesos = pesos or PESOS_BSD_PADRAO
     nomes = list(pesos.keys())
 
     brutos = [indicadores_bsd(c, anos_media) for c in empresas]
 
-    # winsoriza e padroniza coluna a coluna
+    # padroniza cada coluna contra a banda fixa de REFERENCIA_BSD (absoluto, não min-max do lote)
     notas: Dict[str, List[Optional[float]]] = {}
     for nome in nomes:
         coluna = [b.get(nome) for b in brutos]
-        coluna_w = _winsorize(coluna, winsor)
-        notas[nome] = _padronizar_0_100(coluna_w)
+        lo, hi = REFERENCIA_BSD[nome]
+        notas[nome] = _padronizar_absoluto(coluna, lo, hi)
 
     soma_pesos = sum(pesos.values())
-    medias_ponderadas = []
-    for i in range(len(empresas)):
-        mp = sum(notas[nome][i] * pesos[nome] for nome in nomes) / soma_pesos
-        medias_ponderadas.append(mp)
-
-    bsd_final = _padronizar_0_100(medias_ponderadas)
 
     resultado = []
     for i, c in enumerate(empresas):
+        bsd = sum(notas[nome][i] * pesos[nome] for nome in nomes) / soma_pesos
         resultado.append({
             "ticker": c.ticker,
             "nome": c.nome,
             "setor": c.setor,
-            "bsd": bsd_final[i],
-            "acima_de_80": (bsd_final[i] or 0) > 80,
+            "bsd": bsd,
+            "acima_de_80": bsd > 80,
             "indicadores": brutos[i],
         })
     resultado.sort(key=lambda r: r["bsd"] or 0, reverse=True)
