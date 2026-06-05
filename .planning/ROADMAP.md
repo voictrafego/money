@@ -45,7 +45,10 @@ Plans:
   3. Quando o payout exibido (último ano) difere do payout usado pelo DDM (média 3a projetada), o app mostra ambos rotulados, sem ambiguidade.
   4. Um teste automatizado garante que a mesma empresa (mesmo dado de entrada) produz payout/ROE/veredito coerentes entre os 3 modos.
   5. `pytest` passa: os testes golden existentes da engine continuam verdes após todas as correções.
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 02-01-PLAN.md — UI: coluna Ano-base (Garimpo+Ranking), dual-payout no Analisar, "indisponível" no Ranking + 3 tooltips (app.py/glossario)
+- [ ] 02-02-PLAN.md — Travas de consistência cross-modo (TEST-01) e golden verde (TEST-02) (tests)
 **UI hint**: yes
 
 ## Progress
@@ -56,4 +59,4 @@ Phases execute in numeric order: 1 → 2
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Engine de Consistência | 5/5 | Complete   | 2026-06-05 |
-| 2. Apresentação e Travas de Consistência | 0/TBD | Not started | - |
+| 2. Apresentação e Travas de Consistência | 0/2 | Not started | - |
