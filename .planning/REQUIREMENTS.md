@@ -11,9 +11,9 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 ### Garimpo / BSD
 
 - [ ] **GARIMPO-01**: No Garimpo, o ranking exibido respeita o corte por Selic prometido — uma ação com DY abaixo da Selic não aparece como recomendada no topo (ordenar/filtrar por "Passa filtros", não só por BSD). *(CR-01)*
-- [ ] **GARIMPO-02**: O BSD é padronizado contra uma referência fixa (não relativo ao lote): a mesma ação tem o mesmo BSD independentemente dos outros tickers colados, e "BSD > 80" volta a ser um corte absoluto válido. *(WR-06)*
-- [ ] **GARIMPO-03**: Fatores do BSD com dado ausente são tratados como neutro/ausente (não como pior valor 0), e o app indica quantos/quais fatores faltaram por empresa. *(WR-05)*
-- [ ] **GARIMPO-04**: O proxy de crescimento do BSD (ROE×(1−payout) na ausência de estimativa) usa a mesma janela dos demais fatores e é documentado no tooltip. *(WR-02)*
+- [x] **GARIMPO-02**: O BSD é padronizado contra uma referência fixa (não relativo ao lote): a mesma ação tem o mesmo BSD independentemente dos outros tickers colados, e "BSD > 80" volta a ser um corte absoluto válido. *(WR-06)*
+- [x] **GARIMPO-03**: Fatores do BSD com dado ausente são tratados como neutro/ausente (não como pior valor 0), e o app indica quantos/quais fatores faltaram por empresa. *(WR-05)*
+- [x] **GARIMPO-04**: O proxy de crescimento do BSD (ROE×(1−payout) na ausência de estimativa) usa a mesma janela dos demais fatores e é documentado no tooltip. *(WR-02)*
 
 ### Payout unificado
 
@@ -65,9 +65,9 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | GARIMPO-01 | Phase 1 | Pending |
-| GARIMPO-02 | Phase 1 | Pending |
-| GARIMPO-03 | Phase 1 | Pending |
-| GARIMPO-04 | Phase 1 | Pending |
+| GARIMPO-02 | Phase 1 | Complete |
+| GARIMPO-03 | Phase 1 | Complete |
+| GARIMPO-04 | Phase 1 | Complete |
 | PAYOUT-01 | Phase 1 | Complete |
 | RANK-02 | Phase 1 | Complete |
 | ROE-01 | Phase 1 | Complete |

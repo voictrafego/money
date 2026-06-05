@@ -31,7 +31,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01-PLAN.md — Engine canônica: payout-para-valuation, ROE base consistente, DY trailing-12m (fundamentals/prices/build)
 - [x] 01-02-PLAN.md — Clamp/sinalização de payout fora de [0,1] na regressão de preço-alvo (comparables)
-- [ ] 01-03-PLAN.md — BSD absoluto e reprodutível, fatores ausentes neutros, proxy de crescimento com janela padrão (screening/glossário)
+- [x] 01-03-PLAN.md — BSD absoluto e reprodutível, fatores ausentes neutros, proxy de crescimento com janela padrão (screening/glossário)
 - [ ] 01-04-PLAN.md — Analisar usa payout canônico no DDM e expõe vmin/vmax do intervalo intrínseco (report)
 - [ ] 01-05-PLAN.md — Wire dos 3 modos: Garimpo ordena por filtros, Ranking usa payout canônico, Analisar reusa vmin/vmax (app.py)
 
