@@ -26,26 +26,25 @@ a mesma ação não pode parecer barata num menu e cara/ausente em outro sem exp
 - ✓ CLI espelhando a engine da UI — existing
 - ✓ Tooltips de glossário (ícone ?) com definições do livro em todos os termos da UI — existing
 - ✓ Testes golden da engine (pytest) — existing
+- ✓ **Corte por Selic real no Garimpo** (CR-01) — Validated in Phase 1
+- ✓ **Janela de payout unificada entre modos** (CR-02/WR-03) — Validated in Phase 1 (função canônica `payout_valuation()`)
+- ✓ **Clamp/alerta de payout fora de [0,1] no Ranking, igual ao Analisar** (CR-03 parte) — Validated in Phase 1
+- ✓ **"indisponível" em vez de "—" no Ranking quando ROE/payout faltam** (CR-03 parte / RANK-01) — Validated in Phase 2
+- ✓ **ROE com base de PL consistente** (WR-01) — Validated in Phase 1
+- ✓ **Proxy de crescimento padronizado em janela** (WR-02) — Validated in Phase 1
+- ✓ **DY corrente com dividendos dos últimos 12m** (WR-04) — Validated in Phase 1
+- ✓ **Fatores ausentes no BSD tratados como neutro/ausente** (WR-05) — Validated in Phase 1
+- ✓ **BSD com padronização absoluta (referência fixa), reproduzível** (WR-06) — Validated in Phase 1
+- ✓ **Intervalo de valor intrínseco vindo de um único cálculo (sem duplicação)** (WR-07) — Validated in Phase 1
+- ✓ **Coluna Ano-base efetivo (ultimo_ano) no Garimpo e Ranking** (ANO-01) — Validated in Phase 2
+- ✓ **Payouts duplos rotulados no Analisar** (último ano vs. média 3a do DDM) (PAYOUT-02) — Validated in Phase 2
+- ✓ **Trava de testes de coerência cross-modo** (ROE/payout/direção do veredito) (TEST-01/TEST-02) — Validated in Phase 2
 
 ### Active
 
-<!-- Marco atual: corrigir as inconsistências de consistência entre os menus
-     mapeadas em CONSISTENCY-REVIEW.md. Abordagem decidida: MUDAR O COMPORTAMENTO. -->
+<!-- Marco v1.0 (remediação de consistência) entregue nas Fases 1 e 2. Sem requisitos ativos. -->
 
-- [ ] **Corte por Selic real no Garimpo** — aplicar de fato o corte do DY pela Selic
-  (ordenar/filtrar por "Passa filtros"), em vez de só prometer no rótulo (CR-01)
-- [ ] **Janela de payout unificada entre modos** — Analisar e Ranking devem usar a mesma
-  janela/clamp de payout (uma função única) para a mesma ação não divergir (CR-02/WR-03)
-- [ ] **Tratamento explícito de dados faltantes no Ranking** — exibir "indisponível" em vez de
-  "—" silencioso; aplicar o mesmo clamp/alerta de payout>100% do Analisar (CR-03)
-- [ ] **ROE com base consistente** — alinhar PL inicial/médio entre todos os anos e ao glossário (WR-01)
-- [ ] **Proxy de crescimento do BSD documentado e padronizado em janela** (WR-02)
-- [ ] **DY corrente com dividendos dos últimos 12m** (não de ano antigo) (WR-04)
-- [ ] **Fatores ausentes no BSD tratados como neutro/ausente, não como pior valor (0)** (WR-05)
-- [ ] **BSD com padronização absoluta (referência fixa), não relativa ao lote** — ou rótulo honesto;
-  decisão: padronizar contra referência fixa (WR-06)
-- [ ] **Eliminar duplicação do cálculo do intervalo de valor intrínseco** (UI vs veredito) (WR-07)
-- [ ] **Cobertura de testes** garantindo que a mesma empresa produz números coerentes entre os 3 modos
+(nenhum — marco v1.0 completo)
 
 ### Out of Scope
 
@@ -65,6 +64,10 @@ a mesma ação não pode parecer barata num menu e cara/ausente em outro sem exp
 - O que está confirmado correto (não mexer): fórmulas únicas de ROE/P-L/DY/payout/ML/EY em
   `multiples.py`/`fundamentals.py`; unidades decimais com ×100 só na borda; UI lê valores da
   engine sem recalcular Ke/Beta/g/DDM; CLI e UI compartilham a mesma engine.
+- **Estado atual: marco v1.0 completo.** Phase 1 (engine de consistência, 5/5 verificado) tornou
+  os números coerentes na origem; Phase 2 (apresentação + travas, 5/5 verificado) expôs ano-base,
+  "indisponível" e payouts rotulados na UI e travou a coerência cross-modo com pytest (47 passed).
+  Os 16 achados do `CONSISTENCY-REVIEW.md` estão endereçados.
 
 ## Constraints
 
@@ -77,10 +80,11 @@ a mesma ação não pode parecer barata num menu e cara/ausente em outro sem exp
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Abordagem das correções = mudar o comportamento (não só rótulos) | Fidelidade ao método do livro; a engine deve cumprir o que a UI promete | — Pending |
-| Padronizar BSD contra referência fixa em vez do lote | "BSD > 80" do Carlson é corte absoluto; relativo ao lote torna a nota não-reproduzível | — Pending |
+| Abordagem das correções = mudar o comportamento (não só rótulos) | Fidelidade ao método do livro; a engine deve cumprir o que a UI promete | ✓ Good — Fases 1-2 |
+| Padronizar BSD contra referência fixa em vez do lote | "BSD > 80" do Carlson é corte absoluto; relativo ao lote torna a nota não-reproduzível | ✓ Good — Phase 1 |
 | Repo git dedicado para o projeto | Resolve a dor do git root no `$HOME`; isola histórico e o `.planning/` | ✓ Good |
-| Marco cobre todos os 16 achados (3 críticos + 7 warnings; infos conforme couber) | Usuário pediu cobertura total | — Pending |
+| Marco cobre todos os 16 achados (3 críticos + 7 warnings; infos conforme couber) | Usuário pediu cobertura total | ✓ Good — endereçado nas Fases 1-2 |
+| app.py é read-only: só lê campos da engine, nunca recalcula método | Garante que a UI não reintroduz divergência entre modos | ✓ Good — Phase 2 |
 
 ## Evolution
 
@@ -100,4 +104,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-04 after initialization*
+*Last updated: 2026-06-05 after Phase 2 completion (marco v1.0 completo)*
