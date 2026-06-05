@@ -38,13 +38,6 @@ class AnaliseAcao:
     alertas: List[str] = field(default_factory=list)
 
 
-def _media_payout_3a(c: CompanyData) -> Optional[float]:
-    anos = c.anos_ordenados()[-3:]
-    vals = [c.payout(a) for a in anos]
-    vals = [v for v in vals if v is not None]
-    return sum(vals) / len(vals) if vals else None
-
-
 def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     anos = c.anos_ordenados()
     ult = c.ultimo_ano()
@@ -99,9 +92,7 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             a.ke = capm.ke_eua_ajustada(c.beta, params)
 
     # --- DDM de dois estágios (Cap. 15/17) ---
-    payout_proj = _media_payout_3a(c)
-    if payout_proj is not None:
-        payout_proj = min(payout_proj, 1.0)
+    payout_proj = c.payout_valuation()  # média 3a + clamp 1.0 (função canônica única)
     n = cfg["ddm"]["n_anos_explicito"]
     trib = cfg["ddm"].get("tributacao_dividendos", 0.0)
     if None not in (lpa, payout_proj, a.g_alto, a.ke) and a.ke > g_estavel:

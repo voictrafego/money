@@ -66,6 +66,21 @@ class CompanyData:
     def payout(self, ano: int) -> Optional[float]:
         return mult.dividend_payout(self.dpa(ano), self.lpa(ano))
 
+    def payout_valuation(self, janela: int = 3) -> Optional[float]:
+        """Payout-para-valuation: definição ÚNICA usada por DDM (Analisar) e regressão (Ranking).
+
+        Média do payout cru dos `janela` últimos anos (ignorando os None), com clamp em
+        1.0 (uma empresa não pode projetar distribuir mais que 100% do lucro). Substitui o
+        antigo `_media_payout_3a`+clamp local do report, eliminando a divergência CR-02/WR-03
+        (Analisar usava média 3a+clamp; Ranking usava 1 ano sem clamp). `payout(ano)` cru
+        continua existindo para a exibição por ano.
+        """
+        anos = self.anos_ordenados()[-janela:]
+        vals = [v for v in (self.payout(a) for a in anos) if v is not None]
+        if not vals:
+            return None
+        return min(sum(vals) / len(vals), 1.0)
+
     def roe(self, ano: int) -> Optional[float]:
         """ROE com PL inicial (= PL do ano anterior, se houver; senão do próprio ano)."""
         pl_ini = self.patrimonio_liquido.get(ano - 1, self.patrimonio_liquido.get(ano))
