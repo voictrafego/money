@@ -122,9 +122,16 @@ if modo.startswith("🔎"):
                 cma, cmb = st.columns(2)
                 with cma:
                     st.markdown("**Múltiplos (Cap. 10)**", help=h("tab_multiplos"))
+                    st.caption("Dois payouts: o do último ano e o usado no valuation (DDM).",
+                               help=h("payout_dual"))
+                    payout_ult = a.multiplos.get("DP (payout)")  # = c.payout(ult), último ano cru
+                    payout_proj = c.payout_valuation()           # média 3a + clamp 1.0 (usado no DDM)
                     rows = []
                     for k, val in a.multiplos.items():
-                        if k in ("ML", "ROE", "DP (payout)", "DY", "EY"):
+                        if k == "DP (payout)":
+                            rows.append(("Payout (último ano)", fmt_pct(payout_ult)))
+                            rows.append(("Payout p/ valuation (média 3a)", fmt_pct(payout_proj)))
+                        elif k in ("ML", "ROE", "DY", "EY"):
                             rows.append((k, fmt_pct(val)))
                         else:
                             rows.append((k, fmt_num(val)))
@@ -213,6 +220,7 @@ elif modo.startswith("⛏️"):
                 rows.append({
                     "Ticker": c.ticker,
                     "_passou": bool(rc.passou),
+                    "Ano-base": c.ultimo_ano(),
                     "BSD": round(b.get("bsd") or 0, 1),
                     "BSD > 80": "✅" if b.get("acima_de_80") else "",
                     "Passa filtros": "✅" if rc.passou else "",
@@ -223,7 +231,8 @@ elif modo.startswith("⛏️"):
             # ANTES do BSD para que quem reprova no corte não apareça no topo.
             df = pd.DataFrame(rows).sort_values(["_passou", "BSD"], ascending=[False, False])
             df = df.drop(columns=["_passou"])
-            st.dataframe(df, hide_index=True, use_container_width=True)
+            st.dataframe(df, hide_index=True, use_container_width=True,
+                         column_config={"Ano-base": st.column_config.Column("Ano-base", help=h("ano_base"))})
             st.warning("⚠️ **BSD > 80 sem 'Passa filtros' NÃO é recomendação.** O BSD é uma nota "
                        "de estabilidade do dividendo; o corte por Selic (DY > Selic) e os demais "
                        "filtros vivem na coluna 'Passa filtros'. Comece pelas que passam nos filtros.")
@@ -274,20 +283,29 @@ else:
             rows = []
             for r in ranking:
                 pa = alvos.get(r["empresa"])
-                veredito = "—"
-                if pa:
+                if pa is None:
+                    # RANK-01: empresa descartada da regressão (ROE/payout ausente).
+                    # "indisponível" é estado neutro de dado ausente, não "cara" — distingue do "—" genérico.
+                    preco_alvo_txt = "indisponível"
+                    upside_txt = "indisponível"
+                    veredito = "indisponível (ROE/payout ausente)"
+                else:
+                    preco_alvo_txt = fmt_rs(pa.preco_alvo)
+                    upside_txt = fmt_pct(pa.upside) if pa.upside is not None else "—"
                     veredito = "Subavaliada ✅" if pa.subavaliada else "Cara 🔺"
                     if pa.payout_fora_faixa:  # espelha o alerta ">100%" do Analisar
                         veredito += " ⚠️ payout ajustado"
                 rows.append({
                     "Ticker": r["empresa"],
                     "Nota (0–100)": round(r["nota"], 1) if r["nota"] is not None else None,
+                    "Ano-base": next(c.ultimo_ano() for c in empresas if c.ticker == r["empresa"]),
                     "Preço atual": fmt_rs(next(c.preco_atual for c in empresas if c.ticker == r["empresa"])),
-                    "Preço-alvo": fmt_rs(pa.preco_alvo) if pa else "—",
-                    "Upside": fmt_pct(pa.upside) if pa and pa.upside is not None else "—",
+                    "Preço-alvo": preco_alvo_txt,
+                    "Upside": upside_txt,
                     "Veredito": veredito,
                 })
-            st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+            st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True,
+                         column_config={"Ano-base": st.column_config.Column("Ano-base", help=h("ano_base"))})
             if reg:
                 st.caption(f"Regressão: P/L = {reg.coeficientes[0]:.2f} + {reg.coeficientes[1]:.2f}·payout "
                            f"+ {reg.coeficientes[2]:.2f}·ROE  (R²={reg.r2:.2f}, n={reg.n})")
