@@ -112,6 +112,7 @@ class PrecoAlvo:
     preco_alvo: float
     upside: float
     subavaliada: bool
+    payout_fora_faixa: bool = False
 
 
 def preco_alvo_por_regressao(
@@ -127,7 +128,11 @@ def preco_alvo_por_regressao(
     """
     if reg is None or None in (dp, roe, lpa, preco_corrente) or lpa <= 0:
         return None
-    pl_esperado = reg.prever(dp, roe)
+    # Mesmo clamp do Analisar antes do DDM (report.py: payout_proj = min(media_3a, 1.0)):
+    # payout fora de [0,1] (>100% ou negativo de LPA<0) não pode puxar b1*DP para valores sem sentido.
+    dp_clamp = min(max(dp, 0.0), 1.0)
+    payout_fora_faixa = dp_clamp != dp
+    pl_esperado = reg.prever(dp_clamp, roe)
     pl_corrente = preco_corrente / lpa
     preco_alvo = pl_esperado * lpa
     upside = preco_alvo / preco_corrente - 1.0 if preco_corrente else None
@@ -139,4 +144,5 @@ def preco_alvo_por_regressao(
         preco_alvo=preco_alvo,
         upside=upside,
         subavaliada=preco_alvo > preco_corrente,
+        payout_fora_faixa=payout_fora_faixa,
     )
