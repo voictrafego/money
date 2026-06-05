@@ -34,6 +34,8 @@ class AnaliseAcao:
     ddm_constante: Optional[ddm.ResultadoDDM] = None
     ddm_h: Optional[ddm.ResultadoDDM] = None
     sensibilidade: Optional[List[List[Optional[float]]]] = None
+    vmin: Optional[float] = None
+    vmax: Optional[float] = None
     veredito: str = ""
     alertas: List[str] = field(default_factory=list)
 
@@ -111,14 +113,15 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
 
     # --- Veredito ---
     valores = [r.valor_intrinseco for r in (a.ddm_h, a.ddm_constante) if r]
+    if valores:
+        a.vmin, a.vmax = min(valores), max(valores)
     if valores and a.preco_atual:
-        vmin, vmax = min(valores), max(valores)
-        if a.preco_atual < vmin:
-            a.veredito = f"SUBAVALIADA — preço R$ {a.preco_atual:.2f} abaixo do intervalo intrínseco R$ {vmin:.2f}–{vmax:.2f}"
-        elif a.preco_atual > vmax:
-            a.veredito = f"SOBREAVALIADA — preço R$ {a.preco_atual:.2f} acima do intervalo intrínseco R$ {vmin:.2f}–{vmax:.2f}"
+        if a.preco_atual < a.vmin:
+            a.veredito = f"SUBAVALIADA — preço R$ {a.preco_atual:.2f} abaixo do intervalo intrínseco R$ {a.vmin:.2f}–{a.vmax:.2f}"
+        elif a.preco_atual > a.vmax:
+            a.veredito = f"SOBREAVALIADA — preço R$ {a.preco_atual:.2f} acima do intervalo intrínseco R$ {a.vmin:.2f}–{a.vmax:.2f}"
         else:
-            a.veredito = f"NO INTERVALO — preço R$ {a.preco_atual:.2f} dentro de R$ {vmin:.2f}–{vmax:.2f}"
+            a.veredito = f"NO INTERVALO — preço R$ {a.preco_atual:.2f} dentro de R$ {a.vmin:.2f}–{a.vmax:.2f}"
 
     # --- Alertas / armadilhas de dividendos (Cap. 6) ---
     dy = a.multiplos.get("DY")
