@@ -213,13 +213,21 @@ elif modo.startswith("⛏️"):
                 b = bsd_map.get(c.ticker, {})
                 rows.append({
                     "Ticker": c.ticker,
+                    "_passou": bool(rc.passou),
                     "BSD": round(b.get("bsd") or 0, 1),
                     "BSD > 80": "✅" if b.get("acima_de_80") else "",
                     "Passa filtros": "✅" if rc.passou else "",
+                    "Fatores faltando": b.get("n_fatores_faltantes") or 0,
                     "Setor": c.setor,
                 })
-            df = pd.DataFrame(rows).sort_values("BSD", ascending=False)
+            # CR-01: o corte por Selic (DY > Selic) vive em "Passa filtros"; ordena por ele
+            # ANTES do BSD para que quem reprova no corte não apareça no topo.
+            df = pd.DataFrame(rows).sort_values(["_passou", "BSD"], ascending=[False, False])
+            df = df.drop(columns=["_passou"])
             st.dataframe(df, hide_index=True, use_container_width=True)
+            st.warning("⚠️ **BSD > 80 sem 'Passa filtros' NÃO é recomendação.** O BSD é uma nota "
+                       "de estabilidade do dividendo; o corte por Selic (DY > Selic) e os demais "
+                       "filtros vivem na coluna 'Passa filtros'. Comece pelas que passam nos filtros.")
             st.bar_chart(df.set_index("Ticker")["BSD"])
             st.caption("Próximo passo: rode o Ranking nas melhores e depois analise as finalistas a fundo.")
 
