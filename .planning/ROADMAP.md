@@ -29,7 +29,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. O Ranking aplica o mesmo clamp/alerta de payout fora de [0,1] que o Analisar antes da regressão, e o intervalo de valor intrínseco vem de um único cálculo (sem recomputar min/max em dois lugares).
 **Plans**: 5 plans
 Plans:
-- [ ] 01-01-PLAN.md — Engine canônica: payout-para-valuation, ROE base consistente, DY trailing-12m (fundamentals/prices/build)
+- [x] 01-01-PLAN.md — Engine canônica: payout-para-valuation, ROE base consistente, DY trailing-12m (fundamentals/prices/build)
 - [ ] 01-02-PLAN.md — Clamp/sinalização de payout fora de [0,1] na regressão de preço-alvo (comparables)
 - [ ] 01-03-PLAN.md — BSD absoluto e reprodutível, fatores ausentes neutros, proxy de crescimento com janela padrão (screening/glossário)
 - [ ] 01-04-PLAN.md — Analisar usa payout canônico no DDM e expõe vmin/vmax do intervalo intrínseco (report)

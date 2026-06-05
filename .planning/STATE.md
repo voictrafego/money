@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: executing
+stopped_at: ROADMAP.md e STATE.md criados; traceability de REQUIREMENTS.md atualizada (14/14 mapeados)
+last_updated: "2026-06-05T11:51:13.950Z"
+last_activity: 2026-06-05
+progress:
+  total_phases: 2
+  completed_phases: 0
+  total_plans: 5
+  completed_plans: 1
+  percent: 20
+---
+
 # Project State
 
 ## Project Reference
@@ -5,20 +21,21 @@
 See: .planning/PROJECT.md (updated 2026-06-04)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação.
-**Current focus:** Phase 1 — Engine de Consistência
+**Current focus:** Phase 01 — engine-de-consist-ncia
 
 ## Current Position
 
-Phase: 1 of 2 (Engine de Consistência)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-06-04 — Roadmap criado a partir de REQUIREMENTS.md (14 reqs v1) e CONSISTENCY-REVIEW.md
+Phase: 01 (engine-de-consist-ncia) — EXECUTING
+Plan: 2 of 5
+Status: Ready to execute
+Last activity: 2026-06-05
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 0
 - Average duration: — min
 - Total execution time: 0.0 hours
@@ -30,10 +47,12 @@ Progress: [░░░░░░░░░░] 0%
 | - | - | - | - |
 
 **Recent Trend:**
+
 - Last 5 plans: —
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 01 P01 | 18 | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -45,6 +64,9 @@ Recent decisions affecting current work:
 - Abordagem das correções = mudar o comportamento (não só rótulos) — a engine deve cumprir o que a UI promete.
 - Padronizar BSD contra referência fixa em vez do lote — "BSD > 80" do Carlson é corte absoluto.
 - Não reescrever as fórmulas de valuation (IN-01..05 confirmam que estão corretas e únicas); o trabalho é consistência de agregação/apresentação.
+- [Phase ?]: payout_valuation canônico (média 3a + clamp 1.0) é a única definição de payout-para-valuation, reusado por Analisar e Ranking
+- [Phase ?]: ROE em PL médio com None no 1º ano sem PL inicial; filtro BSD avalia roe_min só nos anos com ROE definido
+- [Phase ?]: DY corrente usa dpa_trailing_12m (datas reais 12m) com ano_dpa exposto; fallback para o ano-base
 
 ### Pending Todos
 
@@ -69,6 +91,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-04
+Last session: 2026-06-05T11:50:38.625Z
 Stopped at: ROADMAP.md e STATE.md criados; traceability de REQUIREMENTS.md atualizada (14/14 mapeados)
 Resume file: None

@@ -17,7 +17,7 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 
 ### Payout unificado
 
-- [ ] **PAYOUT-01**: Analisar e Ranking usam a mesma janela e clamp de payout (função única) — o payout que decide o preço-alvo no Ranking é o mesmo que decide o valor intrínseco no Analisar para a mesma ação. *(CR-02 / WR-03)*
+- [x] **PAYOUT-01**: Analisar e Ranking usam a mesma janela e clamp de payout (função única) — o payout que decide o preço-alvo no Ranking é o mesmo que decide o valor intrínseco no Analisar para a mesma ação. *(CR-02 / WR-03)*
 - [ ] **PAYOUT-02**: Quando o payout exibido (último ano) difere do payout usado pelo DDM (projetado, média 3a), o app mostra ambos rotulados, sem ambiguidade. *(WR-03)*
 
 ### Ranking robusto
@@ -27,11 +27,11 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 
 ### ROE consistente
 
-- [ ] **ROE-01**: O ROE usa a mesma base (PL inicial ou médio) em todos os anos da série; o 1º ano não cai silenciosamente para PL final, ou o glossário é alinhado à base real usada. *(WR-01)*
+- [x] **ROE-01**: O ROE usa a mesma base (PL inicial ou médio) em todos os anos da série; o 1º ano não cai silenciosamente para PL final, ou o glossário é alinhado à base real usada. *(WR-01)*
 
 ### DY corrente
 
-- [ ] **DY-01**: O DY do Garimpo usa dividendos dos últimos 12 meses (ou alinhado ao ano dos dividendos), não dividendos de ano antigo sobre o preço de hoje; o ano-base do DPA é sinalizado. *(WR-04)*
+- [x] **DY-01**: O DY do Garimpo usa dividendos dos últimos 12 meses (ou alinhado ao ano dos dividendos), não dividendos de ano antigo sobre o preço de hoje; o ano-base do DPA é sinalizado. *(WR-04)*
 
 ### Valuation sem duplicação
 
@@ -68,10 +68,10 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 | GARIMPO-02 | Phase 1 | Pending |
 | GARIMPO-03 | Phase 1 | Pending |
 | GARIMPO-04 | Phase 1 | Pending |
-| PAYOUT-01 | Phase 1 | Pending |
+| PAYOUT-01 | Phase 1 | Complete |
 | RANK-02 | Phase 1 | Pending |
-| ROE-01 | Phase 1 | Pending |
-| DY-01 | Phase 1 | Pending |
+| ROE-01 | Phase 1 | Complete |
+| DY-01 | Phase 1 | Complete |
 | VAL-01 | Phase 1 | Pending |
 | ANO-01 | Phase 2 | Pending |
 | PAYOUT-02 | Phase 2 | Pending |
