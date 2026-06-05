@@ -96,6 +96,23 @@ G: dict[str, str] = {
         "**Upside** = quanto o preço-alvo está acima do preço atual; positivo = candidata a estar barata "
         "(subavaliada). Use de preferência empresas do mesmo setor."
     ),
+    # ---- Fase 2: ano-base, dual-payout, indisponível ----
+    "ano_base": (
+        "**Ano-base** — último exercício (ano) com lucro coletado para esta empresa, vindo das "
+        "demonstrações da CVM. Empresas diferentes podem ter ano-base diferente conforme o que já "
+        "foi divulgado; quando os anos divergem, a comparação mistura períodos — fique atento a isso."
+    ),
+    "payout_dual": (
+        "**Por que dois payouts?** O *Payout (último ano)* é a fatia do lucro distribuída no exercício "
+        "mais recente. O *Payout p/ valuation (média 3a)* é a média projetada dos últimos 3 anos "
+        "(com teto de 100%), e é esse que o modelo de valuation (DDM) usa para estimar o valor justo. "
+        "Quando os dois divergem, o app mostra ambos para você entender de onde vem o preço-alvo."
+    ),
+    "indisponivel": (
+        "**indisponível** — esta empresa foi deixada de fora da regressão de preço-alvo porque faltou "
+        "ROE ou payout para estimá-la. Não é 'cara' nem 'barata': simplesmente não há dado suficiente "
+        "para o cálculo."
+    ),
 }
 
 
