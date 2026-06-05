@@ -1,10 +1,11 @@
 ---
 phase: 2
 slug: apresenta-o-e-travas-de-consist-ncia
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-06-05
+reviewed_at: 2026-06-05
 ---
 
 # Fase 2 — Contrato de UI (Apresentação e Travas de Consistência)
@@ -218,11 +219,11 @@ ajustar sem reabrir o contrato:
 > declarado" é a resposta correta e intencional, não uma lacuna. Avaliar Copywriting e
 > consistência com os padrões existentes do app como dimensões primárias.
 
-- [ ] Dimension 1 Copywriting: PASS — rótulos e estados definidos (Ano-base, dual-payout, indisponível)
-- [ ] Dimension 2 Visuals: PASS — reusa widgets nativos do Streamlit, sem padrão novo
-- [ ] Dimension 3 Color: PASS — herdada (semântica success/warning/error/info do Streamlit)
-- [ ] Dimension 4 Typography: PASS — herdada (tema padrão do Streamlit)
-- [ ] Dimension 5 Spacing: PASS — herdado (tema padrão do Streamlit)
-- [ ] Dimension 6 Registry Safety: PASS — não aplicável (sem registry, zero deps novas)
+- [x] Dimension 1 Copywriting: PASS — rótulos e estados definidos (Ano-base, dual-payout, indisponível)
+- [x] Dimension 2 Visuals: PASS — reusa widgets nativos do Streamlit, sem padrão novo
+- [x] Dimension 3 Color: PASS — herdada (semântica success/warning/error/info do Streamlit)
+- [x] Dimension 4 Typography: PASS — herdada (tema padrão do Streamlit)
+- [x] Dimension 5 Spacing: PASS — herdado (tema padrão do Streamlit)
+- [x] Dimension 6 Registry Safety: PASS — não aplicável (sem registry, zero deps novas)
 
-**Approval:** pending
+**Approval:** approved (gsd-ui-checker, 2026-06-05)
