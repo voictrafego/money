@@ -80,7 +80,14 @@ G: dict[str, str] = {
         "**BSD — Big, Safe Dividend** (Charles Carlson, Cap. 8) — nota de 0 a 100 que combina dez "
         "fatores de estabilidade e crescimento dos dividendos, sendo o **payout** o de maior peso (30%). "
         "Carlson recomenda focar em empresas com **BSD acima de 80** (no estudo do livro, só 19 de 297 "
-        "empresas brasileiras passaram)."
+        "empresas brasileiras passaram).\n\n"
+        "- **Nota absoluta**: cada fator é comparado a uma **referência fixa** (não às outras ações "
+        "coladas no lote), então a mesma ação tem o mesmo BSD em qualquer execução e o corte 80 vale "
+        "de verdade.\n"
+        "- **Crescimento de longo prazo**: na ausência de estimativa de analistas, é um **proxy por "
+        "fundamentos** = ROE × (1 − payout) (média da janela), não uma previsão de analistas.\n"
+        "- **Dados faltantes**: um fator sem dado entra como **neutro**, não como pior nota; o app "
+        "indica **quantos fatores faltaram** em cada empresa."
     ),
     # ---- Modo Ranking ----
     "ranking": (

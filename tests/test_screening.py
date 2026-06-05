@@ -67,16 +67,78 @@ def test_graham_original_reprova_pvpa_alto():
     assert res.passou is False
 
 
-def test_bsd_ranking_ordena_e_marca_acima_80():
+def _brutos_na_fracao(frac):
+    """Indicadores BSD brutos posicionados na fração `frac` de cada banda de REFERENCIA_BSD."""
+    return {
+        nome: lo + frac * (hi - lo) for nome, (lo, hi) in sc.REFERENCIA_BSD.items()
+    }
+
+
+def test_bsd_ranking_ordena_e_marca_acima_80(monkeypatch):
+    # Perfis sintéticos posicionados nas bandas absolutas (não dependem do lote).
+    forte = _empresa_solida("FORTE3")   # frac 0.9 → terço superior
+    fraca = _empresa_solida("FRACA3")   # frac 0.1 → terço inferior
+    brutos = {"FORTE3": _brutos_na_fracao(0.90), "FRACA3": _brutos_na_fracao(0.10)}
+
+    def fake_indicadores(c, anos_media=3):
+        return brutos[c.ticker]
+
+    monkeypatch.setattr(sc, "indicadores_bsd", fake_indicadores)
+
+    ranking = sc.bsd_ranking([fraca, forte])
+    # ordenação: forte antes da fraca
+    assert ranking[0]["ticker"] == "FORTE3"
+    assert ranking[-1]["ticker"] == "FRACA3"
+    # corte 80 ABSOLUTO: forte passa, fraca não
+    assert ranking[0]["bsd"] > 80 and ranking[0]["acima_de_80"] is True
+    assert ranking[-1]["bsd"] < 80 and ranking[-1]["acima_de_80"] is False
+    # chaves de faltantes presentes (nenhum faltante neste perfil completo)
+    for r in ranking:
+        assert "fatores_faltantes" in r and "n_fatores_faltantes" in r
+        assert r["n_fatores_faltantes"] == 0
+
+
+def test_bsd_corte_80_absoluto_via_padronizar():
+    # Smoke direto sobre _padronizar_absoluto: terço superior pontua acima do inferior.
+    lo, hi = sc.REFERENCIA_BSD["payout"]
+    sup = lo + (2 / 3) * (hi - lo)
+    inf = lo + (1 / 3) * (hi - lo)
+    notas = sc._padronizar_absoluto([sup, inf, None], lo, hi)
+    assert notas[0] > notas[1]               # terço superior > terço inferior
+    assert notas[2] == 50.0                  # ausente é neutro, não 0
+    # clamp: acima de hi não passa de 100, abaixo de lo não fica negativo
+    assert sc._padronizar_absoluto([hi * 2, lo - hi], lo, hi) == [100.0, 0.0]
+
+
+def test_bsd_reprodutivel_entre_lotes():
     boa = _empresa_solida("BOA3")
-    # empresa fraca: payout baixo, sem crescimento, DY baixo
-    fraca = _empresa_solida("FRACA3")
-    for a in fraca.anos:
-        fraca.dividendos[a] = 50          # payout baixo
-        fraca.lucro_liquido[a] = 1000      # sem crescimento
-        fraca.fco[a] = 200
-    fraca.desempenho_relativo_6m = -0.20
-    ranking = sc.bsd_ranking([boa, fraca])
-    assert ranking[0]["ticker"] == "BOA3"
-    assert ranking[0]["bsd"] == 100.0      # melhor empresa recebe 100 após padronização
-    assert ranking[-1]["bsd"] == 0.0
+    bsd_sozinha = sc.bsd_ranking([boa])[0]["bsd"]
+    fraca1 = _empresa_solida("F1")
+    fraca2 = _empresa_solida("F2")
+    for f in (fraca1, fraca2):
+        for a in f.anos:
+            f.dividendos[a] = 50
+            f.lucro_liquido[a] = 1000
+            f.fco[a] = 200
+        f.desempenho_relativo_6m = -0.20
+    bsd_no_lote = [
+        r for r in sc.bsd_ranking([boa, fraca1, fraca2]) if r["ticker"] == "BOA3"
+    ][0]["bsd"]
+    assert abs(bsd_sozinha - bsd_no_lote) < 1e-6
+
+
+def test_bsd_fatores_faltantes_neutros():
+    anos = list(range(2015, 2025))
+    c = CompanyData(ticker="X", nome="X", setor="Energia", anos=anos)
+    for a in anos:
+        c.lucro_liquido[a] = 1000
+        c.patrimonio_liquido[a] = 4000
+        c.dividendos[a] = 600
+        c.num_acoes[a] = 1000
+        c.vendas_liquidas[a] = 1800
+        c.fco[a] = 1200
+    c.preco_atual = 30.0  # sem despesa_juros e sem desempenho_relativo_6m
+    r = sc.bsd_ranking([c])[0]
+    assert r["n_fatores_faltantes"] >= 1
+    assert "cobertura_juros" in r["fatores_faltantes"]
+    assert r["bsd"] is not None
