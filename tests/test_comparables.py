@@ -16,6 +16,31 @@ def test_preco_alvo_cteep():
     assert abs(alvo.upside - 0.68) < 0.02
 
 
+def test_preco_alvo_clampa_payout_acima_de_1():
+    # Payout 1.5 deve produzir o mesmo preço-alvo que 1.0 (clamp do Analisar) e sinalizar.
+    reg = cmp.RegressaoPL(coeficientes=np.array([5.0, 3.0, 2.0]), r2=0.9, n=5)
+    alto = cmp.preco_alvo_por_regressao(reg, dp=1.5, roe=0.2, lpa=2.0, preco_corrente=20.0)
+    clamp = cmp.preco_alvo_por_regressao(reg, dp=1.0, roe=0.2, lpa=2.0, preco_corrente=20.0)
+    assert abs(alto.preco_alvo - clamp.preco_alvo) < 1e-9
+    assert alto.payout_fora_faixa is True
+    assert clamp.payout_fora_faixa is False
+
+
+def test_preco_alvo_clampa_payout_negativo():
+    # Payout negativo (LPA<0) deve ser clampado para 0.0 sem exceção e sinalizado.
+    reg = cmp.RegressaoPL(coeficientes=np.array([5.0, 3.0, 2.0]), r2=0.9, n=5)
+    neg = cmp.preco_alvo_por_regressao(reg, dp=-0.3, roe=0.2, lpa=2.0, preco_corrente=20.0)
+    piso = cmp.preco_alvo_por_regressao(reg, dp=0.0, roe=0.2, lpa=2.0, preco_corrente=20.0)
+    assert abs(neg.preco_alvo - piso.preco_alvo) < 1e-9
+    assert neg.payout_fora_faixa is True
+
+
+def test_preco_alvo_payout_dentro_da_faixa_nao_sinaliza():
+    reg = cmp.RegressaoPL(coeficientes=np.array([5.0, 3.0, 2.0]), r2=0.9, n=5)
+    ok = cmp.preco_alvo_por_regressao(reg, dp=0.6, roe=0.2, lpa=2.0, preco_corrente=20.0)
+    assert ok.payout_fora_faixa is False
+
+
 def test_regressao_recupera_coeficientes():
     # P/L = 5 + 10*DP + 20*ROE exatamente.
     dp = [0.3, 0.5, 0.7, 0.4, 0.6, 0.8]
