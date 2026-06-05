@@ -23,7 +23,7 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 ### Ranking robusto
 
 - [ ] **RANK-01**: O Ranking exibe "indisponível" (não "—" ambíguo lido como "cara") quando uma empresa é descartada da regressão por ROE/payout faltante. *(CR-03)*
-- [ ] **RANK-02**: O Ranking aplica o mesmo clamp/alerta de payout fora de [0,1] que o Analisar antes de alimentar a regressão. *(CR-03)*
+- [x] **RANK-02**: O Ranking aplica o mesmo clamp/alerta de payout fora de [0,1] que o Analisar antes de alimentar a regressão. *(CR-03)*
 
 ### ROE consistente
 
@@ -69,7 +69,7 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 | GARIMPO-03 | Phase 1 | Pending |
 | GARIMPO-04 | Phase 1 | Pending |
 | PAYOUT-01 | Phase 1 | Complete |
-| RANK-02 | Phase 1 | Pending |
+| RANK-02 | Phase 1 | Complete |
 | ROE-01 | Phase 1 | Complete |
 | DY-01 | Phase 1 | Complete |
 | VAL-01 | Phase 1 | Pending |
