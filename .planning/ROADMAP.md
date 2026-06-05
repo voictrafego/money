@@ -27,7 +27,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. No Garimpo, uma ação com DY abaixo da Selic não aparece como recomendada no topo — o ranking respeita de fato o corte por Selic prometido (ordena/filtra por "Passa filtros").
   4. Fatores do BSD com dado ausente entram como neutro/ausente (não como 0/pior valor), e o DY corrente usa dividendos dos últimos 12 meses; o ROE usa a mesma base de PL em todos os anos da série.
   5. O Ranking aplica o mesmo clamp/alerta de payout fora de [0,1] que o Analisar antes da regressão, e o intervalo de valor intrínseco vem de um único cálculo (sem recomputar min/max em dois lugares).
-**Plans**: TBD
+**Plans**: 5 plans
+Plans:
+- [ ] 01-01-PLAN.md — Engine canônica: payout-para-valuation, ROE base consistente, DY trailing-12m (fundamentals/prices/build)
+- [ ] 01-02-PLAN.md — Clamp/sinalização de payout fora de [0,1] na regressão de preço-alvo (comparables)
+- [ ] 01-03-PLAN.md — BSD absoluto e reprodutível, fatores ausentes neutros, proxy de crescimento com janela padrão (screening/glossário)
+- [ ] 01-04-PLAN.md — Analisar usa payout canônico no DDM e expõe vmin/vmax do intervalo intrínseco (report)
+- [ ] 01-05-PLAN.md — Wire dos 3 modos: Garimpo ordena por filtros, Ranking usa payout canônico, Analisar reusa vmin/vmax (app.py)
 
 ### Phase 2: Apresentação e Travas de Consistência
 **Goal**: A UI mostra de forma honesta o que a engine agora cumpre — ano-base efetivo, dado "indisponível", payouts duplos rotulados e fatores faltantes — e a coerência entre os três modos fica travada por testes automatizados, com os golden existentes ainda passando.
@@ -49,5 +55,5 @@ Phases execute in numeric order: 1 → 2
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Engine de Consistência | 0/TBD | Not started | - |
+| 1. Engine de Consistência | 0/5 | Not started | - |
 | 2. Apresentação e Travas de Consistência | 0/TBD | Not started | - |
