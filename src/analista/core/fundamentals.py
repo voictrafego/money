@@ -43,6 +43,10 @@ class CompanyData:
     beta: Optional[float] = None
     eh_concessionaria: bool = False
 
+    # proventos dos últimos 12 meses reais (datas do Yahoo) para o DY corrente (WR-04)
+    dpa_trailing_12m: Optional[float] = None
+    ano_dpa: Optional[int] = None  # ano-base do DPA usado (exposto p/ a Fase 2 exibir)
+
     # ------------------------------------------------------------------ #
     def anos_ordenados(self) -> List[int]:
         return sorted(a for a in self.anos)
@@ -95,6 +99,10 @@ class CompanyData:
         return mult.roe_medio(self.lucro_liquido.get(ano), pl_ini, pl_fim)
 
     def dy_atual(self) -> Optional[float]:
+        """DY corrente. Usa o DPA dos últimos 12 meses reais quando disponível (WR-04);
+        senão cai para o DPA do último ano-calendário coletado (fallback)."""
+        if self.dpa_trailing_12m is not None:
+            return mult.dividend_yield(self.dpa_trailing_12m, self.preco_atual)
         ano = self.ultimo_ano()
         if ano is None:
             return None

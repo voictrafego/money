@@ -38,6 +38,8 @@ class DadosMercado:
     beta: Optional[float] = None
     desempenho_relativo_6m: Optional[float] = None
     dividendos_por_ano: Dict[int, float] = field(default_factory=dict)
+    dpa_trailing_12m: Optional[float] = None  # soma dos proventos/ação dos últimos 12 meses reais
+    ano_dpa: Optional[int] = None             # ano da última data de provento (ano-base do DPA)
 
 
 def _retornos_mensais(hist) -> list:
@@ -91,14 +93,23 @@ def coletar_mercado(ticker: str, meses_beta: int = 60) -> DadosMercado:
             if ret_acao is not None and ret_idx is not None:
                 dm.desempenho_relativo_6m = float(ret_acao - ret_idx)
 
-    # dividendos por ano
+    # dividendos por ano + soma trailing-12m pelas datas reais (para o DY corrente)
     try:
         divs = tk.dividends
         if divs is not None and not divs.empty:
+            import pandas as pd
+
             por_ano: Dict[int, float] = {}
             for data, valor in divs.items():
                 por_ano[data.year] = por_ano.get(data.year, 0.0) + float(valor)
             dm.dividendos_por_ano = por_ano  # dividendo POR AÇÃO por ano
+
+            ult_data = divs.index.max()
+            dm.ano_dpa = int(ult_data.year)
+            # janela de 12 meses ancorada na última data de provento (tz-aware compatível)
+            corte = ult_data - pd.Timedelta(days=365)
+            trailing = float(divs[divs.index > corte].sum())
+            dm.dpa_trailing_12m = trailing if trailing > 0 else None
     except Exception:
         pass
 

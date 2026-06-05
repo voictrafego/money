@@ -36,6 +36,8 @@ def montar_empresa(
     c.volume_financeiro_diario = dm.volume_financeiro_diario
     c.beta = dm.beta
     c.desempenho_relativo_6m = dm.desempenho_relativo_6m
+    c.dpa_trailing_12m = dm.dpa_trailing_12m  # DY corrente trailing-12m (WR-04)
+    c.ano_dpa = dm.ano_dpa
     c.eh_concessionaria = any(t.lower() in (c.setor or "").lower() for t in setores_concessionaria)
 
     acoes_atual = dm.num_acoes
