@@ -48,7 +48,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 02-01-PLAN.md — UI: coluna Ano-base (Garimpo+Ranking), dual-payout no Analisar, "indisponível" no Ranking + 3 tooltips (app.py/glossario)
-- [ ] 02-02-PLAN.md — Travas de consistência cross-modo (TEST-01) e golden verde (TEST-02) (tests)
+- [x] 02-02-PLAN.md — Travas de consistência cross-modo (TEST-01) e golden verde (TEST-02) (tests)
 **UI hint**: yes
 
 ## Progress

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
+status: verifying
 stopped_at: Completed 02-01-PLAN.md (human-verify aprovado)
-last_updated: "2026-06-05T16:01:02Z"
-last_activity: 2026-06-05 -- 02-01 complete (UI ano-base, dual-payout, indisponível)
+last_updated: "2026-06-05T16:09:33.622Z"
+last_activity: 2026-06-05
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
-  percent: 86
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-06-04)
 
 Phase: 02 (apresenta-o-e-travas-de-consist-ncia) — EXECUTING
 Plan: 2 of 2
-Status: Executing Phase 02 (02-01 complete)
-Last activity: 2026-06-05 -- 02-01 complete (UI ano-base, dual-payout, indisponível)
+Status: Phase complete — ready for verification
+Last activity: 2026-06-05
 
-Progress: [█████████░] 86%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Progress: [█████████░] 86%
 | Phase 01 P04 | 6 | 2 tasks | 1 files |
 | Phase 01 P05 | 15 | 3 tasks | 1 files |
 | Phase 02 P01 | 11 | 3 tasks | 2 files |
+| Phase 02 P02 | 12 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,8 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 01]: AnaliseAcao expõe vmin/vmax do intervalo intrínseco calculado uma única vez no veredito; UI lê os campos em vez de recomputar min/max (VAL-01/WR-07)
 - [Phase ?]: [Phase 01]: app.py conecta os 3 modos à engine canônica — Garimpo ordena por 'Passa filtros' antes do BSD; Ranking usa payout_valuation()+payout_fora_faixa; Analisar lê a.vmin/a.vmax (GARIMPO-01/PAYOUT-01/RANK-02/VAL-01)
 - [Phase 02]: UI lê campos canônicos e só formata (zero recálculo em app.py) — coluna Ano-base (ultimo_ano) no Garimpo+Ranking, dois payouts rotulados no Analisar, 'indisponível' neutro no Ranking quando pa is None (ANO-01/PAYOUT-02/RANK-01)
+- [Phase ?]: TEST-01: trava cross-modo monta CompanyData à mão (sem rede) e afirma ROE/payout/direção-do-veredito coerentes entre Analisar e Ranking
+- [Phase ?]: TEST-01 direção: alvo calibrada (preço R$6) abaixo do intrínseco DDM (~8,20) E do preço-alvo da regressão; afirma sinal, não igualdade numérica
 
 ### Pending Todos
 
@@ -103,6 +106,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-05T16:01:02Z
+Last session: 2026-06-05T16:09:23.853Z
 Stopped at: Completed 02-01-PLAN.md (human-verify aprovado)
-Resume file: .planning/phases/02-apresenta-o-e-travas-de-consist-ncia/02-02-PLAN.md
+Resume file: None

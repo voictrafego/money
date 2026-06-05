@@ -43,8 +43,8 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 
 ### Testes de consistência
 
-- [ ] **TEST-01**: Teste automatizado garante que a mesma empresa (mesmo dado de entrada) produz payout/ROE/veredito coerentes entre os 3 modos.
-- [ ] **TEST-02**: Os testes golden existentes da engine continuam passando após as correções.
+- [x] **TEST-01**: Teste automatizado garante que a mesma empresa (mesmo dado de entrada) produz payout/ROE/veredito coerentes entre os 3 modos.
+- [x] **TEST-02**: Os testes golden existentes da engine continuam passando após as correções.
 
 ## v2 Requirements
 
@@ -76,8 +76,8 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 | ANO-01 | Phase 2 | Complete |
 | PAYOUT-02 | Phase 2 | Complete |
 | RANK-01 | Phase 2 | Complete |
-| TEST-01 | Phase 2 | Pending |
-| TEST-02 | Phase 2 | Pending |
+| TEST-01 | Phase 2 | Complete |
+| TEST-02 | Phase 2 | Complete |
 
 **Coverage:**
 - v1 requirements: 14 total
