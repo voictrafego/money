@@ -103,9 +103,8 @@ if modo.startswith("🔎"):
             else:
                 st.warning(f"➖ {v}")
 
-            # Métricas principais
-            valores = [r.valor_intrinseco for r in (a.ddm_h, a.ddm_constante) if r]
-            intervalo = f"{fmt_rs(min(valores))} – {fmt_rs(max(valores))}" if valores else "—"
+            # Métricas principais — intervalo intrínseco vem do cálculo único do veredito (WR-07)
+            intervalo = f"{fmt_rs(a.vmin)} – {fmt_rs(a.vmax)}" if a.vmin is not None and a.vmax is not None else "—"
             m1, m2, m3, m4, m5 = st.columns(5)
             m1.metric("Preço atual", fmt_rs(a.preco_atual), help=h("preco"))
             m2.metric("Valor intrínseco (DDM)", intervalo, help=h("valor_intrinseco"))
@@ -262,26 +261,31 @@ else:
                 ROE.append(c.roe(u))
                 PL.append(mult.preco_lucro(c.preco_atual, lpa))
                 EY.append(mult.earnings_yield(lpa, c.preco_atual))
-                DP.append(c.payout(u))
+                DP.append(c.payout_valuation())  # payout canônico (média 3a + clamp), igual ao Analisar
             ranking = cmp.ranking_por_multiplos(nomes, {"ML": ML, "ROE": ROE, "PL": PL, "EY": EY})
             reg = cmp.ajustar_regressao_pl(PL, DP, ROE)
             alvos = {}
             if reg:
                 for c in empresas:
                     u = c.ultimo_ano()
-                    pa = cmp.preco_alvo_por_regressao(reg, c.payout(u), c.roe(u), c.lpa(u), c.preco_atual)
+                    pa = cmp.preco_alvo_por_regressao(reg, c.payout_valuation(), c.roe(u), c.lpa(u), c.preco_atual)
                     if pa:
                         alvos[c.ticker] = pa
             rows = []
             for r in ranking:
                 pa = alvos.get(r["empresa"])
+                veredito = "—"
+                if pa:
+                    veredito = "Subavaliada ✅" if pa.subavaliada else "Cara 🔺"
+                    if pa.payout_fora_faixa:  # espelha o alerta ">100%" do Analisar
+                        veredito += " ⚠️ payout ajustado"
                 rows.append({
                     "Ticker": r["empresa"],
                     "Nota (0–100)": round(r["nota"], 1) if r["nota"] is not None else None,
                     "Preço atual": fmt_rs(next(c.preco_atual for c in empresas if c.ticker == r["empresa"])),
                     "Preço-alvo": fmt_rs(pa.preco_alvo) if pa else "—",
                     "Upside": fmt_pct(pa.upside) if pa and pa.upside is not None else "—",
-                    "Veredito": ("Subavaliada ✅" if pa and pa.subavaliada else "Cara 🔺") if pa else "—",
+                    "Veredito": veredito,
                 })
             st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
             if reg:
