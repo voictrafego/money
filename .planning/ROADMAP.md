@@ -12,7 +12,7 @@ Marco de remediação que corrige as inconsistências mapeadas em `CONSISTENCY-R
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Engine de Consistência** - Unificar a agregação/cálculo da engine (payout, BSD, fatores ausentes, ROE, DY, regressão) para que os modos parem de divergir na origem
+- [x] **Phase 1: Engine de Consistência** - Unificar a agregação/cálculo da engine (payout, BSD, fatores ausentes, ROE, DY, regressão) para que os modos parem de divergir na origem (completed 2026-06-05)
 - [ ] **Phase 2: Apresentação e Travas de Consistência** - Expor à UI o que a engine agora cumpre (ano-base, "indisponível", payouts rotulados, fatores faltantes) e travar a coerência entre modos com testes
 
 ## Phase Details
@@ -33,7 +33,7 @@ Plans:
 - [x] 01-02-PLAN.md — Clamp/sinalização de payout fora de [0,1] na regressão de preço-alvo (comparables)
 - [x] 01-03-PLAN.md — BSD absoluto e reprodutível, fatores ausentes neutros, proxy de crescimento com janela padrão (screening/glossário)
 - [x] 01-04-PLAN.md — Analisar usa payout canônico no DDM e expõe vmin/vmax do intervalo intrínseco (report)
-- [ ] 01-05-PLAN.md — Wire dos 3 modos: Garimpo ordena por filtros, Ranking usa payout canônico, Analisar reusa vmin/vmax (app.py)
+- [x] 01-05-PLAN.md — Wire dos 3 modos: Garimpo ordena por filtros, Ranking usa payout canônico, Analisar reusa vmin/vmax (app.py)
 
 ### Phase 2: Apresentação e Travas de Consistência
 **Goal**: A UI mostra de forma honesta o que a engine agora cumpre — ano-base efetivo, dado "indisponível", payouts duplos rotulados e fatores faltantes — e a coerência entre os três modos fica travada por testes automatizados, com os golden existentes ainda passando.
@@ -55,5 +55,5 @@ Phases execute in numeric order: 1 → 2
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Engine de Consistência | 0/5 | Not started | - |
+| 1. Engine de Consistência | 5/5 | Complete   | 2026-06-05 |
 | 2. Apresentação e Travas de Consistência | 0/TBD | Not started | - |
