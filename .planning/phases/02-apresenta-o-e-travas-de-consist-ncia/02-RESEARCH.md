@@ -346,22 +346,27 @@ payout_proj = c.payout_valuation()            # média 3a + clamp 1.0 (usado no 
 
 **Nada na categoria de versões/segurança é assumido:** versões verificadas via `.venv`.
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> Todas as três são micro-escolhas de UX não-bloqueantes, com defaults travados em 02-UI-SPEC.md.
 
 1. **PAYOUT-02: onde mostrar o segundo payout?**
    - What we know: hoje só `payout(ult)` aparece (métrica + aba Múltiplos). `payout_valuation()` existe e é usado no DDM.
    - What's unclear: métrica dedicada (`st.metric`) vs. linha extra na tabela de múltiplos vs. caption na aba Valuation.
    - Recommendation: mostrar ambos rotulados na aba Múltiplos (linha "Payout — último ano" e "Payout — média 3a (DDM)"), exibindo a média 3a com destaque/aviso quando diferir do último ano. Decisão de layout fica para discuss/plan.
+   - **RESOLVED:** default travado em 02-UI-SPEC.md → duas linhas rotuladas SEMPRE visíveis na aba Múltiplos ("Payout (último ano)" e "Payout p/ valuation (média 3a)"), não uma métrica condicional.
 
 2. **TEST-01: cobrir o modo Ranking exige ≥4 empresas para a regressão.**
    - What we know: `ajustar_regressao_pl` retorna None com <4 (comparables.py:94).
    - What's unclear: se TEST-01 cobre veredito do Ranking (precisa regressão) ou só payout/ROE (não precisa).
    - Recommendation: TEST-01 mínimo = afirmar payout_valuation/roe iguais entre os caminhos (sem regressão). TEST-01 estendido (opcional) = montar ≥4 fixtures para checar direção do veredito Ranking vs Analisar.
+   - **RESOLVED:** o critério de sucesso #4 do ROADMAP torna a direção do veredito OBRIGATÓRIA — o plano 02-02 monta ≥4 fixtures determinísticas para a regressão rodar e afirma a direção (subavaliada/cara) sem `pytest.skip`. Não é mais "opcional".
 
 3. **ANO-01: exibir também `ano_dpa` (ano do dividendo) além de `ultimo_ano`?**
    - What we know: `ano_dpa` existe e é o ano-base do DPA do DY; pode diferir do `ultimo_ano` (fundamentos).
    - What's unclear: se o requisito quer só o ano dos fundamentos ou também o ano do dividendo.
    - Recommendation: ANO-01 pede `ultimo_ano` explicitamente — exibir esse. `ano_dpa` é nice-to-have (pode ir num tooltip).
+   - **RESOLVED:** default travado em 02-UI-SPEC.md → coluna `ultimo_ano` na tabela; `ano_dpa` vai no tooltip (column_config ou caption — ambos aceitáveis).
 
 ## Environment Availability
 
