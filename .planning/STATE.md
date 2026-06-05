@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-06-05T12:27:04.291Z"
-last_activity: 2026-06-05
+status: executing
+stopped_at: Completed 02-01-PLAN.md (human-verify aprovado)
+last_updated: "2026-06-05T16:01:02Z"
+last_activity: 2026-06-05 -- 02-01 complete (UI ano-base, dual-payout, indisponível)
 progress:
   total_phases: 2
   completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
-  percent: 100
+  total_plans: 7
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-04)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação.
-**Current focus:** Phase 01 — engine-de-consist-ncia
+**Current focus:** Phase 02 — apresenta-o-e-travas-de-consist-ncia
 
 ## Current Position
 
-Phase: 01 (engine-de-consist-ncia) — EXECUTING
-Plan: 5 of 5
-Status: Phase complete — ready for verification
-Last activity: 2026-06-05
+Phase: 02 (apresenta-o-e-travas-de-consist-ncia) — EXECUTING
+Plan: 2 of 2
+Status: Executing Phase 02 (02-01 complete)
+Last activity: 2026-06-05 -- 02-01 complete (UI ano-base, dual-payout, indisponível)
 
-Progress: [██████████] 100%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Progress: [██████████] 100%
 | Phase 01 P03 | 5 | 3 tasks | 3 files |
 | Phase 01 P04 | 6 | 2 tasks | 1 files |
 | Phase 01 P05 | 15 | 3 tasks | 1 files |
+| Phase 02 P01 | 11 | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,7 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 01]: proxy crescimento_lucro_lp usa média roe/payout na janela anos_media (ignora None), documentado no tooltip (GARIMPO-04)
 - [Phase ?]: [Phase 01]: AnaliseAcao expõe vmin/vmax do intervalo intrínseco calculado uma única vez no veredito; UI lê os campos em vez de recomputar min/max (VAL-01/WR-07)
 - [Phase ?]: [Phase 01]: app.py conecta os 3 modos à engine canônica — Garimpo ordena por 'Passa filtros' antes do BSD; Ranking usa payout_valuation()+payout_fora_faixa; Analisar lê a.vmin/a.vmax (GARIMPO-01/PAYOUT-01/RANK-02/VAL-01)
+- [Phase 02]: UI lê campos canônicos e só formata (zero recálculo em app.py) — coluna Ano-base (ultimo_ano) no Garimpo+Ranking, dois payouts rotulados no Analisar, 'indisponível' neutro no Ranking quando pa is None (ANO-01/PAYOUT-02/RANK-01)
 
 ### Pending Todos
 
@@ -101,6 +103,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-05T12:26:55.359Z
-Stopped at: Completed 01-02-PLAN.md
-Resume file: None
+Last session: 2026-06-05T16:01:02Z
+Stopped at: Completed 02-01-PLAN.md (human-verify aprovado)
+Resume file: .planning/phases/02-apresenta-o-e-travas-de-consist-ncia/02-02-PLAN.md

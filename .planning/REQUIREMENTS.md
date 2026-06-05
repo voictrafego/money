@@ -18,11 +18,11 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 ### Payout unificado
 
 - [x] **PAYOUT-01**: Analisar e Ranking usam a mesma janela e clamp de payout (função única) — o payout que decide o preço-alvo no Ranking é o mesmo que decide o valor intrínseco no Analisar para a mesma ação. *(CR-02 / WR-03)*
-- [ ] **PAYOUT-02**: Quando o payout exibido (último ano) difere do payout usado pelo DDM (projetado, média 3a), o app mostra ambos rotulados, sem ambiguidade. *(WR-03)*
+- [x] **PAYOUT-02**: Quando o payout exibido (último ano) difere do payout usado pelo DDM (projetado, média 3a), o app mostra ambos rotulados, sem ambiguidade. *(WR-03)*
 
 ### Ranking robusto
 
-- [ ] **RANK-01**: O Ranking exibe "indisponível" (não "—" ambíguo lido como "cara") quando uma empresa é descartada da regressão por ROE/payout faltante. *(CR-03)*
+- [x] **RANK-01**: O Ranking exibe "indisponível" (não "—" ambíguo lido como "cara") quando uma empresa é descartada da regressão por ROE/payout faltante. *(CR-03)*
 - [x] **RANK-02**: O Ranking aplica o mesmo clamp/alerta de payout fora de [0,1] que o Analisar antes de alimentar a regressão. *(CR-03)*
 
 ### ROE consistente
@@ -39,7 +39,7 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 
 ### Ano-base visível
 
-- [ ] **ANO-01**: Ranking e Garimpo exibem o ano-base efetivo de cada empresa (`ultimo_ano`), para o usuário enxergar quando há mistura de anos na comparação. *(CR-02, parte 2)*
+- [x] **ANO-01**: Ranking e Garimpo exibem o ano-base efetivo de cada empresa (`ultimo_ano`), para o usuário enxergar quando há mistura de anos na comparação. *(CR-02, parte 2)*
 
 ### Testes de consistência
 
@@ -73,9 +73,9 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 | ROE-01 | Phase 1 | Complete |
 | DY-01 | Phase 1 | Complete |
 | VAL-01 | Phase 1 | Complete |
-| ANO-01 | Phase 2 | Pending |
-| PAYOUT-02 | Phase 2 | Pending |
-| RANK-01 | Phase 2 | Pending |
+| ANO-01 | Phase 2 | Complete |
+| PAYOUT-02 | Phase 2 | Complete |
+| RANK-01 | Phase 2 | Complete |
 | TEST-01 | Phase 2 | Pending |
 | TEST-02 | Phase 2 | Pending |
 
