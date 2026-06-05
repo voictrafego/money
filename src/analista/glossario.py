@@ -33,8 +33,8 @@ G: dict[str, str] = {
     ),
     "roe": (
         "**ROE — Retorno sobre o Patrimônio Líquido** — lucro líquido recorrente ÷ patrimônio líquido. "
-        "Quanto de lucro a empresa gera para cada R$ 1 de capital próprio. Usa-se o PL inicial ou médio "
-        "(não o final). (Cap. 10)"
+        "Quanto de lucro a empresa gera para cada R$ 1 de capital próprio. Usa-se o PL médio "
+        "(inicial+final)/2; indisponível no 1º ano sem histórico. (Cap. 10)"
     ),
     "ke": (
         "**Ke — custo do capital próprio** — retorno mínimo que o investidor exige para correr o risco "

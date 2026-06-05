@@ -82,9 +82,17 @@ class CompanyData:
         return min(sum(vals) / len(vals), 1.0)
 
     def roe(self, ano: int) -> Optional[float]:
-        """ROE com PL inicial (= PL do ano anterior, se houver; senão do próprio ano)."""
-        pl_ini = self.patrimonio_liquido.get(ano - 1, self.patrimonio_liquido.get(ano))
-        return mult.roe(self.lucro_liquido.get(ano), pl_ini)
+        """ROE com PL médio ((PL_ini + PL_fim)/2); None quando falta o PL inicial.
+
+        Base ÚNICA em toda a série: usa `roe_medio` (PL médio) quando há PL do ano anterior
+        e do próprio ano. No 1º ano da janela (sem PL ano-1) retorna None em vez de cair
+        silenciosamente para o PL final — assim a série nunca mistura bases (WR-01).
+        """
+        pl_ini = self.patrimonio_liquido.get(ano - 1)
+        pl_fim = self.patrimonio_liquido.get(ano)
+        if pl_ini is None:
+            return None
+        return mult.roe_medio(self.lucro_liquido.get(ano), pl_ini, pl_fim)
 
     def dy_atual(self) -> Optional[float]:
         ano = self.ultimo_ano()

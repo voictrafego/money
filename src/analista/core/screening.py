@@ -54,8 +54,10 @@ def filtros_customizados(
     lucros = [c.lucro_liquido.get(a) for a in anos]
     crit["lucro_todos_anos"] = all(l is not None and l > 0 for l in lucros) and len(lucros) > 0
 
-    roes = [c.roe(a) for a in anos]
-    crit["roe_min"] = all(r is not None and r > roe_min for r in roes) and len(roes) > 0
+    # ROE usa PL médio e é None no 1º ano sem PL inicial (WR-01). Avalia só os anos com
+    # ROE definido (precisam de PL do ano anterior) e exige pelo menos um ano avaliável.
+    roes = [r for r in (c.roe(a) for a in anos) if r is not None]
+    crit["roe_min"] = len(roes) > 0 and all(r > roe_min for r in roes)
 
     divs = [c.dividendos.get(a) for a in anos]
     crit["dividendos_todos_anos"] = all(d is not None and d > 0 for d in divs) and len(divs) > 0
