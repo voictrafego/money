@@ -4,14 +4,14 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-06-05T12:04:25.092Z"
+last_updated: "2026-06-05T12:07:16.517Z"
 last_activity: 2026-06-05
 progress:
   total_phases: 2
   completed_phases: 0
   total_plans: 5
-  completed_plans: 3
-  percent: 60
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-04)
 ## Current Position
 
 Phase: 01 (engine-de-consist-ncia) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-06-05
 
-Progress: [██████░░░░] 60%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Progress: [██████░░░░] 60%
 | Phase 01 P01 | 18 | 3 tasks | 7 files |
 | Phase 01 P02 | 4 | 1 tasks | 2 files |
 | Phase 01 P03 | 5 | 3 tasks | 3 files |
+| Phase 01 P04 | 6 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,7 @@ Recent decisions affecting current work:
 - [Phase ?]: [Phase 01]: BSD padronizado contra REFERENCIA_BSD (10 bandas fixas calibráveis), não min-max do lote — reproduzível entre lotes e corte 80 absoluto (GARIMPO-02)
 - [Phase ?]: [Phase 01]: fator BSD ausente entra como neutro (50), não pior valor (0); bsd_ranking expõe fatores_faltantes/n_fatores_faltantes (GARIMPO-03)
 - [Phase ?]: [Phase 01]: proxy crescimento_lucro_lp usa média roe/payout na janela anos_media (ignora None), documentado no tooltip (GARIMPO-04)
+- [Phase ?]: [Phase 01]: AnaliseAcao expõe vmin/vmax do intervalo intrínseco calculado uma única vez no veredito; UI lê os campos em vez de recomputar min/max (VAL-01/WR-07)
 
 ### Pending Todos
 
@@ -97,6 +99,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-05T12:03:43.318Z
+Last session: 2026-06-05T12:06:49.044Z
 Stopped at: Completed 01-02-PLAN.md
 Resume file: None

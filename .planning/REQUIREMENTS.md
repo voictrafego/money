@@ -35,7 +35,7 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 
 ### Valuation sem duplicação
 
-- [ ] **VAL-01**: O intervalo de valor intrínseco exibido na métrica e o usado no veredito vêm de um único cálculo (sem recomputar min/max em dois lugares). *(WR-07)*
+- [x] **VAL-01**: O intervalo de valor intrínseco exibido na métrica e o usado no veredito vêm de um único cálculo (sem recomputar min/max em dois lugares). *(WR-07)*
 
 ### Ano-base visível
 
@@ -72,7 +72,7 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 | RANK-02 | Phase 1 | Complete |
 | ROE-01 | Phase 1 | Complete |
 | DY-01 | Phase 1 | Complete |
-| VAL-01 | Phase 1 | Pending |
+| VAL-01 | Phase 1 | Complete |
 | ANO-01 | Phase 2 | Pending |
 | PAYOUT-02 | Phase 2 | Pending |
 | RANK-01 | Phase 2 | Pending |
