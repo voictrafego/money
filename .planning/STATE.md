@@ -101,6 +101,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260620-oa9 | Avisos de confiabilidade na Tela 2 (Ranking): amostra pequena, ROE com sinal invertido, mesmo segmento | 2026-06-20 | 0e573da | [260620-oa9-ajustar-tela-2-ranking-por-multiplos-com](./quick/260620-oa9-ajustar-tela-2-ranking-por-multiplos-com/) |
+| fast | fix: mapear BMGB4 → CD_CVM 24600 (Banco BMG) — resolução determinística contra hiccup do Yahoo | 2026-06-20 | bc9de8c | (gsd-fast) |
 
 ## Deferred Items
 
