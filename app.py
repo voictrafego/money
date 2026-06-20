@@ -309,5 +309,27 @@ else:
             if reg:
                 st.caption(f"Regressão: P/L = {reg.coeficientes[0]:.2f} + {reg.coeficientes[1]:.2f}·payout "
                            f"+ {reg.coeficientes[2]:.2f}·ROE  (R²={reg.r2:.2f}, n={reg.n})")
+                # RANK-CONF-01: amostra pequena → regressão instável, veredito pouco confiável.
+                if reg.amostra_pequena:
+                    st.warning(
+                        f"⚠️ **Amostra pequena (n={reg.n}).** Com poucas empresas, a regressão "
+                        f"P/L ~ f(payout, ROE) fica instável e o veredito *Subavaliada/Cara* é "
+                        f"pouco confiável. Adicione mais comparáveis **do mesmo setor** para "
+                        f"firmar o preço-alvo."
+                    )
+                # RANK-CONF-02: ROE com coeficiente negativo contraria Gordon (caso TAEE11).
+                if reg.roe_sinal_invertido:
+                    st.warning(
+                        "⚠️ **Coeficiente do ROE saiu negativo** — isso *contraria* a teoria "
+                        "(modelo de Gordon: o P/L justo cresce com o ROE). Em geral é sinal de "
+                        "overfitting/multicolinearidade e acaba penalizando as empresas mais "
+                        "rentáveis. Aqui o preço-alvo da regressão pode discordar do **Analisar "
+                        "a fundo** (DDM); nesse caso, confie mais no DDM."
+                    )
+                # RANK-CONF-03: orientação fixa de mesmo segmento (sempre que há tabela).
+                st.caption(
+                    "ℹ️ Compare empresas do **mesmo segmento** (ex.: geração × transmissão × "
+                    "distribuição de energia). Misturar segmentos distorce a regressão e o ranking."
+                )
             else:
                 st.info("Poucas empresas para a regressão (precisa de ≥4). Os preços-alvo ficam indisponíveis.")
