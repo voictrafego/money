@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-06-04)
 Phase: 02
 Plan: Not started
 Status: Milestone complete
-Last activity: 2026-06-05
+Last activity: 2026-06-20 - Completed quick task 260620-oa9: avisos de confiabilidade na Tela 2 (Ranking)
 
 Progress: [██████████] 100%
 
@@ -95,6 +95,12 @@ None yet.
 
 - Restrição dura: os testes golden existentes em `tests/` (test_ddm, test_multiples, test_comparables, test_screening) devem continuar passando após cada correção.
 - CR-02 parte 2 (ano-base instável entre execuções por fallback de DFP da CVM) é mitigado por exibir o ano-base (ANO-01), não por forçar o mesmo ano — manter escopo nessa decisão.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260620-oa9 | Avisos de confiabilidade na Tela 2 (Ranking): amostra pequena, ROE com sinal invertido, mesmo segmento | 2026-06-20 | 0e573da | [260620-oa9-ajustar-tela-2-ranking-por-multiplos-com](./quick/260620-oa9-ajustar-tela-2-ranking-por-multiplos-com/) |
 
 ## Deferred Items
 
