@@ -56,6 +56,24 @@ def test_regressao_amostra_insuficiente():
     assert cmp.ajustar_regressao_pl([10, 12], [0.3, 0.5], [0.1, 0.15]) is None
 
 
+def test_regressao_amostra_pequena():
+    # n < LIMIAR_AMOSTRA (10) sinaliza amostra pequena; n >= 10 não.
+    pequena = cmp.RegressaoPL(coeficientes=np.array([5.0, 3.0, 2.0]), r2=0.9, n=6)
+    suficiente = cmp.RegressaoPL(coeficientes=np.array([5.0, 3.0, 2.0]), r2=0.9, n=10)
+    assert pequena.amostra_pequena is True
+    assert suficiente.amostra_pequena is False
+
+
+def test_regressao_roe_sinal_invertido():
+    # b_ROE (coeficientes[2]) < 0 contraria Gordon → invertido; >=0 não.
+    invertido = cmp.RegressaoPL(coeficientes=np.array([5.0, 10.0, -66.72]), r2=0.9, n=6)
+    normal = cmp.RegressaoPL(coeficientes=np.array([5.0, 10.0, 20.0]), r2=0.9, n=6)
+    zero = cmp.RegressaoPL(coeficientes=np.array([5.0, 10.0, 0.0]), r2=0.9, n=6)
+    assert invertido.roe_sinal_invertido is True
+    assert normal.roe_sinal_invertido is False
+    assert zero.roe_sinal_invertido is False
+
+
 def test_ranking_por_multiplos_maior_e_menor_melhor():
     # ML maior melhor; P/L menor melhor.
     empresas = ["A", "B"]

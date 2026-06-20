@@ -67,6 +67,11 @@ def ranking_por_multiplos(
 # --------------------------------------------------------------------------- #
 # Cap. 12 — regressão P/L = f(DP, ROE) e preço-alvo
 # --------------------------------------------------------------------------- #
+# Abaixo deste n, ajustar 3 parâmetros sobre poucas observações deixa a regressão
+# instável (overfitting/multicolinearidade) e o veredito de preço-alvo pouco confiável.
+LIMIAR_AMOSTRA = 10
+
+
 @dataclass
 class RegressaoPL:
     coeficientes: np.ndarray   # [intercepto, b_DP, b_ROE]
@@ -76,6 +81,16 @@ class RegressaoPL:
     def prever(self, dp: float, roe: float) -> float:
         b0, b1, b2 = self.coeficientes
         return float(b0 + b1 * dp + b2 * roe)
+
+    @property
+    def amostra_pequena(self) -> bool:
+        """Poucas empresas para 3 parâmetros → regressão instável."""
+        return self.n < LIMIAR_AMOSTRA
+
+    @property
+    def roe_sinal_invertido(self) -> bool:
+        """b_ROE < 0 contraria Gordon (P/L justo cresce com o ROE) → overfitting."""
+        return float(self.coeficientes[2]) < 0
 
 
 def ajustar_regressao_pl(
