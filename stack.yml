@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  money:
+    image: money:latest
+
+    networks:
+      - network_swarm_public
+
+    deploy:
+      replicas: 1
+
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=network_swarm_public
+
+        - traefik.http.routers.money.rule=Host(`money.voictech.com.br`)
+        - traefik.http.routers.money.entrypoints=websecure
+        - traefik.http.routers.money.tls=true
+        - traefik.http.routers.money.tls.certresolver=letsencryptresolver
+
+        - traefik.http.services.money.loadbalancer.server.port=8501
+
+networks:
+  network_swarm_public:
+    external: true
