@@ -9,6 +9,7 @@ proventos auditáveis use a CVM como backstop.
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 
@@ -16,10 +17,24 @@ from ..core import capm
 
 INDICE_MERCADO = "^BVSP"
 
+# O rate-limit por IP de datacenter do Yahoo é intermitente: um fetch pode falhar
+# ou voltar vazio e o seguinte (segundos depois) ter sucesso. Re-tentamos algumas
+# vezes com backoff curto antes de desistir.
+_MAX_TENTATIVAS = 3
+_BACKOFF_SEG = (0.5, 1.0)
+
 
 def _yf():
     import yfinance as yf  # import tardio: dependência pesada
     return yf
+
+
+def _fetch_info(tk) -> dict:
+    """Obtém o `info` do Ticker do Yahoo; {} em qualquer falha (mockável nos testes)."""
+    try:
+        return tk.info or {}
+    except Exception:
+        return {}
 
 
 def yahoo_symbol(ticker: str) -> str:
@@ -54,11 +69,21 @@ def coletar_mercado(ticker: str, meses_beta: int = 60) -> DadosMercado:
     tk = yf.Ticker(sym)
     dm = DadosMercado(ticker=ticker.upper())
 
-    info = {}
-    try:
-        info = tk.info or {}
-    except Exception:
-        info = {}
+    # retry do fetch do info: tentativa "falha" = sem nome E sem preço (ou exceção)
+    info: dict = {}
+    for tentativa in range(_MAX_TENTATIVAS):
+        try:
+            info = _fetch_info(tk)
+        except Exception:
+            info = {}
+        tem_nome = bool(info.get("longName") or info.get("shortName"))
+        tem_preco = info.get("currentPrice") is not None or info.get("regularMarketPrice") is not None
+        if tem_nome or tem_preco:
+            break
+        if tentativa < _MAX_TENTATIVAS - 1:
+            time.sleep(_BACKOFF_SEG[min(tentativa, len(_BACKOFF_SEG) - 1)])
+    # ao esgotar as tentativas seguimos com info possivelmente {} (desistência, sem exceção)
+
     dm.preco_atual = info.get("currentPrice") or info.get("regularMarketPrice")
     dm.num_acoes = info.get("sharesOutstanding")
     dm.setor = info.get("sector", "") or info.get("industry", "")
