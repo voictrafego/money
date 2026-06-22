@@ -103,6 +103,7 @@ None yet.
 | 260620-oa9 | Avisos de confiabilidade na Tela 2 (Ranking): amostra pequena, ROE com sinal invertido, mesmo segmento | 2026-06-20 | 0e573da | [260620-oa9-ajustar-tela-2-ranking-por-multiplos-com](./quick/260620-oa9-ajustar-tela-2-ranking-por-multiplos-com/) |
 | fast | fix: mapear BMGB4 → CD_CVM 24600 (Banco BMG) — resolução determinística contra hiccup do Yahoo | 2026-06-20 | bc9de8c | (gsd-fast) |
 | 260622-cg9 | Robustez da resolução de tickers: retry no Yahoo + _norm cirúrgico + casamento por token-set + map +10 (incl. ELET3/ELET6→Axia) | 2026-06-22 | c06a6d1 | [260622-cg9-robustez-da-resolucao-de-tickers-retry-y](./quick/260622-cg9-robustez-da-resolucao-de-tickers-retry-y/) |
+| fast | feat: aviso "preço atual indisponível (Yahoo)" na Tela 1 quando preco_atual=None | 2026-06-22 | d3e0d1b | (gsd-fast) |
 
 ## Deferred Items
 
