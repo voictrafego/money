@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-06-04)
 Phase: 02
 Plan: Not started
 Status: Milestone complete
-Last activity: 2026-06-20 - Completed quick task 260620-oa9: avisos de confiabilidade na Tela 2 (Ranking)
+Last activity: 2026-06-22 - Completed quick task 260622-cg9: robustez da resolução de tickers (retry Yahoo + token-set + map)
 
 Progress: [██████████] 100%
 
@@ -102,6 +102,7 @@ None yet.
 |---|-------------|------|--------|-----------|
 | 260620-oa9 | Avisos de confiabilidade na Tela 2 (Ranking): amostra pequena, ROE com sinal invertido, mesmo segmento | 2026-06-20 | 0e573da | [260620-oa9-ajustar-tela-2-ranking-por-multiplos-com](./quick/260620-oa9-ajustar-tela-2-ranking-por-multiplos-com/) |
 | fast | fix: mapear BMGB4 → CD_CVM 24600 (Banco BMG) — resolução determinística contra hiccup do Yahoo | 2026-06-20 | bc9de8c | (gsd-fast) |
+| 260622-cg9 | Robustez da resolução de tickers: retry no Yahoo + _norm cirúrgico + casamento por token-set + map +10 (incl. ELET3/ELET6→Axia) | 2026-06-22 | c06a6d1 | [260622-cg9-robustez-da-resolucao-de-tickers-retry-y](./quick/260622-cg9-robustez-da-resolucao-de-tickers-retry-y/) |
 
 ## Deferred Items
 
