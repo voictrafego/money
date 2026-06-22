@@ -112,6 +112,13 @@ if modo.startswith("🔎"):
             m4.metric("ROE", fmt_pct(a.multiplos.get("ROE")), help=h("roe"))
             m5.metric("Ke (custo capital)", fmt_pct(a.ke), help=h("ke"))
 
+            if a.preco_atual is None:
+                st.warning(
+                    "⚠️ Preço atual indisponível agora (fonte Yahoo instável). Os fundamentos e o "
+                    "valor intrínseco (DDM, dados CVM) abaixo seguem válidos — só a comparação de "
+                    "preço/veredito fica suspensa até o preço voltar."
+                )
+
             if a.alertas:
                 for al in a.alertas:
                     st.warning(f"⚠️ {al}")
