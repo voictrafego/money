@@ -89,10 +89,10 @@ def test_retry_todas_falham_desiste_sem_excecao(monkeypatch):
 # ---------------------------------------------------------------------------
 
 def test_norm_preserva_saneamento_sao():
-    n = universe._norm("CIA SANEAMENTO BASICO ESTADO SAO PAULO")
-    assert "saneamento" in n
-    assert "sao" in n
-    assert "neamento" not in n
+    toks = universe._norm("CIA SANEAMENTO BASICO ESTADO SAO PAULO").split()
+    assert "saneamento" in toks
+    assert "sao" in toks
+    assert "neamento" not in toks  # o bug do str.replace(' sa', ' ') geraria isto
 
 
 def test_norm_preserva_sabesp():
@@ -144,11 +144,11 @@ CADASTRO_SINTETICO = pd.DataFrame(
 
 @pytest.fixture
 def cadastro_sintetico(monkeypatch):
-    universe.carregar_cadastro.cache_clear()
+    universe.carregar_cadastro.cache_clear()  # descarta qualquer cache real prévio
     monkeypatch.setattr(universe, "carregar_cadastro", lambda: CADASTRO_SINTETICO.copy())
     monkeypatch.setattr(universe, "_carregar_override", lambda: {})
     yield
-    universe.carregar_cadastro.cache_clear()
+    # monkeypatch restaura carregar_cadastro (com lru_cache) ao final do teste
 
 
 def test_tokenset_casa_agro3(cadastro_sintetico):

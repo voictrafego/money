@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import unicodedata
 from functools import lru_cache
 from typing import Optional, Tuple
@@ -23,12 +24,40 @@ CAD_CACHE = os.path.join(DATA_DIR, "cvm", "cad_cia_aberta.csv")
 TICKER_MAP = os.path.join(DATA_DIR, "ticker_map.json")
 
 
+# Tokens jurídicos/genéricos removidos só em FRONTEIRA DE PALAVRA — usar str.replace
+# apagava substrings reais (" sa" dentro de "Saneamento" -> "neamento", "Sao" -> "o").
+_LIXO_TOKENS = [
+    "s.a.", "s/a", "sa", "s a", "ltda",
+    "holding", "participacoes", "do brasil", "brasil",
+    "companhia", "cia", "energia", "banco",
+]
+
+
 def _norm(s: str) -> str:
     s = unicodedata.normalize("NFKD", str(s)).encode("ascii", "ignore").decode().lower()
-    for lixo in [" s.a.", " s/a", " sa", " s a", " holding", " participacoes", " do brasil",
-                 " brasil", " companhia", " cia", " energia", " banco"]:
-        s = s.replace(lixo, " ")
+    # remove pontuação leve que separa tokens jurídicos (s.a. / s/a)
+    s = s.replace(".", " ").replace("/", " ")
+    for lixo in _LIXO_TOKENS:
+        # \b...\b garante fronteira de palavra; "sa" não casa dentro de "saneamento"
+        s = re.sub(r"\b" + re.escape(lixo) + r"\b", " ", s)
     return " ".join(s.split())
+
+
+def _tokens_significativos(nome_norm: str) -> set:
+    """Tokens de _norm com len>2 (descarta conectivos curtos sobreviventes)."""
+    return {t for t in nome_norm.split() if len(t) > 2}
+
+
+def _segmentos(nome: str) -> list:
+    """Nome completo + segmentos separados por ' - ' (marca à parte, ex.: '... - SABESP')."""
+    partes = [nome] + [p for p in nome.split(" - ") if p.strip()]
+    # dedup preservando ordem
+    vistos, out = set(), []
+    for p in partes:
+        if p not in vistos:
+            vistos.add(p)
+            out.append(p)
+    return out
 
 
 @lru_cache(maxsize=1)
@@ -83,11 +112,61 @@ def resolver(ticker: str, nome_yahoo: str = "") -> Tuple[Optional[int], str]:
     exato = cad[cad["_n"] == alvo]
     if not exato.empty:
         linha = exato.iloc[0]
-    else:
-        # 2) contém (escolhe o nome mais curto que contém o alvo ou vice-versa)
-        cand = cad[cad["_n"].apply(lambda x: x in alvo or alvo in x) & (cad["_n"].str.len() > 2)]
-        if cand.empty:
-            return None, ""
+        return int(linha["CD_CVM"]), str(linha.get("SETOR_ATIV", "") or "")
+
+    # 2) contém (escolhe o nome mais curto que contém o alvo ou vice-versa)
+    cand = cad[cad["_n"].apply(lambda x: x in alvo or alvo in x) & (cad["_n"].str.len() > 2)]
+    if not cand.empty:
         linha = cand.iloc[cand["_n"].str.len().argmin()]
-    setor = str(linha.get("SETOR_ATIV", "") or "")
-    return int(linha["CD_CVM"]), setor
+        return int(linha["CD_CVM"]), str(linha.get("SETOR_ATIV", "") or "")
+
+    # 3) fallback token-set (ADITIVO): nomes legais da CVM divergem do longName do
+    #    Yahoo (ordem/abreviações), então casamos por sobreposição de tokens. Só roda
+    #    quando exato E contém falharam; exige limiar p/ evitar falso-positivo.
+    return _resolver_token_set(nome_yahoo, cad)
+
+
+def _token_casa(token: str, alvo_tokens: set) -> bool:
+    if token in alvo_tokens:
+        return True
+    # abreviação: prefixo de >=3 chars de um token do alvo (ou vice-versa)
+    for a in alvo_tokens:
+        n = min(len(token), len(a))
+        if n >= 3 and (a.startswith(token) or token.startswith(a)):
+            return True
+    return False
+
+
+def _resolver_token_set(nome_yahoo: str, cad: pd.DataFrame) -> Tuple[Optional[int], str]:
+    # une tokens do nome completo e dos segmentos (' - SABESP', 'BrasilAgro - ...')
+    alvo_tokens: set = set()
+    for seg in _segmentos(nome_yahoo):
+        alvo_tokens |= _tokens_significativos(_norm(seg))
+    if len(alvo_tokens) < 2:
+        return None, ""
+
+    melhor = None
+    melhor_score: tuple = ()
+    for _, row in cad.iterrows():
+        cvm_tokens = _tokens_significativos(row["_n"])
+        if not cvm_tokens:
+            continue
+        # token casa se igual OU se um é prefixo do outro (abreviações CVM: "bras"~"brasileira",
+        # "prop"~"propriedades") com pelo menos 3 chars no prefixo — evita casar ruído.
+        comum = {t for t in cvm_tokens if _token_casa(t, alvo_tokens)}
+        if len(comum) < 2:
+            continue
+        cobertos_cvm = comum  # tokens da CVM que encontraram correspondência no alvo
+        jaccard = len(comum) / len(cvm_tokens | alvo_tokens) if (cvm_tokens | alvo_tokens) else 0.0
+        subset = cobertos_cvm == cvm_tokens  # todo token da CVM casou no alvo
+        # limiar de segurança: Jaccard >= 0.5 OU todos os tokens da CVM cobertos pelo alvo
+        if not (jaccard >= 0.5 or subset):
+            continue
+        # score: mais tokens em comum melhor; empate -> nome CVM mais curto (menos tokens)
+        score = (len(comum), -len(cvm_tokens), jaccard)
+        if score > melhor_score:
+            melhor_score = score
+            melhor = row
+    if melhor is None:
+        return None, ""
+    return int(melhor["CD_CVM"]), str(melhor.get("SETOR_ATIV", "") or "")
