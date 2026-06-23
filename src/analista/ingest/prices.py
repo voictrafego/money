@@ -55,6 +55,7 @@ class DadosMercado:
     dividendos_por_ano: Dict[int, float] = field(default_factory=dict)
     dpa_trailing_12m: Optional[float] = None  # soma dos proventos/ação dos últimos 12 meses reais
     ano_dpa: Optional[int] = None             # ano da última data de provento (ano-base do DPA)
+    serie_precos: Optional["pd.Series"] = None  # close diário 5a (índice = datas) p/ o gráfico
 
 
 def _retornos_mensais(hist) -> list:
@@ -96,6 +97,7 @@ def coletar_mercado(ticker: str, meses_beta: int = 60) -> DadosMercado:
         hist = None
 
     if hist is not None and not hist.empty:
+        dm.serie_precos = hist["Close"].dropna()
         if dm.preco_atual is None:
             dm.preco_atual = float(hist["Close"].iloc[-1])
         ult_ano = hist.tail(252)
