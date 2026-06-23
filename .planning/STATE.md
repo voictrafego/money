@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: grafico-de-preco
-status: planning
+status: roadmapped
 last_updated: "2026-06-23T12:15:05.177Z"
 last_activity: 2026-06-23
 progress:
-  total_phases: 0
+  total_phases: 1
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,30 +17,31 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-04)
+See: .planning/PROJECT.md (updated 2026-06-23)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação.
-**Current focus:** Phase 02 — apresenta-o-e-travas-de-consist-ncia
+**Current focus:** Phase 3 — Gráfico de Preço na aba Analisar (v1.1, roadmapped, não iniciada)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 3 — Gráfico de Preço na aba Analisar (not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-06-23 — Milestone v1.1 started
+Status: Roadmapped (awaiting `/gsd-plan-phase 3`)
+Last activity: 2026-06-23 — Roadmap do marco v1.1 criado (Phase 3 mapeada, GRAF-01/02/03 com 100% de cobertura)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 2
+- Total plans completed: 7 (v1.0)
 - Average duration: — min
-- Total execution time: 0.0 hours
+- Total execution time: — hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
+| 01 | 5 | - | - |
 | 02 | 2 | - | - |
 
 **Recent Trend:**
@@ -64,21 +65,11 @@ Last activity: 2026-06-23 — Milestone v1.1 started
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Abordagem das correções = mudar o comportamento (não só rótulos) — a engine deve cumprir o que a UI promete.
-- Padronizar BSD contra referência fixa em vez do lote — "BSD > 80" do Carlson é corte absoluto.
-- Não reescrever as fórmulas de valuation (IN-01..05 confirmam que estão corretas e únicas); o trabalho é consistência de agregação/apresentação.
-- [Phase ?]: payout_valuation canônico (média 3a + clamp 1.0) é a única definição de payout-para-valuation, reusado por Analisar e Ranking
-- [Phase ?]: ROE em PL médio com None no 1º ano sem PL inicial; filtro BSD avalia roe_min só nos anos com ROE definido
-- [Phase ?]: DY corrente usa dpa_trailing_12m (datas reais 12m) com ano_dpa exposto; fallback para o ano-base
-- [Phase 01]: clamp de payout em [0,1] na previsao do preco-alvo do Ranking (preco_alvo_por_regressao) espelha o teto 1.0 do Analisar; flag PrecoAlvo.payout_fora_faixa sinaliza valor original fora de faixa
-- [Phase ?]: [Phase 01]: BSD padronizado contra REFERENCIA_BSD (10 bandas fixas calibráveis), não min-max do lote — reproduzível entre lotes e corte 80 absoluto (GARIMPO-02)
-- [Phase ?]: [Phase 01]: fator BSD ausente entra como neutro (50), não pior valor (0); bsd_ranking expõe fatores_faltantes/n_fatores_faltantes (GARIMPO-03)
-- [Phase ?]: [Phase 01]: proxy crescimento_lucro_lp usa média roe/payout na janela anos_media (ignora None), documentado no tooltip (GARIMPO-04)
-- [Phase ?]: [Phase 01]: AnaliseAcao expõe vmin/vmax do intervalo intrínseco calculado uma única vez no veredito; UI lê os campos em vez de recomputar min/max (VAL-01/WR-07)
-- [Phase ?]: [Phase 01]: app.py conecta os 3 modos à engine canônica — Garimpo ordena por 'Passa filtros' antes do BSD; Ranking usa payout_valuation()+payout_fora_faixa; Analisar lê a.vmin/a.vmax (GARIMPO-01/PAYOUT-01/RANK-02/VAL-01)
-- [Phase 02]: UI lê campos canônicos e só formata (zero recálculo em app.py) — coluna Ano-base (ultimo_ano) no Garimpo+Ranking, dois payouts rotulados no Analisar, 'indisponível' neutro no Ranking quando pa is None (ANO-01/PAYOUT-02/RANK-01)
-- [Phase ?]: TEST-01: trava cross-modo monta CompanyData à mão (sem rede) e afirma ROE/payout/direção-do-veredito coerentes entre Analisar e Ranking
-- [Phase ?]: TEST-01 direção: alvo calibrada (preço R$6) abaixo do intrínseco DDM (~8,20) E do preço-alvo da regressão; afirma sinal, não igualdade numérica
+- [v1.1 / Phase 3]: a série diária de 5a já é baixada por `ingest/prices.py` (`coletar_mercado` → `tk.history(period="5y")`) e hoje é descartada após beta/liquidez — o trabalho é PRESERVAR esse DataFrame, não fazer nova chamada de rede.
+- [v1.1 / Phase 3]: a série flui `DadosMercado.hist` → `build.montar_empresa` (CompanyData) → `report.analisar_acao` (AnaliseAcao) → `app.py` (aba Analisar); o cache de 1h em `montar_empresa` já cobre o gráfico.
+- [v1.1 / Phase 3]: o valor intrínseco a sobrepor é o vmin/vmax já exposto em `AnaliseAcao` (Phase 1, VAL-01) — NÃO recalcular nem alterar nenhuma fórmula de valuation.
+- [v1.1 / Phase 3]: render com Plotly via `st.plotly_chart`; `plotly` adicionado ao `requirements.txt`.
+- app.py é read-only: só lê campos da engine, nunca recalcula método (decisão herdada da Phase 2).
 
 ### Pending Todos
 
@@ -90,8 +81,8 @@ None yet.
 
 [Issues that affect future work]
 
-- Restrição dura: os testes golden existentes em `tests/` (test_ddm, test_multiples, test_comparables, test_screening) devem continuar passando após cada correção.
-- CR-02 parte 2 (ano-base instável entre execuções por fallback de DFP da CVM) é mitigado por exibir o ano-base (ANO-01), não por forçar o mesmo ano — manter escopo nessa decisão.
+- Restrição dura: os testes golden existentes em `tests/` (test_ddm, test_multiples, test_comparables, test_screening) devem continuar passando após cada mudança — nenhuma fórmula de valuation pode mudar no v1.1.
+- A degradação graciosa (GRAF-03) deve seguir o padrão do aviso "preço atual indisponível (Yahoo)" já existente na Tela 1, evitando quebrar a aba quando `hist` vier vazio/None.
 
 ### Quick Tasks Completed
 
@@ -112,6 +103,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-05T16:09:23.853Z
-Stopped at: Completed 02-01-PLAN.md (human-verify aprovado)
+Last session: 2026-06-23T12:15:05.177Z
+Stopped at: Roadmap do marco v1.1 criado — Phase 3 mapeada (GRAF-01/02/03, cobertura 3/3)
 Resume file: None

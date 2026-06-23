@@ -79,13 +79,14 @@ evidenciando a margem de segurança — sem tocar em cálculo de valuation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GRAF-01 | — | Pending |
-| GRAF-02 | — | Pending |
-| GRAF-03 | — | Pending |
+| GRAF-01 | Phase 3 | Pending |
+| GRAF-02 | Phase 3 | Pending |
+| GRAF-03 | Phase 3 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 3 total
-- Mapped to phases: 0 (preenchido pelo roadmapper)
+- Mapped to phases: 3 ✓
+- Unmapped: 0
 
 ---
 
@@ -125,4 +126,4 @@ evidenciando a margem de segurança — sem tocar em cálculo de valuation.
 
 ---
 *Requirements defined: 2026-06-04*
-*Last updated: 2026-06-04 after roadmap creation (traceability mapped)*
+*Last updated: 2026-06-23 — v1.1 traceability mapped (GRAF-01/02/03 → Phase 3)*

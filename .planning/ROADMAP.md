@@ -1,8 +1,8 @@
-# Roadmap: Analista de Dividendos — Marco "Consistência entre menus"
+# Roadmap: Analista de Dividendos
 
 ## Overview
 
-Marco de remediação que corrige as inconsistências mapeadas em `CONSISTENCY-REVIEW.md` (3 críticos + 7 warnings) para que a mesma ação produza números coerentes nos três modos do app (`Analisar`, `Garimpar BSD`, `Ranking por múltiplos`). A abordagem é **mudar o comportamento de agregação/apresentação**, não reescrever as fórmulas de valuation — que já estão corretas e têm implementação única. O trabalho divide-se em corrigir a engine (janela de payout, referência absoluta do BSD, fatores ausentes, ROE, DY, regressão robusta) e a camada de apresentação/UX dos modos, fechando com testes que travam a consistência entre os modos. Os testes golden existentes em `tests/` devem continuar passando do início ao fim.
+Dois marcos vivem neste roadmap. **v1.0 — "Consistência entre menus"** (Phases 1-2, completo): marco de remediação que corrige as inconsistências de `CONSISTENCY-REVIEW.md` (3 críticos + 7 warnings) para que a mesma ação produza números coerentes nos três modos do app (`Analisar`, `Garimpar BSD`, `Ranking por múltiplos`), mudando o comportamento de agregação/apresentação sem reescrever as fórmulas de valuation. **v1.1 — "Gráfico de preço na aba Analisar"** (Phase 3): marco aditivo pequeno que mostra a evolução do preço (5 anos) com a linha do valor intrínseco do DDM sobreposta, reaproveitando a série diária que `ingest/prices.py` já baixa e hoje descarta — sem nova chamada de rede e sem tocar em nenhum cálculo de valuation. Os testes golden existentes em `tests/` devem continuar passando do início ao fim.
 
 ## Phases
 
@@ -12,8 +12,14 @@ Marco de remediação que corrige as inconsistências mapeadas em `CONSISTENCY-R
 
 Decimal phases appear between their surrounding integers in numeric order.
 
+**v1.0 — Consistência entre menus**
+
 - [x] **Phase 1: Engine de Consistência** - Unificar a agregação/cálculo da engine (payout, BSD, fatores ausentes, ROE, DY, regressão) para que os modos parem de divergir na origem (completed 2026-06-05)
-- [ ] **Phase 2: Apresentação e Travas de Consistência** - Expor à UI o que a engine agora cumpre (ano-base, "indisponível", payouts rotulados, fatores faltantes) e travar a coerência entre modos com testes
+- [x] **Phase 2: Apresentação e Travas de Consistência** - Expor à UI o que a engine agora cumpre (ano-base, "indisponível", payouts rotulados, fatores faltantes) e travar a coerência entre modos com testes (completed 2026-06-05)
+
+**v1.1 — Gráfico de preço na aba Analisar**
+
+- [ ] **Phase 3: Gráfico de Preço na aba Analisar** - Preservar a série diária de 5 anos que a engine já baixa e renderizá-la com Plotly na aba "Analisar", sobrepondo a linha do valor intrínseco do DDM, com degradação graciosa quando o Yahoo falha
 
 ## Phase Details
 
@@ -51,12 +57,25 @@ Plans:
 - [x] 02-02-PLAN.md — Travas de consistência cross-modo (TEST-01) e golden verde (TEST-02) (tests)
 **UI hint**: yes
 
+### Phase 3: Gráfico de Preço na aba Analisar
+**Goal**: Ao analisar uma ação, o usuário vê na aba "Analisar" um gráfico interativo da evolução do preço dos últimos 5 anos com a linha do valor intrínseco do DDM sobreposta, deixando a margem de segurança visível — reaproveitando a série que a engine já baixa (sem nova chamada de rede) e sem alterar nenhum cálculo de valuation.
+**Depends on**: Phase 2 (UX da aba Analisar já consolidada; herda os campos vmin/vmax expostos pela engine na Phase 1)
+**Requirements**: GRAF-01, GRAF-02, GRAF-03
+**Success Criteria** (what must be TRUE):
+  1. Na aba "Analisar", o usuário vê uma linha do preço de fechamento dos últimos 5 anos, com zoom e hover interativos (Plotly).
+  2. Uma linha/referência horizontal marca o valor intrínseco do DDM já calculado pela engine sobre a série de preço, tornando a margem de segurança visível (preço abaixo = desconto; acima = prêmio).
+  3. Quando a série histórica de preços está indisponível (falha do Yahoo), a aba mostra um aviso claro em vez de quebrar, coerente com o aviso de "preço atual indisponível" já existente.
+  4. `pytest` continua verde — nenhum golden test (test_ddm, test_multiples, test_comparables, test_screening) quebra, pois nenhuma fórmula de valuation foi alterada.
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2
+Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Engine de Consistência | 5/5 | Complete   | 2026-06-05 |
-| 2. Apresentação e Travas de Consistência | 1/2 | In progress | - |
+| 1. Engine de Consistência | 5/5 | Complete | 2026-06-05 |
+| 2. Apresentação e Travas de Consistência | 2/2 | Complete | 2026-06-05 |
+| 3. Gráfico de Preço na aba Analisar | 0/TBD | Not started | - |
