@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 
 import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 
 from analista.core import comparables as cmp
@@ -122,6 +123,34 @@ if modo.startswith("🔎"):
             if a.alertas:
                 for al in a.alertas:
                     st.warning(f"⚠️ {al}")
+
+            # Gráfico de preço 5a + banda do valor intrínseco (DDM) — topo da aba, antes dos sub-tabs (D-03)
+            st.markdown("**Evolução do preço (5 anos) vs. valor intrínseco**", help=h("valor_intrinseco"))
+            serie = c.serie_precos
+            if serie is None or len(serie) == 0:
+                # D-05/GRAF-03: série indisponível → aviso sem quebrar a aba (espelha o aviso de preço atual)
+                st.info(
+                    "📉 Gráfico de preço indisponível agora (fonte Yahoo instável). Os fundamentos e o "
+                    "valor intrínseco (DDM, dados CVM) abaixo seguem válidos."
+                )
+            else:
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(
+                    x=serie.index, y=serie.values, mode="lines", name="Preço",
+                    line=dict(color="#1f77b4", width=2),
+                    hovertemplate="%{x|%d/%m/%Y}<br>R$ %{y:.2f}<extra></extra>",
+                ))
+                # D-01/D-02/D-06: banda horizontal plana entre vmin e vmax, só se o DDM calculou
+                if a.vmin is not None and a.vmax is not None:
+                    fig.add_hrect(
+                        y0=a.vmin, y1=a.vmax, line_width=0, fillcolor="green", opacity=0.12,
+                        annotation_text="Valor intrínseco (DDM)", annotation_position="top left",
+                    )
+                fig.update_layout(
+                    height=380, margin=dict(l=10, r=10, t=30, b=10),
+                    yaxis_title="R$", xaxis_title=None, showlegend=False,
+                )
+                st.plotly_chart(fig, width="stretch")
 
             tab1, tab2, tab3 = st.tabs(["📈 Múltiplos & Crescimento", "💵 Valuation (DDM)", "📋 Fundamentos (10 anos)"])
 
