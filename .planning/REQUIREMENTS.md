@@ -52,13 +52,52 @@ Cada requisito mapeia a um achado do review. Abordagem decidida: **mudar o compo
 
 - **DDM-DOC-01**: Alinhar a docstring de `ddm.py` e o caso de teste de referência à mesma convenção de t (ano 0 vs ano 1) — fonte provável de confusão futura, sem divergência entre modos hoje. *(IN-06)*
 
+---
+
+# Milestone v1.1 — Gráfico de preço na aba "Analisar"
+
+**Defined:** 2026-06-23
+**Goal:** Mostrar a evolução do preço (5a) com a linha do valor intrínseco do DDM sobreposta,
+evidenciando a margem de segurança — sem tocar em cálculo de valuation.
+
+## v1.1 Requirements
+
+### Gráfico de preço (Analisar)
+
+- [ ] **GRAF-01**: Ao analisar uma ação, o usuário vê um gráfico interativo (Plotly) da evolução do preço de fechamento nos últimos 5 anos, com zoom e hover.
+- [ ] **GRAF-02**: O gráfico sobrepõe ao preço a linha do valor intrínseco / preço-alvo do DDM já calculado pela engine, evidenciando visualmente a margem de segurança (preço abaixo = desconto; acima = prêmio).
+- [ ] **GRAF-03**: Quando a série histórica de preços está indisponível (falha do Yahoo), o gráfico degrada graciosamente com aviso claro, sem quebrar a aba — coerente com o aviso de "preço atual indisponível" já existente.
+
+**Constraints (não são requisitos, mas governam a implementação):**
+- A série histórica de 5a (hoje baixada e descartada em `ingest/prices.py`) deve ser preservada e
+  entregue à UI pela cadeia `DadosMercado → build → report → app.py`, reusando o cache de 1h (sem
+  nova chamada de rede só para o gráfico).
+- `plotly` adicionado ao `requirements.txt`.
+- Nenhuma fórmula de valuation é alterada; os golden tests de `tests/` continuam verdes.
+
+## v1.1 Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| GRAF-01 | — | Pending |
+| GRAF-02 | — | Pending |
+| GRAF-03 | — | Pending |
+
+**Coverage:**
+- v1.1 requirements: 3 total
+- Mapped to phases: 0 (preenchido pelo roadmapper)
+
+---
+
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
 | Dados pagos / APIs premium | Projeto é custo zero por princípio |
 | Reescrever as fórmulas de valuation | As fórmulas estão corretas (IN-01..05); o problema é consistência de apresentação/agregação |
-| Novos menus/ferramentas além dos 3 | Este marco é remediação, não expansão |
+| Quarto menu/ferramenta | O gráfico do v1.1 enriquece a aba "Analisar" existente, não cria um novo menu |
+| Gráfico no CLI / relatório Markdown | Markdown não embute imagem sem salvar PNG; o valor está na UI interativa |
+| Sobreposições extras (proventos, IBOV, faixa de DY) | Adiadas — escopo do v1.1 é núcleo (preço + valor intrínseco) |
 
 ## Traceability
 
