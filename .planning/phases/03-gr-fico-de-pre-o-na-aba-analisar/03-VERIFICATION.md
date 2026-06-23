@@ -1,7 +1,8 @@
 ---
 phase: 03-gr-fico-de-pre-o-na-aba-analisar
 verified: 2026-06-23T00:00:00Z
-status: human_needed
+status: verified
+human_confirmed: 2026-06-23  # usuário confirmou gráfico+banda+terminal limpo no browser
 score: 4/4 must-haves verified
 overrides_applied: 0
 re_verification: false

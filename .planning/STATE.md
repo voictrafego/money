@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: grafico-de-preco
-status: verified_human_needed
-stopped_at: Phase 3 verified (4/4 in code) — aguardando confirmação humana no browser
-last_updated: "2026-06-23T13:48:40.401Z"
-last_activity: 2026-06-23
+status: Awaiting next milestone
+stopped_at: Phase 3 context gathered
+last_updated: "2026-06-23T17:27:24.970Z"
+last_activity: 2026-06-23 — Milestone v1.1 completed and archived
 progress:
   total_phases: 3
   completed_phases: 3
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-06-23)
 
 ## Current Position
 
-Phase: 03 (gr-fico-de-pre-o-na-aba-analisar) — COMPLETE
-Plan: 2 of 2 (all plans complete)
-Status: Phase complete — ready for verification
-Last activity: 2026-06-23
+Phase: Milestone v1.1 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-06-23 — Milestone v1.1 completed and archived
 
 ## Performance Metrics
 
@@ -111,3 +111,7 @@ Items acknowledged and carried forward from previous milestone close:
 Last session: 2026-06-23T13:47:48.996Z
 Stopped at: Phase 3 context gathered
 Resume file: None
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

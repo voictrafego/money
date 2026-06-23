@@ -12,22 +12,14 @@ aplicar o método do livro sem pagar por terminais de dados.
 Os números que o app mostra precisam ser **fiéis ao método do livro e consistentes entre si** —
 a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação.
 
-## Current Milestone: v1.1 Gráfico de preço na análise da ação
+## Current State
 
-**Goal:** Na aba "Analisar", mostrar a evolução do preço da ação (últimos 5 anos) com a linha do
-valor intrínseco do DDM sobreposta, deixando a margem de segurança visível — sem tocar em nenhum
-cálculo de valuation.
+**v1.1 shipped 2026-06-23.** A aba "Analisar" agora mostra um gráfico Plotly do preço de
+fechamento de 5 anos com a banda do valor intrínseco do DDM sobreposta, botões de período
+(30D/6M/1A/5A) e degradação graciosa quando o Yahoo falha. Dois marcos completos (v1.0
+consistência + v1.1 gráfico); 64 testes golden verdes.
 
-**Target features:**
-- Gráfico interativo (Plotly) de preço dos últimos 5 anos na aba "Analisar"
-- Linha do valor intrínseco / preço-alvo do DDM sobreposta ao preço (margem de segurança)
-- Degradação graciosa quando o Yahoo falha (aviso claro, sem quebrar a aba)
-
-**Key context:** os dados já existem — `ingest/prices.py` baixa 5a de candles diários (`tk.history`)
-e hoje **descarta** a série após calcular beta/liquidez. O trabalho é preservar essa série
-(`DadosMercado.hist`), carregá-la até o `app.py` pela cadeia `build → report` (cache de 1h já
-existe, sem nova chamada de rede) e renderizá-la. Adiciona `plotly` ao `requirements.txt`. Os
-golden tests da engine devem continuar verdes.
+**Próximo marco:** a definir (`/gsd-new-milestone`).
 
 ## Requirements
 
@@ -56,14 +48,15 @@ golden tests da engine devem continuar verdes.
 - ✓ **Coluna Ano-base efetivo (ultimo_ano) no Garimpo e Ranking** (ANO-01) — Validated in Phase 2
 - ✓ **Payouts duplos rotulados no Analisar** (último ano vs. média 3a do DDM) (PAYOUT-02) — Validated in Phase 2
 - ✓ **Trava de testes de coerência cross-modo** (ROE/payout/direção do veredito) (TEST-01/TEST-02) — Validated in Phase 2
+- ✓ **Gráfico interativo (Plotly) de preço 5a na aba Analisar, com zoom/hover e botões de período** (GRAF-01) — Validated in Phase 3 (v1.1)
+- ✓ **Banda do valor intrínseco do DDM sobreposta ao preço** (GRAF-02) — Validated in Phase 3 (v1.1)
+- ✓ **Degradação graciosa quando a série de preços do Yahoo falha** (GRAF-03) — Validated in Phase 3 (v1.1)
 
 ### Active
 
-<!-- Marco v1.1: gráfico de preço na aba Analisar. -->
+<!-- Sem marco ativo. Próximo escopo via /gsd-new-milestone. -->
 
-- [ ] **GRAF-01**: Ao analisar uma ação, o usuário vê um gráfico interativo da evolução do preço nos últimos 5 anos (zoom/hover)
-- [ ] **GRAF-02**: O gráfico sobrepõe ao preço a linha do valor intrínseco / preço-alvo do DDM, evidenciando visualmente a margem de segurança
-- [ ] **GRAF-03**: Quando a série de preços está indisponível (falha do Yahoo), o gráfico degrada graciosamente com aviso claro, sem quebrar a aba
+(nenhum — aguardando próximo marco)
 
 ### Out of Scope
 
@@ -105,6 +98,9 @@ golden tests da engine devem continuar verdes.
 | Repo git dedicado para o projeto | Resolve a dor do git root no `$HOME`; isola histórico e o `.planning/` | ✓ Good |
 | Marco cobre todos os 16 achados (3 críticos + 7 warnings; infos conforme couber) | Usuário pediu cobertura total | ✓ Good — endereçado nas Fases 1-2 |
 | app.py é read-only: só lê campos da engine, nunca recalcula método | Garante que a UI não reintroduz divergência entre modos | ✓ Good — Phase 2 |
+| Série do gráfico = Close nominal (`auto_adjust=False`), beta/retornos seguem em Adj Close | Eixo Y do gráfico tem de ficar na mesma base da banda DDM (nominal); senão preços retroajustados distorcem a margem de segurança (CR-01) | ✓ Good — Phase 3 |
+| Botões de período nativos do Plotly (30D/6M/1A/5A) | Zoom por janela sem JS nem dependência extra | ✓ Good — Phase 3 |
+| `esc_md()` escapa `$` em metric/alertas (não no `fmt_rs` global) | Dois `R$` na mesma string acionavam o modo LaTeX do Streamlit; tabelas continuam com texto cru | ✓ Good — Phase 3 |
 
 ## Evolution
 
@@ -124,4 +120,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-23 — início do marco v1.1 (gráfico de preço na aba Analisar)*
+*Last updated: 2026-06-23 — após o marco v1.1 (gráfico de preço na aba Analisar) shipped*
