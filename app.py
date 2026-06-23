@@ -144,10 +144,20 @@ if modo.startswith("🔎"):
                 if a.vmin is not None and a.vmax is not None:
                     fig.add_hrect(
                         y0=a.vmin, y1=a.vmax, line_width=0, fillcolor="green", opacity=0.12,
-                        annotation_text="Valor intrínseco (DDM)", annotation_position="top left",
+                        annotation_text="Valor intrínseco (DDM)", annotation_position="top right",
                     )
+                # Botões de período (range selector nativo do Plotly): 30 dias a 5 anos
+                fig.update_xaxes(rangeselector=dict(
+                    buttons=[
+                        dict(count=30, label="30D", step="day", stepmode="backward"),
+                        dict(count=6, label="6M", step="month", stepmode="backward"),
+                        dict(count=1, label="1A", step="year", stepmode="backward"),
+                        dict(step="all", label="5A"),
+                    ],
+                    activecolor="#1f77b4", x=0, y=1.12,
+                ))
                 fig.update_layout(
-                    height=380, margin=dict(l=10, r=10, t=30, b=10),
+                    height=400, margin=dict(l=10, r=10, t=50, b=10),
                     yaxis_title="R$", xaxis_title=None, showlegend=False,
                 )
                 st.plotly_chart(fig, width="stretch")
