@@ -58,6 +58,12 @@ def fmt_rs(x, casas=2):
     return "—" if x is None else f"R$ {x:,.{casas}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
+def esc_md(s: str) -> str:
+    """Escapa '$' p/ contextos markdown (metric, alertas): dois 'R$' na mesma
+    string fariam o Streamlit interpretar o miolo como LaTeX e quebrar o layout."""
+    return s.replace("$", r"\$")
+
+
 # --------------------------------------------------------------------------- #
 st.title("💰 Analista de Ações de Dividendos")
 st.caption("Método do livro *O Investidor em Ações de Dividendos* (Orleans Martins & Felipe Pontes) · "
@@ -98,17 +104,17 @@ if modo.startswith("🔎"):
             # Veredito colorido
             v = a.veredito or "Indeterminado"
             if v.startswith("SUBAVALIADA"):
-                st.success(f"✅ {v}")
+                st.success(f"✅ {esc_md(v)}")
             elif v.startswith("SOBREAVALIADA"):
-                st.error(f"🔺 {v}")
+                st.error(f"🔺 {esc_md(v)}")
             else:
-                st.warning(f"➖ {v}")
+                st.warning(f"➖ {esc_md(v)}")
 
             # Métricas principais — intervalo intrínseco vem do cálculo único do veredito (WR-07)
             intervalo = f"{fmt_rs(a.vmin)} – {fmt_rs(a.vmax)}" if a.vmin is not None and a.vmax is not None else "—"
             m1, m2, m3, m4, m5 = st.columns(5)
-            m1.metric("Preço atual", fmt_rs(a.preco_atual), help=h("preco"))
-            m2.metric("Valor intrínseco (DDM)", intervalo, help=h("valor_intrinseco"))
+            m1.metric("Preço atual", esc_md(fmt_rs(a.preco_atual)), help=h("preco"))
+            m2.metric("Valor intrínseco (DDM)", esc_md(intervalo), help=h("valor_intrinseco"))
             m3.metric("Dividend Yield", fmt_pct(a.multiplos.get("DY")), help=h("dy"))
             m4.metric("ROE", fmt_pct(a.multiplos.get("ROE")), help=h("roe"))
             m5.metric("Ke (custo capital)", fmt_pct(a.ke), help=h("ke"))
@@ -122,7 +128,7 @@ if modo.startswith("🔎"):
 
             if a.alertas:
                 for al in a.alertas:
-                    st.warning(f"⚠️ {al}")
+                    st.warning(f"⚠️ {esc_md(al)}")
 
             # Gráfico de preço 5a + banda do valor intrínseco (DDM) — topo da aba, antes dos sub-tabs (D-03)
             st.markdown("**Evolução do preço (5 anos) vs. valor intrínseco**", help=h("valor_intrinseco"))
