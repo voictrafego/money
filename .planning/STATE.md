@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: milestone_complete
-stopped_at: Completed 02-01-PLAN.md (human-verify aprovado)
-last_updated: "2026-06-05T16:09:33.622Z"
-last_activity: 2026-06-05
+milestone: v1.1
+milestone_name: grafico-de-preco
+status: planning
+last_updated: "2026-06-23T12:15:05.177Z"
+last_activity: 2026-06-23
 progress:
-  total_phases: 2
-  completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
-  percent: 150
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,12 +24,10 @@ See: .planning/PROJECT.md (updated 2026-06-04)
 
 ## Current Position
 
-Phase: 02
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-06-22 - Completed quick task 260622-cg9: robustez da resolução de tickers (retry Yahoo + token-set + map)
-
-Progress: [██████████] 100%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-06-23 — Milestone v1.1 started
 
 ## Performance Metrics
 

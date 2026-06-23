@@ -12,6 +12,23 @@ aplicar o método do livro sem pagar por terminais de dados.
 Os números que o app mostra precisam ser **fiéis ao método do livro e consistentes entre si** —
 a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação.
 
+## Current Milestone: v1.1 Gráfico de preço na análise da ação
+
+**Goal:** Na aba "Analisar", mostrar a evolução do preço da ação (últimos 5 anos) com a linha do
+valor intrínseco do DDM sobreposta, deixando a margem de segurança visível — sem tocar em nenhum
+cálculo de valuation.
+
+**Target features:**
+- Gráfico interativo (Plotly) de preço dos últimos 5 anos na aba "Analisar"
+- Linha do valor intrínseco / preço-alvo do DDM sobreposta ao preço (margem de segurança)
+- Degradação graciosa quando o Yahoo falha (aviso claro, sem quebrar a aba)
+
+**Key context:** os dados já existem — `ingest/prices.py` baixa 5a de candles diários (`tk.history`)
+e hoje **descarta** a série após calcular beta/liquidez. O trabalho é preservar essa série
+(`DadosMercado.hist`), carregá-la até o `app.py` pela cadeia `build → report` (cache de 1h já
+existe, sem nova chamada de rede) e renderizá-la. Adiciona `plotly` ao `requirements.txt`. Os
+golden tests da engine devem continuar verdes.
+
 ## Requirements
 
 ### Validated
@@ -42,16 +59,19 @@ a mesma ação não pode parecer barata num menu e cara/ausente em outro sem exp
 
 ### Active
 
-<!-- Marco v1.0 (remediação de consistência) entregue nas Fases 1 e 2. Sem requisitos ativos. -->
+<!-- Marco v1.1: gráfico de preço na aba Analisar. -->
 
-(nenhum — marco v1.0 completo)
+- [ ] **GRAF-01**: Ao analisar uma ação, o usuário vê um gráfico interativo da evolução do preço nos últimos 5 anos (zoom/hover)
+- [ ] **GRAF-02**: O gráfico sobrepõe ao preço a linha do valor intrínseco / preço-alvo do DDM, evidenciando visualmente a margem de segurança
+- [ ] **GRAF-03**: Quando a série de preços está indisponível (falha do Yahoo), o gráfico degrada graciosamente com aviso claro, sem quebrar a aba
 
 ### Out of Scope
 
 - Dados pagos / APIs premium (brapi pago, terminais) — projeto é custo zero por princípio
 - Reescrever a engine de valuation — o cálculo está correto; o problema é consistência de
   apresentação/agregação entre menus, não as fórmulas
-- Novas ferramentas/menus além dos 3 atuais — este marco é remediação, não expansão
+- Novas ferramentas/menus além dos 3 atuais — o gráfico do v1.1 é um enriquecimento da aba
+  "Analisar" existente, não um quarto menu
 
 ## Context
 
@@ -104,4 +124,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-05 after Phase 2 completion (marco v1.0 completo)*
+*Last updated: 2026-06-23 — início do marco v1.1 (gráfico de preço na aba Analisar)*
