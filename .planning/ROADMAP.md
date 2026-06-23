@@ -68,7 +68,7 @@ Plans:
   4. `pytest` continua verde — nenhum golden test (test_ddm, test_multiples, test_comparables, test_screening) quebra, pois nenhuma fórmula de valuation foi alterada.
 **Plans**: 2 plans
 Plans:
-- [ ] 03-01-PLAN.md — Preservar a série 5a e thread DadosMercado→CompanyData; plotly no requirements; golden verde (prices/build/fundamentals/requirements)
+- [x] 03-01-PLAN.md — Preservar a série 5a e thread DadosMercado→CompanyData; plotly no requirements; golden verde (prices/build/fundamentals/requirements)
 - [ ] 03-02-PLAN.md — Render Plotly da série + banda DDM na aba Analisar, com fallbacks de série/DDM indisponíveis (app.py)
 **UI hint**: yes
 

@@ -64,9 +64,9 @@ evidenciando a margem de segurança — sem tocar em cálculo de valuation.
 
 ### Gráfico de preço (Analisar)
 
-- [ ] **GRAF-01**: Ao analisar uma ação, o usuário vê um gráfico interativo (Plotly) da evolução do preço de fechamento nos últimos 5 anos, com zoom e hover.
-- [ ] **GRAF-02**: O gráfico sobrepõe ao preço a linha do valor intrínseco / preço-alvo do DDM já calculado pela engine, evidenciando visualmente a margem de segurança (preço abaixo = desconto; acima = prêmio).
-- [ ] **GRAF-03**: Quando a série histórica de preços está indisponível (falha do Yahoo), o gráfico degrada graciosamente com aviso claro, sem quebrar a aba — coerente com o aviso de "preço atual indisponível" já existente.
+- [x] **GRAF-01**: Ao analisar uma ação, o usuário vê um gráfico interativo (Plotly) da evolução do preço de fechamento nos últimos 5 anos, com zoom e hover.
+- [x] **GRAF-02**: O gráfico sobrepõe ao preço a linha do valor intrínseco / preço-alvo do DDM já calculado pela engine, evidenciando visualmente a margem de segurança (preço abaixo = desconto; acima = prêmio).
+- [x] **GRAF-03**: Quando a série histórica de preços está indisponível (falha do Yahoo), o gráfico degrada graciosamente com aviso claro, sem quebrar a aba — coerente com o aviso de "preço atual indisponível" já existente.
 
 **Constraints (não são requisitos, mas governam a implementação):**
 - A série histórica de 5a (hoje baixada e descartada em `ingest/prices.py`) deve ser preservada e
@@ -79,9 +79,9 @@ evidenciando a margem de segurança — sem tocar em cálculo de valuation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GRAF-01 | Phase 3 | Pending |
-| GRAF-02 | Phase 3 | Pending |
-| GRAF-03 | Phase 3 | Pending |
+| GRAF-01 | Phase 3 | Complete |
+| GRAF-02 | Phase 3 | Complete |
+| GRAF-03 | Phase 3 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 3 total

@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: grafico-de-preco
 status: executing
 stopped_at: Phase 3 context gathered
-last_updated: "2026-06-23T13:19:30.349Z"
-last_activity: 2026-06-23 -- Phase 03 planning complete
+last_updated: "2026-06-23T13:26:30.302Z"
+last_activity: 2026-06-23
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
-  percent: 78
+  completed_plans: 8
+  percent: 89
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-23)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação.
-**Current focus:** Phase 3 — Gráfico de Preço na aba Analisar (v1.1, roadmapped, não iniciada)
+**Current focus:** Phase 03 — gr-fico-de-pre-o-na-aba-analisar
 
 ## Current Position
 
-Phase: 3 — Gráfico de Preço na aba Analisar (not started)
-Plan: —
+Phase: 03 (gr-fico-de-pre-o-na-aba-analisar) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-06-23 -- Phase 03 planning complete
+Last activity: 2026-06-23
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Last activity: 2026-06-23 -- Phase 03 planning complete
 | Phase 01 P05 | 15 | 3 tasks | 1 files |
 | Phase 02 P01 | 11 | 3 tasks | 2 files |
 | Phase 02 P02 | 12 | 2 tasks | 1 files |
+| Phase 03 P01 | 2 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,7 @@ Recent decisions affecting current work:
 - [v1.1 / Phase 3]: o valor intrínseco a sobrepor é o vmin/vmax já exposto em `AnaliseAcao` (Phase 1, VAL-01) — NÃO recalcular nem alterar nenhuma fórmula de valuation.
 - [v1.1 / Phase 3]: render com Plotly via `st.plotly_chart`; `plotly` adicionado ao `requirements.txt`.
 - app.py é read-only: só lê campos da engine, nunca recalcula método (decisão herdada da Phase 2).
+- [v1.1 / Phase 3 / Plano 01 ✓]: `serie_precos` (close 5a) preservado de `hist["Close"].dropna()` no fetch existente (zero rede nova) e conduzido `DadosMercado → CompanyData` via `build.montar_empresa`; forward-ref `Optional["pd.Series"]` mantém a engine leve (sem `import pandas` no topo). plotly>=6.0 pinado e instalado (6.8.0). pytest 62 passed, nenhuma fórmula alterada.
 
 ### Pending Todos
 
@@ -104,6 +106,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-23T12:39:33.645Z
+Last session: 2026-06-23T13:26:30.298Z
 Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-gr-fico-de-pre-o-na-aba-analisar/03-CONTEXT.md
+Resume file: None
