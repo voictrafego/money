@@ -85,6 +85,54 @@ def test_retry_todas_falham_desiste_sem_excecao(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
+# CR-01 — serie_precos usa preço NOMINAL (Close), mesma base da banda DDM
+# ---------------------------------------------------------------------------
+
+def _hist_fake():
+    idx = pd.date_range("2021-01-01", periods=300, freq="D")
+    close = pd.Series(range(100, 400), index=idx, dtype=float)   # nominal
+    adj = close * 0.5                                            # retroajustado != nominal
+    return pd.DataFrame({"Close": close, "Adj Close": adj, "Volume": 1000.0})
+
+
+class _TkComHist:
+    def history(self, *a, **k):
+        return _hist_fake()
+
+    @property
+    def dividends(self):
+        return pd.Series(dtype=float)
+
+
+def test_serie_precos_usa_close_nominal(monkeypatch):
+    """serie_precos e preco_atual-fallback usam Close nominal, não Adj Close."""
+    class _YF:
+        @staticmethod
+        def Ticker(sym):
+            return _TkComHist()
+
+    monkeypatch.setattr(prices, "_yf", lambda: _YF())
+    monkeypatch.setattr(prices.time, "sleep", lambda *_: None)
+    monkeypatch.setattr(prices, "_fetch_info", lambda tk: {})  # sem preço -> usa fallback
+
+    dm = prices.coletar_mercado("XYZ3")
+    assert dm.serie_precos is not None
+    # série é o Close NOMINAL (399), não o Adj Close (199.5)
+    assert dm.serie_precos.iloc[-1] == 399.0
+    # preço atual (fallback) é nominal e bate com a ponta da série (consistência com DDM)
+    assert dm.preco_atual == float(dm.serie_precos.iloc[-1])
+
+
+def test_serie_precos_none_quando_hist_vazio(monkeypatch):
+    """Sem histórico (Yahoo falha/vazio), serie_precos fica None — fallback da Tela 1."""
+    _stub_yf(monkeypatch)  # _TkStub.history retorna DataFrame vazio
+    monkeypatch.setattr(prices.time, "sleep", lambda *_: None)
+    monkeypatch.setattr(prices, "_fetch_info", lambda tk: {"shortName": "Z", "regularMarketPrice": 5.0})
+    dm = prices.coletar_mercado("ZZZ3")
+    assert dm.serie_precos is None
+
+
+# ---------------------------------------------------------------------------
 # FIX 2 — _norm cirúrgico
 # ---------------------------------------------------------------------------
 

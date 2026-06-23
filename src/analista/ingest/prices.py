@@ -58,8 +58,9 @@ class DadosMercado:
     serie_precos: Optional["pd.Series"] = None  # close diário 5a (índice = datas) p/ o gráfico
 
 
-def _retornos_mensais(hist) -> list:
-    mensal = hist["Close"].resample("ME").last()
+def _retornos_mensais(precos) -> list:
+    """Retornos mensais a partir de uma série de preços (ajustada p/ beta)."""
+    mensal = precos.resample("ME").last()
     ret = mensal.pct_change().dropna()
     return list(ret.values)
 
@@ -90,33 +91,41 @@ def coletar_mercado(ticker: str, meses_beta: int = 60) -> DadosMercado:
     dm.setor = info.get("sector", "") or info.get("industry", "")
     dm.nome = info.get("longName", "") or info.get("shortName", "")
 
-    # histórico de preços (para liquidez, beta e desempenho relativo)
+    # histórico de preços (para liquidez, beta e desempenho relativo).
+    # auto_adjust=False traz Close NOMINAL (R$ correntes) + Adj Close (retroajustado):
+    #   - serie_precos e preço-fallback usam Close nominal, p/ ficar na MESMA base que a
+    #     banda DDM (vmin/vmax nominais) — senão o gráfico mostraria preços históricos
+    #     retroajustados abaixo do nominal, distorcendo a leitura da margem de segurança;
+    #   - beta e desempenho relativo usam Adj Close (retorno total, com proventos).
     try:
-        hist = tk.history(period="5y", auto_adjust=True)
+        hist = tk.history(period="5y", auto_adjust=False)
     except Exception:
         hist = None
 
     if hist is not None and not hist.empty:
-        dm.serie_precos = hist["Close"].dropna()
-        if dm.preco_atual is None:
-            dm.preco_atual = float(hist["Close"].iloc[-1])
+        nominal = hist["Close"].dropna()
+        ajustado = hist["Adj Close"] if "Adj Close" in hist else hist["Close"]
+        dm.serie_precos = nominal
+        if dm.preco_atual is None and len(nominal):
+            dm.preco_atual = float(nominal.iloc[-1])
         ult_ano = hist.tail(252)
         dm.volume_financeiro_diario = float((ult_ano["Close"] * ult_ano["Volume"]).mean())
 
         # beta e desempenho relativo precisam do índice
         try:
-            idx = yf.Ticker(INDICE_MERCADO).history(period="5y", auto_adjust=True)
+            idx = yf.Ticker(INDICE_MERCADO).history(period="5y", auto_adjust=False)
         except Exception:
             idx = None
         if idx is not None and not idx.empty:
-            ra = _retornos_mensais(hist)[-meses_beta:]
-            rm = _retornos_mensais(idx)[-meses_beta:]
+            idx_aj = idx["Adj Close"] if "Adj Close" in idx else idx["Close"]
+            ra = _retornos_mensais(ajustado)[-meses_beta:]
+            rm = _retornos_mensais(idx_aj)[-meses_beta:]
             n = min(len(ra), len(rm))
             if n >= 2:
                 dm.beta = capm.beta(ra[-n:], rm[-n:])
             # desempenho relativo dos últimos 6 meses (~126 pregões)
-            ret_acao = hist["Close"].iloc[-1] / hist["Close"].iloc[-126] - 1 if len(hist) > 126 else None
-            ret_idx = idx["Close"].iloc[-1] / idx["Close"].iloc[-126] - 1 if len(idx) > 126 else None
+            ret_acao = ajustado.iloc[-1] / ajustado.iloc[-126] - 1 if len(ajustado) > 126 else None
+            ret_idx = idx_aj.iloc[-1] / idx_aj.iloc[-126] - 1 if len(idx_aj) > 126 else None
             if ret_acao is not None and ret_idx is not None:
                 dm.desempenho_relativo_6m = float(ret_acao - ret_idx)
 
