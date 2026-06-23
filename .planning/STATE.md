@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: grafico-de-preco
-status: verifying
-stopped_at: Phase 3 context gathered
+status: verified_human_needed
+stopped_at: Phase 3 verified (4/4 in code) — aguardando confirmação humana no browser
 last_updated: "2026-06-23T13:48:40.401Z"
 last_activity: 2026-06-23
 progress:
