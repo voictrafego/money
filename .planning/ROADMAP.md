@@ -66,7 +66,10 @@ Plans:
   2. Uma linha/referência horizontal marca o valor intrínseco do DDM já calculado pela engine sobre a série de preço, tornando a margem de segurança visível (preço abaixo = desconto; acima = prêmio).
   3. Quando a série histórica de preços está indisponível (falha do Yahoo), a aba mostra um aviso claro em vez de quebrar, coerente com o aviso de "preço atual indisponível" já existente.
   4. `pytest` continua verde — nenhum golden test (test_ddm, test_multiples, test_comparables, test_screening) quebra, pois nenhuma fórmula de valuation foi alterada.
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 03-01-PLAN.md — Preservar a série 5a e thread DadosMercado→CompanyData; plotly no requirements; golden verde (prices/build/fundamentals/requirements)
+- [ ] 03-02-PLAN.md — Render Plotly da série + banda DDM na aba Analisar, com fallbacks de série/DDM indisponíveis (app.py)
 **UI hint**: yes
 
 ## Progress
@@ -78,4 +81,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Engine de Consistência | 5/5 | Complete | 2026-06-05 |
 | 2. Apresentação e Travas de Consistência | 2/2 | Complete | 2026-06-05 |
-| 3. Gráfico de Preço na aba Analisar | 0/TBD | Not started | - |
+| 3. Gráfico de Preço na aba Analisar | 0/2 | Not started | - |
