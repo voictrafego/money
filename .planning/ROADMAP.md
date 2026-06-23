@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **v1.1 — Gráfico de preço na aba Analisar**
 
-- [ ] **Phase 3: Gráfico de Preço na aba Analisar** - Preservar a série diária de 5 anos que a engine já baixa e renderizá-la com Plotly na aba "Analisar", sobrepondo a linha do valor intrínseco do DDM, com degradação graciosa quando o Yahoo falha
+- [x] **Phase 3: Gráfico de Preço na aba Analisar** - Preservar a série diária de 5 anos que a engine já baixa e renderizá-la com Plotly na aba "Analisar", sobrepondo a linha do valor intrínseco do DDM, com degradação graciosa quando o Yahoo falha (completed 2026-06-23)
 
 ## Phase Details
 
@@ -69,7 +69,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 03-01-PLAN.md — Preservar a série 5a e thread DadosMercado→CompanyData; plotly no requirements; golden verde (prices/build/fundamentals/requirements)
-- [ ] 03-02-PLAN.md — Render Plotly da série + banda DDM na aba Analisar, com fallbacks de série/DDM indisponíveis (app.py)
+- [x] 03-02-PLAN.md — Render Plotly da série + banda DDM na aba Analisar, com fallbacks de série/DDM indisponíveis (app.py)
 **UI hint**: yes
 
 ## Progress
@@ -81,4 +81,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Engine de Consistência | 5/5 | Complete | 2026-06-05 |
 | 2. Apresentação e Travas de Consistência | 2/2 | Complete | 2026-06-05 |
-| 3. Gráfico de Preço na aba Analisar | 0/2 | Not started | - |
+| 3. Gráfico de Preço na aba Analisar | 2/2 | Complete   | 2026-06-23 |
