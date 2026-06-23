@@ -42,6 +42,7 @@ class CompanyData:
     g_lucro_esperado: Optional[float] = None           # crescimento esperado LP (analistas)
     beta: Optional[float] = None
     eh_concessionaria: bool = False
+    serie_precos: Optional["pd.Series"] = None  # close diário 5a (índice = datas) p/ o gráfico
 
     # proventos dos últimos 12 meses reais (datas do Yahoo) para o DY corrente (WR-04)
     dpa_trailing_12m: Optional[float] = None
