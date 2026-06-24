@@ -19,7 +19,23 @@ fechamento de 5 anos com a banda do valor intrínseco do DDM sobreposta, botões
 (30D/6M/1A/5A) e degradação graciosa quando o Yahoo falha. Dois marcos completos (v1.0
 consistência + v1.1 gráfico); 64 testes golden verdes.
 
-**Próximo marco:** a definir (`/gsd-new-milestone`).
+**Marco ativo: v1.2 — Indicadores de tendência (timing) na aba Analisar.**
+
+## Current Milestone: v1.2 Indicadores de tendência (timing) na aba Analisar
+
+**Goal:** Adicionar indicadores técnicos de tendência — consultivos, ligáveis/desligáveis — à aba
+Analisar para auxiliar o *timing* de entrada e disparar um alerta de reverificação quando o preço
+rompe a tendência (possível perda de fundamentos). Estritamente consultivo: o veredito
+fundamentalista (DDM/múltiplos) continua sendo a base e nunca é sobrescrito.
+
+**Target features:**
+- Médias móveis (SMA/EMA 20/50/200) + cruzamentos (golden/death cross) e posição preço×MM200
+- Canais de alta/baixa (Donchian máx/mín + Bandas de Bollinger) com rompimentos
+- Força/inclinação da tendência (ADX + inclinação) para dizer SE há tendência e a direção
+- Momentum (RSI + MACD) para o timing fino de entrada
+- Painel de controles na aba Analisar para ligar/desligar e selecionar quais indicadores exibir
+- Resumo de sinal de *timing de entrada* (consultivo)
+- Alerta de venda/reverificação: rompimento técnico (ex.: perda da MM200) → "reveja os fundamentos"
 
 ## Requirements
 
@@ -54,9 +70,12 @@ consistência + v1.1 gráfico); 64 testes golden verdes.
 
 ### Active
 
-<!-- Sem marco ativo. Próximo escopo via /gsd-new-milestone. -->
+<!-- Marco v1.2 — indicadores de tendência (timing) na aba Analisar. REQ-IDs em REQUIREMENTS.md. -->
 
-(nenhum — aguardando próximo marco)
+- [ ] Indicadores de tendência consultivos (médias móveis, canais, força/inclinação, momentum) na aba Analisar
+- [ ] Controles para ligar/desligar e selecionar quais indicadores ver no gráfico
+- [ ] Sinal de timing de entrada (consultivo, não altera o veredito barato/caro)
+- [ ] Alerta de venda/reverificação ao rompimento técnico (preço perde a tendência → revisar fundamentos)
 
 ### Out of Scope
 
@@ -101,6 +120,9 @@ consistência + v1.1 gráfico); 64 testes golden verdes.
 | Série do gráfico = Close nominal (`auto_adjust=False`), beta/retornos seguem em Adj Close | Eixo Y do gráfico tem de ficar na mesma base da banda DDM (nominal); senão preços retroajustados distorcem a margem de segurança (CR-01) | ✓ Good — Phase 3 |
 | Botões de período nativos do Plotly (30D/6M/1A/5A) | Zoom por janela sem JS nem dependência extra | ✓ Good — Phase 3 |
 | `esc_md()` escapa `$` em metric/alertas (não no `fmt_rs` global) | Dois `R$` na mesma string acionavam o modo LaTeX do Streamlit; tabelas continuam com texto cru | ✓ Good — Phase 3 |
+| Análise técnica (v1.2) é **consultiva**, nunca altera o veredito fundamentalista | O projeto é fundamentalista por princípio (método do livro); indicadores ajudam o timing/alerta, não o "barato/caro" | — Pending |
+| Sinal de venda = rompimento técnico **dispara reverificação** dos fundamentos (não vende sozinho) | O livro vende por perda de fundamento; o técnico serve de gatilho antecipado para o investidor reolhar os números | — Pending |
+| Indicadores ligáveis/desligáveis e selecionáveis na aba Analisar | Evita poluir o gráfico; o investidor escolhe o que quer ver sem virar um terminal de trade | — Pending |
 
 ## Evolution
 
@@ -120,4 +142,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-23 — após o marco v1.1 (gráfico de preço na aba Analisar) shipped*
+*Last updated: 2026-06-24 — início do marco v1.2 (indicadores de tendência / timing na aba Analisar)*
