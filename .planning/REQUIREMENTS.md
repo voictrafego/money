@@ -96,44 +96,44 @@ Mapeamento requisito → fase. Preenchido na criação do roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | TBD | Pending |
-| DATA-02 | TBD | Pending |
-| DATA-03 | TBD | Pending |
-| TREND-01 | TBD | Pending |
-| TREND-02 | TBD | Pending |
-| TREND-03 | TBD | Pending |
-| TREND-04 | TBD | Pending |
-| CHAN-01 | TBD | Pending |
-| CHAN-02 | TBD | Pending |
-| CHAN-03 | TBD | Pending |
-| FORCE-01 | TBD | Pending |
-| FORCE-02 | TBD | Pending |
-| MOM-01 | TBD | Pending |
-| MOM-02 | TBD | Pending |
-| TIMING-01 | TBD | Pending |
-| TIMING-02 | TBD | Pending |
-| TIMING-03 | TBD | Pending |
-| TIMING-04 | TBD | Pending |
-| UI-01 | TBD | Pending |
-| UI-02 | TBD | Pending |
-| UI-03 | TBD | Pending |
-| UI-04 | TBD | Pending |
-| UI-05 | TBD | Pending |
-| UI-06 | TBD | Pending |
-| CLI-01 | TBD | Pending |
-| TEST-03 | TBD | Pending |
-| TEST-04 | TBD | Pending |
-| TEST-05 | TBD | Pending |
-| TEST-06 | TBD | Pending |
-| TEST-07 | TBD | Pending |
+| DATA-01 | Phase 4 | Pending |
+| DATA-02 | Phase 4 | Pending |
+| DATA-03 | Phase 4 | Pending |
+| TREND-01 | Phase 5 | Pending |
+| TREND-02 | Phase 5 | Pending |
+| TREND-03 | Phase 5 | Pending |
+| TREND-04 | Phase 5 | Pending |
+| CHAN-01 | Phase 5 | Pending |
+| CHAN-02 | Phase 5 | Pending |
+| CHAN-03 | Phase 5 | Pending |
+| FORCE-01 | Phase 5 | Pending |
+| FORCE-02 | Phase 5 | Pending |
+| MOM-01 | Phase 5 | Pending |
+| MOM-02 | Phase 5 | Pending |
+| TIMING-01 | Phase 6 | Pending |
+| TIMING-02 | Phase 6 | Pending |
+| TIMING-03 | Phase 6 | Pending |
+| TIMING-04 | Phase 6 | Pending |
+| UI-01 | Phase 7 | Pending |
+| UI-02 | Phase 7 | Pending |
+| UI-03 | Phase 7 | Pending |
+| UI-04 | Phase 7 | Pending |
+| UI-05 | Phase 7 | Pending |
+| UI-06 | Phase 7 | Pending |
+| CLI-01 | Phase 6 | Pending |
+| TEST-03 | Phase 5 | Pending |
+| TEST-04 | Phase 5 | Pending |
+| TEST-05 | Phase 5 | Pending |
+| TEST-06 | Phase 6 | Pending |
+| TEST-07 | Phase 4 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 30 total
-- Mapped to phases: 0 (roadmap pendente)
-- Unmapped: 30 ⚠️
+- Mapped to phases: 30 ✓
+- Unmapped: 0
+
+> Nota: TEST-07 (os 64 golden tests existentes continuam verdes) é um **invariante contínuo** — ancorado na Phase 4 mas verificado ao final de todas as fases do marco (4-7).
 
 ---
 *Requirements defined: 2026-06-24*
-*Last updated: 2026-06-24 after initial definition*
-</content>
-</invoke>
+*Last updated: 2026-06-24 — roadmap criado (Phases 4-7 mapeadas)*

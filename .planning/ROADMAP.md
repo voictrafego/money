@@ -4,6 +4,7 @@
 
 - ✅ **v1.0 — Consistência entre menus** — Phases 1-2 (shipped 2026-06-05)
 - ✅ **v1.1 — Gráfico de preço na aba Analisar** — Phase 3 (shipped 2026-06-23)
+- 🚧 **v1.2 — Indicadores de tendência (timing) na aba Analisar** — Phases 4-7 (in progress)
 
 ## Phases
 
@@ -26,13 +27,78 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
 
 </details>
 
+### 🚧 v1.2 — Indicadores de tendência (timing) na aba Analisar (In Progress)
+
+**Milestone Goal:** Adicionar indicadores técnicos consultivos (médias móveis + cruzamentos, canais, força/inclinação, momentum) à aba Analisar para auxiliar o *timing* de entrada e disparar um alerta de reverificação ao rompimento de tendência. Estritamente consultivo: o veredito fundamentalista (DDM/múltiplos) continua sendo a base e nunca é sobrescrito. Sem nova chamada de rede, sem nova dependência de TA, `app.py` read-only, e os 64 testes golden continuam verdes.
+
+- [ ] **Phase 4: Encanamento de dados + série correta** - Preserva o frame OHLC já baixado e prepara a série split-adjusted para os indicadores, sem novo comportamento e sem quebrar os 64 golden tests
+- [ ] **Phase 5: Motor de indicadores puro** - `core/indicators.py` com as 4 famílias hand-rolled (SMA/EMA+cruzamentos, Donchian+Bollinger+squeeze, ADX+inclinação, RSI+MACD), travado por golden tests (Wilder, no-repaint, split)
+- [ ] **Phase 6: Integração na engine + composite + alerta + CLI** - Liga os sinais em `analisar_acao`, deriva o resumo de timing e a matriz fundamento×técnico, o alerta de reverificação e a paridade na CLI
+- [ ] **Phase 7: UI — overlays, subpainéis, controles e enquadramento** - Renderiza overlays e osciladores no gráfico com toggles, marcadores de evento, tooltips e enquadramento subordinado ao fundamento
+
+## Phase Details
+
+### Phase 4: Encanamento de dados + série correta
+**Goal**: O frame OHLC que o Yahoo já baixa deixa de ser descartado e fica disponível na engine, com uma série ajustada por splits pronta para os cálculos de indicador — sem novo comportamento visível e sem qualquer fórmula de valuation alterada.
+**Depends on**: Phase 3 (v1.1 — padrão `serie_precos` é o blueprint)
+**Requirements**: DATA-01, DATA-02, DATA-03, TEST-07
+**Success Criteria** (what must be TRUE):
+  1. O OHLCV de 5 anos já buscado em `coletar_mercado` é preservado em `DadosMercado.ohlc` e conduzido até `CompanyData.ohlc`, sem nenhuma nova chamada ao Yahoo (DATA-01).
+  2. Existe uma série ajustada por **splits** (não por dividendos) disponível para os cálculos, enquanto a série/eixo do gráfico permanece em Close nominal (DATA-02, decisão CR-01); validada num ticker com split conhecido — sem cruzamentos espúrios na data do split.
+  3. Quando o histórico é curto ou o `hist` vem vazio/None, o encanamento degrada graciosamente (campos `ohlc=None`) sem quebrar nada, espelhando o padrão GRAF-03 (DATA-03).
+  4. Os 64 golden tests de valuation existentes continuam verdes após o encanamento (TEST-07) — invariante que se mantém ao longo de todas as fases do marco.
+**Plans**: TBD
+
+### Phase 5: Motor de indicadores puro
+**Goal**: Um módulo puro `core/indicators.py` calcula as 4 famílias de indicadores a partir do OHLC e devolve séries prontas para plotar + sinais discretos, com a matemática correta travada por golden tests antes de qualquer integração com a UI.
+**Depends on**: Phase 4 (precisa do campo OHLC no dataclass; funções puras testáveis com frames sintéticos em paralelo)
+**Requirements**: TREND-01, TREND-02, TREND-03, TREND-04, CHAN-01, CHAN-02, CHAN-03, FORCE-01, FORCE-02, MOM-01, MOM-02, TEST-03, TEST-04, TEST-05
+**Success Criteria** (what must be TRUE):
+  1. `indicators.calcular(ohlc, cfg)` devolve um `SinaisTecnicos` cobrindo as 4 famílias: SMA/EMA 20/50/200 + golden/death cross + posição preço×MM200 + toggle EMA (TREND-01..04); Donchian 20/55 + Bollinger 20/2σ + squeeze com rompimentos rotulados (CHAN-01..03); ADX(14) Wilder + inclinação de regressão (FORCE-01..02); RSI(14) Wilder + MACD 12/26/9 com cruzamento de sinal (MOM-01..02).
+  2. RSI e ADX usam suavização de **Wilder** (`ewm(alpha=1/length, adjust=False)`, seed SMA) e batem com fixtures de referência cruzadas com TradingView (TEST-03).
+  3. Nenhum sinal usa dados futuros — `indicador(série[:k])[-1] == indicador(série)[k-1]` para vários k (TEST-04 no-repaint).
+  4. A série split-adjusted não gera cruzamentos/rompimentos espúrios num ticker com split conhecido (TEST-05).
+  5. Zero novas dependências instaladas (só numpy/pandas/scipy já presentes); parâmetros canônicos vivem em config; os 64 golden tests seguem verdes (TEST-07).
+**Plans**: TBD
+
+### Phase 6: Integração na engine + composite + alerta + CLI
+**Goal**: Os sinais técnicos passam a viver em `AnaliseAcao` via `analisar_acao`, com um resumo de timing composite que lê (sem recalcular) o veredito DDM numa matriz fundamento×técnico, um alerta de reverificação ao rompimento de tendência e a base temporal diária/semanal dos alertas — tudo espelhado na CLI.
+**Depends on**: Phase 5 (engine só pode chamar `indicators.calcular` depois que o módulo existe e está travado)
+**Requirements**: TIMING-01, TIMING-02, TIMING-03, TIMING-04, CLI-01, TEST-06
+**Success Criteria** (what must be TRUE):
+  1. `a.sinais` é populado em `analisar_acao` e expõe um resumo de "timing de entrada" composite consultivo em linguagem natural — tendência de alta / sem tendência / atenção (TIMING-01).
+  2. O resumo cruza o veredito DDM (barato/caro) com o sinal técnico numa matriz fundamento×técnico, lendo `a.veredito`/`vmin`/`vmax` já calculados, sem recalcular nem sobrescrever o fundamento (TIMING-02).
+  3. Quando o preço perde a tendência (perda da MM200 / death cross / rompimento da mínima do Donchian) é gerado um alerta de "reveja os fundamentos", enquadrado como reverificação e nunca como ordem de venda (TIMING-03).
+  4. O usuário pode escolher a base temporal dos alertas (diário ou semanal; padrão semanal), com o gráfico visual permanecendo diário (TIMING-04).
+  5. `relatorio_markdown` imprime uma seção "Sinais técnicos (consultivos)" espelhando os mesmos sinais da engine (CLI-01), e as regras de desempate do composite estão travadas por golden test em casos-limite — ex.: acima da MM200 mas ADX < 20 (TEST-06).
+**Plans**: TBD
+
+### Phase 7: UI — overlays, subpainéis, controles e enquadramento
+**Goal**: A aba Analisar passa a desenhar os overlays no eixo de preço e os osciladores em subpainéis dinâmicos, com controles para ligar/desligar e selecionar indicadores, marcadores de evento nas datas exatas, tooltips de glossário, e um enquadramento que mantém o veredito fundamentalista visivelmente decisório — tudo lendo `a.sinais` em modo read-only.
+**Depends on**: Phase 6 (`app.py` lê `a.sinais`, que precisa existir em `AnaliseAcao`)
+**Requirements**: UI-01, UI-02, UI-03, UI-04, UI-05, UI-06
+**Success Criteria** (what must be TRUE):
+  1. Overlays (MMs / Donchian / Bollinger) são desenhados no eixo de preço do gráfico existente (UI-01) e os osciladores (RSI / MACD / ADX) em subpainéis dinâmicos via `make_subplots`, criados só quando ativos (UI-02).
+  2. O usuário liga/desliga e seleciona quais indicadores exibir; o estado é mantido por sessão (`st.session_state`) e o gráfico redesenha o subconjunto escolhido sem recomputar (UI-03).
+  3. Eventos (cruzamentos / rompimentos) aparecem marcados nas datas exatas no gráfico (UI-04) e cada novo indicador tem tooltip de glossário (ícone ?) com definição acessível, em paridade com o glossário do app (UI-05).
+  4. O bloco técnico é apresentado como subordinado ao veredito fundamentalista (off por padrão, seção secundária, linguagem consultiva); critério de aceite: um leitor novo numa tela "cara + timing bullish" reconhece o fundamento como decisório (UI-06).
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 4 → 5 → 6 → 7
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1. Engine de Consistência | v1.0 | 5/5 | Complete | 2026-06-05 |
 | 2. Apresentação e Travas de Consistência | v1.0 | 2/2 | Complete | 2026-06-05 |
 | 3. Gráfico de Preço na aba Analisar | v1.1 | 2/2 | Complete | 2026-06-23 |
+| 4. Encanamento de dados + série correta | v1.2 | 0/TBD | Not started | - |
+| 5. Motor de indicadores puro | v1.2 | 0/TBD | Not started | - |
+| 6. Integração na engine + composite + alerta + CLI | v1.2 | 0/TBD | Not started | - |
+| 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 0/TBD | Not started | - |
 
 ---
-*Próximo marco: `/gsd-new-milestone`*
+*Próximo passo: `/gsd-plan-phase 4`*
