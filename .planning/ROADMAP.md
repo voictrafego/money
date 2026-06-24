@@ -47,7 +47,9 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
   2. Existe uma série ajustada por **splits** (não por dividendos) disponível para os cálculos, enquanto a série/eixo do gráfico permanece em Close nominal (DATA-02, decisão CR-01); validada num ticker com split conhecido — sem cruzamentos espúrios na data do split.
   3. Quando o histórico é curto ou o `hist` vem vazio/None, o encanamento degrada graciosamente (campos `ohlc=None`) sem quebrar nada, espelhando o padrão GRAF-03 (DATA-03).
   4. Os 64 golden tests de valuation existentes continuam verdes após o encanamento (TEST-07) — invariante que se mantém ao longo de todas as fases do marco.
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 04-01-PLAN.md — Encanamento ohlc/ohlc_ajustado (ingest→build→CompanyData) + função pura de split + testes offline
+- [ ] 04-02-PLAN.md — Validação multi-split ITSA4 + invariante TEST-07 (64 golden tests verdes)
 
 ### Phase 5: Motor de indicadores puro
 **Goal**: Um módulo puro `core/indicators.py` calcula as 4 famílias de indicadores a partir do OHLC e devolve séries prontas para plotar + sinais discretos, com a matemática correta travada por golden tests antes de qualquer integração com a UI.
@@ -95,10 +97,10 @@ Phases execute in numeric order: 4 → 5 → 6 → 7
 | 1. Engine de Consistência | v1.0 | 5/5 | Complete | 2026-06-05 |
 | 2. Apresentação e Travas de Consistência | v1.0 | 2/2 | Complete | 2026-06-05 |
 | 3. Gráfico de Preço na aba Analisar | v1.1 | 2/2 | Complete | 2026-06-23 |
-| 4. Encanamento de dados + série correta | v1.2 | 0/TBD | Not started | - |
+| 4. Encanamento de dados + série correta | v1.2 | 0/2 | Not started | - |
 | 5. Motor de indicadores puro | v1.2 | 0/TBD | Not started | - |
 | 6. Integração na engine + composite + alerta + CLI | v1.2 | 0/TBD | Not started | - |
 | 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 0/TBD | Not started | - |
 
 ---
-*Próximo passo: `/gsd-plan-phase 4`*
+*Próximo passo: `/gsd-execute-phase 4`*
