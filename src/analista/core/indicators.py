@@ -145,3 +145,72 @@ def _tendencia(close: pd.Series, cfg: dict) -> Tendencia:
         ema20=ema20, ema50=ema50, ema200=ema200,
         posicao_mm200=posicao, cruzamento=cruzamento,
     )
+
+
+# --------------------------------------------------------------------------- #
+# Momentum (MOM-01..02) — RSI(14) Wilder + MACD 12/26/9 (EMA padrão, NÃO Wilder)
+# --------------------------------------------------------------------------- #
+def rsi_wilder(close: pd.Series, length: int = 14) -> pd.Series:
+    """RSI de Wilder SMA-seeded (bate o TradingView: 1º RSI(14)=70,5328 no dataset canônico).
+
+    A EMA ingênua (sem seed por SMA) daria 50,75 — por isso o ganho/perda médios usam
+    `_wilder_rma_from`. RS = avg_gain/avg_loss é protegida contra divisão por zero:
+    janela só de ganhos → RSI 100; só de perdas → RSI 0; nunca propaga inf à UI.
+    """
+    delta = close.diff()
+    gain = delta.clip(lower=0.0)
+    loss = (-delta).clip(lower=0.0)
+    avg_gain = _wilder_rma_from(gain.iloc[1:].to_numpy(float), length)
+    avg_loss = _wilder_rma_from(loss.iloc[1:].to_numpy(float), length)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        rs = avg_gain / avg_loss
+        rsi = 100.0 - 100.0 / (1.0 + rs)
+    # avg_loss == 0 (só ganhos) → rs=inf → RSI 100; avg_gain==avg_loss==0 → RSI neutro 50.
+    rsi = np.where((avg_loss == 0) & (avg_gain > 0), 100.0, rsi)
+    rsi = np.where((avg_loss == 0) & (avg_gain == 0), 50.0, rsi)
+    serie = pd.Series(rsi, index=close.index[1:])
+    return serie.reindex(close.index)
+
+
+def _momentum(close: pd.Series, cfg: dict) -> Momentum:
+    """RSI(14) Wilder + MACD 12/26/9 (EMA padrão) com cruzamento de sinal rotulado.
+
+    MACD usa `ewm(span=, adjust=False)` (EMA clássica), NUNCA Wilder — só RSI/ADX são Wilder.
+    Sinais discretos degradam para "indisponivel" quando a ponta da série é NaN (DATA-03).
+    """
+    ind = cfg["indicadores"]
+    rsi = rsi_wilder(close, ind["rsi_janela"])
+
+    fast, slow, signal = ind["macd"]
+    macd = close.ewm(span=fast, adjust=False).mean() - close.ewm(span=slow, adjust=False).mean()
+    macd_sinal = macd.ewm(span=signal, adjust=False).mean()
+    macd_hist = macd - macd_sinal
+
+    baixo, alto = ind["rsi_faixas"]
+    if len(rsi.dropna()) == 0 or pd.isna(rsi.iloc[-1]):
+        nivel_rsi = "indisponivel"
+    elif rsi.iloc[-1] >= alto:
+        nivel_rsi = "sobrecomprado"
+    elif rsi.iloc[-1] <= baixo:
+        nivel_rsi = "sobrevendido"
+    else:
+        nivel_rsi = "neutro"
+
+    d = (macd - macd_sinal).dropna()
+    if len(d) < 2:
+        cruzamento_macd = "indisponivel"
+    else:
+        ultimo, penultimo = d.iloc[-1], d.iloc[-2]
+        cruzou = np.sign(ultimo) != np.sign(penultimo)
+        if cruzou and ultimo > 0:
+            cruzamento_macd = "cruz_alta"
+        elif cruzou and ultimo < 0:
+            cruzamento_macd = "cruz_baixa"
+        else:
+            cruzamento_macd = "nenhum"
+
+    return Momentum(
+        rsi=rsi,
+        macd=macd, macd_sinal=macd_sinal, macd_hist=macd_hist,
+        nivel_rsi=nivel_rsi, cruzamento_macd=cruzamento_macd,
+    )
