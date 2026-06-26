@@ -102,3 +102,46 @@ def _wilder_rma_from(arr: np.ndarray, length: int, start: int = 0) -> np.ndarray
     for i in range(start + length, len(arr)):
         out[i] = a * arr[i] + (1 - a) * out[i - 1]
     return out
+
+
+# --------------------------------------------------------------------------- #
+# Tendencia (TREND-01..04) — SMA/EMA 20/50/200; sinais discretos SEMPRE sobre SMA (D-03)
+# --------------------------------------------------------------------------- #
+def _tendencia(close: pd.Series, cfg: dict) -> Tendencia:
+    """SMA e EMA 20/50/200 (ambas sempre — D-03) + posição×MM200 e golden/death cross.
+
+    Os sinais discretos derivam SEMPRE da SMA (D-03); a EMA é vista alternativa para o plot.
+    `min_periods=janela` garante NaN (não valor parcial) com histórico curto (DATA-03);
+    os sinais degradam para "indisponivel" sem levantar exceção.
+    """
+    j20, j50, j200 = cfg["indicadores"]["sma_emas"]
+    sma20 = close.rolling(j20, min_periods=j20).mean()
+    sma50 = close.rolling(j50, min_periods=j50).mean()
+    sma200 = close.rolling(j200, min_periods=j200).mean()
+    ema20 = close.ewm(span=j20, adjust=False).mean()
+    ema50 = close.ewm(span=j50, adjust=False).mean()
+    ema200 = close.ewm(span=j200, adjust=False).mean()
+
+    if len(close) == 0 or pd.isna(sma200.iloc[-1]):
+        posicao = "indisponivel"
+    else:
+        posicao = "acima" if close.iloc[-1] > sma200.iloc[-1] else "abaixo"
+
+    diff = (sma50 - sma200).dropna()
+    if len(diff) < 2:
+        cruzamento = "indisponivel"
+    else:
+        ultimo, penultimo = diff.iloc[-1], diff.iloc[-2]
+        cruzou = np.sign(ultimo) != np.sign(penultimo)
+        if cruzou and ultimo > 0:
+            cruzamento = "golden_cross"
+        elif cruzou and ultimo < 0:
+            cruzamento = "death_cross"
+        else:
+            cruzamento = "nenhum"
+
+    return Tendencia(
+        sma20=sma20, sma50=sma50, sma200=sma200,
+        ema20=ema20, ema50=ema50, ema200=ema200,
+        posicao_mm200=posicao, cruzamento=cruzamento,
+    )
