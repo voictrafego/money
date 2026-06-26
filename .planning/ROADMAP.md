@@ -76,7 +76,9 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
   3. Quando o preço perde a tendência (perda da MM200 / death cross / rompimento da mínima do Donchian) é gerado um alerta de "reveja os fundamentos", enquadrado como reverificação e nunca como ordem de venda (TIMING-03).
   4. O usuário pode escolher a base temporal dos alertas (diário ou semanal; padrão semanal), com o gráfico visual permanecendo diário (TIMING-04).
   5. `relatorio_markdown` imprime uma seção "Sinais técnicos (consultivos)" espelhando os mesmos sinais da engine (CLI-01), e as regras de desempate do composite estão travadas por golden test em casos-limite — ex.: acima da MM200 mas ADX < 20 (TEST-06).
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 06-01-PLAN.md — Engine: popular a.sinais + composite de timing (MM200/ADX) + base temporal semanal (W-FRI) + golden TEST-06
+- [ ] 06-02-PLAN.md — Matriz fundamento×técnico + alerta de reverificação + seção CLI consultiva + invariante TEST-07
 
 ### Phase 7: UI — overlays, subpainéis, controles e enquadramento
 **Goal**: A aba Analisar passa a desenhar os overlays no eixo de preço e os osciladores em subpainéis dinâmicos, com controles para ligar/desligar e selecionar indicadores, marcadores de evento nas datas exatas, tooltips de glossário, e um enquadramento que mantém o veredito fundamentalista visivelmente decisório — tudo lendo `a.sinais` em modo read-only.
@@ -102,7 +104,7 @@ Phases execute in numeric order: 4 → 5 → 6 → 7
 | 3. Gráfico de Preço na aba Analisar | v1.1 | 2/2 | Complete | 2026-06-23 |
 | 4. Encanamento de dados + série correta | v1.2 | 2/2 | Complete | 2026-06-26 |
 | 5. Motor de indicadores puro | v1.2 | 0/3 | Not started | - |
-| 6. Integração na engine + composite + alerta + CLI | v1.2 | 0/TBD | Not started | - |
+| 6. Integração na engine + composite + alerta + CLI | v1.2 | 0/2 | Planned | - |
 | 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 0/TBD | Not started | - |
 
 ---
