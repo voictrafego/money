@@ -5,6 +5,7 @@ preservando `ohlc`/`ohlc_ajustado` (D-01/D-02/D-06). Nenhum teste bate na rede:
 tudo via fixtures locais e monkeypatch do yfinance (padrão de test_ingest_resolucao.py).
 """
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -188,3 +189,112 @@ def test_serie_precos_nao_regrediu(monkeypatch):
     dm = prices.coletar_mercado("OHL3")
     assert dm.serie_precos is not None
     assert dm.serie_precos.iloc[-1] == _hist_com_split()["Close"].iloc[-1]
+
+
+# ---------------------------------------------------------------------------
+# Validação multi-split estilo ITSA4 (D-08, critério de aceite #2) — offline
+# ---------------------------------------------------------------------------
+#
+# ITSA4 tem 5 eventos de split/bonificação em ~5 anos (dez/2021, nov/2022,
+# nov/2023, dez/2024, dez/2025 — verificados em runtime, CONTEXT 04 <specifics>),
+# o que estressa o fator de split CUMULATIVO. Esta fixture é 100% offline: a
+# validação contra o Yahoo real do ITSA4 é o checkpoint humano da Task 2.
+
+# fatores plausíveis de bonificação por evento (produto cumulativo > 1)
+_ITSA4_EVENTOS = [
+    (pd.Timestamp("2021-12-15"), 1.10),
+    (pd.Timestamp("2022-11-15"), 1.05),
+    (pd.Timestamp("2023-11-15"), 1.10),
+    (pd.Timestamp("2024-12-15"), 1.20),
+    (pd.Timestamp("2025-12-15"), 1.10),
+]
+_ITSA4_PROD_TOTAL = 1.10 * 1.05 * 1.10 * 1.20 * 1.10  # produto dos 5 fatores
+
+
+def _hist_itsa4_multisplit():
+    """Fixture estilo ITSA4 (D-08): 5 eventos de split em ~5 anos de pregões diários.
+
+    Constrói-se a partir de um caminho econômico CONTÍNUO `A` (a série já split-
+    adjusted "verdadeira", suave e crescente) multiplicado pelo fator de split
+    CUMULATIVO (produto dos splits que ocorrem ESTRITAMENTE DEPOIS de cada data)
+    para obter o Close NOMINAL — exatamente a relação que os dados crus do Yahoo
+    (auto_adjust=False) têm com a série split-adjusted. Cada evento cria um degrau
+    para baixo no nominal; `_ajustar_por_split` deve RECUPERAR `A` (contínuo, sem
+    saltos) a partir desse nominal cheio de degraus.
+
+    Retorna (hist, A) para o teste asseverar contra a construção.
+    """
+    idx = pd.date_range("2021-01-01", "2025-12-31", freq="D")
+    n = len(idx)
+    # série split-adjusted "verdadeira" — suave/contínua, sem degraus (R$5 -> R$12)
+    A = pd.Series(np.linspace(5.0, 12.0, n), index=idx)
+    # fator cumulativo: produto dos splits ESTRITAMENTE DEPOIS de cada data
+    fator = pd.Series(1.0, index=idx)
+    for data, f in _ITSA4_EVENTOS:
+        fator[idx < data] *= f
+    close = A * fator  # Close NOMINAL com degraus nas 5 datas de split
+    splits = pd.Series(0.0, index=idx)
+    for data, f in _ITSA4_EVENTOS:
+        splits[data] = f
+    hist = pd.DataFrame({
+        "Open": close * 0.99,
+        "High": close * 1.02,
+        "Low": close * 0.98,
+        "Close": close,
+        "Adj Close": close * 0.6,   # dividend-adjusted: NUNCA usado como base
+        "Volume": 1_000.0 / fator,  # volume nominal (inverso); adj recupera ~1000
+        "Stock Splits": splits,
+        "Dividends": pd.Series(0.0, index=idx),
+    })
+    return hist, A
+
+
+def test_itsa4_5_splits_ponta_recente_coincide_com_nominal():
+    """D-08: após o último split (dez/2025), fator = 1 -> ponta recente do ajustado
+    coincide com o nominal (e com a série split-adjusted verdadeira A)."""
+    hist, A = _hist_itsa4_multisplit()
+    aj = prices._ajustar_por_split(hist)
+    ultimo_split = _ITSA4_EVENTOS[-1][0]
+    cauda = hist.index >= ultimo_split
+    assert cauda.sum() > 0
+    # cauda do ajustado == nominal == A (sem reescala após o último evento)
+    np.testing.assert_allclose(aj.loc[cauda, "Close"], hist.loc[cauda, "Close"])
+    np.testing.assert_allclose(aj.loc[cauda, "Close"], A[cauda].values)
+
+
+def test_itsa4_5_splits_serie_ajustada_continua_sem_saltos():
+    """D-08: a série ajustada recupera o caminho contínuo A — sem degraus/cruzamentos
+    espúrios nas 5 datas de split, embora o nominal salte em cada evento."""
+    hist, A = _hist_itsa4_multisplit()
+    aj = prices._ajustar_por_split(hist)
+    # (1) o ajustado reconstrói o caminho contínuo verdadeiro em toda a janela
+    np.testing.assert_allclose(aj["Close"].values, A.values, rtol=1e-9)
+    # (2) em CADA data de split: nominal cai (degrau ~ 1/fator), ajustado é contínuo
+    for data, f in _ITSA4_EVENTOS:
+        loc = hist.index.get_loc(data)
+        assert loc > 0
+        razao_nominal = hist["Close"].iloc[loc] / hist["Close"].iloc[loc - 1]
+        razao_aj = aj["Close"].iloc[loc] / aj["Close"].iloc[loc - 1]
+        # nominal tem o degrau do split (~1/f, claramente < 1)
+        assert razao_nominal < 0.97, (data, razao_nominal)
+        # ajustado atravessa o evento sem salto (continuidade dentro de tolerância)
+        assert abs(razao_aj - 1.0) < 0.01, (data, razao_aj)
+
+
+def test_itsa4_fator_cumulativo_pre_primeiro_split():
+    """D-08: datas anteriores ao 1º split (dez/2021) são escaladas pelo produto dos
+    5 fatores -> ajustado MENOR que o nominal (sem salto abrupto)."""
+    hist, A = _hist_itsa4_multisplit()
+    aj = prices._ajustar_por_split(hist)
+    primeiro_split = _ITSA4_EVENTOS[0][0]
+    pre = hist.index < primeiro_split
+    assert pre.sum() > 0
+    # ajustado = nominal / (produto dos 5 fatores) antes do primeiro evento
+    np.testing.assert_allclose(
+        aj.loc[pre, "Close"].values,
+        hist.loc[pre, "Close"].values / _ITSA4_PROD_TOTAL,
+    )
+    # o Close ajustado mais antigo é estritamente MENOR que o nominal correspondente
+    assert aj["Close"].iloc[0] < hist["Close"].iloc[0]
+    # volume antigo ajustado é MAIOR (sentido inverso do preço)
+    assert aj["Volume"].iloc[0] > hist["Volume"].iloc[0]
