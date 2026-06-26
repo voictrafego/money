@@ -8,6 +8,8 @@ import pytest
 import yaml
 
 from analista.core import indicators
+from analista.ingest import prices
+from tests.test_ingest_ohlc import _hist_itsa4_multisplit, _ITSA4_EVENTOS
 
 
 def _cfg_ind() -> dict:
@@ -265,3 +267,95 @@ def test_regressao_slope_r2():
     flat = pd.Series(np.full(120, 50.0), index=idx)
     slope_flat, _ = indicators.regressao_trailing(flat, win=90)
     assert slope_flat.iloc[-1] == pytest.approx(0.0, abs=1e-9)
+
+
+# --- calcular() entry-point + split TEST-05 ---
+_SINAIS_DISCRETOS = [
+    ("tendencia", "posicao_mm200"), ("tendencia", "cruzamento"),
+    ("canais", "rompimento_donchian"), ("canais", "toque_bollinger"), ("canais", "squeeze"),
+    ("forca", "forca_adx"),
+    ("momentum", "nivel_rsi"), ("momentum", "cruzamento_macd"),
+]
+
+
+def _frame_ohlc_longo(n: int = 320, seed: int = 3) -> pd.DataFrame:
+    """Frame OHLC longo o suficiente para todas as janelas (200/126/90) ficarem válidas."""
+    s = _serie_ruidosa(n=n, seed=seed)
+    close = s.to_numpy(float)
+    rng = np.random.default_rng(seed + 1)
+    spread = np.abs(rng.normal(0, 0.8, n)) + 0.5
+    return pd.DataFrame(
+        {"Open": close, "High": close + spread, "Low": close - spread, "Close": close},
+        index=s.index,
+    )
+
+
+def test_calcular_completo():
+    # Histórico cheio: calcular devolve SinaisTecnicos com as 4 famílias, todos os
+    # sinais discretos VÁLIDOS (não "indisponivel").
+    cfg = _cfg_ind()
+    sinais = indicators.calcular(_frame_ohlc_longo(), cfg)
+    assert isinstance(sinais, indicators.SinaisTecnicos)
+    for fam in ("tendencia", "canais", "forca", "momentum"):
+        assert getattr(sinais, fam) is not None
+    for fam, attr in _SINAIS_DISCRETOS:
+        assert getattr(getattr(sinais, fam), attr) != "indisponivel", (fam, attr)
+
+
+def test_calcular_degrada():
+    # ohlc=None → TODOS os sinais "indisponivel", sem exceção.
+    cfg = _cfg_ind()
+    nulo = indicators.calcular(None, cfg)
+    for fam, attr in _SINAIS_DISCRETOS:
+        assert getattr(getattr(nulo, fam), attr) == "indisponivel", (fam, attr)
+
+    # Histórico curto (12 bars): sinais de janela longa degradam para "indisponivel".
+    close = np.linspace(10.0, 12.0, 12)
+    curto = _frame_ohlc(close)  # já tem Open? não — adiciona
+    curto = curto.assign(Open=close)
+    s = indicators.calcular(curto, cfg)
+    assert s.tendencia.posicao_mm200 == "indisponivel"
+    assert s.forca.forca_adx == "indisponivel"
+    assert s.canais.rompimento_donchian == "indisponivel"
+    assert s.momentum.nivel_rsi == "indisponivel"
+    assert s.canais.squeeze == "indisponivel"
+
+
+def test_split_sem_cross_espurio():
+    # TEST-05: a série split-adjusted (contínua) NÃO gera cross/breakout espúrio nas 5
+    # datas de split do ITSA4; a NOMINAL (com degraus) geraria — contraste prova a teeth.
+    cfg = _cfg_ind()
+    hist, _A = _hist_itsa4_multisplit()
+    aj = prices._ajustar_por_split(hist)
+
+    # calcular roda sobre o frame ajustado sem exceção e devolve as 4 famílias
+    sinais = indicators.calcular(aj, cfg)
+    assert isinstance(sinais, indicators.SinaisTecnicos)
+
+    j20 = cfg["indicadores"]["donchian"][0]
+    j50, j200 = cfg["indicadores"]["sma_emas"][1], cfg["indicadores"]["sma_emas"][2]
+
+    def _sinais_por_barra(df: pd.DataFrame):
+        close, high, low = df["Close"], df["High"], df["Low"]
+        don_inf = low.rolling(j20, min_periods=j20).min().shift(1)
+        don_sup = high.rolling(j20, min_periods=j20).max().shift(1)
+        perda = close < don_inf            # rompimento de baixa (gatilho espúrio do degrau)
+        sma50 = close.rolling(j50, min_periods=j50).mean()
+        sma200 = close.rolling(j200, min_periods=j200).mean()
+        d = np.sign(sma50 - sma200)
+        cross = d.ne(d.shift(1)) & d.notna() & d.shift(1).notna()  # qualquer cruzamento
+        return perda, cross
+
+    perda_aj, cross_aj = _sinais_por_barra(aj)
+    perda_nom, _ = _sinais_por_barra(hist)
+
+    for data, _f in _ITSA4_EVENTOS:
+        loc = aj.index.get_loc(data)
+        # ajustado contínuo: nenhum rompimento de baixa nem cruzamento na data do split
+        assert not bool(perda_aj.iloc[loc]), (data, "perda_minima espúria no ajustado")
+        assert not bool(cross_aj.iloc[loc]), (data, "cruzamento espúrio no ajustado")
+
+    # teeth: o NOMINAL dispara pelo menos uma perda_minima espúria em torno dos splits
+    janela_eventos = pd.Index([d for d, _ in _ITSA4_EVENTOS])
+    proximos = perda_nom.reindex(janela_eventos, method="nearest")
+    assert proximos.any(), "fixture sem teeth: nominal deveria romper de baixa nos splits"
