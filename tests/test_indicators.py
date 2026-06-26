@@ -177,3 +177,40 @@ def test_bollinger_touch():
     # Discriminação anti-ddof=1: a amostral deslocaria a banda e NÃO bateria.
     esperado_ddof1 = sl.mean() + sigma * sl.std(ddof=1)
     assert not np.isclose(c.bb_sup.iloc[-1], esperado_ddof1, rtol=1e-9)
+
+
+def test_squeeze_percentil_causal():
+    # Cauda de baixa volatilidade vs janela de 126 → largura atual no percentil baixo → squeeze_on.
+    cfg = _cfg_ind()
+    rng = np.random.default_rng(7)
+    close = np.concatenate([100 + rng.normal(0, 5.0, 140), 100 + rng.normal(0, 0.1, 60)])
+    df = _frame_ohlc(close)
+    c = indicators._canais(df, cfg)
+    assert c.squeeze == "squeeze_on"
+    assert c.squeeze_pct.iloc[-1] <= cfg["indicadores"]["squeeze_percentil"]
+
+    # Primeiro válido: o warmup do Bollinger (20) empurra a largura para o índice 19, e o
+    # percentil rolling de 126 só fica válido em 19 + 125 = 144 (causal; o "125" do método é
+    # sobre uma série de largura sem NaN inicial, aqui o canal acrescenta o warmup das bandas).
+    jbb = cfg["indicadores"]["bollinger"]["janela"]
+    jsq = cfg["indicadores"]["squeeze_janela"]
+    primeiro_valido = (jbb - 1) + (jsq - 1)
+    assert c.squeeze_pct.iloc[:primeiro_valido].isna().all()
+    assert not np.isnan(c.squeeze_pct.iloc[primeiro_valido])
+
+    # Causal/no-repaint: squeeze_pct(serie[:k]).iloc[-1] == squeeze_pct(serie)[k-1].
+    for k in (160, 180, 200):
+        ck = indicators._canais(df.iloc[:k], cfg)
+        assert ck.squeeze_pct.iloc[-1] == pytest.approx(c.squeeze_pct.iloc[k - 1], abs=1e-9)
+
+
+def test_canais_historico_curto():
+    # <20 bars: Donchian/Bollinger/squeeze degradam para "indisponivel" sem exceção (T-05-04).
+    cfg = _cfg_ind()
+    close = np.linspace(10.0, 12.0, 15)
+    df = _frame_ohlc(close)
+    c = indicators._canais(df, cfg)
+    assert c.squeeze_pct.isna().all()
+    assert c.squeeze == "indisponivel"
+    assert c.rompimento_donchian == "indisponivel"
+    assert c.toque_bollinger == "indisponivel"
