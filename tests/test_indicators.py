@@ -214,3 +214,54 @@ def test_canais_historico_curto():
     assert c.squeeze == "indisponivel"
     assert c.rompimento_donchian == "indisponivel"
     assert c.toque_bollinger == "indisponivel"
+
+
+# --- Forca (FORCE-01..02) ---
+def _ohlc_adx_ref(n: int = 80, seed: int = 11) -> pd.DataFrame:
+    """Série OHLC determinística (np.linspace + ruído seedado) — fixture canônica do ADX.
+
+    É a MESMA série usada no checkpoint humano TradingView (Task 3). High/Low envolvem
+    o close por um spread positivo para gerar um True Range não-trivial.
+    """
+    rng = np.random.default_rng(seed)
+    base = np.linspace(20.0, 60.0, n) + rng.normal(0, 1.5, n)
+    high = base + np.abs(rng.normal(0, 0.8, n)) + 0.5
+    low = base - np.abs(rng.normal(0, 0.8, n)) - 0.5
+    idx = pd.date_range("2020-01-01", periods=n, freq="B")
+    return pd.DataFrame({"High": high, "Low": low, "Close": base}, index=idx)
+
+
+def test_adx_wilder_estrutural():
+    # Dupla suavização de Wilder: 1º ADX válido no índice 2*length-1 = 27 (length 14).
+    # Seed errado (start=0) deixaria adx.dropna() vazio — este teste pega a armadilha.
+    cfg = _cfg_ind()
+    length = cfg["indicadores"]["adx_janela"]
+    df = _ohlc_adx_ref()
+    adx, pdi, ndi = indicators.adx_wilder(df, length)
+    validos = adx.dropna()
+    assert len(validos) > 0                              # apanha o bug start=0 (tudo NaN)
+    primeiro = adx.reset_index(drop=True).first_valid_index()
+    assert primeiro == 2 * length - 1 == 27
+    # +DI/-DI também válidos a partir do índice length
+    assert pdi.reset_index(drop=True).first_valid_index() == length
+    assert ndi.reset_index(drop=True).first_valid_index() == length
+
+    # No-repaint: adx(s[:k]).iloc[-1] == adx(s)[k-1] (TEST-04).
+    for k in (40, 55, 70, 80):
+        adx_k = indicators.adx_wilder(df.iloc[:k], length)[0]
+        assert adx_k.iloc[-1] == pytest.approx(adx.iloc[k - 1], abs=1e-9)
+
+
+def test_regressao_slope_r2():
+    # Série perfeitamente linear → R² ~ 1.0 e slope_ano > 0; série flat → slope_ano ~ 0.
+    idx = pd.date_range("2020-01-01", periods=120, freq="B")
+    subida = pd.Series(np.linspace(10.0, 30.0, 120), index=idx)
+    slope, r2 = indicators.regressao_trailing(subida, win=90)
+    assert r2.iloc[-1] == pytest.approx(1.0, abs=1e-9)
+    assert slope.iloc[-1] > 0
+    assert pd.isna(slope.iloc[88])                       # 1º válido no índice win-1 = 89
+    assert not pd.isna(slope.iloc[89])
+
+    flat = pd.Series(np.full(120, 50.0), index=idx)
+    slope_flat, _ = indicators.regressao_trailing(flat, win=90)
+    assert slope_flat.iloc[-1] == pytest.approx(0.0, abs=1e-9)
