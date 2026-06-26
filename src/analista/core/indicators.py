@@ -249,6 +249,107 @@ def _canais(ohlc: pd.DataFrame, cfg: dict) -> Canais:
     )
 
 
+# --------------------------------------------------------------------------- #
+# Forca (FORCE-01..02) — ADX(14) dupla-Wilder + regressão linear trailing (%/ano, R²)
+# --------------------------------------------------------------------------- #
+def adx_wilder(ohlc: pd.DataFrame, length: int = 14):
+    """ADX(14) pela cadeia completa de Wilder com DUPLA suavização → (adx, pdi, ndi).
+
+    Cadeia: +DM/-DM/TR por barra → suaviza cada um com `_wilder_rma_from` (1º válido no
+    índice `length`) → +DI = 100·sm(+DM)/ATR, -DI = 100·sm(-DM)/ATR → DX = 100·|+DI−−DI|/
+    (+DI+−DI) → ADX = 2ª suavização de Wilder do DX SEEDADA no primeiro DX válido
+    (`start=length`). Seedar a 2ª suavização em 0 faria a SMA-seed mediar `length` NaNs →
+    ADX todo-NaN (RESEARCH Pitfall 2); por isso `start=length` e o 1º ADX válido cai no
+    índice 2·length−1 (= 27 para length 14). Divisões protegidas com `np.errstate`
+    (ATR==0 ou +DI+−DI==0 → NaN, nunca inf; mitiga T-05-06).
+    """
+    high, low, close = ohlc["High"], ohlc["Low"], ohlc["Close"]
+
+    up = high.diff()
+    dn = -low.diff()
+    plus_dm = np.where((up > dn) & (up > 0), up, 0.0)
+    minus_dm = np.where((dn > up) & (dn > 0), dn, 0.0)
+
+    prev_close = close.shift(1)
+    tr = pd.concat([
+        (high - low),
+        (high - prev_close).abs(),
+        (low - prev_close).abs(),
+    ], axis=1).max(axis=1)
+
+    # 1ª suavização de Wilder — start=1 porque a barra 0 é o diff indefinido (up/dn = NaN);
+    # seedar a SMA em arr[1:1+length] coloca o 1º +DI/-DI/ATR válido no índice `length`.
+    atr = _wilder_rma_from(tr.to_numpy(float), length, start=1)
+    sm_pdm = _wilder_rma_from(np.asarray(plus_dm, dtype=float), length, start=1)
+    sm_ndm = _wilder_rma_from(np.asarray(minus_dm, dtype=float), length, start=1)
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        pdi = 100.0 * sm_pdm / atr
+        ndi = 100.0 * sm_ndm / atr
+        denom = pdi + ndi
+        dx = 100.0 * np.abs(pdi - ndi) / denom
+    dx = np.where(denom == 0.0, np.nan, dx)
+
+    # 2ª suavização de Wilder do DX — SEED no primeiro DX válido (start=length)
+    adx_arr = _wilder_rma_from(dx, length, start=length)
+
+    idx = ohlc.index
+    return (
+        pd.Series(adx_arr, index=idx),
+        pd.Series(pdi, index=idx),
+        pd.Series(ndi, index=idx),
+    )
+
+
+def regressao_trailing(close: pd.Series, win: int = 90):
+    """Regressão linear trailing (causal) → (slope_ann %/ano, r2) como Series (D-04).
+
+    Para cada barra i ≥ win−1, ajusta uma reta OLS sobre a janela TRAILING de `win` barras
+    via `scipy.stats.linregress`. slope_ann = slope·252/média(seg)·100 (inclinação anualizada
+    em %/ano, normalizada pelo nível de preço — robusta a escala, comparável entre tickers);
+    r2 = rvalue². Janela só do passado → no-repaint por construção.
+    """
+    y = close.to_numpy(float)
+    n = len(y)
+    slope_ann = np.full(n, np.nan)
+    r2 = np.full(n, np.nan)
+    x = np.arange(win)
+    for i in range(win - 1, n):
+        seg = y[i - win + 1: i + 1]
+        media = seg.mean()
+        res = stats.linregress(x, seg)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            slope_ann[i] = res.slope * 252.0 / media * 100.0 if media != 0 else np.nan
+        r2[i] = res.rvalue ** 2
+    return pd.Series(slope_ann, index=close.index), pd.Series(r2, index=close.index)
+
+
+def _forca(ohlc: pd.DataFrame, cfg: dict) -> Forca:
+    """Família Força: ADX(14) dupla-Wilder + regressão linear trailing %/ano (FORCE-01..02).
+
+    forca_adx lê a ponta do ADX: < 20 → "sem_tendencia"; > 25 → "forte"; entre → "neutro";
+    NaN (histórico curto) → "indisponivel" (degradação graciosa, DATA-03).
+    """
+    ind = cfg["indicadores"]
+    adx, pdi, ndi = adx_wilder(ohlc, ind["adx_janela"])
+    slope, r2 = regressao_trailing(ohlc["Close"], ind["regressao_janela"])
+
+    if len(adx.dropna()) == 0 or pd.isna(adx.iloc[-1]):
+        forca_adx = "indisponivel"
+    elif adx.iloc[-1] < 20.0:
+        forca_adx = "sem_tendencia"
+    elif adx.iloc[-1] > 25.0:
+        forca_adx = "forte"
+    else:
+        forca_adx = "neutro"
+
+    return Forca(
+        adx=adx, pdi=pdi, ndi=ndi,
+        regressao_slope_ann=slope, regressao_r2=r2,
+        forca_adx=forca_adx,
+    )
+
+
 def _momentum(close: pd.Series, cfg: dict) -> Momentum:
     """RSI(14) Wilder + MACD 12/26/9 (EMA padrão) com cruzamento de sinal rotulado.
 
