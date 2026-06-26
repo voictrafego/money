@@ -61,7 +61,10 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
   3. Nenhum sinal usa dados futuros — `indicador(série[:k])[-1] == indicador(série)[k-1]` para vários k (TEST-04 no-repaint).
   4. A série split-adjusted não gera cruzamentos/rompimentos espúrios num ticker com split conhecido (TEST-05).
   5. Zero novas dependências instaladas (só numpy/pandas/scipy já presentes); parâmetros canônicos vivem em config; os 64 golden tests seguem verdes (TEST-07).
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 05-01-PLAN.md — Contrato SinaisTecnicos + config + Wilder helper + Tendência (SMA/EMA+cross) + Momentum (RSI Wilder 70.5328 + MACD); golden + no-repaint
+- [ ] 05-02-PLAN.md — Canais: Donchian 20/55 (shift1) + Bollinger 20/2σ (ddof=0) + squeeze percentil 126/20 (D-02); causal + no-repaint
+- [ ] 05-03-PLAN.md — Força: ADX(14) double-Wilder (1º válido idx 27) + regressão %/ano+R² (D-04) + montagem do calcular() + split ITSA4 (TEST-05) + checkpoint ADX×TradingView (TEST-03)
 
 ### Phase 6: Integração na engine + composite + alerta + CLI
 **Goal**: Os sinais técnicos passam a viver em `AnaliseAcao` via `analisar_acao`, com um resumo de timing composite que lê (sem recalcular) o veredito DDM numa matriz fundamento×técnico, um alerta de reverificação ao rompimento de tendência e a base temporal diária/semanal dos alertas — tudo espelhado na CLI.
@@ -98,7 +101,7 @@ Phases execute in numeric order: 4 → 5 → 6 → 7
 | 2. Apresentação e Travas de Consistência | v1.0 | 2/2 | Complete | 2026-06-05 |
 | 3. Gráfico de Preço na aba Analisar | v1.1 | 2/2 | Complete | 2026-06-23 |
 | 4. Encanamento de dados + série correta | v1.2 | 2/2 | Complete | 2026-06-26 |
-| 5. Motor de indicadores puro | v1.2 | 0/TBD | Not started | - |
+| 5. Motor de indicadores puro | v1.2 | 0/3 | Not started | - |
 | 6. Integração na engine + composite + alerta + CLI | v1.2 | 0/TBD | Not started | - |
 | 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 0/TBD | Not started | - |
 
