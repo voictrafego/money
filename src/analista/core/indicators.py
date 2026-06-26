@@ -223,10 +223,22 @@ def _canais(ohlc: pd.DataFrame, cfg: dict) -> Canais:
     else:
         toque = "nenhum"
 
-    # Squeeze percentil (Task 2) — placeholders até o plan 05-02 Task 2.
-    largura_bb = pd.Series(np.nan, index=close.index)
-    squeeze_pct = pd.Series(np.nan, index=close.index)
-    squeeze = "indisponivel"
+    # Squeeze percentil (CHAN-03, D-02): largura normalizada vs sua própria janela trailing.
+    # bb_med==0 (preço achatado) → largura NaN, não inf (np.errstate; mitiga T-05-03).
+    with np.errstate(divide="ignore", invalid="ignore"):
+        largura_bb = (bb_sup - bb_inf) / bb_med.replace(0.0, np.nan)
+    squeeze_janela = ind["squeeze_janela"]
+    # raw=True → x é ndarray e x[-1] é a barra atual; o percentil só olha a janela até agora (causal).
+    squeeze_pct = largura_bb.rolling(squeeze_janela, min_periods=squeeze_janela).apply(
+        lambda x: (x <= x[-1]).mean() * 100.0, raw=True
+    )
+    squeeze_percentil = ind["squeeze_percentil"]
+    if len(close) == 0 or pd.isna(squeeze_pct.iloc[-1]):
+        squeeze = "indisponivel"
+    elif squeeze_pct.iloc[-1] <= squeeze_percentil:
+        squeeze = "squeeze_on"
+    else:
+        squeeze = "squeeze_off"
 
     return Canais(
         donchian_sup=donchian_sup, donchian_inf=donchian_inf,
