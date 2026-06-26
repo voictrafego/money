@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: — Indicadores de tendência
 status: executing
 stopped_at: Phase 5 context gathered
-last_updated: "2026-06-26T17:30:02.188Z"
-last_activity: 2026-06-26 -- Phase 05 planning complete
+last_updated: "2026-06-26T17:54:39.675Z"
+last_activity: 2026-06-26
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 5
-  completed_plans: 2
-  percent: 40
+  completed_plans: 3
+  percent: 60
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-24)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação.
-**Current focus:** Phase 04 — encanamento-de-dados-s-rie-correta
+**Current focus:** Phase 05 — motor-de-indicadores-puro
 
 ## Current Position
 
-Phase: 04 — COMPLETE
-Plan: 2 of 2
+Phase: 05 (motor-de-indicadores-puro) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-06-26 -- Phase 05 planning complete
+Last activity: 2026-06-26
 
-Progress: [██████████] 100%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Progress: [██████████] 100%
 
 *Updated after each plan completion*
 | Phase 04 P02 | 10 | 2 tasks | 1 files |
+| Phase 05 P01 | 18 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,7 @@ Recent decisions affecting current work:
 - [v1.2 research]: hand-roll total dos indicadores em numpy/pandas/scipy — **sem nova dependência de TA** (`ta`/`pandas-ta`/`TA-Lib` incompatíveis com numpy 2.4.6 / pandas 3.0.3).
 - [v1.2 research]: RSI/ADX exigem suavização de **Wilder** (`ewm(alpha=1/length, adjust=False)`, seed SMA), não EMA padrão — travar com golden test cruzado com TradingView.
 - [v1.2 research]: `a.sinais` (`SinaisTecnicos`) calculado em `report.analisar_acao` — ponto único compartilhado por CLI e UI; paridade gratuita.
+- [Phase ?]: [05-01] SinaisTecnicos nested por família; cross/posição×MM200 SEMPRE sobre SMA (D-03); RSI Wilder SMA-seeded = 70.5328; MACD usa EMA padrão, não Wilder.
 
 ### Pending Todos
 
@@ -95,9 +97,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-26T16:43:04.063Z
+Last session: 2026-06-26T17:54:13.685Z
 Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-motor-de-indicadores-puro/05-CONTEXT.md
+Resume file: None
 
 ## Operator Next Steps
 

@@ -14,10 +14,10 @@
 
 ### Médias móveis e cruzamentos (TREND)
 
-- [ ] **TREND-01**: User vê SMA 20/50/200 sobrepostas ao preço na aba Analisar
-- [ ] **TREND-02**: User vê a posição do preço vs. MM200 rotulada (acima/abaixo) como filtro primário de tendência de longo prazo
-- [ ] **TREND-03**: User vê a sinalização de golden cross / death cross (MM50 × MM200)
-- [ ] **TREND-04**: User pode alternar para EMA além da SMA (toggle; padrão SMA)
+- [x] **TREND-01**: User vê SMA 20/50/200 sobrepostas ao preço na aba Analisar
+- [x] **TREND-02**: User vê a posição do preço vs. MM200 rotulada (acima/abaixo) como filtro primário de tendência de longo prazo
+- [x] **TREND-03**: User vê a sinalização de golden cross / death cross (MM50 × MM200)
+- [x] **TREND-04**: User pode alternar para EMA além da SMA (toggle; padrão SMA)
 
 ### Canais de alta/baixa (CHAN)
 
@@ -32,8 +32,8 @@
 
 ### Momentum (MOM)
 
-- [ ] **MOM-01**: User vê o RSI(14) com faixas 30/70 (sobrevendido/sobrecomprado), calculado com suavização de Wilder
-- [ ] **MOM-02**: User vê o MACD(12/26/9) com o cruzamento da linha de sinal
+- [x] **MOM-01**: User vê o RSI(14) com faixas 30/70 (sobrevendido/sobrecomprado), calculado com suavização de Wilder
+- [x] **MOM-02**: User vê o MACD(12/26/9) com o cruzamento da linha de sinal
 
 ### Timing consultivo (TIMING)
 
@@ -59,8 +59,8 @@
 
 > Continua a numeração de TEST-01/TEST-02 (coerência cross-modo, marco v1.0).
 
-- [ ] **TEST-03**: Golden test trava RSI e ADX com suavização de **Wilder** (`ewm(alpha=1/length, adjust=False)`, seed SMA) contra fixtures de referência (cruzados com TradingView)
-- [ ] **TEST-04**: No-repaint test garante que os sinais não usam dados futuros — `indicador(série[:k])[-1] == indicador(série)[k-1]`
+- [x] **TEST-03**: Golden test trava RSI e ADX com suavização de **Wilder** (`ewm(alpha=1/length, adjust=False)`, seed SMA) contra fixtures de referência (cruzados com TradingView)
+- [x] **TEST-04**: No-repaint test garante que os sinais não usam dados futuros — `indicador(série[:k])[-1] == indicador(série)[k-1]`
 - [ ] **TEST-05**: Test cobre a série split-adjusted num ticker com split conhecido (sem cruzamentos espúrios na data do split)
 - [ ] **TEST-06**: Test trava as regras de desempate do composite de timing (casos-limite: ex.: "acima da MM200 mas ADX < 20")
 - [x] **TEST-07**: Invariante — os 64 golden tests de valuation existentes permanecem verdes (nenhuma fórmula do livro alterada)
@@ -99,17 +99,17 @@ Mapeamento requisito → fase. Preenchido na criação do roadmap.
 | DATA-01 | Phase 4 | Complete |
 | DATA-02 | Phase 4 | Complete |
 | DATA-03 | Phase 4 | Complete |
-| TREND-01 | Phase 5 | Pending |
-| TREND-02 | Phase 5 | Pending |
-| TREND-03 | Phase 5 | Pending |
-| TREND-04 | Phase 5 | Pending |
+| TREND-01 | Phase 5 | Complete |
+| TREND-02 | Phase 5 | Complete |
+| TREND-03 | Phase 5 | Complete |
+| TREND-04 | Phase 5 | Complete |
 | CHAN-01 | Phase 5 | Pending |
 | CHAN-02 | Phase 5 | Pending |
 | CHAN-03 | Phase 5 | Pending |
 | FORCE-01 | Phase 5 | Pending |
 | FORCE-02 | Phase 5 | Pending |
-| MOM-01 | Phase 5 | Pending |
-| MOM-02 | Phase 5 | Pending |
+| MOM-01 | Phase 5 | Complete |
+| MOM-02 | Phase 5 | Complete |
 | TIMING-01 | Phase 6 | Pending |
 | TIMING-02 | Phase 6 | Pending |
 | TIMING-03 | Phase 6 | Pending |
@@ -121,8 +121,8 @@ Mapeamento requisito → fase. Preenchido na criação do roadmap.
 | UI-05 | Phase 7 | Pending |
 | UI-06 | Phase 7 | Pending |
 | CLI-01 | Phase 6 | Pending |
-| TEST-03 | Phase 5 | Pending |
-| TEST-04 | Phase 5 | Pending |
+| TEST-03 | Phase 5 | Complete |
+| TEST-04 | Phase 5 | Complete |
 | TEST-05 | Phase 5 | Pending |
 | TEST-06 | Phase 6 | Pending |
 | TEST-07 | Phase 4 | Complete |

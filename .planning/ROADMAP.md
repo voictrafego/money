@@ -62,7 +62,7 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
   4. A série split-adjusted não gera cruzamentos/rompimentos espúrios num ticker com split conhecido (TEST-05).
   5. Zero novas dependências instaladas (só numpy/pandas/scipy já presentes); parâmetros canônicos vivem em config; os 64 golden tests seguem verdes (TEST-07).
 **Plans**: 3 plans
-- [ ] 05-01-PLAN.md — Contrato SinaisTecnicos + config + Wilder helper + Tendência (SMA/EMA+cross) + Momentum (RSI Wilder 70.5328 + MACD); golden + no-repaint
+- [x] 05-01-PLAN.md — Contrato SinaisTecnicos + config + Wilder helper + Tendência (SMA/EMA+cross) + Momentum (RSI Wilder 70.5328 + MACD); golden + no-repaint
 - [ ] 05-02-PLAN.md — Canais: Donchian 20/55 (shift1) + Bollinger 20/2σ (ddof=0) + squeeze percentil 126/20 (D-02); causal + no-repaint
 - [ ] 05-03-PLAN.md — Força: ADX(14) double-Wilder (1º válido idx 27) + regressão %/ano+R² (D-04) + montagem do calcular() + split ITSA4 (TEST-05) + checkpoint ADX×TradingView (TEST-03)
 
