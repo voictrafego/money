@@ -54,6 +54,10 @@ class Canais:
     rompimento_donchian: str    # "nova_maxima" | "perda_minima" | "nenhum" | "indisponivel"
     toque_bollinger: str        # "banda_superior" | "banda_inferior" | "nenhum" | "indisponivel"
     squeeze: str                # "squeeze_on" | "squeeze_off" | "indisponivel"
+    # Donchian-55 (mesma família, janela longa) — séries para o overlay da Phase 7.
+    # Aditivas (default None) para não quebrar o contrato travado no plan 05-01.
+    donchian_sup_55: pd.Series = None
+    donchian_inf_55: pd.Series = None
 
 
 @dataclass
@@ -170,6 +174,67 @@ def rsi_wilder(close: pd.Series, length: int = 14) -> pd.Series:
     rsi = np.where((avg_loss == 0) & (avg_gain == 0), 50.0, rsi)
     serie = pd.Series(rsi, index=close.index[1:])
     return serie.reindex(close.index)
+
+
+# --------------------------------------------------------------------------- #
+# Canais (CHAN-01..03) — Donchian 20/55 causal (.shift(1)) + Bollinger 20/2σ (ddof=0)
+# --------------------------------------------------------------------------- #
+def _canais(ohlc: pd.DataFrame, cfg: dict) -> Canais:
+    """Donchian 20/55 (canal causal) e Bollinger 20/2σ (desvio populacional).
+
+    Todo o canal é CAUSAL: o Donchian usa `.shift(1)` — o canal é definido só pelas barras
+    PASSADAS. Sem o shift, o max/min dos últimos n inclui o próprio close e o rompimento nunca
+    dispara (close ≤ max que contém o próprio close). O Bollinger usa desvio POPULACIONAL
+    (ddof=0, convenção TradingView/StockCharts); ddof=1 deslocaria as bandas. Histórico curto
+    degrada para "indisponivel" (min_periods=janela → NaN; mitiga T-05-04). O squeeze percentil
+    (largura_bb/squeeze_pct/squeeze) é preenchido no plan 05-02 Task 2.
+    """
+    ind = cfg["indicadores"]
+    high, low, close = ohlc["High"], ohlc["Low"], ohlc["Close"]
+
+    j_curto, j_longo = ind["donchian"]                 # [20, 55] — 20 é o canal primário
+    donchian_sup = high.rolling(j_curto, min_periods=j_curto).max().shift(1)
+    donchian_inf = low.rolling(j_curto, min_periods=j_curto).min().shift(1)
+    donchian_sup_55 = high.rolling(j_longo, min_periods=j_longo).max().shift(1)
+    donchian_inf_55 = low.rolling(j_longo, min_periods=j_longo).min().shift(1)
+
+    if len(close) == 0 or pd.isna(donchian_sup.iloc[-1]) or pd.isna(donchian_inf.iloc[-1]):
+        rompimento = "indisponivel"
+    elif close.iloc[-1] > donchian_sup.iloc[-1]:
+        rompimento = "nova_maxima"
+    elif close.iloc[-1] < donchian_inf.iloc[-1]:
+        rompimento = "perda_minima"
+    else:
+        rompimento = "nenhum"
+
+    jbb = ind["bollinger"]["janela"]
+    sigma = ind["bollinger"]["sigma"]
+    bb_med = close.rolling(jbb, min_periods=jbb).mean()
+    sd = close.rolling(jbb, min_periods=jbb).std(ddof=0)   # ddof=0 = população
+    bb_sup = bb_med + sigma * sd
+    bb_inf = bb_med - sigma * sd
+
+    if len(close) == 0 or pd.isna(bb_sup.iloc[-1]) or pd.isna(bb_inf.iloc[-1]):
+        toque = "indisponivel"
+    elif close.iloc[-1] >= bb_sup.iloc[-1]:
+        toque = "banda_superior"
+    elif close.iloc[-1] <= bb_inf.iloc[-1]:
+        toque = "banda_inferior"
+    else:
+        toque = "nenhum"
+
+    # Squeeze percentil (Task 2) — placeholders até o plan 05-02 Task 2.
+    largura_bb = pd.Series(np.nan, index=close.index)
+    squeeze_pct = pd.Series(np.nan, index=close.index)
+    squeeze = "indisponivel"
+
+    return Canais(
+        donchian_sup=donchian_sup, donchian_inf=donchian_inf,
+        bb_sup=bb_sup, bb_med=bb_med, bb_inf=bb_inf,
+        largura_bb=largura_bb, squeeze_pct=squeeze_pct,
+        rompimento_donchian=rompimento, toque_bollinger=toque, squeeze=squeeze,
+        donchian_sup_55=donchian_sup_55, donchian_inf_55=donchian_inf_55,
+    )
 
 
 def _momentum(close: pd.Series, cfg: dict) -> Momentum:
