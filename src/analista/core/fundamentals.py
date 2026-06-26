@@ -43,6 +43,8 @@ class CompanyData:
     beta: Optional[float] = None
     eh_concessionaria: bool = False
     serie_precos: Optional["pd.Series"] = None  # close diário 5a (índice = datas) p/ o gráfico
+    ohlc: Optional["pd.DataFrame"] = None           # frame OHLCV nominal 5a (Yahoo cru, auto_adjust=False)
+    ohlc_ajustado: Optional["pd.DataFrame"] = None  # OHLCV split-only-adjusted p/ indicadores (Phase 5)
 
     # proventos dos últimos 12 meses reais (datas do Yahoo) para o DY corrente (WR-04)
     dpa_trailing_12m: Optional[float] = None

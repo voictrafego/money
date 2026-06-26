@@ -39,6 +39,8 @@ def montar_empresa(
     c.dpa_trailing_12m = dm.dpa_trailing_12m  # DY corrente trailing-12m (WR-04)
     c.ano_dpa = dm.ano_dpa
     c.serie_precos = dm.serie_precos
+    c.ohlc = dm.ohlc                      # frame OHLCV nominal cru (D-02; None quando Yahoo falha)
+    c.ohlc_ajustado = dm.ohlc_ajustado    # OHLCV split-only-adjusted p/ indicadores (Phase 5)
     c.eh_concessionaria = any(t.lower() in (c.setor or "").lower() for t in setores_concessionaria)
 
     acoes_atual = dm.num_acoes
