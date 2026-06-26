@@ -8,9 +8,9 @@
 
 ### Dados de mercado (DATA)
 
-- [ ] **DATA-01**: O app preserva o frame OHLC que o Yahoo já baixa (sem nova chamada de rede) para alimentar os indicadores
-- [ ] **DATA-02**: Indicadores são calculados sobre série ajustada por **splits** (não por dividendos), evitando cruzamentos/rompimentos espúrios; o eixo do gráfico permanece em Close nominal (decisão CR-01)
-- [ ] **DATA-03**: Cada indicador degrada graciosamente quando falta histórico mínimo (ex.: "MM200 indisponível — histórico < 200 pregões"), sem quebrar o gráfico (paridade com GRAF-03)
+- [x] **DATA-01**: O app preserva o frame OHLC que o Yahoo já baixa (sem nova chamada de rede) para alimentar os indicadores
+- [x] **DATA-02**: Indicadores são calculados sobre série ajustada por **splits** (não por dividendos), evitando cruzamentos/rompimentos espúrios; o eixo do gráfico permanece em Close nominal (decisão CR-01)
+- [x] **DATA-03**: Cada indicador degrada graciosamente quando falta histórico mínimo (ex.: "MM200 indisponível — histórico < 200 pregões"), sem quebrar o gráfico (paridade com GRAF-03)
 
 ### Médias móveis e cruzamentos (TREND)
 
@@ -96,9 +96,9 @@ Mapeamento requisito → fase. Preenchido na criação do roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 4 | Pending |
-| DATA-02 | Phase 4 | Pending |
-| DATA-03 | Phase 4 | Pending |
+| DATA-01 | Phase 4 | Complete |
+| DATA-02 | Phase 4 | Complete |
+| DATA-03 | Phase 4 | Complete |
 | TREND-01 | Phase 5 | Pending |
 | TREND-02 | Phase 5 | Pending |
 | TREND-03 | Phase 5 | Pending |

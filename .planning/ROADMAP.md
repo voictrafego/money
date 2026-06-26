@@ -48,7 +48,7 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
   3. Quando o histórico é curto ou o `hist` vem vazio/None, o encanamento degrada graciosamente (campos `ohlc=None`) sem quebrar nada, espelhando o padrão GRAF-03 (DATA-03).
   4. Os 64 golden tests de valuation existentes continuam verdes após o encanamento (TEST-07) — invariante que se mantém ao longo de todas as fases do marco.
 **Plans**: 2 plans
-- [ ] 04-01-PLAN.md — Encanamento ohlc/ohlc_ajustado (ingest→build→CompanyData) + função pura de split + testes offline
+- [x] 04-01-PLAN.md — Encanamento ohlc/ohlc_ajustado (ingest→build→CompanyData) + função pura de split + testes offline
 - [ ] 04-02-PLAN.md — Validação multi-split ITSA4 + invariante TEST-07 (64 golden tests verdes)
 
 ### Phase 5: Motor de indicadores puro
