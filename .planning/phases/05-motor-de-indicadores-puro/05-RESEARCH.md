@@ -413,17 +413,17 @@ indicadores:
 
 **Os itens acima são convenções dominantes verificadas, não chutes** — mas A1/A2 dependem de cross-check visual com TradingView no passo de validação (não de pesquisa), conforme o STATE.md já registra ("Phase 5 — cruzar fixture RSI/ADX com TradingView antes de travar o golden").
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Donchian: uma ou duas janelas no breakout discreto?**
    - What we know: CHAN-01 pede Donchian 20 **e** 55; ambas as séries são computadas.
    - What's unclear: o sinal discreto de rompimento usa qual janela como primária (provavelmente 20 para breakout, 55 para tendência maior)?
-   - Recommendation: o planner define; sugestão = rótulo primário sobre Donchian 20, série de 55 disponível para o plot. Não é decisão de pesquisa.
+   - RESOLVED: rótulo discreto primário sobre Donchian 20; série de 55 disponível para o plot. Travado na interface do Plan 05-02.
 
 2. **Base temporal do ADX/cross em "perda da MM200":**
    - What we know: TIMING-03/04 (Phase 6) escolhem diário vs semanal; a engine da Phase 5 opera no frame diário entregue.
    - What's unclear: nada para a Phase 5 — a resample semanal é responsabilidade da Phase 6.
-   - Recommendation: `calcular` permanece agnóstica de timeframe (recebe o frame que lhe derem). A Phase 6 resample antes de chamar, se preciso.
+   - RESOLVED: `calcular` permanece agnóstica de timeframe (recebe o frame que lhe derem); resample semanal é da Phase 6. Travado no contexto do Plan 05-03.
 
 ## Environment Availability
 
@@ -440,7 +440,7 @@ indicadores:
 
 ## Validation Architecture
 
-> `nyquist_validation` não está desabilitado em config (ausente = habilitado). Seção incluída.
+> Nota: `workflow.nyquist_validation` está **desabilitado** (`false`) em `.planning/config.json`, então `VALIDATION.md` **não é exigido** nesta fase. Esta seção fica como referência de arquitetura de testes — as tarefas de teste concretas vivem nos PLAN.md (Wilder/no-repaint/split).
 
 ### Test Framework
 | Property | Value |
