@@ -63,7 +63,7 @@
 - [ ] **TEST-04**: No-repaint test garante que os sinais não usam dados futuros — `indicador(série[:k])[-1] == indicador(série)[k-1]`
 - [ ] **TEST-05**: Test cobre a série split-adjusted num ticker com split conhecido (sem cruzamentos espúrios na data do split)
 - [ ] **TEST-06**: Test trava as regras de desempate do composite de timing (casos-limite: ex.: "acima da MM200 mas ADX < 20")
-- [ ] **TEST-07**: Invariante — os 64 golden tests de valuation existentes permanecem verdes (nenhuma fórmula do livro alterada)
+- [x] **TEST-07**: Invariante — os 64 golden tests de valuation existentes permanecem verdes (nenhuma fórmula do livro alterada)
 
 ## Future Requirements (v2+)
 
@@ -125,7 +125,7 @@ Mapeamento requisito → fase. Preenchido na criação do roadmap.
 | TEST-04 | Phase 5 | Pending |
 | TEST-05 | Phase 5 | Pending |
 | TEST-06 | Phase 6 | Pending |
-| TEST-07 | Phase 4 | Pending |
+| TEST-07 | Phase 4 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 30 total
