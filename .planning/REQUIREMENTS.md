@@ -21,9 +21,9 @@
 
 ### Canais de alta/baixa (CHAN)
 
-- [ ] **CHAN-01**: User vê o canal de Donchian (20/55) com rompimentos rotulados (nova máxima / perda da mínima)
-- [ ] **CHAN-02**: User vê as Bandas de Bollinger (20, 2σ) com toque/rompimento de banda rotulado como contexto
-- [ ] **CHAN-03**: User vê a sinalização de Bollinger squeeze (bandas estreitas → baixa volatilidade)
+- [x] **CHAN-01**: User vê o canal de Donchian (20/55) com rompimentos rotulados (nova máxima / perda da mínima)
+- [x] **CHAN-02**: User vê as Bandas de Bollinger (20, 2σ) com toque/rompimento de banda rotulado como contexto
+- [x] **CHAN-03**: User vê a sinalização de Bollinger squeeze (bandas estreitas → baixa volatilidade)
 
 ### Força e direção da tendência (FORCE)
 
@@ -103,9 +103,9 @@ Mapeamento requisito → fase. Preenchido na criação do roadmap.
 | TREND-02 | Phase 5 | Complete |
 | TREND-03 | Phase 5 | Complete |
 | TREND-04 | Phase 5 | Complete |
-| CHAN-01 | Phase 5 | Pending |
-| CHAN-02 | Phase 5 | Pending |
-| CHAN-03 | Phase 5 | Pending |
+| CHAN-01 | Phase 5 | Complete |
+| CHAN-02 | Phase 5 | Complete |
+| CHAN-03 | Phase 5 | Complete |
 | FORCE-01 | Phase 5 | Pending |
 | FORCE-02 | Phase 5 | Pending |
 | MOM-01 | Phase 5 | Complete |
