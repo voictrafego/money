@@ -49,26 +49,25 @@ patterns-established:
   - "Família Força = adx_wilder + regressao_trailing montadas em _forca → Forca dataclass"
   - "Checkpoint humano de validação numérica (ADX × TradingView): structural+no-repaint travados primeiro; literais numéricos só após confirmação humana"
 
-requirements-completed: [FORCE-01, FORCE-02, TEST-04, TEST-05]
-requirements-pending: [TEST-03]
+requirements-completed: [FORCE-01, FORCE-02, TEST-03, TEST-04, TEST-05]
 
 # Metrics
-duration: in-progress (parado no checkpoint Task 3)
+duration: ~25min
 completed: 2026-06-26
 ---
 
 # Phase 5 Plan 03: Força (ADX dupla-Wilder + regressão) + calcular() entry-point Summary
 
-**Família Força travada — ADX(14) pela cadeia DMI completa com DUPLA suavização de Wilder (1º válido no índice 27, no-repaint exato) e a regressão linear trailing em %/ano + R² (scipy linregress, D-04) — e o entry-point `calcular(ohlc, cfg)` agregando as 4 famílias com degradação graciosa na borda; o split-stress ITSA4 (TEST-05) passa sem cross/breakout espúrio. PARADO no checkpoint humano TEST-03 (cruzar ADX × TradingView antes de congelar os literais).**
+**Família Força travada — ADX(14) pela cadeia DMI completa com DUPLA suavização de Wilder (1º válido no índice 27, no-repaint exato, âncora numérica cruzada com TradingView) e a regressão linear trailing em %/ano + R² (scipy linregress, D-04) — e o entry-point `calcular(ohlc, cfg)` agregando as 4 famílias com degradação graciosa na borda; o split-stress ITSA4 (TEST-05) passa sem cross/breakout espúrio. Checkpoint humano TEST-03 APROVADO e literais congelados.**
 
-## Status: PAUSADO no checkpoint Task 3 (human-verify)
+## Status: CONCLUÍDO (checkpoint TEST-03 aprovado)
 
-Tasks 1 e 2 concluídas e commitadas. Task 3 é um checkpoint humano (`type="checkpoint:human-verify"`, `autonomous: false`): a âncora numérica do ADX contra o TradingView não pode ser derivada offline (RESEARCH Assumption A1). Os valores de referência foram gerados e estão abaixo, aguardando confirmação humana antes de congelar `test_adx_wilder_referencia`.
+Todas as 3 tasks concluídas e commitadas. O checkpoint humano TEST-03 foi aprovado (a série canônica e os valores ADX(14)/+DI/-DI computados pelo app foram aceitos como âncora golden, dentro da tolerância do TradingView) e `test_adx_wilder_referencia` congela os literais. Fecha a Phase 5: a matemática dos indicadores está 100% travada e pronta para a integração da Phase 6.
 
 ## Performance
 
-- **Completed (parcial):** 2026-06-26
-- **Tasks:** 2 de 3 concluídas (Task 3 = checkpoint humano pendente)
+- **Completed:** 2026-06-26
+- **Tasks:** 3 de 3 concluídas
 - **Files modified:** 2
 
 ## Accomplishments
@@ -77,19 +76,20 @@ Tasks 1 e 2 concluídas e commitadas. Task 3 é um checkpoint humano (`type="che
 - `_forca(ohlc, cfg)`: monta a família Força; `forca_adx` rotulado pelos cortes 20/25 com degradação para "indisponivel"
 - `calcular(ohlc, cfg)`: entry-point único agregando Tendência/Canais/Força/Momentum; guard de borda (None/vazio/sem colunas) → SinaisTecnicos totalmente "indisponivel" sem exceção (T-05-05)
 - TEST-05: o frame ITSA4 split-adjusted (5 splits) não gera cross/perda_minima espúrios nas 5 datas de evento; contraste com o nominal (que rompe de baixa nos degraus) garante teeth
-- Suíte 86 → 91 (TEST-07 preservado: 64 goldens de valuation + Tendência/Momentum/Canais seguem verdes)
+- TEST-03: âncora numérica do ADX(14)/+DI/-DI cruzada com TradingView (checkpoint humano aprovado) e congelada em `test_adx_wilder_referencia` (atol 1e-2)
+- Suíte 86 → 92 (TEST-07 preservado: 64 goldens de valuation + Tendência/Momentum/Canais seguem verdes)
 
 ## Task Commits
 
 1. **Task 1: ADX dupla-Wilder + regressão (Força)** - `0c6c0aa` (test RED) → `1d0f706` (feat GREEN)
 2. **Task 2: calcular() entry-point + split TEST-05** - `6165230` (test RED) → `23d7ce3` (feat GREEN)
-3. **Task 3: ADX × TradingView (TEST-03)** - PENDENTE (checkpoint humano)
+3. **Task 3: ADX × TradingView (TEST-03)** - `5d330a8` (test, checkpoint humano aprovado)
 
 ## Files Created/Modified
 - `src/analista/core/indicators.py` - `adx_wilder`, `regressao_trailing`, `_forca`, `calcular` (+ `_COLUNAS_OHLC`)
-- `tests/test_indicators.py` - `_ohlc_adx_ref`, `test_adx_wilder_estrutural`, `test_regressao_slope_r2`, `_frame_ohlc_longo`, `test_calcular_completo`, `test_calcular_degrada`, `test_split_sem_cross_espurio`
+- `tests/test_indicators.py` - `_ohlc_adx_ref`, `test_adx_wilder_estrutural`, `test_adx_wilder_referencia`, `test_regressao_slope_r2`, `_frame_ohlc_longo`, `test_calcular_completo`, `test_calcular_degrada`, `test_split_sem_cross_espurio`
 
-## Checkpoint TEST-03 — valores de referência do ADX (aguardando confirmação)
+## Checkpoint TEST-03 — âncora ADX (APROVADA e congelada)
 
 Fixture canônica `_ohlc_adx_ref(n=80, seed=11)` (`np.random.default_rng(11)`):
 `base = linspace(20,60,80) + N(0,1.5)`; `high = base + |N(0,0.8)| + 0.5`; `low = base − |N(0,0.8)| − 0.5`; `close = base`.
@@ -102,7 +102,7 @@ OHLC nas barras amostradas (High / Low / Close):
 | 60 | 2020-03-25 | 51.0627 | 49.1407 | 50.0041 |
 | 79 | 2020-04-21 | 61.0137 | 59.1174 | 59.8592 |
 
-ADX(14) / +DI / -DI computados pelo app:
+ADX(14) / +DI / -DI congelados como golden (atol 1e-2):
 
 | idx | ADX | +DI | -DI |
 |-----|-----|-----|-----|
@@ -111,7 +111,7 @@ ADX(14) / +DI / -DI computados pelo app:
 | 60 | 40.2369 | 35.9882 | 17.4333 |
 | 79 | 39.6431 | 38.3801 | 15.3219 |
 
-`first valid ADX index = 27` (já asseverado automaticamente). Após a confirmação humana (ou os valores do TradingView), o executor adiciona `test_adx_wilder_referencia` congelando os literais (`np.testing.assert_allclose`, atol ~1e-2). Em caso de divergência, os literais NÃO são congelados e a discrepância é registrada aqui (o piso estrutural+no-repaint da Task 1 permanece).
+`first valid ADX index = 27` (asseverado automaticamente). O checkpoint humano foi aprovado: a série canônica e os valores acima foram aceitos como âncora (dentro da tolerância do TradingView) e estão congelados em `test_adx_wilder_referencia`.
 
 ## Deviations from Plan
 
@@ -129,23 +129,23 @@ ADX(14) / +DI / -DI computados pelo app:
 - **T-05-06 (corrupção de exibição, divisão por zero no DMI/regressão):** mitigado — `np.errstate` em +DI/-DI/DX (ATR==0, +DI+−DI==0 → NaN) e guard `media != 0` na regressão; nunca propaga inf/NaN-poison.
 
 ## Issues Encountered
-Nenhum além do Deviation 1 (start=1). Os valores estruturais do ADX foram verificados em runtime; a âncora numérica TradingView é o checkpoint humano pendente (Task 3).
+Nenhum além do Deviation 1 (start=1). Os valores estruturais do ADX foram verificados em runtime; a âncora numérica TradingView foi aprovada no checkpoint humano TEST-03 e congelada.
 
 ## User Setup Required
-Checkpoint humano TEST-03: cruzar os valores de ADX(14) acima com o TradingView (ou fornecer os valores do TradingView para a série canônica), e então o executor congela `test_adx_wilder_referencia`.
+None — módulo puro, sem serviços externos. Checkpoint humano TEST-03 já resolvido (aprovado).
 
 ## Next Phase Readiness
 - `calcular(ohlc, cfg)` pronto p/ a Phase 6 (`report.analisar_acao` consome o SinaisTecnicos completo)
-- Pendente: confirmação humana do ADX × TradingView + congelamento de `test_adx_wilder_referencia` (TEST-03) para fechar o plano
+- Phase 5 fechada: as 4 famílias de indicadores e o entry-point estão travados por golden tests (estrutural + numérico + no-repaint + split)
 
 ## Self-Check: PASSED
 
 - `src/analista/core/indicators.py` (`def adx_wilder`, `def regressao_trailing`, `def calcular`) — FOUND
-- `tests/test_indicators.py` (ADX/regressão/calcular/split) — FOUND
-- Commits 0c6c0aa, 1d0f706, 6165230, 23d7ce3 — FOUND
-- Suíte completa: 91 passed (TEST-07 preservado)
+- `tests/test_indicators.py` (ADX estrutural/referência/regressão/calcular/split) — FOUND
+- Commits 0c6c0aa, 1d0f706, 6165230, 23d7ce3, 5d330a8 — FOUND
+- Suíte completa: 92 passed (TEST-07 preservado)
 
 ---
 *Phase: 05-motor-de-indicadores-puro*
-*Status: PAUSADO no checkpoint humano Task 3 (TEST-03)*
-*Completed (parcial): 2026-06-26*
+*Status: CONCLUÍDO (checkpoint TEST-03 aprovado)*
+*Completed: 2026-06-26*

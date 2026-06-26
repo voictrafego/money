@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: — Indicadores de tendência
 status: executing
-stopped_at: "Phase 5 Plan 03 — checkpoint humano TEST-03 (ADX × TradingView) pendente; Tasks 1-2 commitadas"
+stopped_at: "Phase 5 Plan 03 CONCLUÍDO — checkpoint TEST-03 aprovado; Phase 5 fechada"
 last_updated: "2026-06-26T18:02:06.223Z"
 last_activity: 2026-06-26
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 5
-  completed_plans: 3
-  percent: 60
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 
 ## Current Position
 
-Phase: 05 (motor-de-indicadores-puro) — EXECUTING
-Plan: 3 of 3
-Status: PAUSADO no checkpoint humano TEST-03 (Tasks 1-2 de 3 concluídas e commitadas)
+Phase: 05 (motor-de-indicadores-puro) — CONCLUÍDA
+Plan: 3 of 3 (CONCLUÍDO)
+Status: Phase 5 fechada — checkpoint TEST-03 aprovado e literais congelados; pronta p/ Phase 6
 Last activity: 2026-06-26
 
-Progress: [██████░░░░] 60%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -72,7 +72,7 @@ Recent decisions affecting current work:
 - [v1.2 research]: RSI/ADX exigem suavização de **Wilder** (`ewm(alpha=1/length, adjust=False)`, seed SMA), não EMA padrão — travar com golden test cruzado com TradingView.
 - [v1.2 research]: `a.sinais` (`SinaisTecnicos`) calculado em `report.analisar_acao` — ponto único compartilhado por CLI e UI; paridade gratuita.
 - [Phase ?]: [05-01] SinaisTecnicos nested por família; cross/posição×MM200 SEMPRE sobre SMA (D-03); RSI Wilder SMA-seeded = 70.5328; MACD usa EMA padrão, não Wilder.
-- [05-03] ADX dupla-Wilder: 1ª suavização do DMI com start=1 (barra 0 = diff indefinido) → 1º DI no índice 14; 2ª suavização do DX com start=length → 1º ADX no índice 27. calcular() agrega as 4 famílias com guard de borda → fully-indisponivel. Checkpoint TEST-03 (ADX × TradingView) pendente.
+- [05-03] ADX dupla-Wilder: 1ª suavização do DMI com start=1 (barra 0 = diff indefinido) → 1º DI no índice 14; 2ª suavização do DX com start=length → 1º ADX no índice 27. calcular() agrega as 4 famílias com guard de borda → fully-indisponivel. Checkpoint TEST-03 (ADX × TradingView) APROVADO e literais congelados em test_adx_wilder_referencia.
 
 ### Pending Todos
 
@@ -99,8 +99,8 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-06-26T18:02:06.220Z
-Stopped at: Phase 5 Plan 03 Task 3 — checkpoint humano TEST-03 (ADX × TradingView)
-Resume file: .planning/phases/05-motor-de-indicadores-puro/05-03-SUMMARY.md
+Stopped at: Phase 5 CONCLUÍDA (Plan 03 + checkpoint TEST-03 aprovado)
+Resume file: None
 
 ## Operator Next Steps
 
