@@ -392,3 +392,30 @@ def _momentum(close: pd.Series, cfg: dict) -> Momentum:
         macd=macd, macd_sinal=macd_sinal, macd_hist=macd_hist,
         nivel_rsi=nivel_rsi, cruzamento_macd=cruzamento_macd,
     )
+
+
+# --------------------------------------------------------------------------- #
+# Entry-point — agrega as 4 famílias sobre o OHLC split-adjusted (CR-01)
+# --------------------------------------------------------------------------- #
+_COLUNAS_OHLC = ("Open", "High", "Low", "Close")
+
+
+def calcular(ohlc: "pd.DataFrame", cfg: dict) -> SinaisTecnicos:
+    """Ponto de entrada único: devolve um `SinaisTecnicos` completo (4 famílias).
+
+    Guard na borda (espelha `ddm.ddm_dois_estagios`, mitiga T-05-05): se `ohlc` é None,
+    vazio ou não tem as colunas OHLC, substitui por um frame vazio e ROTEIA pelas funções
+    de família — a degradação para "indisponivel" fica em um lugar só. Nunca levanta exceção
+    na aba do Streamlit. Consome SEMPRE o frame split-adjusted (CR-01) e é agnóstico de
+    timeframe (recebe o frame que lhe derem; o resample semanal é da Phase 6).
+    """
+    if ohlc is None or len(ohlc) == 0 or not set(_COLUNAS_OHLC).issubset(ohlc.columns):
+        ohlc = pd.DataFrame({c: pd.Series(dtype=float) for c in _COLUNAS_OHLC})
+
+    close = ohlc["Close"]
+    return SinaisTecnicos(
+        tendencia=_tendencia(close, cfg),
+        canais=_canais(ohlc, cfg),
+        forca=_forca(ohlc, cfg),
+        momentum=_momentum(close, cfg),
+    )
