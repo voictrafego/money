@@ -61,7 +61,7 @@
 
 - [x] **TEST-03**: Golden test trava RSI e ADX com suavização de **Wilder** (`ewm(alpha=1/length, adjust=False)`, seed SMA) contra fixtures de referência (cruzados com TradingView)
 - [x] **TEST-04**: No-repaint test garante que os sinais não usam dados futuros — `indicador(série[:k])[-1] == indicador(série)[k-1]`
-- [ ] **TEST-05**: Test cobre a série split-adjusted num ticker com split conhecido (sem cruzamentos espúrios na data do split)
+- [x] **TEST-05**: Test cobre a série split-adjusted num ticker com split conhecido (sem cruzamentos espúrios na data do split)
 - [ ] **TEST-06**: Test trava as regras de desempate do composite de timing (casos-limite: ex.: "acima da MM200 mas ADX < 20")
 - [x] **TEST-07**: Invariante — os 64 golden tests de valuation existentes permanecem verdes (nenhuma fórmula do livro alterada)
 
@@ -123,7 +123,7 @@ Mapeamento requisito → fase. Preenchido na criação do roadmap.
 | CLI-01 | Phase 6 | Pending |
 | TEST-03 | Phase 5 | Complete |
 | TEST-04 | Phase 5 | Complete |
-| TEST-05 | Phase 5 | Pending |
+| TEST-05 | Phase 5 | Complete |
 | TEST-06 | Phase 6 | Pending |
 | TEST-07 | Phase 4 | Complete |
 

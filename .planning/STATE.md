@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: — Indicadores de tendência
-status: executing
+status: ready_to_plan
 stopped_at: "Phase 5 Plan 03 CONCLUÍDO — checkpoint TEST-03 aprovado; Phase 5 fechada"
 last_updated: "2026-06-26T18:02:06.223Z"
 last_activity: 2026-06-26
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
   completed_plans: 4
-  percent: 80
+  percent: 50
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 
 ## Current Position
 
-Phase: 05 (motor-de-indicadores-puro) — CONCLUÍDA
-Plan: 3 of 3 (CONCLUÍDO)
-Status: Phase 5 fechada — checkpoint TEST-03 aprovado e literais congelados; pronta p/ Phase 6
+Phase: 6
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-06-26
 
 Progress: [████████░░] 80%
@@ -36,7 +36,7 @@ Progress: [████████░░] 80%
 
 **Velocity:**
 
-- Total plans completed: 9 (v1.0 + v1.1)
+- Total plans completed: 12 (v1.0 + v1.1)
 - Average duration: — min
 - Total execution time: — hours
 
@@ -47,6 +47,7 @@ Progress: [████████░░] 80%
 | 01 | 5 | - | - |
 | 02 | 2 | - | - |
 | 03 | 2 | - | - |
+| 05 | 3 | - | - |
 
 **Recent Trend:**
 
