@@ -254,6 +254,24 @@ def test_adx_wilder_estrutural():
         assert adx_k.iloc[-1] == pytest.approx(adx.iloc[k - 1], abs=1e-9)
 
 
+def test_adx_wilder_referencia():
+    # TEST-03 (checkpoint humano APROVADO): âncora numérica do ADX(14)/+DI/-DI cruzada com
+    # o TradingView na série canônica _ohlc_adx_ref(80, seed=11). Literais congelados (atol 1e-2).
+    cfg = _cfg_ind()
+    df = _ohlc_adx_ref()
+    adx, pdi, ndi = indicators.adx_wilder(df, cfg["indicadores"]["adx_janela"])
+    referencia = {
+        27: (33.2531, 34.4017, 18.8407),
+        40: (42.0324, 35.9687, 10.7024),
+        60: (40.2369, 35.9882, 17.4333),
+        79: (39.6431, 38.3801, 15.3219),
+    }
+    for i, (adx_ref, pdi_ref, ndi_ref) in referencia.items():
+        np.testing.assert_allclose(adx.iloc[i], adx_ref, atol=1e-2)
+        np.testing.assert_allclose(pdi.iloc[i], pdi_ref, atol=1e-2)
+        np.testing.assert_allclose(ndi.iloc[i], ndi_ref, atol=1e-2)
+
+
 def test_regressao_slope_r2():
     # Série perfeitamente linear → R² ~ 1.0 e slope_ano > 0; série flat → slope_ano ~ 0.
     idx = pd.date_range("2020-01-01", periods=120, freq="B")
