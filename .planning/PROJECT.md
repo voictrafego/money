@@ -21,6 +21,12 @@ consistência + v1.1 gráfico); 64 testes golden verdes.
 
 **Marco ativo: v1.2 — Indicadores de tendência (timing) na aba Analisar.**
 
+**Fase 5 completa (2026-06-26):** o módulo puro `core/indicators.py` calcula as 4 famílias
+(Tendência SMA/EMA+cross, Canais Donchian/Bollinger/squeeze, Força ADX/inclinação, Momentum
+RSI/MACD) a partir do OHLC via `indicators.calcular(ohlc, cfg) → SinaisTecnicos`, com a matemática
+travada por golden tests (Wilder, no-repaint, split ITSA4, ADX×TradingView). Suíte: 92 testes
+verdes. Próximo: Fase 6 — integração na engine + composite + alerta + CLI.
+
 ## Current Milestone: v1.2 Indicadores de tendência (timing) na aba Analisar
 
 **Goal:** Adicionar indicadores técnicos de tendência — consultivos, ligáveis/desligáveis — à aba
