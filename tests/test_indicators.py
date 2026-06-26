@@ -63,3 +63,68 @@ def test_historico_curto_tendencia():
     assert t.sma200.isna().all()
     assert t.posicao_mm200 == "indisponivel"
     assert t.cruzamento == "indisponivel"
+
+
+# --- Momentum (MOM-01..02) ---
+# Dataset canônico de Wilder ("New Concepts in Technical Trading Systems"), replicado por
+# StockCharts/Wikipedia/TradingView: primeiro RSI(14) = 70,5328 (SMA-seeded).
+_WILDER_CLOSES = [
+    44.3389, 44.0902, 44.1497, 43.6124, 44.3278, 44.8264, 45.0955, 45.4245, 45.8433,
+    46.0826, 45.8931, 46.0328, 45.6140, 46.2820, 46.2820, 46.0028, 46.0328, 46.4116,
+    46.2222, 45.6439, 46.2122, 46.2521, 45.7137, 46.4515, 45.7835, 45.3548, 44.0288,
+    44.1783, 44.2181, 44.5672, 43.4205, 42.6628, 43.1314,
+]
+
+
+def _serie_ruidosa(n: int = 320, seed: int = 42) -> pd.Series:
+    """Série determinística (tendência + ciclo + ruído seedado) para no-repaint/MACD."""
+    rng = np.random.default_rng(seed)
+    t = np.arange(n)
+    base = 50.0 + 10.0 * np.sin(t / 15.0) + 0.05 * t + rng.normal(0, 1.0, n)
+    idx = pd.date_range("2019-01-01", periods=n, freq="B")
+    return pd.Series(base, index=idx)
+
+
+def test_rsi_wilder_canonico():
+    # Âncora pública: 1º RSI(14) = 70,5328; cinco seguintes batem o TradingView.
+    close = pd.Series(_WILDER_CLOSES)
+    rsi = indicators.rsi_wilder(close, length=14)
+    validos = rsi.dropna()
+    assert validos.iloc[0] == pytest.approx(70.5328, abs=1e-3)
+    np.testing.assert_allclose(
+        validos.iloc[:6].to_numpy(float),
+        [70.5328, 66.3186, 66.5498, 69.4063, 66.3552, 57.9749],
+        atol=1e-3,
+    )
+
+
+def test_macd_cross():
+    # MACD usa EMA padrão (não Wilder). Recorta no 1º bar de cruzamento da linha×sinal.
+    cfg = _cfg_ind()
+    close = _serie_ruidosa()
+    fast, slow, signal = cfg["indicadores"]["macd"]
+    macd = close.ewm(span=fast, adjust=False).mean() - close.ewm(span=slow, adjust=False).mean()
+    macd_sinal = macd.ewm(span=signal, adjust=False).mean()
+    d = macd - macd_sinal
+    sign = np.sign(d)
+    cross_pos = None
+    for i in range(1, len(d)):
+        if sign.iloc[i] > 0 and sign.iloc[i - 1] <= 0:
+            cross_pos = i
+            break
+    assert cross_pos is not None
+    m = indicators._momentum(close.iloc[: cross_pos + 1], cfg)
+    assert m.cruzamento_macd == "cruz_alta"
+
+
+def test_no_repaint_momentum():
+    # ind(s[:k])[-1] == ind(s)[k-1] para RSI e linha MACD (TEST-04).
+    cfg = _cfg_ind()
+    s = _serie_ruidosa()
+    rsi_full = indicators.rsi_wilder(s, length=cfg["indicadores"]["rsi_janela"])
+    macd_full = indicators._momentum(s, cfg).macd
+    for k in (60, 120, 200, 300):
+        rsi_k = indicators.rsi_wilder(s.iloc[:k], length=cfg["indicadores"]["rsi_janela"])
+        assert rsi_k.iloc[-1] == pytest.approx(rsi_full.iloc[k - 1], abs=1e-9)
+        macd_k = indicators._momentum(s.iloc[:k], cfg).macd
+        assert macd_k.iloc[-1] == pytest.approx(macd_full.iloc[k - 1], abs=1e-9)
