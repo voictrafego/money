@@ -128,3 +128,52 @@ def test_no_repaint_momentum():
         assert rsi_k.iloc[-1] == pytest.approx(rsi_full.iloc[k - 1], abs=1e-9)
         macd_k = indicators._momentum(s.iloc[:k], cfg).macd
         assert macd_k.iloc[-1] == pytest.approx(macd_full.iloc[k - 1], abs=1e-9)
+
+
+# --- Canais (CHAN-01..03) ---
+def _frame_ohlc(close, high=None, low=None, start: str = "2021-01-01") -> pd.DataFrame:
+    """Frame OHLC determinístico (colunas capitalizadas, DatetimeIndex) para os Canais."""
+    close = np.asarray(close, dtype=float)
+    high = close + 0.5 if high is None else np.asarray(high, dtype=float)
+    low = close - 0.5 if low is None else np.asarray(low, dtype=float)
+    idx = pd.date_range(start, periods=len(close), freq="B")
+    return pd.DataFrame({"High": high, "Low": low, "Close": close}, index=idx)
+
+
+def test_donchian_breakout_causal():
+    # Canal Donchian-20 dos 20 bars ANTERIORES (.shift(1)); último close rompe acima → nova_maxima.
+    cfg = _cfg_ind()
+    close = np.full(60, 100.0)
+    close[-1] = 120.0
+    df = _frame_ohlc(close)
+    c = indicators._canais(df, cfg)
+    assert c.rompimento_donchian == "nova_maxima"
+
+    # No-repaint: o canal nunca inclui a barra atual → _canais(s[:k]).iloc[-1] == _canais(s)[k-1].
+    for k in (40, 50):
+        ck = indicators._canais(df.iloc[:k], cfg)
+        assert ck.donchian_sup.iloc[-1] == pytest.approx(c.donchian_sup.iloc[k - 1], abs=1e-9)
+        assert ck.donchian_inf.iloc[-1] == pytest.approx(c.donchian_inf.iloc[k - 1], abs=1e-9)
+
+    # Sem o .shift(1) o max dos últimos 20 incluiria a própria barra (high=120.5) → nunca romperia.
+    hi20_sem_shift = df["High"].rolling(20, min_periods=20).max()
+    assert df["Close"].iloc[-1] <= hi20_sem_shift.iloc[-1]
+
+
+def test_bollinger_touch():
+    # Último close encosta na banda superior; bb usa desvio POPULACIONAL (ddof=0, TradingView).
+    cfg = _cfg_ind()
+    close = np.full(40, 50.0)
+    close[-1] = 60.0
+    df = _frame_ohlc(close, high=np.full(40, 60.5), low=np.full(40, 49.5))
+    c = indicators._canais(df, cfg)
+    assert c.toque_bollinger == "banda_superior"
+
+    # Cross-check ddof=0 num slice fixo: bb_sup == SMA20 + 2*std_populacional dos últimos 20.
+    sl = pd.Series(close[-20:])
+    sigma = cfg["indicadores"]["bollinger"]["sigma"]
+    esperado = sl.mean() + sigma * sl.std(ddof=0)
+    np.testing.assert_allclose(c.bb_sup.iloc[-1], esperado, rtol=1e-12)
+    # Discriminação anti-ddof=1: a amostral deslocaria a banda e NÃO bateria.
+    esperado_ddof1 = sl.mean() + sigma * sl.std(ddof=1)
+    assert not np.isclose(c.bb_sup.iloc[-1], esperado_ddof1, rtol=1e-9)
