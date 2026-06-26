@@ -66,3 +66,18 @@ ddm:
   sensibilidade:
     delta_ke: [-0.02, -0.01, 0.0, 0.01, 0.02]
     delta_g: [-0.01, -0.005, 0.0, 0.005, 0.01]
+
+# --- v1.2: indicadores técnicos (consultivos) — parâmetros canônicos ---
+indicadores:
+  sma_emas: [20, 50, 200]
+  donchian: [20, 55]
+  bollinger:
+    janela: 20
+    sigma: 2.0
+  squeeze_janela: 126        # ~6 meses
+  squeeze_percentil: 20
+  adx_janela: 14             # Wilder
+  rsi_janela: 14             # Wilder
+  rsi_faixas: [30, 70]
+  macd: [12, 26, 9]
+  regressao_janela: 90       # ~1 trimestre
