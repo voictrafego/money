@@ -56,6 +56,8 @@ class DadosMercado:
     dpa_trailing_12m: Optional[float] = None  # soma dos proventos/ação dos últimos 12 meses reais
     ano_dpa: Optional[int] = None             # ano da última data de provento (ano-base do DPA)
     serie_precos: Optional["pd.Series"] = None  # close diário 5a (índice = datas) p/ o gráfico
+    ohlc: Optional["pd.DataFrame"] = None           # frame OHLCV nominal 5a (Yahoo cru, auto_adjust=False)
+    ohlc_ajustado: Optional["pd.DataFrame"] = None  # OHLCV split-only-adjusted p/ indicadores (Phase 5)
 
 
 def _retornos_mensais(precos) -> list:
@@ -63,6 +65,49 @@ def _retornos_mensais(precos) -> list:
     mensal = precos.resample("ME").last()
     ret = mensal.pct_change().dropna()
     return list(ret.values)
+
+
+def _ajustar_por_split(hist) -> Optional["pd.DataFrame"]:
+    """Série/frame OHLCV ajustada SÓ por splits (D-03/D-05) — função pura.
+
+    Deriva o ajuste da coluna "Stock Splits" que já vem dentro do `hist` (auto_adjust=
+    False), sem nenhuma chamada de rede (D-04). NÃO usa "Adj Close" (que mistura
+    proventos — anti-pattern explícito): os indicadores técnicos precisam de preço
+    split-adjusted, não dividend-adjusted.
+
+    Regra (D-05): calcula o fator de split CUMULATIVO de trás para frente — para cada
+    data, o produto dos splits que ocorrem ESTRITAMENTE DEPOIS dela. Assim, após o
+    último split o fator é 1.0 e a ponta recente da ajustada coincide com a nominal.
+    Open/High/Low/Close são divididos pelo fator (preços antigos escalados para a base
+    recente) e Volume é multiplicado pelo fator (sentido inverso). Colunas não-OHLCV
+    (Adj Close/Dividends/Stock Splits) são copiadas inalteradas.
+
+    Tolera frame sem a coluna "Stock Splits" (retorna cópia inalterada) e frame vazio
+    (retorna None), sem estourar. Não muta o frame de entrada.
+    """
+    if hist is None or hist.empty:
+        return None
+
+    aj = hist.copy(deep=True)
+    if "Stock Splits" not in aj.columns:
+        return aj
+
+    splits = aj["Stock Splits"].fillna(0.0)
+    # fator de split em cada dia: o próprio valor quando > 0, senão 1.0 (sem evento)
+    fator_dia = splits.where(splits > 0, 1.0)
+    # fator cumulativo "para frente": produto dos splits que ocorrem APÓS cada data.
+    # cumprod reverso de fator_dia inclui o split do próprio dia; dividimos por ele
+    # para que a data DO split já fique na base recente (sem salto na data do split).
+    cum_rev = fator_dia[::-1].cumprod()[::-1]
+    fator_cumulativo = cum_rev / fator_dia
+
+    for col in ("Open", "High", "Low", "Close"):
+        if col in aj.columns:
+            aj[col] = aj[col] / fator_cumulativo
+    if "Volume" in aj.columns:
+        aj["Volume"] = aj["Volume"] * fator_cumulativo
+
+    return aj
 
 
 def coletar_mercado(ticker: str, meses_beta: int = 60) -> DadosMercado:
@@ -106,6 +151,8 @@ def coletar_mercado(ticker: str, meses_beta: int = 60) -> DadosMercado:
         nominal = hist["Close"].dropna()
         ajustado = hist["Adj Close"] if "Adj Close" in hist else hist["Close"]
         dm.serie_precos = nominal
+        dm.ohlc = hist                               # frame OHLCV nominal completo (D-01: nada descartado)
+        dm.ohlc_ajustado = _ajustar_por_split(hist)  # split-only-adjusted derivado de "Stock Splits" (D-03/D-05)
         if dm.preco_atual is None and len(nominal):
             dm.preco_atual = float(nominal.iloc[-1])
         ult_ano = hist.tail(252)
