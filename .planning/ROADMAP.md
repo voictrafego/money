@@ -153,7 +153,10 @@ Detalhes das fases concluídas mantidos abaixo em "Phase Details".
   3. O Ranking por múltiplos consome crescimento/ROE/payout normalizados (consistente com o Analisar), de modo que a mesma empresa não ranqueia barata por um g cru inflado num único ano.
   4. Validado: em VULC3 o ano extraordinário não infla o BSD nem o g exibido; em tickers normais (ITUB4/EGIE3/TAEE11/BBAS3) o ranqueamento e o g não regridem materialmente vs. o estado atual.
   5. A fronteira per-ano permanece intacta — `roe(ano)`/`payout(ano)`/lucro CRU seguem alimentando a elegibilidade per-ano (Cap. 8) e a tabela "Fundamentos (por ano)"; só os **agregados de crescimento** mudam de base.
-**Plans**: TBD
+**Plans**: 3 plans (3 waves)
+- [ ] 10-01-PLAN.md — GROW-01: estimador puro `crescimento_log_linear` (growth.py) + swap do g_historico (report.py)
+- [ ] 10-02-PLAN.md — GROW-02: BSD calcula crescimento via log-linear sobre série winsorizada (screening.py) + clamp do payout no fit da regressão de preço-alvo (comparables.py, D-06)
+- [ ] 10-03-PLAN.md — Validação multi-ticker (VULC3 + ITUB4/EGIE3/TAEE11/BBAS3) offline + live + rebaseline deliberado dos golden
 
 ### Phase 11: Apresentação, hierarquia e trava multi-ticker
 **Goal**: A UI passa a destacar a renda sustentável (DY recorrente formatado como % e em destaque no header), rebaixar o DY trailing inflado a contexto rotulado, e exibir o payout **cru real** do último ano como número distinto do payout sustentável de valuation. O marco fecha com a trava de validação multi-ticker (ITUB4/EGIE3/TAEE11/BBAS3 + VULC3) e o rebaseline **deliberado e justificado** dos golden — extensão do invariante TEST-07.
@@ -184,7 +187,7 @@ Fases concluídas executaram em ordem numérica (4 → 5 → 6 → 8 → 7). v1.
 | 8. Saneamento do motor DDM (caso VULC3) | v1.2 | 4/4 | Complete | 2026-06-27 |
 | 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 5/5 | Complete | 2026-06-27 |
 | 9. Payout sustentável + DY recorrente (núcleo de metodologia) | v1.3 | 3/3 | Complete   | 2026-06-27 |
-| 10. Crescimento robusto + de-poison do screening | v1.3 | 0/TBD | Not started | - |
+| 10. Crescimento robusto + de-poison do screening | v1.3 | 0/3 | Planned | - |
 | 11. Apresentação, hierarquia e trava multi-ticker | v1.3 | 0/TBD | Not started | - |
 
 ---
