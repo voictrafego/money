@@ -154,7 +154,7 @@ Detalhes das fases concluídas mantidos abaixo em "Phase Details".
   4. Validado: em VULC3 o ano extraordinário não infla o BSD nem o g exibido; em tickers normais (ITUB4/EGIE3/TAEE11/BBAS3) o ranqueamento e o g não regridem materialmente vs. o estado atual.
   5. A fronteira per-ano permanece intacta — `roe(ano)`/`payout(ano)`/lucro CRU seguem alimentando a elegibilidade per-ano (Cap. 8) e a tabela "Fundamentos (por ano)"; só os **agregados de crescimento** mudam de base.
 **Plans**: 3 plans (3 waves)
-- [ ] 10-01-PLAN.md — GROW-01: estimador puro `crescimento_log_linear` (growth.py) + swap do g_historico (report.py)
+- [x] 10-01-PLAN.md — GROW-01: estimador puro `crescimento_log_linear` (growth.py) + swap do g_historico (report.py)
 - [ ] 10-02-PLAN.md — GROW-02: BSD calcula crescimento via log-linear sobre série winsorizada (screening.py) + clamp do payout no fit da regressão de preço-alvo (comparables.py, D-06)
 - [ ] 10-03-PLAN.md — Validação multi-ticker (VULC3 + ITUB4/EGIE3/TAEE11/BBAS3) offline + live + rebaseline deliberado dos golden
 

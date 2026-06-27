@@ -18,7 +18,7 @@
 
 ### Crescimento robusto (GROW)
 
-- [ ] **GROW-01**: O **g histórico** exibido usa uma estimativa **robusta** de crescimento (não CAGR endpoint-a-endpoint, sensível a um único ano de fundo/topo), fiel à trajetória do lucro normalizado
+- [x] **GROW-01**: O **g histórico** exibido usa uma estimativa **robusta** de crescimento (não CAGR endpoint-a-endpoint, sensível a um único ano de fundo/topo), fiel à trajetória do lucro normalizado
 - [ ] **GROW-02**: O screening de **Garimpo (BSD)** e **Ranking** calcula crescimento de lucro/dividendos sobre a série **normalizada** (não o lucro/dividendo CRU da CVM), impedindo que um ano extraordinário envenene o ranqueamento
 
 ### Hierarquia de apresentação (HIER)
@@ -46,7 +46,7 @@
 |-------------|-------|--------|
 | DYR-01 | Phase 9 | Complete |
 | PAY-01 | Phase 9 | Complete |
-| GROW-01 | Phase 10 | Pending |
+| GROW-01 | Phase 10 | Complete |
 | GROW-02 | Phase 10 | Pending |
 | DYR-02 | Phase 11 | Pending |
 | PAY-02 | Phase 11 | Pending |
