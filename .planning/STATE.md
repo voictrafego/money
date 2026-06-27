@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: — Indicadores de tendência
-status: verifying
+status: ready_to_plan
 stopped_at: "Completed 08-04-PLAN.md (FIX-06 guardrails + golden de regressão VULC3). Fase 8 completa (4/4). Próximo: Phase 7 (UI)."
 last_updated: "2026-06-27T12:43:31.889Z"
 last_activity: 2026-06-27
 progress:
   total_phases: 5
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 16
   completed_plans: 16
-  percent: 100
+  percent: 120
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 
 ## Current Position
 
-Phase: 07 (ui-overlays-subpain-is-controles-e-enquadramento) — EXECUTING
-Plan: 5 of 5
-Status: Phase complete — ready for verification
+Phase: 08
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-06-27
 
 Progress: [██████████] 100%
@@ -36,7 +36,7 @@ Progress: [██████████] 100%
 
 **Velocity:**
 
-- Total plans completed: 14 (v1.0 + v1.1)
+- Total plans completed: 19 (v1.0 + v1.1)
 - Average duration: — min
 - Total execution time: — hours
 
@@ -49,6 +49,7 @@ Progress: [██████████] 100%
 | 03 | 2 | - | - |
 | 05 | 3 | - | - |
 | 06 | 2 | - | - |
+| 07 | 5 | - | - |
 
 **Recent Trend:**
 
