@@ -377,3 +377,21 @@ def test_split_sem_cross_espurio():
     janela_eventos = pd.Index([d for d, _ in _ITSA4_EVENTOS])
     proximos = perda_nom.reindex(janela_eventos, method="nearest")
     assert proximos.any(), "fixture sem teeth: nominal deveria romper de baixa nos splits"
+
+
+# --------------------------------------------------------------------------- #
+# Exposição read-only da close (split-adjusted) usada pelos indicadores (07-01)
+# --------------------------------------------------------------------------- #
+def test_sinais_close_paridade():
+    # 07-01 / UI-04: SinaisTecnicos.close é a MESMA série de ohlc["Close"] (índice e
+    # valores idênticos) — read-only, sem recálculo, para os marcadores de evento da UI.
+    cfg = _cfg_ind()
+    idx = pd.date_range("2019-01-01", periods=30, freq="B")
+    close = pd.Series(np.linspace(10.0, 25.0, 30), index=idx)
+    ohlc = pd.DataFrame(
+        {"Open": close, "High": close + 0.5, "Low": close - 0.5, "Close": close}
+    )
+
+    sinais = indicators.calcular(ohlc, cfg)
+
+    assert sinais.close.equals(ohlc["Close"])
