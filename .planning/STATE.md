@@ -4,14 +4,14 @@ milestone: v1.3
 milestone_name: Saneamento residual do valuation
 status: executing
 stopped_at: Phase 9 context gathered
-last_updated: "2026-06-27T20:02:24.996Z"
-last_activity: 2026-06-27 -- Phase 09 planning complete
+last_updated: "2026-06-27T21:36:22.680Z"
+last_activity: 2026-06-27
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 33
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-24)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação.
-**Current focus:** Phase 9 — Payout sustentável + DY recorrente (núcleo de metodologia)
+**Current focus:** Phase 09 — payout-sustent-vel-dy-recorrente-n-cleo-de-metodologia
 
 ## Current Position
 
-Phase: 9 — Payout sustentável + DY recorrente (núcleo de metodologia)
-Plan: — (roadmap criado; aguardando planejamento da fase)
+Phase: 09 (payout-sustent-vel-dy-recorrente-n-cleo-de-metodologia) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-06-27 -- Phase 09 planning complete
+Last activity: 2026-06-27
 
 **v1.3 — execução 9 → 10 → 11 (metodologia antes das telas que a consomem):**
 
@@ -63,6 +63,7 @@ Last activity: 2026-06-27 -- Phase 09 planning complete
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 09 P01 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,7 @@ Recent decisions affecting current work (v1.3 — saneamento residual):
 - GROW-02 (de-poison do Garimpo/Ranking) **gateia** as telas → metodologia (Phase 9) aterrissa antes; crescimento robusto + screening normalizado na Phase 10.
 - TEST-08 é a **trava de fechamento** (Phase 11): valida contra ITUB4/EGIE3/TAEE11/BBAS3 + VULC3; rebaseline de golden só **deliberado e justificado** (extensão de TEST-07). NÃO tunar a um ticker — fixes generalizam.
 - app.py é read-only (locked, Phase 2): DYR-02/PAY-02/HIER-01 são apresentação sobre campos já expostos pela engine, sem recálculo de método.
+- [Phase ?]: Phase 9 Plan 01: primitiva pura mediana_payout (mediana sobre série completa, sem janela 3a, sem clamp 1.0) como irmã de base_normalizada; raiz metodológica do PAY-01 travada por golden antes dos consumidores (Plan 02)
 
 ### Pending Todos
 
@@ -105,9 +107,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-27T19:19:52.219Z
+Last session: 2026-06-27T21:35:35.179Z
 Stopped at: Phase 9 context gathered
-Resume file: .planning/phases/09-payout-sustent-vel-dy-recorrente-n-cleo-de-metodologia/09-CONTEXT.md
+Resume file: None
 
 ## Operator Next Steps
 

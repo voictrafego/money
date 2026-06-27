@@ -13,7 +13,7 @@
 
 ### Payout sustentável (PAY)
 
-- [ ] **PAY-01**: O payout-para-valuation **expurga anos não-recorrentes** (distribuição extraordinária / payout >100%) por regra geral, devolvendo um payout sustentável para qualquer ticker — não a média crua de 3 anos que encosta no clamp de 100% e zera o crescimento por fundamentos
+- [x] **PAY-01**: O payout-para-valuation **expurga anos não-recorrentes** (distribuição extraordinária / payout >100%) por regra geral, devolvendo um payout sustentável para qualquer ticker — não a média crua de 3 anos que encosta no clamp de 100% e zera o crescimento por fundamentos
 - [ ] **PAY-02**: O app exibe o payout **cru do último ano** (valor real, ex.: 124,7%) como número distinto do payout sustentável de valuation — hoje as duas linhas ("Payout (último ano)" e "Payout p/ valuation") mostram o mesmo valor clampado
 
 ### Crescimento robusto (GROW)
@@ -45,7 +45,7 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | DYR-01 | Phase 9 | Pending |
-| PAY-01 | Phase 9 | Pending |
+| PAY-01 | Phase 9 | Complete |
 | GROW-01 | Phase 10 | Pending |
 | GROW-02 | Phase 10 | Pending |
 | DYR-02 | Phase 11 | Pending |
