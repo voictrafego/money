@@ -104,11 +104,11 @@ Phases execute in numeric order: 4 → 5 → 6 → 7
 | 3. Gráfico de Preço na aba Analisar | v1.1 | 2/2 | Complete | 2026-06-23 |
 | 4. Encanamento de dados + série correta | v1.2 | 2/2 | Complete | 2026-06-26 |
 | 5. Motor de indicadores puro | v1.2 | 3/3 | Complete | 2026-06-26 |
-| 6. Integração na engine + composite + alerta + CLI | v1.2 | 0/2 | Planned | - |
+| 6. Integração na engine + composite + alerta + CLI | v1.2 | 2/2 | Complete | 2026-06-26 |
 | 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 0/TBD | Not started | - |
 
 ---
-*Próximo passo: `/gsd-execute-phase 6`*
+*Próximo passo: `/gsd-plan-phase 7` (UI — ainda não planejada; ver nota de sequenciamento do 999.1)*
 
 ---
 
