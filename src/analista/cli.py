@@ -62,6 +62,10 @@ def cmd_analyze(args, cfg):
         print("Não foi possível montar a empresa (verifique ticker e conexão).")
         return 1
     c = empresas[0]
+    # FIX-03: resolve o rf do CAPM uma vez (Selic ao vivo do BCB, ou o fallback do config)
+    # e injeta em cfg ANTES da engine — a rede vive aqui, no entry point; analisar_acao
+    # permanece offline lendo cfg["capm"]["rf_local"].
+    cfg["capm"]["rf_local"] = macro.selic_para_capm(cfg["capm"]["selic_fallback"])
     a = report.analisar_acao(c, cfg)
     md = report.relatorio_markdown(c, a, cfg)
     destino = os.path.join(OUT_DIR, f"{c.ticker}.md")

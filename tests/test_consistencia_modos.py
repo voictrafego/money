@@ -129,6 +129,36 @@ def _empresa_param(ticker, *, preco, lucro, pl, div, num_acoes=1000):
     return c
 
 
+def _empresa_param_crescente(ticker, *, preco, lucro_inicial, g, pl, payout, num_acoes=1000):
+    """Como _empresa_param, mas com lucro/dividendos CRESCENTES à taxa `g` (payout fixo).
+
+    Rebaseline FIX-03: com o Ke local (~15% com Selic ao vivo + beta), uma série CONSTANTE
+    (g_alto=0) cola o intrínseco do DDM no limiar de DY>15% — não há janela robusta de
+    "barata sem disparar o flag DDM-FIX-05". Uma empresa que CRESCE (CAGR>0 ⇒ g_alto>0) faz
+    o intrínseco subir bem acima do piso de DY, recuperando uma alvo claramente SUBAVALIADA.
+    """
+    anos = list(range(2015, 2025))
+    c = CompanyData(ticker=ticker, nome=ticker, setor="Energia Elétrica", anos=anos)
+    for i, a in enumerate(anos):
+        lucro = round(lucro_inicial * (1 + g) ** i)
+        c.lucro_liquido[a] = lucro
+        c.patrimonio_liquido[a] = pl
+        c.dividendos[a] = round(payout * lucro)
+        c.num_acoes[a] = num_acoes
+        c.vendas_liquidas[a] = lucro * 5
+        c.fco[a] = lucro * 1.2
+        c.ativo_circulante[a] = 2000
+        c.passivo_circulante[a] = 800
+        c.divida_lp[a] = 500
+        c.despesa_juros[a] = 100
+        c.ativo_intangivel[a] = 200
+    c.preco_atual = preco
+    c.volume_financeiro_diario = 40_000_000
+    c.desempenho_relativo_6m = 0.10
+    c.beta = 0.8
+    return c
+
+
 def test_veredito_direcao_coerente():
     """Direção (subavaliada/cara) coerente entre DDM (Analisar) e regressão (Ranking).
 
@@ -143,9 +173,11 @@ def test_veredito_direcao_coerente():
     """
     cfg = _cfg()
 
-    # Empresa-alvo claramente barata: ROE ~25%, payout ~50%, preço (6,00) abaixo TANTO do
-    # valor intrínseco do DDM (~8,20 com LPA 1,0) quanto do preço-alvo da regressão.
-    alvo = _empresa_param("AAA3", preco=6.0, lucro=1000, pl=4000, div=500)
+    # Empresa-alvo claramente barata e que CRESCE (~14%/ano): preço (5,50) abaixo TANTO do
+    # valor intrínseco do DDM (vmin≈6,75) quanto do preço-alvo da regressão. Rebaseline FIX-03
+    # (ver _empresa_param_crescente): com o Ke local ~15% a alvo precisa crescer p/ o DDM
+    # render um intrínseco bem acima do preço SEM disparar o flag DY>15% (DY≈12,4% < 15%).
+    alvo = _empresa_param_crescente("AAA3", preco=5.5, lucro_inicial=600, g=0.14, pl=5000, payout=0.35)
     # Comparáveis com P/L corrente ALTO (preço caro vs lucro): puxam o P/L justo para cima,
     # tornando o preço-alvo da AAA3 (barata) acima do seu preço corrente.
     comp_b = _empresa_param("BBB3", preco=40.0, lucro=1000, pl=4000, div=500)
@@ -154,14 +186,15 @@ def test_veredito_direcao_coerente():
     empresas = [alvo, comp_b, comp_c, comp_d]
 
     # Vetores PL/DP/ROE como no modo Ranking VIVO (app.py/cli.py pós-FIX-04): tudo via
-    # métodos canônicos normalizados. As fixtures têm séries CONSTANTES, então a base
-    # normalizada == lucro cru e a direção do veredito não muda com a normalização —
-    # o que se garante aqui é que o guard usa exatamente os métodos que o Ranking consome.
-    # Rebaseline FIX-02: nesta fixture o g_alto adotado caiu de 0,025 (antigo piso g_estavel)
-    # para 0,0 — a série é constante (CAGR=0), e o piso g_estavel foi removido da fase
-    # explícita; o g sustentável g_fund=0,125 é só TETO (não eleva o CAGR=0). Com g_alto=0 o
-    # intrínseco (vmin≈6,79) segue acima do preço 6,00, então a DIREÇÃO SUBAVALIADA se mantém
-    # sem recalibrar a fixture — por isso o assert de direção abaixo permanece intacto.
+    # métodos canônicos normalizados — o que se garante aqui é que o guard usa exatamente os
+    # métodos que o Ranking consome. Os comparáveis seguem CONSTANTES (P/L corrente alto, p/
+    # puxar o P/L justo p/ cima); a alvo agora CRESCE (FIX-03).
+    # Rebaseline FIX-03 (Ke local ~15%): a alvo passou de série constante (g_alto=0, vmin≈6,79
+    # com o Ke antigo de 9,4%) para uma empresa que cresce ~14%/ano. Com o Ke local mais alto,
+    # uma série constante derruba o intrínseco p/ ~3,4 e qualquer preço abaixo disso dispara o
+    # flag DY>15% (vira "VERIFICAR", não "SUBAVALIADA"). A alvo crescente recupera vmin≈6,75 >
+    # preço 5,50 com DY≈12,4% < 15% — a DIREÇÃO SUBAVALIADA volta a valer com folga, sem
+    # afrouxar nenhum assert.
     PL, DP, ROE = [], [], []
     for c in empresas:
         PL.append(mult.preco_lucro(c.preco_atual, c.lpa_valuation()))

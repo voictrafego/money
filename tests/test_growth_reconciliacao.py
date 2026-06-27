@@ -105,10 +105,13 @@ def test_teto_absoluto_025_quando_g_fund_e_cagr_explodem():
 def test_trava_ke_quando_g_fund_supera_ke():
     """g_fund > Ke (e ≤ 0,25), CAGR ≥ g_fund ⇒ após a trava FIX-01, g_alto == Ke."""
     cfg = _cfg()
-    # ROE_val ≈ 0,30; payout 0,5 ⇒ g_fund ≈ 0,15 (> Ke≈0,0875, < 0,25); CAGR ≈ 0,20 ≥ g_fund.
+    # Rebaseline FIX-03: o Ke local (Selic fallback 0,105 + beta 0,8 × ERP 0,06) = 0,153 subiu
+    # frente ao Ke antigo (≈0,0875). Para o caso-limite "g_fund > Ke" continuar mordendo, o PL
+    # caiu de 1987 p/ 1700 ⇒ ROE_val ≈ 0,35 e g_fund ≈ 0,175 (> Ke 0,153, < 0,25); CAGR ≈ 0,20
+    # ≥ g_fund. Recalibração de fixture (não afrouxa assert): o assert g_alto == Ke é o mesmo.
     lucros = [100, 125, 156, 195, 244, 305, 381, 477, 596, 745]
     divs = [round(0.5 * x) for x in lucros]
-    c = _mk("TRKE", lucros, [1987] * 10, divs=divs, beta=0.8)
+    c = _mk("TRKE", lucros, [1700] * 10, divs=divs, beta=0.8)
 
     a = report.analisar_acao(c, cfg)
 

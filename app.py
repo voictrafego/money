@@ -96,6 +96,11 @@ if modo.startswith("🔎"):
             st.error(f"Não encontrei dados suficientes para {ticker}. "
                      "Confira o ticker ou adicione o mapeamento em data/ticker_map.json.")
         else:
+            # FIX-03: injeta o rf do CAPM (Selic ao vivo) em CFG antes da engine. Reusa
+            # selic_atual() — @st.cache_data garante UMA chamada de rede por execução,
+            # compartilhada com a métrica da sidebar. app.py segue read-only: só injeta
+            # input de config, não recalcula o método.
+            CFG["capm"]["rf_local"] = selic_atual()
             a = report.analisar_acao(c, CFG)
 
             st.markdown(f"### {a.ticker} — {a.nome}")
