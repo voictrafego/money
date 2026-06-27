@@ -253,3 +253,41 @@ def test_cli_secao_sinais_tecnicos_degradado():
 
     assert "## Sinais técnicos (consultivos)" in md
     assert "_Histórico de preços insuficiente para o read técnico._" in md
+
+
+# --------------------------------------------------------------------------- #
+# Degradação holística "só-de-força" (CR-01 / WR-02 / IN-02)
+# --------------------------------------------------------------------------- #
+def _ohlc_achatado(n: int = 220) -> pd.DataFrame:
+    """Série DIÁRIA achatada (close ~constante) por ≥200 barras.
+
+    A MM200 fica DISPONÍVEL (≥200 barras), mas a ausência total de movimento direcional
+    leva o ADX a ser todo-NaN ⇒ forca_adx="indisponivel". É o caso "só-de-força" (CR-01):
+    a direção (MM200) existe, mas a força (ADX) não — o read técnico degrada por aí.
+    """
+    close = pd.Series(100.0, index=pd.date_range("2019-01-01", periods=n, freq="B"))
+    return pd.DataFrame(
+        {"Open": close, "High": close + 0.3, "Low": close - 0.3, "Close": close}
+    )
+
+
+def test_degradacao_so_de_forca():
+    # CR-01/WR-02: ADX indisponível com MM200 disponível (série achatada) tem de degradar
+    # IGUAL ao histórico curto — nenhum campo derivado pode afirmar um estado fabricado.
+    cfg = copy.deepcopy(_cfg_ind())
+    cfg["indicadores"]["base_temporal"] = "diario"
+    c = CompanyData(ticker="TST", anos=[2023], ohlc_ajustado=_ohlc_achatado())
+
+    a = report.analisar_acao(c, cfg)
+
+    # Pré-condição do caso só-de-força: MM200 disponível, ADX indisponível.
+    assert a.sinais.tendencia.posicao_mm200 != "indisponivel"
+    assert a.sinais.forca.forca_adx == "indisponivel"
+    # Degradação holística: timing e matriz colapsam coerentemente (nada fabricado).
+    assert a.timing_resumo == ""
+    assert a.matriz_leitura == ""
+
+    # Markdown: a linha de degradação aparece e a de timing NÃO (guarda por not timing_resumo).
+    md = report.relatorio_markdown(c, a, cfg)
+    assert "_Histórico de preços insuficiente para o read técnico._" in md
+    assert "**Timing de entrada:**" not in md
