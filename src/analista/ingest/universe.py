@@ -90,13 +90,37 @@ def _carregar_override() -> dict:
     return {}
 
 
+def _cd_de(raw) -> Optional[int]:
+    """Extrai o CD_CVM de um valor do override (int direto ou dict {cd_cvm, setor})."""
+    if isinstance(raw, dict):
+        return raw.get("cd_cvm")
+    return raw
+
+
 def resolver(ticker: str, nome_yahoo: str = "") -> Tuple[Optional[int], str]:
-    """Resolve (CD_CVM, setor) para um ticker. CD_CVM None se não encontrado."""
+    """Resolve (CD_CVM, setor). FIX-06 (item K): aplica override de setor display-only por
+    ticker — quando o ticker traz `setor` no override (data/ticker_map.json), ele PREVALECE
+    sobre o SETOR_ATIV da CVM, que às vezes classifica errado (ex.: VULC3 cai em 'Têxtil',
+    mas Vulcabras é Calçados/Consumo Cíclico). O override é só de EXIBIÇÃO — nenhum cálculo
+    de valuation consome setor; o CD_CVM segue resolvido normalmente."""
+    chave = ticker.upper().replace(".SA", "")
+    raw = _carregar_override().get(chave)
+    setor_override = str(raw["setor"]) if isinstance(raw, dict) and raw.get("setor") else ""
+    cd_override = _cd_de(raw)
+    # Atalho 100% offline: cd + setor no override dispensam o cadastro CVM (sem rede).
+    if cd_override is not None and setor_override:
+        return int(cd_override), setor_override
+    cd, setor = _resolver_base(ticker, nome_yahoo)
+    return cd, (setor_override or setor)
+
+
+def _resolver_base(ticker: str, nome_yahoo: str = "") -> Tuple[Optional[int], str]:
+    """Resolução-base de (CD_CVM, setor): override de CD_CVM → match por nome → token-set."""
     override = _carregar_override()
     cad = carregar_cadastro()
     chave = ticker.upper().replace(".SA", "")
 
-    cd = override.get(chave)
+    cd = _cd_de(override.get(chave))
     if cd is not None and cad is not None:
         linha = cad[cad["CD_CVM"] == int(cd)]
         setor = linha["SETOR_ATIV"].iloc[0] if not linha.empty and "SETOR_ATIV" in cad.columns else ""

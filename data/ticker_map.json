@@ -1,5 +1,7 @@
 {
-  "_comentario": "Override ticker B3 -> CD_CVM (código da empresa na CVM). Curado a partir do cadastro oficial (cad_cia_aberta). Tem precedência sobre o casamento por nome. Adicione novos tickers aqui para resolução determinística.",
+  "_comentario": "Override ticker B3 -> CD_CVM (código da empresa na CVM). Curado a partir do cadastro oficial (cad_cia_aberta). Tem precedência sobre o casamento por nome. Adicione novos tickers aqui para resolução determinística. Forma dict {cd_cvm, setor} corrige o setor de EXIBIÇÃO quando o SETOR_ATIV da CVM classifica errado (FIX-06 item K, display-only).",
+
+  "VULC3": {"cd_cvm": 11762, "setor": "Calçados (Consumo Cíclico)"},
 
   "ITUB4": 19348,
   "ITUB3": 19348,

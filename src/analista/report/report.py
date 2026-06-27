@@ -64,7 +64,8 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
         "EY": mult.earnings_yield(lpa, c.preco_atual),
         "DP (payout)": c.payout_valuation(),
         "CDC": mult.cobertura_dividendos_caixa(c.fco.get(ult), c.num_acoes.get(ult), dpa),
-        "DY": c.dy_atual(),        # canônico (trailing-12m c/ fallback), igual em todo o app
+        "DY": c.dy_atual(),        # trailing-12m c/ fallback (contexto: inclui extraordinários)
+        "DY rec.": c.dy_recorrente(),  # FIX-06 item J: DY sobre provento NORMALIZADO (sustentável)
     }
 
     # --- Crescimento (Cap. 14) ---
@@ -155,10 +156,20 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     flag_payout = payout_ult is not None and payout_ult > 1.0
 
     # --- Veredito ---
-    valores = [r.valor_intrinseco for r in (a.ddm_h, a.ddm_constante) if r]
-    if valores:
-        a.vmin, a.vmax = min(valores), max(valores)
-    if valores and a.preco_atual:
+    # FIX-06 (item H): a banda intrínseca vmin/vmax = min/max da matriz de SENSIBILIDADE
+    # real (Ke×g, já calculada acima), não o toggle binário de 2 cenários (ddm_constante ×
+    # ddm_h). A matriz cobre o grid `delta_ke × delta_g` do config — é a sensibilidade
+    # econômica de fato (um Ke um pouco menor / g um pouco maior abre o teto da banda).
+    celulas_sens = [v for linha in (a.sensibilidade or []) for v in linha if v is not None]
+    if celulas_sens:
+        a.vmin, a.vmax = min(celulas_sens), max(celulas_sens)
+    else:
+        # Fallback (T-08-07): matriz só-None / DDM não rodou → degrada para os 2 cenários
+        # centrais (ou nada), como antes, sem deixar célula inválida virar banda espúria.
+        valores = [r.valor_intrinseco for r in (a.ddm_h, a.ddm_constante) if r]
+        if valores:
+            a.vmin, a.vmax = min(valores), max(valores)
+    if a.vmin is not None and a.vmax is not None and a.preco_atual:
         if a.preco_atual < a.vmin:
             # DDM-FIX-05 (caso VULC3): não rotular "SUBAVALIADA" quando flags de risco
             # contradizem a tese de desconto. Preço abaixo do intrínseco + payout>100% ou
@@ -367,7 +378,7 @@ def relatorio_markdown(c: CompanyData, a: AnaliseAcao, cfg: dict) -> str:
     L.append("## Múltiplos (Cap. 10)")
     mlin = []
     for k, v in a.multiplos.items():
-        if k in ("ML", "ROE", "DP (payout)", "DY", "EY"):
+        if k in ("ML", "ROE", "DP (payout)", "DY", "DY rec.", "EY"):
             mlin.append([k, _pct(v)])
         else:
             mlin.append([k, _num(v)])

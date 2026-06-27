@@ -158,3 +158,24 @@ class CompanyData:
         if ano is None:
             return None
         return mult.dividend_yield(self.dpa(ano), self.preco_atual)
+
+    # ------------------------------------------------------------------ #
+    # FIX-06 (item J): DY RECORRENTE — leitura sustentável vs trailing.
+    #
+    # `dy_atual()` é o DY TRAILING: carrega os proventos dos últimos 12 meses, inclusive
+    # um ano de distribuição extraordinária (JCP especial, dividendo de evento). Sobre um
+    # ano atípico ele superestima a renda sustentável. O DY RECORRENTE aplica a MESMA
+    # normalização de lucro (mediana/winsor dos últimos anos, primitiva do Plan 01) sobre
+    # a série de PROVENTOS, devolvendo a renda que a empresa distribui de forma recorrente.
+    # Ambos são exibidos lado a lado: o recorrente é a leitura sustentável; o trailing fica
+    # como contexto (e segue alimentando o detector de armadilha de dividendos, Cap. 6).
+    # ------------------------------------------------------------------ #
+    def dpa_recorrente(self, anos_media: int = 3, winsor: float = 0.10) -> Optional[float]:
+        """DPA recorrente: provento normalizado (robusto a UM ano extraordinário) por ação."""
+        base = norm.base_normalizada(self.serie("dividendos"), anos_media, winsor)
+        return mult.dpa(base, self.num_acoes.get(self.ultimo_ano()))
+
+    def dy_recorrente(self, anos_media: int = 3, winsor: float = 0.10) -> Optional[float]:
+        """DY recorrente (sustentável): DPA recorrente normalizado / preço. Distinto do
+        `dy_atual()` trailing, que reflete os proventos extraordinários do período."""
+        return mult.dividend_yield(self.dpa_recorrente(anos_media, winsor), self.preco_atual)
