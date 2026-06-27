@@ -11,6 +11,7 @@ import os
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from plotly.subplots import make_subplots
 
 from analista import grafico
 from analista.core import comparables as cmp
@@ -136,47 +137,15 @@ if modo.startswith("🔎"):
                 for al in a.alertas:
                     st.warning(f"⚠️ {esc_md(al)}")
 
-            # Gráfico de preço 5a + banda do valor intrínseco (DDM) — topo da aba, antes dos sub-tabs (D-03)
-            st.markdown("**Evolução do preço (5 anos) vs. valor intrínseco**", help=h("valor_intrinseco"))
-            serie = c.serie_precos
-            if serie is None or len(serie) == 0:
-                # D-05/GRAF-03: série indisponível → aviso sem quebrar a aba (espelha o aviso de preço atual)
-                st.info(
-                    "📉 Gráfico de preço indisponível agora (fonte Yahoo instável). Os fundamentos e o "
-                    "valor intrínseco (DDM, dados CVM) abaixo seguem válidos."
-                )
-            else:
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(
-                    x=serie.index, y=serie.values, mode="lines", name="Preço",
-                    line=dict(color="#1f77b4", width=2),
-                    hovertemplate="%{x|%d/%m/%Y}<br>R$ %{y:.2f}<extra></extra>",
-                ))
-                # D-01/D-02/D-06: banda horizontal plana entre vmin e vmax, só se o DDM calculou
-                if a.vmin is not None and a.vmax is not None:
-                    fig.add_hrect(
-                        y0=a.vmin, y1=a.vmax, line_width=0, fillcolor="green", opacity=0.12,
-                        annotation_text="Valor intrínseco (DDM)", annotation_position="top right",
-                    )
-                # Botões de período (range selector nativo do Plotly): 30 dias a 5 anos
-                fig.update_xaxes(rangeselector=dict(
-                    buttons=[
-                        dict(count=30, label="30D", step="day", stepmode="backward"),
-                        dict(count=6, label="6M", step="month", stepmode="backward"),
-                        dict(count=1, label="1A", step="year", stepmode="backward"),
-                        dict(step="all", label="5A"),
-                    ],
-                    activecolor="#1f77b4", x=0, y=1.12,
-                ))
-                fig.update_layout(
-                    height=400, margin=dict(l=10, r=10, t=50, b=10),
-                    yaxis_title="R$", xaxis_title=None, showlegend=False,
-                )
-                st.plotly_chart(fig, width="stretch")
+            # Gráfico de preço 5a + banda do valor intrínseco (DDM) — topo da aba, antes dos sub-tabs (D-03).
+            # Reservamos o slot do gráfico AQUI (topo) com st.container() e só o PREENCHEMOS depois que os
+            # controles abaixo rodarem: assim o render lê o st.session_state["tec_estado"] já atualizado pelos
+            # widgets no MESMO rerun (UI-03 — toggle redesenha na hora, sem lag de um clique). Read-only.
+            grafico_box = st.container()
 
             # Controles técnicos consultivos (UI-03/UI-05): os widgets SÓ capturam estado em
-            # st.session_state["tec_estado"] (mesmas chaves de grafico.estado_padrao()); o desenho
-            # dos overlays/subpainéis a partir desse estado é o Plan 05. app.py segue read-only.
+            # st.session_state["tec_estado"] (mesmas chaves de grafico.estado_padrao()); o gráfico
+            # acima consome esse estado para desenhar overlays/subpainéis. app.py segue read-only.
             st.session_state.setdefault("tec_estado", grafico.estado_padrao())
             est = st.session_state["tec_estado"]
             with st.expander("⚙️ Indicadores técnicos (consultivo)", expanded=False):
@@ -216,6 +185,83 @@ if modo.startswith("🔎"):
                         "RSI", value=est["momentum"]["rsi_on"], help=h("tec_rsi"))
                     est["momentum"]["macd_on"] = st.toggle(
                         "MACD", value=est["momentum"]["macd_on"], help=h("tec_macd"))
+
+            # Render do gráfico no slot reservado no topo, JÁ com o estado atualizado pelos controles
+            # acima. make_subplots dinâmico: row 1 = preço + banda DDM + overlays ativos (UI-01);
+            # rows seguintes = subpainéis SÓ dos osciladores ligados, montados a partir do SubpainelSpec
+            # (série(s) + níveis de referência vindos do módulo puro — app.py não mapeia nome→série nem
+            # hardcoda 20/25, 30/70, 0). Read-only: lê a.sinais, não recomputa indicador.
+            with grafico_box:
+                st.markdown("**Evolução do preço (5 anos) vs. valor intrínseco**", help=h("valor_intrinseco"))
+                serie = c.serie_precos
+                if serie is None or len(serie) == 0:
+                    # D-05/GRAF-03: série indisponível → aviso sem quebrar a aba (espelha o aviso de preço atual)
+                    st.info(
+                        "📉 Gráfico de preço indisponível agora (fonte Yahoo instável). Os fundamentos e o "
+                        "valor intrínseco (DDM, dados CVM) abaixo seguem válidos."
+                    )
+                else:
+                    estado = st.session_state["tec_estado"]
+                    # Técnico OFF/degradado ⇒ specs/overlays vazios ⇒ só o painel de preço (paridade com o atual).
+                    if grafico.leitura_tecnica_disponivel(a.sinais):
+                        overlays = grafico.overlays_preco(estado, a.sinais)
+                        specs = grafico.subpaineis_ativos(estado, a.sinais)
+                    else:
+                        overlays, specs = [], []
+                    layout = grafico.layout_subplots(len(specs))
+                    fig = make_subplots(
+                        rows=layout["rows"], cols=1, shared_xaxes=True,
+                        row_heights=layout["row_heights"], vertical_spacing=0.03,
+                    )
+                    # Row 1 — preço nominal (mesmo trace/estilo do gráfico atual; alinha com a banda DDM)
+                    fig.add_trace(go.Scatter(
+                        x=serie.index, y=serie.values, mode="lines", name="Preço",
+                        line=dict(color="#1f77b4", width=2),
+                        hovertemplate="%{x|%d/%m/%Y}<br>R$ %{y:.2f}<extra></extra>",
+                    ), row=1, col=1)
+                    # D-01/D-02/D-06: banda horizontal plana entre vmin e vmax, só se o DDM calculou
+                    if a.vmin is not None and a.vmax is not None:
+                        fig.add_hrect(
+                            y0=a.vmin, y1=a.vmax, line_width=0, fillcolor="green", opacity=0.12,
+                            annotation_text="Valor intrínseco (DDM)", annotation_position="top right",
+                            row=1, col=1,
+                        )
+                    # Overlays (MMs/Donchian/Bollinger) no eixo de preço — série + estilo vêm do OverlaySpec
+                    for ov in overlays:
+                        fig.add_trace(go.Scatter(
+                            x=ov.serie.index, y=ov.serie.values, mode="lines", name=ov.nome,
+                            line=dict(ov.estilo),
+                            hovertemplate=f"{ov.nome}<br>%{{x|%d/%m/%Y}}<br>R$ %{{y:.2f}}<extra></extra>",
+                        ), row=1, col=1)
+                    # Subpainéis dos osciladores ativos — série(s) + linhas de referência do SubpainelSpec
+                    for i, spec in enumerate(specs):
+                        r = i + 2
+                        for rotulo, s in spec.series:
+                            fig.add_trace(go.Scatter(
+                                x=s.index, y=s.values, mode="lines", name=rotulo,
+                                hovertemplate=f"{rotulo}<br>%{{x|%d/%m/%Y}}<br>%{{y:.2f}}<extra></extra>",
+                            ), row=r, col=1)
+                        for ref in spec.referencias:
+                            fig.add_hline(y=ref, line_width=1, line_dash="dot",
+                                          line_color="#aaaaaa", row=r, col=1)
+                        fig.update_yaxes(title_text=spec.nome.upper(), row=r, col=1)
+                    # Botões de período (range selector nativo do Plotly) na linha do preço
+                    fig.update_xaxes(rangeselector=dict(
+                        buttons=[
+                            dict(count=30, label="30D", step="day", stepmode="backward"),
+                            dict(count=6, label="6M", step="month", stepmode="backward"),
+                            dict(count=1, label="1A", step="year", stepmode="backward"),
+                            dict(step="all", label="5A"),
+                        ],
+                        activecolor="#1f77b4", x=0, y=1.12,
+                    ), row=1, col=1)
+                    fig.update_yaxes(title_text="R$", row=1, col=1)
+                    fig.update_layout(
+                        height=400 + 140 * len(specs), margin=dict(l=10, r=10, t=50, b=10),
+                        xaxis_title=None, showlegend=bool(overlays or specs),
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
+                    )
+                    st.plotly_chart(fig, width="stretch")
 
             # Enquadramento subordinado (UI-06): o veredito fundamentalista (acima) é o selo
             # decisório; a leitura técnica é CONSULTIVA e secundária — markdown/caption discreto,
