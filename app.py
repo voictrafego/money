@@ -202,12 +202,14 @@ if modo.startswith("🔎"):
                     )
                 else:
                     estado = st.session_state["tec_estado"]
-                    # Técnico OFF/degradado ⇒ specs/overlays vazios ⇒ só o painel de preço (paridade com o atual).
+                    # Técnico OFF/degradado ⇒ specs/overlays/marcadores vazios ⇒ só o painel de preço.
                     if grafico.leitura_tecnica_disponivel(a.sinais):
                         overlays = grafico.overlays_preco(estado, a.sinais)
                         specs = grafico.subpaineis_ativos(estado, a.sinais)
+                        # Datas EXATAS dos eventos (UI-04): lê a.sinais + close split-adjusted; sem recompute.
+                        marcadores = grafico.marcadores_eventos(a.sinais, a.sinais.close)
                     else:
-                        overlays, specs = [], []
+                        overlays, specs, marcadores = [], [], []
                     layout = grafico.layout_subplots(len(specs))
                     fig = make_subplots(
                         rows=layout["rows"], cols=1, shared_xaxes=True,
@@ -232,6 +234,24 @@ if modo.startswith("🔎"):
                             x=ov.serie.index, y=ov.serie.values, mode="lines", name=ov.nome,
                             line=dict(ov.estilo),
                             hovertemplate=f"{ov.nome}<br>%{{x|%d/%m/%Y}}<br>R$ %{{y:.2f}}<extra></extra>",
+                        ), row=1, col=1)
+                    # Marcadores de evento no row do preço (UI-04): triângulo-up verde p/ golden_cross/nova_maxima,
+                    # triângulo-down vermelho p/ death_cross/perda_minima; hover nomeia o evento e a data. Lista
+                    # vazia (degradação) ⇒ nenhum marcador, sem exceção.
+                    _ESTILO_MARCADOR = {
+                        "golden_cross": ("triangle-up", "#2ca02c"),
+                        "nova_maxima": ("triangle-up", "#2ca02c"),
+                        "death_cross": ("triangle-down", "#d62728"),
+                        "perda_minima": ("triangle-down", "#d62728"),
+                    }
+                    for m in marcadores:
+                        simbolo, cor = _ESTILO_MARCADOR.get(m.tipo, ("circle", "#888888"))
+                        fig.add_trace(go.Scatter(
+                            x=[m.data], y=[m.y], mode="markers", showlegend=False,
+                            marker=dict(symbol=simbolo, color=cor, size=11,
+                                        line=dict(width=1, color="white")),
+                            hovertext=[m.rotulo],
+                            hovertemplate="%{hovertext}<br>%{x|%d/%m/%Y}<br>R$ %{y:.2f}<extra></extra>",
                         ), row=1, col=1)
                     # Subpainéis dos osciladores ativos — série(s) + linhas de referência do SubpainelSpec
                     for i, spec in enumerate(specs):
