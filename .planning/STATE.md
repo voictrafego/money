@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: — Indicadores de tendência
-status: ready_to_plan
-stopped_at: Phase 8 completa (4/4) — FIX-06 + golden de regressão VULC3
-last_updated: "2026-06-27T12:00:00.000Z"
+status: executing
+stopped_at: "Completed 08-04-PLAN.md (FIX-06 guardrails + golden de regressão VULC3). Fase 8 completa (4/4). Próximo: Phase 7 (UI)."
+last_updated: "2026-06-27T12:14:38.010Z"
 last_activity: 2026-06-27
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 7
-  completed_plans: 7
-  percent: 80
+  total_plans: 16
+  completed_plans: 12
+  percent: 75
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-24)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação.
-**Current focus:** Phase 06 — integra-o-na-engine-composite-alerta-cli
+**Current focus:** Phase 07 — ui-overlays-subpain-is-controles-e-enquadramento
 
 ## Current Position
 
-Phase: 08 — Saneamento do motor DDM (caso VULC3) — CONCLUÍDA (4/4 plans)
-Plan: 08-04 concluído (FIX-06 guardrails + golden de regressão VULC3). Próximo: Phase 7 (UI)
-Status: Fase 8 completa; cascata VULC3 domada e travada por regressão
+Phase: 07 (ui-overlays-subpain-is-controles-e-enquadramento) — EXECUTING
+Plan: 2 of 5
+Status: Ready to execute
 Last activity: 2026-06-27
 
-Progress: [██████████] 100% (Phase 8)
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -64,6 +64,7 @@ Progress: [██████████] 100% (Phase 8)
 | Phase 08 P02 | ~20 | 2 tasks | 3 files |
 | Phase 08 P03 | ~25 | 2 tasks | 7 files |
 | Phase 08 P04 | ~35 | 2 tasks | 6 files |
+| Phase 07 P01 | 12 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,8 @@ Recent decisions affecting current work:
 - [08-03] Rebaseline de caso-limite recalibra a FIXTURE, nunca o assert: o Ke maior fez a alvo SUBAVALIADA flipar (série constante cola o intrínseco no limiar DY>15% ⇒ vira "VERIFICAR") — corrigido tornando a alvo crescente (g_alto>0); TRKE PL 1987→1700 p/ g_fund>Ke. test_ke_itau_capm (literais do livro) intacto.
 - [08-04] FIX-06 (capstone): banda intrínseca vmin/vmax = min/max da matriz Ke×g (sensibilidade REAL, já calculada), não o toggle binário ddm_constante×ddm_h; fallback gracioso p/ matriz só-None (T-08-07). DY recorrente (dy_recorrente sobre provento normalizado, reusa a primitiva do Plan 01) distinto do dy_atual() trailing — ambos exibidos, trailing preservado. Setor override display-only por ticker (dict {cd_cvm,setor} no ticker_map; resolver() vira wrapper sobre _resolver_base) — VULC3=11762, "Calçados (Consumo Cíclico)".
 - [08-04] Golden de regressão VULC3 (test_vulc3_regressao.py) trava a cascata domada end-to-end: base normalizada 4000<12000 extraordinário (FIX-04), g_alto=0 (FIX-02), Ke 15,78% (FIX-03), intrínseco 2,3× preço — não 11–23× (FIX-01/06), veredito VERIFICAR não verde (FIX-05), ROE/payout Analisar==Ranking. Nenhum golden existente precisou rebaseline (banda mais larga não virou caso algum). Suíte 133 verde.
+- [Phase ?]: [07-01] Degradacao holistica: timing_resumo vazio colapsa matriz_leitura (CR-01); markdown por not a.timing_resumo (IN-01); resample W-FRI por DatetimeIndex+colunas (WR-01).
+- [Phase ?]: [07-01] SinaisTecnicos.close (campo aditivo default None) expoe a close split-adjusted ja usada, read-only, para os marcadores de evento da UI (UI-04).
 
 ### Pending Todos
 
@@ -117,7 +120,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-27
+Last session: 2026-06-27T12:14:20.056Z
 Stopped at: Completed 08-04-PLAN.md (FIX-06 guardrails + golden de regressão VULC3). Fase 8 completa (4/4). Próximo: Phase 7 (UI).
 Resume file: None
 

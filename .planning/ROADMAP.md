@@ -91,7 +91,7 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
   3. Eventos (cruzamentos / rompimentos) aparecem marcados nas datas exatas no gráfico (UI-04) e cada novo indicador tem tooltip de glossário (ícone ?) com definição acessível, em paridade com o glossário do app (UI-05).
   4. O bloco técnico é apresentado como subordinado ao veredito fundamentalista (off por padrão, seção secundária, linguagem consultiva); critério de aceite: um leitor novo numa tela "cara + timing bullish" reconhece o fundamento como decisório (UI-06).
 **Plans**: 5 plans (3 waves)
-- [ ] 07-01-PLAN.md — Engine read-side: degradação holística (CR-01/IN-02) + close exposta em SinaisTecnicos + golden
+- [x] 07-01-PLAN.md — Engine read-side: degradação holística (CR-01/IN-02) + close exposta em SinaisTecnicos + golden
 - [ ] 07-02-PLAN.md — Glossário dos indicadores técnicos (tooltips UI-05)
 - [ ] 07-03-PLAN.md — grafico.py: lógica pura de overlays/subpainéis/layout/marcadores (UI-01/02/03/04)
 - [ ] 07-04-PLAN.md — app.py: controles HÍBRIDOS (session_state) + enquadramento subordinado + degradação (UI-03/05/06)
