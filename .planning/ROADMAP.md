@@ -103,7 +103,11 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
   3. **FIX-03:** os inputs do CAPM (rf/ERP/EMBI) vêm de dado vivo (BCB/Selic) ou abordagem local, não dos literais de 2019; Ke resultante coerente com small cap BR.
   4. **FIX-06:** guardrails de apresentação — DY recorrente vs trailing, banda intrínseca = sensibilidade real (não 2 cenários binários), setor correto; VULC3 vira caso de regressão.
   5. Os golden tests são **rebaselinados deliberadamente** (valores corretos mudam) e voltam a ficar verdes com os novos números justificados — não "verde a qualquer custo".
-**Plans**: TBD
+**Plans**: 4 plans (sequenciais — cascata FIX-04 → FIX-02 → FIX-03 → FIX-06)
+- [ ] 08-01-PLAN.md — FIX-04: camada de normalização de lucro (raiz) + roteamento no valuation + rebaseline cascata
+- [ ] 08-02-PLAN.md — FIX-02: reconciliação g_alto × g_fundamentos (payout≥100%⇒g=0) + golden
+- [ ] 08-03-PLAN.md — FIX-03: CAPM 'local' com Selic ao vivo (BCB) + fallback gracioso + rebaseline de Ke
+- [ ] 08-04-PLAN.md — FIX-06: banda = sensibilidade real + DY recorrente + setor + golden de regressão VULC3
 
 ## Progress
 
@@ -118,11 +122,11 @@ Phases execute in numeric order: 4 → 5 → 6 → 8 → 7 (Phase 8 antes da 7 �
 | 4. Encanamento de dados + série correta | v1.2 | 2/2 | Complete | 2026-06-26 |
 | 5. Motor de indicadores puro | v1.2 | 3/3 | Complete | 2026-06-26 |
 | 6. Integração na engine + composite + alerta + CLI | v1.2 | 2/2 | Complete | 2026-06-26 |
-| 8. Saneamento do motor DDM (caso VULC3) | v1.2 | 0/TBD | Planning | - |
+| 8. Saneamento do motor DDM (caso VULC3) | v1.2 | 0/4 | Planning | - |
 | 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 0/TBD | Not started | - |
 
 ---
-*Próximo passo: `/gsd-plan-phase 8` (saneamento do DDM — promovido do backlog 999.1)*
+*Próximo passo: `/gsd-execute-phase 8` (4 planos sequenciais — cascata FIX-04→02→03→06)*
 
 ---
 
