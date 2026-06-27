@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: — Indicadores de tendência
 status: executing
 stopped_at: "Completed 08-04-PLAN.md (FIX-06 guardrails + golden de regressão VULC3). Fase 8 completa (4/4). Próximo: Phase 7 (UI)."
-last_updated: "2026-06-27T12:27:47.812Z"
+last_updated: "2026-06-27T12:32:33.674Z"
 last_activity: 2026-06-27
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 16
-  completed_plans: 14
-  percent: 88
+  completed_plans: 15
+  percent: 94
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 ## Current Position
 
 Phase: 07 (ui-overlays-subpain-is-controles-e-enquadramento) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-06-27
 
-Progress: [█████████░] 88%
+Progress: [█████████░] 94%
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Progress: [█████████░] 88%
 | Phase 07 P01 | 12 | 3 tasks | 4 files |
 | Phase 07 P02 | 6 | 2 tasks | 2 files |
 | Phase 07 P03 | 14 | 2 tasks | 2 files |
+| Phase 07 P04 | 8 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,7 @@ Recent decisions affecting current work:
 - [Phase ?]: [07-01] SinaisTecnicos.close (campo aditivo default None) expoe a close split-adjusted ja usada, read-only, para os marcadores de evento da UI (UI-04).
 - [Phase ?]: [07-02] Glossário técnico: 11 chaves tec_* em glossario.G lidas por h('tec_*'); contrato (existência + tom consultivo, sem 'compre'/'venda') travado por tests/test_glossario.py.
 - [Phase ?]: [07-03] Montagem do gráfico técnico (overlays/subpainéis/marcadores/layout) extraída p/ grafico.py puro golden-coberto; overlays_preco e subpaineis_ativos devolvem SPEC completo (série+níveis 20/25,30/70,0), app.py não mapeia nome→série nem hardcoda níveis; subpainel só com série não-toda-NaN; marcadores varrem a série inteira nas datas exatas.
+- [Phase ?]: [07-04] Controles técnicos no app.py capturam estado em st.session_state['tec_estado'] (chaves de grafico.estado_padrao()); enquadramento UI-06: veredito no banner (decisório), técnico em markdown/caption (consultivo); degradação timing_resumo vazio ⇒ caption indisponível. Plan 05 consome o estado p/ desenhar overlays.
 
 ### Pending Todos
 
@@ -124,7 +126,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-27T12:27:18.277Z
+Last session: 2026-06-27T12:32:17.472Z
 Stopped at: Completed 08-04-PLAN.md (FIX-06 guardrails + golden de regressão VULC3). Fase 8 completa (4/4). Próximo: Phase 7 (UI).
 Resume file: None
 
