@@ -105,7 +105,7 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
   5. Os golden tests são **rebaselinados deliberadamente** (valores corretos mudam) e voltam a ficar verdes com os novos números justificados — não "verde a qualquer custo".
 **Plans**: 4 plans (sequenciais — cascata FIX-04 → FIX-02 → FIX-03 → FIX-06)
 - [x] 08-01-PLAN.md — FIX-04: camada de normalização de lucro (raiz) + roteamento no valuation + rebaseline cascata ✅ 2026-06-26
-- [ ] 08-02-PLAN.md — FIX-02: reconciliação g_alto × g_fundamentos (payout≥100%⇒g=0) + golden
+- [x] 08-02-PLAN.md — FIX-02: reconciliação g_alto × g_fundamentos (payout≥100%⇒g=0) + golden ✅ 2026-06-26
 - [ ] 08-03-PLAN.md — FIX-03: CAPM 'local' com Selic ao vivo (BCB) + fallback gracioso + rebaseline de Ke
 - [ ] 08-04-PLAN.md — FIX-06: banda = sensibilidade real + DY recorrente + setor + golden de regressão VULC3
 
@@ -122,7 +122,7 @@ Phases execute in numeric order: 4 → 5 → 6 → 8 → 7 (Phase 8 antes da 7 �
 | 4. Encanamento de dados + série correta | v1.2 | 2/2 | Complete | 2026-06-26 |
 | 5. Motor de indicadores puro | v1.2 | 3/3 | Complete | 2026-06-26 |
 | 6. Integração na engine + composite + alerta + CLI | v1.2 | 2/2 | Complete | 2026-06-26 |
-| 8. Saneamento do motor DDM (caso VULC3) | v1.2 | 0/4 | Planning | - |
+| 8. Saneamento do motor DDM (caso VULC3) | v1.2 | 2/4 | In Progress | - |
 | 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 0/TBD | Not started | - |
 
 ---
