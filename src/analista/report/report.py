@@ -188,71 +188,89 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             "Sem tendência definida (lateral / força fraca) — não é timing de entrada confirmado."
         )
 
-    # --- Matriz fundamento×técnico (TIMING-02, D-04/D-05/D-06) ---
-    # Read-only sobre o fundamento: LÊ o token líder de a.veredito (já calculado) e
-    # cruza com a.timing_estado, selecionando uma frase CURADA por célula. O fundamento
-    # sempre lidera (UI-06). Se o DDM não produziu veredito → matriz vazia (degradação).
-    if a.veredito.startswith("SUBAVALIADA"):
-        token = "SUBAVALIADA"
-    elif a.veredito.startswith("SOBREAVALIADA"):
-        token = "SOBREAVALIADA"
-    elif a.veredito.startswith("NO INTERVALO"):
-        token = "NO INTERVALO"
-    else:
-        token = ""
-
-    if token:
-        matriz = {
-            # Célula-âncora D-05 (verbatim) — liga direto ao alerta de reverificação.
-            ("SUBAVALIADA", "atencao"):
-                "Fundamentalmente descontada, porém o preço perdeu a tendência — "
-                "confirme que os fundamentos seguem intactos antes de entrar.",
-            ("SUBAVALIADA", "tendencia_de_alta"):
-                "Fundamentalmente descontada e tecnicamente em alta — os dois lados "
-                "conversam; ainda assim confirme os fundamentos antes de entrar.",
-            ("SUBAVALIADA", "sem_tendencia"):
-                "Fundamentalmente descontada, porém sem tendência técnica definida — "
-                "o desconto é do método; a entrada pode esperar confirmação de força.",
-            ("NO INTERVALO", "tendencia_de_alta"):
-                "Dentro do intervalo justo; tecnicamente em alta — acompanhe, "
-                "sem prêmio de desconto.",
-            ("NO INTERVALO", "sem_tendencia"):
-                "Dentro do intervalo justo e sem tendência técnica definida — "
-                "preço próximo do valor; nada a fazer pelo método agora.",
-            ("NO INTERVALO", "atencao"):
-                "Dentro do intervalo justo, mas o preço perdeu a tendência — "
-                "reveja os fundamentos antes de qualquer decisão.",
-            # Célula-âncora D-06 (verbatim) — o fundamento veta a euforia técnica.
-            ("SOBREAVALIADA", "tendencia_de_alta"):
-                "Tecnicamente em alta, porém acima do valor intrínseco — "
-                "o método não compra caro; aguarde um preço melhor.",
-            ("SOBREAVALIADA", "sem_tendencia"):
-                "Acima do valor intrínseco e sem tendência técnica de suporte — "
-                "o método não paga caro; aguarde um preço melhor.",
-            ("SOBREAVALIADA", "atencao"):
-                "Acima do valor intrínseco e com o preço perdendo tendência — "
-                "o método já não compraria caro; sem pressa.",
-        }
-        a.matriz_leitura = matriz.get((token, a.timing_estado), "")
-
-    # --- Alerta de reverificação (TIMING-03, D-07/D-08/D-09) ---
-    # OR dos três gatilhos de baixa, lidos dos rótulos discretos já classificados.
-    # Dispara INDEPENDENTE do veredito (D-08); consolida tudo numa única mensagem
-    # (D-09) com voz "reverifique os fundamentos" — NUNCA ordem de venda.
-    gatilhos: List[str] = []
-    if a.sinais.tendencia.posicao_mm200 == "abaixo":
-        gatilhos.append("preço abaixo da MM200")
-    if a.sinais.tendencia.cruzamento == "death_cross":
-        gatilhos.append("cruzamento de baixa MM50×MM200")
-    if a.sinais.canais.rompimento_donchian == "perda_minima":
-        gatilhos.append("rompimento da mínima do canal")
-    if gatilhos:
-        a.alerta_reverificacao = (
-            "Reverifique os fundamentos: " + "; ".join(gatilhos)
-            + ". Não é sinal de venda — confirme se os números seguem intactos."
-        )
+    # --- Matriz fundamento×técnico (TIMING-02) e alerta de reverificação (TIMING-03) ---
+    # Ambos read-only sobre o fundamento: LÊEM a.veredito/a.sinais já calculados, sem
+    # recalcular nem tocar veredito/vmin/vmax. Helpers puros p/ travar por golden direto.
+    a.matriz_leitura = _matriz_leitura(a.veredito, a.timing_estado)
+    a.alerta_reverificacao = _alerta_reverificacao(a.sinais)
 
     return a
+
+
+# --------------------------------------------------------------------------- #
+# Matriz fundamento×técnico e alerta de reverificação (Phase 6 Plan 02)
+# --------------------------------------------------------------------------- #
+# Frase CURADA por célula (token do veredito × estado técnico), NÃO um template
+# composicional (D-04). O fundamento sempre lidera a frase (garante UI-06). As duas
+# células-âncora têm texto VERBATIM (CONTEXT D-05 / D-06).
+_MATRIZ_LEITURA: Dict[tuple, str] = {
+    # Célula-âncora D-05 (verbatim) — liga direto ao alerta de reverificação.
+    ("SUBAVALIADA", "atencao"):
+        "Fundamentalmente descontada, porém o preço perdeu a tendência — "
+        "confirme que os fundamentos seguem intactos antes de entrar.",
+    ("SUBAVALIADA", "tendencia_de_alta"):
+        "Fundamentalmente descontada e tecnicamente em alta — os dois lados "
+        "conversam; ainda assim confirme os fundamentos antes de entrar.",
+    ("SUBAVALIADA", "sem_tendencia"):
+        "Fundamentalmente descontada, porém sem tendência técnica definida — "
+        "o desconto é do método; a entrada pode esperar confirmação de força.",
+    ("NO INTERVALO", "tendencia_de_alta"):
+        "Dentro do intervalo justo; tecnicamente em alta — acompanhe, "
+        "sem prêmio de desconto.",
+    ("NO INTERVALO", "sem_tendencia"):
+        "Dentro do intervalo justo e sem tendência técnica definida — "
+        "preço próximo do valor; nada a fazer pelo método agora.",
+    ("NO INTERVALO", "atencao"):
+        "Dentro do intervalo justo, mas o preço perdeu a tendência — "
+        "reveja os fundamentos antes de qualquer decisão.",
+    # Célula-âncora D-06 (verbatim) — o fundamento veta a euforia técnica.
+    ("SOBREAVALIADA", "tendencia_de_alta"):
+        "Tecnicamente em alta, porém acima do valor intrínseco — "
+        "o método não compra caro; aguarde um preço melhor.",
+    ("SOBREAVALIADA", "sem_tendencia"):
+        "Acima do valor intrínseco e sem tendência técnica de suporte — "
+        "o método não paga caro; aguarde um preço melhor.",
+    ("SOBREAVALIADA", "atencao"):
+        "Acima do valor intrínseco e com o preço perdendo tendência — "
+        "o método já não compraria caro; sem pressa.",
+}
+
+
+def _veredito_token(veredito: str) -> str:
+    """Token líder do veredito DDM (read-only). '' se o DDM não calculou."""
+    for t in ("SUBAVALIADA", "SOBREAVALIADA", "NO INTERVALO"):
+        if veredito.startswith(t):
+            return t
+    return ""
+
+
+def _matriz_leitura(veredito: str, timing_estado: str) -> str:
+    """Frase curada fundamento-primeiro (D-04). '' se veredito vazio (degradação)."""
+    token = _veredito_token(veredito)
+    if not token:
+        return ""
+    return _MATRIZ_LEITURA.get((token, timing_estado), "")
+
+
+def _alerta_reverificacao(sinais: Optional["indicators.SinaisTecnicos"]) -> Optional[str]:
+    """OR dos três gatilhos de baixa (D-07), consolidado numa única mensagem (D-09),
+    voz "reverifique os fundamentos" — NUNCA "venda". Dispara independente do veredito
+    (D-08). None quando nenhum gatilho aciona (inclui sinais "indisponivel")."""
+    if sinais is None:
+        return None
+    gatilhos: List[str] = []
+    if sinais.tendencia.posicao_mm200 == "abaixo":
+        gatilhos.append("preço abaixo da MM200")
+    if sinais.tendencia.cruzamento == "death_cross":
+        gatilhos.append("cruzamento de baixa MM50×MM200")
+    if sinais.canais.rompimento_donchian == "perda_minima":
+        gatilhos.append("rompimento da mínima do canal")
+    if not gatilhos:
+        return None
+    return (
+        "Reverifique os fundamentos: " + "; ".join(gatilhos)
+        + ". Não é sinal de venda — confirme se os números seguem intactos."
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -353,4 +371,22 @@ def relatorio_markdown(c: CompanyData, a: AnaliseAcao, cfg: dict) -> str:
         for al in a.alertas:
             L.append(f"- ⚠️ {al}")
     L.append("")
+
+    # Sinais técnicos (consultivos) — espelha o read da engine (CLI-01 / D-13).
+    # Paridade CLI↔UI gratuita (ambos consomem a.sinais/analisar_acao, ponto único).
+    L.append("## Sinais técnicos (consultivos)")
+    if (a.sinais is None or a.timing_estado == ""
+            or a.sinais.tendencia.posicao_mm200 == "indisponivel"):
+        # Degradação graciosa (DATA-03), espelha o fallback do DDM.
+        L.append("_Histórico de preços insuficiente para o read técnico._")
+        L.append("")
+    else:
+        L.append(f"**Timing de entrada:** {a.timing_resumo}")
+        L.append("")
+        L.append(a.matriz_leitura)              # fundamento-primeiro (D-04)
+        if a.alerta_reverificacao:
+            L.append("")
+            L.append(f"- ⚠️ {a.alerta_reverificacao}")
+        L.append("")
+
     return "\n".join(L)

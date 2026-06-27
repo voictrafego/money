@@ -100,3 +100,156 @@ def test_resample_semanal_w_fri():
     assert s1["High"] == df["High"].iloc[0:5].max()
     assert s1["Low"] == df["Low"].iloc[0:5].min()
     assert s1["Close"] == df["Close"].iloc[4]  # último pregão (sexta)
+
+
+# --------------------------------------------------------------------------- #
+# Matriz fundamento×técnico (TIMING-02 / D-04/D-05/D-06)
+# --------------------------------------------------------------------------- #
+# A matriz é read-only: SÓ lê o token líder do veredito e o estado técnico. Por isso
+# os goldens das células-âncora pinam os inputs direto no helper puro `_matriz_leitura`
+# (mesma frase que `analisar_acao` grava em `a.matriz_leitura`), sem precisar montar um
+# CompanyData inteiro com fundamentos que produzam SUBAVALIADA/SOBREAVALIADA.
+
+def test_matriz_subavaliada_atencao_eh_frase_ancora_d05():
+    # D-05 (verbatim): BARATO + ATENÇÃO → "atrativa, mas reverifique antes".
+    frase = report._matriz_leitura(
+        "SUBAVALIADA — preço R$ 10.00 abaixo do intervalo intrínseco R$ 15.00–20.00",
+        "atencao",
+    )
+    assert frase == (
+        "Fundamentalmente descontada, porém o preço perdeu a tendência — "
+        "confirme que os fundamentos seguem intactos antes de entrar."
+    )
+
+
+def test_matriz_sobreavaliada_alta_eh_frase_ancora_d06():
+    # D-06 (verbatim): CARO + ALTA → "o método não paga caro".
+    frase = report._matriz_leitura(
+        "SOBREAVALIADA — preço R$ 30.00 acima do intervalo intrínseco R$ 15.00–20.00",
+        "tendencia_de_alta",
+    )
+    assert frase == (
+        "Tecnicamente em alta, porém acima do valor intrínseco — "
+        "o método não compra caro; aguarde um preço melhor."
+    )
+
+
+def test_matriz_fundamento_lidera_sempre():
+    # D-04 / UI-06: o fundamento SEMPRE abre a frase. As células-âncora começam pelo
+    # adjetivo fundamentalista ("Fundamentalmente descontada" / "Tecnicamente em alta,
+    # porém acima do valor intrínseco" — o veto fundamentalista lidera a oração).
+    assert report._matriz_leitura("SUBAVALIADA — ...", "atencao").startswith(
+        "Fundamentalmente descontada"
+    )
+    # Demais células curadas também abrem pelo fundamento (não pela parte técnica).
+    assert report._matriz_leitura("NO INTERVALO — ...", "tendencia_de_alta").startswith(
+        "Dentro do intervalo justo"
+    )
+    assert report._matriz_leitura("SOBREAVALIADA — ...", "sem_tendencia").startswith(
+        "Acima do valor intrínseco"
+    )
+
+
+def test_matriz_veredito_vazio_degrada_para_vazio():
+    # DDM não calculou → veredito "" → matriz "" (sem frase inventada).
+    assert report._matriz_leitura("", "atencao") == ""
+    assert report._matriz_leitura("", "tendencia_de_alta") == ""
+
+
+# --------------------------------------------------------------------------- #
+# Alerta de reverificação (TIMING-03 / D-07/D-08/D-09)
+# --------------------------------------------------------------------------- #
+def _ohlc_baixa_rompimento() -> pd.DataFrame:
+    """Série DIÁRIA em queda contínua: preço termina ABAIXO da própria MM200 e fazendo
+    novas mínimas (perda da mínima do Donchian). Aciona ≥2 gatilhos de baixa.
+
+    O passo da queda (~0,47/barra) é maior que o offset Low (0,3), de modo que o Close
+    da ponta rompe abaixo da mínima causal das 20 barras anteriores (perda_minima)."""
+    closes = np.linspace(200.0, 60.0, 300)
+    idx = pd.date_range("2019-01-01", periods=len(closes), freq="B")
+    close = pd.Series(closes, index=idx)
+    return pd.DataFrame(
+        {
+            "Open": close.shift(1).bfill(),
+            "High": close + 0.3,
+            "Low": close - 0.3,
+            "Close": close,
+        }
+    )
+
+
+def test_alerta_dispara_consolidado_em_rompimento():
+    # D-07/D-09: OR dos gatilhos → UMA mensagem consolidada, voz reverificação, sem "venda".
+    cfg = copy.deepcopy(_cfg_ind())
+    cfg["indicadores"]["base_temporal"] = "diario"   # 300 barras diárias bastam p/ MM200
+    c = CompanyData(ticker="TST", anos=[2023], ohlc_ajustado=_ohlc_baixa_rompimento())
+
+    a = report.analisar_acao(c, cfg)
+
+    # Pré-condição: realmente abaixo da MM200 e perdendo a mínima do canal.
+    assert a.sinais.tendencia.posicao_mm200 == "abaixo"
+    assert a.sinais.canais.rompimento_donchian == "perda_minima"
+    # Alerta consolidado, voz reverificação.
+    assert a.alerta_reverificacao is not None
+    assert "Reverifique os fundamentos" in a.alerta_reverificacao
+    assert "Não é sinal de venda" in a.alerta_reverificacao
+    assert "preço abaixo da MM200" in a.alerta_reverificacao
+    assert "rompimento da mínima do canal" in a.alerta_reverificacao
+    # T-06-05: nunca soa como ordem de venda — "venda" só aparece dentro da negação.
+    assert a.alerta_reverificacao.count("venda") == 1
+    assert "Não é sinal de venda" in a.alerta_reverificacao
+
+
+def test_alerta_none_sem_rompimento():
+    # D-07: nenhum gatilho de baixa (preço acima da MM200, sem death cross / perda mínima)
+    # → alerta None. Reusa a série lateral-acima-da-MM200 (mesma de TEST-06).
+    cfg = copy.deepcopy(_cfg_ind())
+    cfg["indicadores"]["base_temporal"] = "diario"
+    c = CompanyData(ticker="TST", anos=[2023], ohlc_ajustado=_ohlc_acima_mm200_adx_fraco())
+
+    a = report.analisar_acao(c, cfg)
+
+    assert a.sinais.tendencia.posicao_mm200 == "acima"
+    assert a.alerta_reverificacao is None
+
+
+def test_alerta_independe_do_veredito_d08():
+    # D-08: o alerta dispara lendo SÓ os sinais, independente do veredito DDM.
+    # O helper puro recebe apenas `sinais` — não há canal para o veredito influenciar.
+    cfg = copy.deepcopy(_cfg_ind())
+    cfg["indicadores"]["base_temporal"] = "diario"
+    c = CompanyData(ticker="TST", anos=[2023], ohlc_ajustado=_ohlc_baixa_rompimento())
+    a = report.analisar_acao(c, cfg)
+    # veredito vazio (sem fundamentos) e ainda assim o alerta disparou.
+    assert a.veredito == ""
+    assert a.alerta_reverificacao is not None
+
+
+# --------------------------------------------------------------------------- #
+# Seção CLI "Sinais técnicos (consultivos)" (CLI-01 / D-13)
+# --------------------------------------------------------------------------- #
+def test_cli_secao_sinais_tecnicos_normal():
+    # CLI-01: a seção espelha o read da engine, com alerta ⚠️ quando há rompimento.
+    cfg = copy.deepcopy(_cfg_ind())
+    cfg["indicadores"]["base_temporal"] = "diario"
+    c = CompanyData(ticker="TST", anos=[2023], ohlc_ajustado=_ohlc_baixa_rompimento())
+    a = report.analisar_acao(c, cfg)
+
+    md = report.relatorio_markdown(c, a, cfg)
+
+    assert "## Sinais técnicos (consultivos)" in md
+    assert "**Timing de entrada:**" in md
+    # Glifo ⚠️ da seção Alertas reaparece no read técnico quando há alerta (paridade visual).
+    assert "- ⚠️ Reverifique os fundamentos" in md
+
+
+def test_cli_secao_sinais_tecnicos_degradado():
+    # D-13 / DATA-03: histórico ausente (ohlc_ajustado=None) → fallback em itálico, sem quebrar.
+    cfg = copy.deepcopy(_cfg_ind())
+    c = CompanyData(ticker="TST", anos=[2023], ohlc_ajustado=None)
+    a = report.analisar_acao(c, cfg)
+
+    md = report.relatorio_markdown(c, a, cfg)
+
+    assert "## Sinais técnicos (consultivos)" in md
+    assert "_Histórico de preços insuficiente para o read técnico._" in md
