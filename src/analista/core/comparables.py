@@ -100,9 +100,17 @@ def ajustar_regressao_pl(
 
     Descarta observações com valores ausentes/negativos de P/L. Requer pelo menos
     4 empresas para 3 parâmetros.
+
+    De-poison do fit (D-06, ver 09-CROSS-EFFECT-FASE10.md): o payout `d` é clampado em
+    [0,1] ANTES de montar a matriz de design. A regressão foi calibrada para payout no
+    domínio [0,1]; desde a Fase 9 `payout_valuation()` deixou de clampar (D-03), então um
+    payout legitimamente >100% (TAEE11 ≈ 2.16) entrava cru no fit e envenenava o coeficiente
+    b1. Clampar aqui é fonte única: cobre cli e app (FIX-04) sem duplicar o clamp já existente
+    da PREVISÃO em `preco_alvo_por_regressao`. O canônico `payout_valuation()`/`mediana_payout`
+    permanece SEM clamp (D-03 Fase 9).
     """
     linhas = [
-        (p, d, r)
+        (p, min(max(d, 0.0), 1.0), r)
         for p, d, r in zip(pl, dp, roe)
         if None not in (p, d, r) and p > 0
     ]
