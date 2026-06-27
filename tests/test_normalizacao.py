@@ -82,6 +82,53 @@ def test_serie_winsorizada_ignora_none_e_serie_curta():
 
 
 # --------------------------------------------------------------------------- #
+# mediana_payout — payout sustentável (PAY-01): mediana sobre a série COMPLETA,
+# SEM janela de 3a e SEM clamp em 1.0 (D-01/D-03/D-04).
+# --------------------------------------------------------------------------- #
+def test_mediana_payout_nao_crava_em_1_para_serie_acima_de_100pct():
+    # Espírito TAEE11 (D-03): transmissora que distribui de caixa regulatório paga
+    # >100% em TODO ano. A mediana é legítima >1.0 — NÃO pode ser cravada em 1.0.
+    res = norm.mediana_payout([2.0, 2.1, 2.2, 2.3])
+    assert res is not None
+    assert res > 1.0  # sem clamp
+    assert abs(res - 2.15) < 1e-9  # mediana de 4 = (2.1+2.2)/2
+
+
+def test_mediana_payout_descarta_spike_extraordinario():
+    # D-01: um ano extraordinário do PRÓPRIO histórico (1.30) é naturalmente
+    # descartado pela mediana, sem precisar marcar/excluir o ano explicitamente.
+    serie = [0.40, 0.45, 0.50, 1.30]
+    res = norm.mediana_payout(serie)
+    media_crua = sum(serie) / len(serie)  # 0.6625, contaminada pelo spike
+    assert res is not None
+    assert abs(res - 0.475) < 1e-9  # mediana de 4 = (0.45+0.50)/2
+    assert res < media_crua  # mediana abaixo da média contaminada
+
+
+def test_mediana_payout_usa_serie_completa_nao_so_3_ultimos():
+    # D-04: usa TODOS os pontos válidos (não fatia os 3 últimos). Com o ano antigo
+    # baixo (0.10), a mediana-de-4 (0.55) difere da mediana-dos-3-últimos (0.60).
+    res = norm.mediana_payout([0.10, 0.50, 0.60, 0.70])
+    assert res is not None
+    assert abs(res - 0.55) < 1e-9  # mediana sobre a série completa
+    assert abs(res - 0.60) > 1e-9  # NÃO é a mediana só dos 3 últimos
+
+
+def test_mediana_payout_ignora_none():
+    # Reuso de _limpar: None não conta como 0; série efetiva [0.5, 0.7] -> 0.6.
+    res = norm.mediana_payout([0.5, None, 0.7])
+    assert res is not None
+    assert abs(res - 0.6) < 1e-9
+
+
+def test_mediana_payout_fronteira_none_e_valor_unico():
+    # D-04: fronteira de None preservada. Vazio/só-None -> None; 1 ano -> o próprio valor.
+    assert norm.mediana_payout([]) is None
+    assert norm.mediana_payout([None, None]) is None
+    assert norm.mediana_payout([0.42]) == 0.42
+
+
+# --------------------------------------------------------------------------- #
 # Pureza (T-08-01 / acceptance): primitiva sem ciclo de import com a engine
 # --------------------------------------------------------------------------- #
 def test_primitiva_e_pura_sem_import_de_fundamentals():
