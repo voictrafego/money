@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: — Indicadores de tendência
 status: executing
 stopped_at: "Completed 08-04-PLAN.md (FIX-06 guardrails + golden de regressão VULC3). Fase 8 completa (4/4). Próximo: Phase 7 (UI)."
-last_updated: "2026-06-27T12:14:38.010Z"
+last_updated: "2026-06-27T12:19:03.059Z"
 last_activity: 2026-06-27
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 16
-  completed_plans: 12
-  percent: 75
+  completed_plans: 13
+  percent: 81
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 ## Current Position
 
 Phase: 07 (ui-overlays-subpain-is-controles-e-enquadramento) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-06-27
 
-Progress: [████████░░] 75%
+Progress: [████████░░] 81%
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ Progress: [████████░░] 75%
 | Phase 08 P03 | ~25 | 2 tasks | 7 files |
 | Phase 08 P04 | ~35 | 2 tasks | 6 files |
 | Phase 07 P01 | 12 | 3 tasks | 4 files |
+| Phase 07 P02 | 6 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,7 @@ Recent decisions affecting current work:
 - [08-04] Golden de regressão VULC3 (test_vulc3_regressao.py) trava a cascata domada end-to-end: base normalizada 4000<12000 extraordinário (FIX-04), g_alto=0 (FIX-02), Ke 15,78% (FIX-03), intrínseco 2,3× preço — não 11–23× (FIX-01/06), veredito VERIFICAR não verde (FIX-05), ROE/payout Analisar==Ranking. Nenhum golden existente precisou rebaseline (banda mais larga não virou caso algum). Suíte 133 verde.
 - [Phase ?]: [07-01] Degradacao holistica: timing_resumo vazio colapsa matriz_leitura (CR-01); markdown por not a.timing_resumo (IN-01); resample W-FRI por DatetimeIndex+colunas (WR-01).
 - [Phase ?]: [07-01] SinaisTecnicos.close (campo aditivo default None) expoe a close split-adjusted ja usada, read-only, para os marcadores de evento da UI (UI-04).
+- [Phase ?]: [07-02] Glossário técnico: 11 chaves tec_* em glossario.G lidas por h('tec_*'); contrato (existência + tom consultivo, sem 'compre'/'venda') travado por tests/test_glossario.py.
 
 ### Pending Todos
 
@@ -120,7 +122,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-27T12:14:20.056Z
+Last session: 2026-06-27T12:18:42.222Z
 Stopped at: Completed 08-04-PLAN.md (FIX-06 guardrails + golden de regressão VULC3). Fase 8 completa (4/4). Próximo: Phase 7 (UI).
 Resume file: None
 
