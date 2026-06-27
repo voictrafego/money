@@ -48,7 +48,7 @@ Detalhes das fases concluídas mantidos abaixo em "Phase Details".
 **Milestone Goal:** Tornar os múltiplos de renda/crescimento (DY recorrente, payout sustentável, g histórico) fiéis e robustos **para qualquer ticker** — expurgando não-recorrentes por **regra geral**, nunca por ajuste de caso — e impedir que esses números contaminem Garimpo/Ranking. O caso VULC3 (lucro/dividendo extraordinário, payout >100%) é apenas o diagnóstico; a correção precisa valer para todo o universo e não regredir tickers normais (ITUB4/EGIE3/TAEE11/BBAS3). Estende a camada de normalização (`normalizacao.py`) já existente — não reescreve o DDM.
 
 - [x] **Phase 9: Payout sustentável + DY recorrente (núcleo de metodologia)** - Define um payout sustentável geral que expurga anos não-recorrentes (>100%) e deriva o DY recorrente de lucro normalizado × payout sustentável, robusto para qualquer ticker (completed 2026-06-27)
-- [ ] **Phase 10: Crescimento robusto + de-poison do screening** - g histórico robusto (não endpoint-a-endpoint) e Garimpo/Ranking calculando crescimento sobre a série normalizada, não sobre lucro/dividendo CRU
+- [x] **Phase 10: Crescimento robusto + de-poison do screening** - g histórico robusto (não endpoint-a-endpoint) e Garimpo/Ranking calculando crescimento sobre a série normalizada, não sobre lucro/dividendo CRU (completed 2026-06-27)
 - [ ] **Phase 11: Apresentação, hierarquia e trava multi-ticker** - DY recorrente em destaque e formatado como %, payout cru do último ano exibido, e trava de validação multi-ticker com rebaseline deliberado dos golden
 
 ## Phase Details
@@ -156,7 +156,7 @@ Detalhes das fases concluídas mantidos abaixo em "Phase Details".
 **Plans**: 3 plans (3 waves)
 - [x] 10-01-PLAN.md — GROW-01: estimador puro `crescimento_log_linear` (growth.py) + swap do g_historico (report.py)
 - [x] 10-02-PLAN.md — GROW-02: BSD calcula crescimento via log-linear sobre série winsorizada (screening.py) + clamp do payout no fit da regressão de preço-alvo (comparables.py, D-06)
-- [ ] 10-03-PLAN.md — Validação multi-ticker (VULC3 + ITUB4/EGIE3/TAEE11/BBAS3) offline + live + rebaseline deliberado dos golden
+- [x] 10-03-PLAN.md — Validação multi-ticker (VULC3 + ITUB4/EGIE3/TAEE11/BBAS3) offline + live + rebaseline deliberado dos golden (suíte 171 verde SEM rebaseline; checkpoint live aprovado) ✅ 2026-06-27
 
 ### Phase 11: Apresentação, hierarquia e trava multi-ticker
 **Goal**: A UI passa a destacar a renda sustentável (DY recorrente formatado como % e em destaque no header), rebaixar o DY trailing inflado a contexto rotulado, e exibir o payout **cru real** do último ano como número distinto do payout sustentável de valuation. O marco fecha com a trava de validação multi-ticker (ITUB4/EGIE3/TAEE11/BBAS3 + VULC3) e o rebaseline **deliberado e justificado** dos golden — extensão do invariante TEST-07.
@@ -187,7 +187,7 @@ Fases concluídas executaram em ordem numérica (4 → 5 → 6 → 8 → 7). v1.
 | 8. Saneamento do motor DDM (caso VULC3) | v1.2 | 4/4 | Complete | 2026-06-27 |
 | 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 5/5 | Complete | 2026-06-27 |
 | 9. Payout sustentável + DY recorrente (núcleo de metodologia) | v1.3 | 3/3 | Complete   | 2026-06-27 |
-| 10. Crescimento robusto + de-poison do screening | v1.3 | 2/3 | In Progress|  |
+| 10. Crescimento robusto + de-poison do screening | v1.3 | 3/3 | Complete | 2026-06-27 |
 | 11. Apresentação, hierarquia e trava multi-ticker | v1.3 | 0/TBD | Not started | - |
 
 ---
