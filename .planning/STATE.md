@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 ## Current Position
 
 Phase: 08 — Saneamento do motor DDM (caso VULC3)
-Plan: 08-02 concluído (FIX-02). Próximo: 08-03 (FIX-03 CAPM)
-Status: Em execução (2/4 plans da fase)
+Plan: 08-03 concluído (FIX-03 CAPM). Próximo: 08-04 (FIX-06 guardrails/regressão)
+Status: Em execução (3/4 plans da fase)
 Last activity: 2026-06-26
 
-Progress: [█████░░░░░] 50% (Phase 8)
+Progress: [████████░░] 75% (Phase 8)
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: [█████░░░░░] 50% (Phase 8)
 | Phase 06 P02 | 5 | 2 tasks | 2 files |
 | Phase 08 P01 | — | 3 tasks | 6 files |
 | Phase 08 P02 | ~20 | 2 tasks | 3 files |
+| Phase 08 P03 | ~25 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,8 @@ Recent decisions affecting current work:
 - [08-01] CAGR de valuation usa série winsorizada (`serie_lucro_normalizada`); lucro_positivo/decrescente do ciclo de vida seguem na série crua (fatos per-ano).
 - [08-02] FIX-02: o g_alto da fase explícita é subordinado ao g sustentável — TETO = g_fundamentos (ROE_norm × (1−payout_valuation)), precedência g_fund → teto absoluto 0.25 → trava ≤Ke (FIX-01). Payout ≥100% ⇒ g_fund ≤0 ⇒ g_alto=0; piso artificial g_estavel REMOVIDO da seleção do g_alto (g_estavel segue só como taxa da perpetuidade no DDM). VULC3 (payout_valuation=100%): g_alto adotado = 0,0 (antes 25%), DDM ainda finito.
 - [08-02] g_fund é TETO (min com o CAGR), não substituto: série constante (CAGR=0) ⇒ g_alto=0 mesmo com g_fund>0 — a empresa que não cresceu o lucro não projeta crescimento.
+- [08-03] FIX-03: CAPM 'local' vira o default — Ke = rf (Selic ao vivo do BCB) + beta × ERP Brasil (0,06), com fallback gracioso (`macro.selic_para_capm`: selic_meta() or selic_fallback de config). Pureza da engine: rede só nos entry points (cli/app injetam `cfg['capm']['rf_local']`); `analisar_acao` lê o rf de cfg e permanece offline (grep selic_meta em report.py == 0). VULC3 Ke: 9,43% (2019) → 15,78% (fallback) / 19,53% (Selic viva 14,25% em 2026) — faixa small cap BR.
+- [08-03] Rebaseline de caso-limite recalibra a FIXTURE, nunca o assert: o Ke maior fez a alvo SUBAVALIADA flipar (série constante cola o intrínseco no limiar DY>15% ⇒ vira "VERIFICAR") — corrigido tornando a alvo crescente (g_alto>0); TRKE PL 1987→1700 p/ g_fund>Ke. test_ke_itau_capm (literais do livro) intacto.
 
 ### Pending Todos
 
@@ -112,7 +115,7 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-06-26
-Stopped at: Completed 08-02-PLAN.md (FIX-02). Próximo: 08-03 (FIX-03 CAPM).
+Stopped at: Completed 08-03-PLAN.md (FIX-03 CAPM). Próximo: 08-04 (FIX-06 guardrails/regressão VULC3).
 Resume file: None
 
 ## Operator Next Steps
