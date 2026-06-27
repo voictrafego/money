@@ -55,24 +55,12 @@ def _empresa_solida(ticker="TAEE11"):
 
 
 def test_roe_coerente_analisar_vs_ranking():
-    """ROE exibido pelo Analisar == ROE do caminho Ranking (ambos c.roe(ult))."""
-    c = _empresa_solida()
-    cfg = _cfg()
-    ult = c.ultimo_ano()
+    """Guard cross-menu (FIX-04 / Core Value): o ROE que o Analisar EXIBE é o MESMO
+    método canônico (`roe_valuation`) que o Ranking vivo (app.py/cli.py) consome.
 
-    a = report.analisar_acao(c, cfg)
-
-    # Caminho Analisar (report.py:53) vs caminho Ranking (app.py:261). Igualdade exata.
-    assert a.multiplos["ROE"] == c.roe(ult)
-    assert a.multiplos["ROE"] is not None
-
-
-def test_payout_coerente_ultimo_ano_vs_valuation():
-    """O Analisar expõe DOIS payouts (PAYOUT-02): o último ano cru e o de valuation.
-
-    - `multiplos["DP (payout)"]` == `c.payout(ult)` (último ano cru, report.py:56).
-    - `c.payout_valuation()` (média 3a + clamp) é o número canônico do DDM/Ranking,
-      distinto do cru. Ambos devem existir e ser floats coerentes.
+    Compara superfície-viva (`a.multiplos["ROE"]`) contra o método-canônico-vivo do outro
+    menu (`c.roe_valuation()`), NÃO contra um número recomputado à mão — assim o teste prova
+    consistência entre menus em vez de mascarar uma futura divergência.
     """
     c = _empresa_solida()
     cfg = _cfg()
@@ -80,15 +68,38 @@ def test_payout_coerente_ultimo_ano_vs_valuation():
 
     a = report.analisar_acao(c, cfg)
 
-    # Último ano cru: idêntico entre Analisar e a função da engine.
-    assert a.multiplos["DP (payout)"] == c.payout(ult)
+    # Igualdade exata: Analisar (report.py) == base canônica que o Ranking (app.py/cli.py) lê.
+    # Rebaseline FIX-04: a base de lucro normalizada (mediana dos 3 últimos = 1400) substitui
+    # o lucro cru do último ano (1450); 1400/PL_médio(4850)=0,28866 é o ROE de valuation correto.
+    assert a.multiplos["ROE"] == c.roe_valuation()
+    assert a.multiplos["ROE"] is not None
+    # E é de fato o normalizado: difere do ROE cru por ano (prova que a normalização está
+    # ativa em AMBOS os menus — o guard pegaria, não esconderia, uma divergência).
+    assert a.multiplos["ROE"] != c.roe(ult)
 
-    # Payout de valuation (canônico, média 3a + clamp): mesma função no Analisar e no Ranking.
-    pv = c.payout_valuation()
-    assert isinstance(pv, float)
-    # São os DOIS números do PAYOUT-02: o cru do último ano e o de valuation. A média 3a
-    # suaviza, então tipicamente difere do ano cru — mas ambos vêm da mesma engine.
-    assert pv == c.payout_valuation()  # função canônica única (determinística)
+
+def test_payout_coerente_ultimo_ano_vs_valuation():
+    """Payout do Analisar é o canônico ÚNICO (FIX-04), igual ao do Ranking.
+
+    Rebaseline FIX-04: o múltiplo EXIBIDO de payout passa a ser `payout_valuation()`
+    (média 3a + clamp 1.0) — o MESMO número que o Ranking (app.py/cli.py) consome na
+    regressão (Core Value). O payout CRU por ano (`c.payout(ano)`) não some: continua na
+    tabela "Fundamentos (por ano)" do relatório, que é a sua superfície de exibição.
+    """
+    c = _empresa_solida()
+    cfg = _cfg()
+    ult = c.ultimo_ano()
+
+    a = report.analisar_acao(c, cfg)
+
+    # Display de payout == canônico de valuation (mesma função no Analisar e no Ranking).
+    assert a.multiplos["DP (payout)"] == c.payout_valuation()
+
+    # E o cru por ano segue existindo na engine, intacto, para a tabela por ano.
+    assert c.payout(ult) is not None
+    # Nesta fixture payout é estável (0,6 em todos os anos), então cru e canônico coincidem;
+    # o ponto do guard é que AMBOS os menus leem `payout_valuation`, não que difiram.
+    assert a.multiplos["DP (payout)"] == c.payout_valuation()
 
 
 def _empresa_param(ticker, *, preco, lucro, pl, div, num_acoes=1000):
@@ -142,23 +153,24 @@ def test_veredito_direcao_coerente():
     comp_d = _empresa_param("DDD3", preco=42.0, lucro=950, pl=4200, div=510)
     empresas = [alvo, comp_b, comp_c, comp_d]
 
-    # Vetores PL/DP/ROE como no modo Ranking (app.py:265-266).
+    # Vetores PL/DP/ROE como no modo Ranking VIVO (app.py/cli.py pós-FIX-04): tudo via
+    # métodos canônicos normalizados. As fixtures têm séries CONSTANTES, então a base
+    # normalizada == lucro cru e a direção do veredito não muda com a normalização —
+    # o que se garante aqui é que o guard usa exatamente os métodos que o Ranking consome.
     PL, DP, ROE = [], [], []
     for c in empresas:
-        u = c.ultimo_ano()
-        PL.append(mult.preco_lucro(c.preco_atual, c.lpa(u)))
+        PL.append(mult.preco_lucro(c.preco_atual, c.lpa_valuation()))
         DP.append(c.payout_valuation())
-        ROE.append(c.roe(u))
+        ROE.append(c.roe_valuation())
 
     reg = cmp.ajustar_regressao_pl(PL, DP, ROE)
     # Com 4 fixtures completas a regressão NÃO pode falhar (n≥4). Se vier None é bug do teste.
     assert reg is not None, "regressão None com 4 fixtures — calibrar PL/DP/ROE"
     assert reg.n >= 4
 
-    # Preço-alvo da empresa-alvo pelo Ranking (regressão).
-    u = alvo.ultimo_ano()
+    # Preço-alvo da empresa-alvo pelo Ranking (regressão) — métodos canônicos vivos.
     pa = cmp.preco_alvo_por_regressao(
-        reg, alvo.payout_valuation(), alvo.roe(u), alvo.lpa(u), alvo.preco_atual
+        reg, alvo.payout_valuation(), alvo.roe_valuation(), alvo.lpa_valuation(), alvo.preco_atual
     )
     assert pa is not None, "PrecoAlvo None — todos os campos da alvo estão presentes"
 
