@@ -183,3 +183,54 @@ def layout_subplots(n_subpaineis: int) -> dict:
     preco = 0.55
     resto = (1.0 - preco) / n_subpaineis
     return {"rows": 1 + n_subpaineis, "row_heights": [preco] + [resto] * n_subpaineis}
+
+
+# --------------------------------------------------------------------------- #
+# Marcadores de evento nas datas EXATAS (UI-04) — varre a série inteira
+# --------------------------------------------------------------------------- #
+def marcadores_eventos(sinais, close: Optional[pd.Series]) -> List[Marcador]:
+    """Marcador(data, y, tipo, rotulo) para cada evento, lendo a.sinais + close (read-only).
+
+    Espelha as regras discretas da engine aplicadas a TODA a série:
+      * golden_cross / death_cross = mudança de sinal de (sma50 − sma200), y sobre a MM50;
+      * nova_maxima / perda_minima = close × Donchian (já shiftado, causal), y no nível do canal.
+    Séries indisponíveis/curtas ⇒ lista vazia (sem exceção; degradação T-07-05). Ordenada por data.
+    """
+    if sinais is None or close is None or len(close) == 0:
+        return []
+
+    out: List[Marcador] = []
+
+    tend = sinais.tendencia
+    diff = (tend.sma50 - tend.sma200).dropna()
+    sign = np.sign(diff)
+    for i in range(1, len(diff)):
+        atual, anterior = sign.iloc[i], sign.iloc[i - 1]
+        data = diff.index[i]
+        if atual > 0 and anterior <= 0:
+            out.append(Marcador(data, float(tend.sma50.loc[data]),
+                                "golden_cross", "Golden cross (MM50×MM200)"))
+        elif atual < 0 and anterior >= 0:
+            out.append(Marcador(data, float(tend.sma50.loc[data]),
+                                "death_cross", "Death cross (MM50×MM200)"))
+
+    canais = sinais.canais
+    sup, inf = canais.donchian_sup, canais.donchian_inf
+    if sup is not None and inf is not None:
+        for data in close.index.intersection(sup.index):
+            c = close.loc[data]
+            s, ival = sup.loc[data], inf.loc[data]
+            if pd.notna(c) and pd.notna(s) and c > s:
+                out.append(Marcador(data, float(s), "nova_maxima", "Rompimento da máxima (Donchian)"))
+            elif pd.notna(c) and pd.notna(ival) and c < ival:
+                out.append(Marcador(data, float(ival), "perda_minima", "Perda da mínima (Donchian)"))
+
+    out.sort(key=lambda m: m.data)
+    return out
+
+
+def leitura_tecnica_disponivel(sinais) -> bool:
+    """False quando os sinais não existem ou a posição×MM200 é "indisponivel" (histórico curto)."""
+    if sinais is None:
+        return False
+    return sinais.tendencia.posicao_mm200 != "indisponivel"
