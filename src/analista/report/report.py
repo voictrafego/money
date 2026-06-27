@@ -75,14 +75,24 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     lucros = c.serie_lucro_normalizada()
     if len(lucros) >= 2:
         a.g_historico = growth.cagr(lucros[0], lucros[-1], len(lucros) - 1)
+    # g_fundamentos usa o MESMO payout do valuation (payout_valuation) ⇒ é o g SUSTENTÁVEL,
+    # quanto a empresa consegue reinvestir: g_fund = ROE_normalizado × (1 − payout_valuation).
     a.g_fundamentos = growth.crescimento_por_fundamentos(c.roe_valuation(), c.payout_valuation())
     g_estavel = cfg["ddm"]["g_estavel"]
     a.g_estavel = g_estavel
-    # o livro prioriza o crescimento histórico do lucro quando o payout variou;
-    # usamos o histórico se disponível, senão o por fundamentos. Limitado a um teto razoável.
+    # DDM-FIX-02 (reconciliação g × fundamentos, caso VULC3): o g_alto adotado parte do
+    # crescimento histórico observado (CAGR sobre a série normalizada), mas é SUBORDINADO ao
+    # g sustentável — o TETO do g_alto passa a ser g_fundamentos (CONTEXT FIX-02). O g deixa
+    # de ser um haircut arbitrário do CAGR e reflete o reinvestimento real.
+    # Precedência: g_fund (sustentável) → teto absoluto 0.25 → trava ≤ Ke (FIX-01, abaixo).
+    # Payout ≥ 100% (ou ROE não positivo) ⇒ g_fund ≤ 0 ⇒ g_alto cai para 0 — SEM o piso
+    # artificial g_estavel na fase explícita (g_estavel segue valendo só como taxa da
+    # perpetuidade no DDM, não como piso do crescimento alto).
     g_alto = a.g_historico if a.g_historico is not None else a.g_fundamentos
+    if a.g_fundamentos is not None:
+        g_alto = a.g_fundamentos if g_alto is None else min(g_alto, a.g_fundamentos)
     if g_alto is not None:
-        g_alto = max(g_estavel, min(g_alto, 0.25))  # piso = g estável; teto 25% a.a.
+        g_alto = max(0.0, min(g_alto, 0.25))  # teto absoluto 25% a.a.; sem piso g_estavel (nunca < 0)
     a.g_alto = g_alto
 
     # --- Estágio do ciclo de vida (Cap. 8) ---
