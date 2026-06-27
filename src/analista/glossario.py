@@ -113,6 +113,73 @@ G: dict[str, str] = {
         "ROE ou payout para estimá-la. Não é 'cara' nem 'barata': simplesmente não há dado suficiente "
         "para o cálculo."
     ),
+    # ---- Fase 7: indicadores técnicos (consultivos — timing, nunca ordem) ----
+    "tec_indicadores": (
+        "**Indicadores técnicos (consultivo)** — leitura do *timing* a partir do histórico de preço, "
+        "para ajudar a escolher **quando** olhar uma ação que os fundamentos já indicam. São "
+        "**secundários e auxiliares**: o veredito vem do método (DDM/múltiplos); o técnico só sugere "
+        "timing e dispara reverificação dos fundamentos quando o preço perde a tendência. Nunca dizem "
+        "'comprar' ou 'vender'."
+    ),
+    "tec_mm": (
+        "**Médias móveis (MM 20/50/200)** — a média do preço de fechamento nas últimas N barras, "
+        "suavizando o ruído para revelar a tendência. **SMA** dá peso igual a todas as barras; **EMA** "
+        "dá mais peso às recentes. A posição do preço **acima ou abaixo da MM200** resume a tendência "
+        "de fundo: acima = força compradora predominante; abaixo = fraqueza. Referência de timing, "
+        "não recomendação."
+    ),
+    "tec_cross": (
+        "**Cruzamentos (golden/death cross)** — o cruzamento da MM50 com a MM200. **Golden cross** "
+        "(MM50 cruza para cima) sinaliza fortalecimento da tendência; **death cross** (MM50 cruza para "
+        "baixo) sinaliza enfraquecimento. Servem de gatilho para **reverificar os fundamentos** no "
+        "momento da virada, não como ordem por si só."
+    ),
+    "tec_donchian": (
+        "**Canal de Donchian (20/55)** — a faixa entre a **máxima** e a **mínima** dos últimos N "
+        "períodos. Romper a máxima do canal indica força/continuação da alta; perder a mínima indica "
+        "fraqueza e é um gatilho para **reverificar os fundamentos**. Mostra onde o preço está dentro "
+        "do seu próprio histórico recente."
+    ),
+    "tec_bollinger": (
+        "**Bandas de Bollinger (20, 2σ)** — uma média de 20 períodos com duas bandas a 2 desvios-padrão "
+        "acima e abaixo, medindo a volatilidade. O preço passa a maior parte do tempo **dentro** das "
+        "bandas; um **toque** na banda superior/inferior indica esticamento de curto prazo, útil para o "
+        "timing fino — referência consultiva, nunca uma ordem de operação."
+    ),
+    "tec_squeeze": (
+        "**Squeeze (estreitamento)** — quando as bandas de Bollinger se **estreitam**, a volatilidade "
+        "está baixa e a tendência, indefinida; costuma anteceder um movimento mais forte, **sem dizer a "
+        "direção**. É um aviso de 'atenção ao timing', não um sinal de entrada."
+    ),
+    "tec_rsi": (
+        "**RSI (14, Wilder)** — Índice de Força Relativa, oscila de 0 a 100 e mede o fôlego do movimento. "
+        "Abaixo de **30** o ativo está sobrevendido (esticado para baixo); acima de **70**, sobrecomprado "
+        "(esticado para cima). Ajuda no timing fino — em tendência forte pode ficar esticado por bastante "
+        "tempo, então é referência, não ordem."
+    ),
+    "tec_macd": (
+        "**MACD (12/26/9)** — diferença entre duas médias exponenciais (12 e 26) com uma linha de sinal "
+        "(9). O **cruzamento** da linha MACD com a de sinal indica mudança de momentum: para cima = "
+        "momentum se fortalecendo; para baixo = enfraquecendo. Lê o *timing* da tendência, sem ser "
+        "recomendação de operação."
+    ),
+    "tec_adx": (
+        "**ADX (14, Wilder)** — mede a **força** da tendência (não a direção), de 0 a 100. Abaixo de "
+        "**20** indica ausência de tendência (lateralização); acima de **25**, tendência definida (de "
+        "alta ou de baixa). Diz **se** vale ler os demais sinais direcionais, não o que fazer."
+    ),
+    "tec_regressao": (
+        "**Regressão da tendência** — ajusta uma reta ao preço recente e reporta a **inclinação "
+        "anualizada** (ritmo e direção da tendência) e o **R²** (quão bem a reta descreve o movimento: "
+        "perto de 1 = tendência limpa; perto de 0 = ruído). Quantifica a tendência para o timing, sem "
+        "emitir ordem."
+    ),
+    "tec_timing": (
+        "**Resumo de timing (consultivo)** — combina os indicadores acima num retrato do momento "
+        "(tendência de fundo + força + momentum) para sugerir **quando** acompanhar a ação. É sempre "
+        "**subordinado ao fundamento**: nunca sobrepõe o veredito barato/caro do método e, ao romper a "
+        "tendência, apenas pede que você **reverifique os fundamentos**."
+    ),
 }
 
 
