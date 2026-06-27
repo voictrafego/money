@@ -47,6 +47,16 @@ screening:
       crescimento_dividendos_3a: 10
       crescimento_lucro_3a: 5
 
+# --- FIX-04: normalização de lucro (base canônica do valuation) ---
+# Janela N + winsorização que produzem a base de lucro robusta a UM exercício atípico,
+# consumida por ROE/LPA/CAGR/payout de valuation (roe_valuation/lpa_valuation).
+# Knob SEPARADO do bloco `bsd` de propósito: `bsd` parametriza o SCORE de garimpo
+# (Cap. 8, elegibilidade per-ano); este parametriza o VALUATION (Cap. 13-17). Mantê-los
+# desacoplados evita que afinar o screening mexa, sem querer, no número intrínseco.
+normalizacao:
+  anos_media: 3             # médias trienais (espírito BSD Cap. 8.4)
+  winsor: 0.10              # winsorização a 10% nos extremos (>=5 pontos)
+
 # --- Cap. 16: CAPM (custo de capital do acionista) ---
 capm:
   abordagem: "eua_ajustada"   # "eua_ajustada" (T-Bond+EMBI+inflação) ou "local"
