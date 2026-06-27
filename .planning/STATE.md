@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: — Indicadores de tendência
-status: verifying
+status: ready_to_plan
 stopped_at: Phase 6 context gathered
 last_updated: "2026-06-27T00:46:21.842Z"
 last_activity: 2026-06-27
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 7
   completed_plans: 7
-  percent: 100
+  percent: 80
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 
 ## Current Position
 
-Phase: 06 (integra-o-na-engine-composite-alerta-cli) — EXECUTING
-Plan: 2 of 2
-Status: Phase complete — ready for verification
+Phase: 999.1
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-06-27
 
 Progress: [██████████] 100%
@@ -36,7 +36,7 @@ Progress: [██████████] 100%
 
 **Velocity:**
 
-- Total plans completed: 12 (v1.0 + v1.1)
+- Total plans completed: 14 (v1.0 + v1.1)
 - Average duration: — min
 - Total execution time: — hours
 
@@ -48,6 +48,7 @@ Progress: [██████████] 100%
 | 02 | 2 | - | - |
 | 03 | 2 | - | - |
 | 05 | 3 | - | - |
+| 06 | 2 | - | - |
 
 **Recent Trend:**
 
