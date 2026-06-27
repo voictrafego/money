@@ -8,7 +8,7 @@
 
 ### Renda recorrente (DYR)
 
-- [ ] **DYR-01**: O DY recorrente reflete o provento **sustentável** (lucro normalizado × payout sustentável), robusto a anos de distribuição extraordinária — não a mediana crua dos últimos 3 anos de dividendos, que pode cair inteira numa era de payout >100% (vale para qualquer ticker)
+- [x] **DYR-01**: O DY recorrente reflete o provento **sustentável** (lucro normalizado × payout sustentável), robusto a anos de distribuição extraordinária — não a mediana crua dos últimos 3 anos de dividendos, que pode cair inteira numa era de payout >100% (vale para qualquer ticker)
 - [ ] **DYR-02**: O DY recorrente é exibido formatado como **%** na tabela de Múltiplos do app (paridade com ML/ROE/DY), nunca como decimal cru ("0.20")
 
 ### Payout sustentável (PAY)
@@ -44,7 +44,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DYR-01 | Phase 9 | Pending |
+| DYR-01 | Phase 9 | Complete |
 | PAY-01 | Phase 9 | Complete |
 | GROW-01 | Phase 10 | Pending |
 | GROW-02 | Phase 10 | Pending |

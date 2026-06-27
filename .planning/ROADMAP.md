@@ -140,7 +140,7 @@ Detalhes das fases concluídas mantidos abaixo em "Phase Details".
   5. A fronteira per-ano é preservada — `payout(ano)` cru segue alimentando a tabela "Fundamentos (por ano)", o detector de armadilha (payout >100%) e a elegibilidade do screening (Cap. 8); só o agregado de valuation muda de base. Golden de valuation (TEST-07) verdes ou rebaselinados deliberadamente.
 **Plans**: 3 plans (3 waves)
 - [x] 09-01-PLAN.md — Primitiva pura `mediana_payout` (mediana sobre série completa, sem clamp) + goldens unitários (PAY-01)
-- [ ] 09-02-PLAN.md — `payout_valuation` mediano/sem-clamp + DY recorrente earnings-based + rebaseline deliberado dos goldens (PAY-01, DYR-01)
+- [x] 09-02-PLAN.md — `payout_valuation` mediano/sem-clamp + DY recorrente earnings-based + rebaseline deliberado dos goldens (PAY-01, DYR-01)
 - [ ] 09-03-PLAN.md — Trava de validação multi-ticker (offline + live VULC3/TAEE11/EGIE3/ITUB4/BBAS3) + registro do cross-effect Fase 10
 
 ### Phase 10: Crescimento robusto + de-poison do screening
