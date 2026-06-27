@@ -170,11 +170,18 @@ class CompanyData:
     # como contexto (e segue alimentando o detector de armadilha de dividendos, Cap. 6).
     # ------------------------------------------------------------------ #
     def dpa_recorrente(self, anos_media: int = 3, winsor: float = 0.10) -> Optional[float]:
-        """DPA recorrente: provento normalizado (robusto a UM ano extraordinário) por ação."""
-        base = norm.base_normalizada(self.serie("dividendos"), anos_media, winsor)
-        return mult.dpa(base, self.num_acoes.get(self.ultimo_ano()))
+        """DPA recorrente (sustentável) = payout sustentável aplicado ao lucro normalizado
+        por ação (earnings-based, D-05): `payout_valuation() × lpa_valuation()`. Consistente
+        com o `g_fund` (mesmo `payout_valuation`), e não mais a mediana crua da série de
+        dividendos (que, no VULC3, cai inteira na era de payout >100%). Fronteira None: se
+        payout ou LPA forem None, devolve None."""
+        p = self.payout_valuation()
+        l = self.lpa_valuation(anos_media, winsor)
+        if p is None or l is None:
+            return None
+        return p * l
 
     def dy_recorrente(self, anos_media: int = 3, winsor: float = 0.10) -> Optional[float]:
-        """DY recorrente (sustentável): DPA recorrente normalizado / preço. Distinto do
+        """DY recorrente (sustentável): DPA recorrente earnings-based / preço. Distinto do
         `dy_atual()` trailing, que reflete os proventos extraordinários do período."""
         return mult.dividend_yield(self.dpa_recorrente(anos_media, winsor), self.preco_atual)
