@@ -15,7 +15,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence
 
-from . import growth
+from . import growth, normalizacao
 from .fundamentals import CompanyData
 
 
@@ -257,11 +257,15 @@ def indicadores_bsd(c: CompanyData, anos_media: int = 3) -> Dict[str, Optional[f
         payout_medio = media([c.payout(a) for a in anos])
         cresc_lucro_lp = growth.crescimento_por_fundamentos(roe_medio, payout_medio)
 
-    # 8/9/10. crescimento de FCO, dividendos e lucro em 3 anos (CAGR)
-    def cagr_serie(d: Dict[int, float]):
-        if len(anos) < 2:
-            return None
-        return growth.cagr(d.get(anos[0]), d.get(anos[-1]), len(anos) - 1)
+    # 8/9/10. crescimento de FCO, dividendos e lucro: tendência log-linear (OLS de ln) sobre a
+    #    série COMPLETA winsorizada de cada atributo (D-04, D-05) — o MESMO estimador do Analisar
+    #    (g_historico). Um ano extraordinário de lucro/provento/caixa deixa de envenenar o BSD: a
+    #    winsorização morde só com ≥5 pontos (a janela 3a tornaria D-05 inócuo), por isso usa-se a
+    #    série inteira. Com lucro = serie_winsorizada(c.serie("lucro_liquido")), o
+    #    crescimento_lucro_3a coincide por construção com report.g_historico (D-04). Chaves mantêm o
+    #    sufixo _3a (são chaves de REFERENCIA_BSD — não renomear).
+    def crescimento_serie(attr: str):
+        return growth.crescimento_log_linear(normalizacao.serie_winsorizada(c.serie(attr)))
 
     return {
         "payout": payout,
@@ -271,9 +275,9 @@ def indicadores_bsd(c: CompanyData, anos_media: int = 3) -> Dict[str, Optional[f
         "desempenho_relativo_preco": desempenho,
         "variacao_tangivel_vp": var_tangivel,
         "crescimento_lucro_lp": cresc_lucro_lp,
-        "crescimento_fc_3a": cagr_serie(c.fco),
-        "crescimento_dividendos_3a": cagr_serie(c.dividendos),
-        "crescimento_lucro_3a": cagr_serie(c.lucro_liquido),
+        "crescimento_fc_3a": crescimento_serie("fco"),
+        "crescimento_dividendos_3a": crescimento_serie("dividendos"),
+        "crescimento_lucro_3a": crescimento_serie("lucro_liquido"),
     }
 
 
