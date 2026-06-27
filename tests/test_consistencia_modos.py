@@ -157,6 +157,11 @@ def test_veredito_direcao_coerente():
     # métodos canônicos normalizados. As fixtures têm séries CONSTANTES, então a base
     # normalizada == lucro cru e a direção do veredito não muda com a normalização —
     # o que se garante aqui é que o guard usa exatamente os métodos que o Ranking consome.
+    # Rebaseline FIX-02: nesta fixture o g_alto adotado caiu de 0,025 (antigo piso g_estavel)
+    # para 0,0 — a série é constante (CAGR=0), e o piso g_estavel foi removido da fase
+    # explícita; o g sustentável g_fund=0,125 é só TETO (não eleva o CAGR=0). Com g_alto=0 o
+    # intrínseco (vmin≈6,79) segue acima do preço 6,00, então a DIREÇÃO SUBAVALIADA se mantém
+    # sem recalibrar a fixture — por isso o assert de direção abaixo permanece intacto.
     PL, DP, ROE = [], [], []
     for c in empresas:
         PL.append(mult.preco_lucro(c.preco_atual, c.lpa_valuation()))
