@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 
 ## Current Position
 
-Phase: 999.1
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-06-27
+Phase: 08 — Saneamento do motor DDM (caso VULC3)
+Plan: 08-01 concluído (FIX-04). Próximo: 08-02 (FIX-02)
+Status: Em execução (1/4 plans da fase)
+Last activity: 2026-06-26
 
-Progress: [██████████] 100%
+Progress: [██░░░░░░░░] 25% (Phase 8)
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [██████████] 100%
 | Phase 05 P01 | 18 | 3 tasks | 3 files |
 | Phase 06 P01 | 4 | 3 tasks | 3 files |
 | Phase 06 P02 | 5 | 2 tasks | 2 files |
+| Phase 08 P01 | — | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,10 @@ Recent decisions affecting current work:
 - [Phase ?]: [05-01] SinaisTecnicos nested por família; cross/posição×MM200 SEMPRE sobre SMA (D-03); RSI Wilder SMA-seeded = 70.5328; MACD usa EMA padrão, não Wilder.
 - [05-03] ADX dupla-Wilder: 1ª suavização do DMI com start=1 (barra 0 = diff indefinido) → 1º DI no índice 14; 2ª suavização do DX com start=length → 1º ADX no índice 27. calcular() agrega as 4 famílias com guard de borda → fully-indisponivel. Checkpoint TEST-03 (ADX × TradingView) APROVADO e literais congelados em test_adx_wilder_referencia.
 - [Phase ?]: [06-02] Matriz e alerta extraídos em helpers puros (_matriz_leitura/_alerta_reverificacao) read-only sobre o fundamento — golden travável com input pinado; token do veredito via startswith porque 'NO INTERVALO' é bi-palavra
+- [08-01] FIX-04: base de lucro normalizada (`normalizacao.py`) vira o número-síntese canônico ÚNICO do valuation. `roe_valuation()`/`lpa_valuation()`/`payout_valuation()` chamados SEM args nas 3 superfícies (Analisar/Ranking app/Ranking cli) → consistência entre menus por construção (espelha o padrão payout_valuation).
+- [08-01] Primitiva: mediana p/ 2≤N<5, média winsorizada p/ N≥5 (winsor percentil não morde poucos pontos); knob `normalizacao` no config separado do `bsd` (valuation ≠ screening).
+- [08-01] Fronteira travada: `roe(ano)`/`lpa(ano)`/`payout(ano)`/`lucro_liquido` CRUS seguem na tabela "Fundamentos (por ano)" e no screening (elegibilidade per-ano Cap. 8). Flags de risco (payout>100%, DY>15%) leem CRU — payout_valuation clampado em 1.0 nunca dispararia o DDM-FIX-05.
+- [08-01] CAGR de valuation usa série winsorizada (`serie_lucro_normalizada`); lucro_positivo/decrescente do ciclo de vida seguem na série crua (fatos per-ano).
 
 ### Pending Todos
 
@@ -103,8 +108,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-27T00:46:12.072Z
-Stopped at: Phase 6 context gathered
+Last session: 2026-06-26
+Stopped at: Completed 08-01-PLAN.md (FIX-04). Próximo: 08-02 (FIX-02).
 Resume file: None
 
 ## Operator Next Steps

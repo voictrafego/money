@@ -104,7 +104,7 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
   4. **FIX-06:** guardrails de apresentação — DY recorrente vs trailing, banda intrínseca = sensibilidade real (não 2 cenários binários), setor correto; VULC3 vira caso de regressão.
   5. Os golden tests são **rebaselinados deliberadamente** (valores corretos mudam) e voltam a ficar verdes com os novos números justificados — não "verde a qualquer custo".
 **Plans**: 4 plans (sequenciais — cascata FIX-04 → FIX-02 → FIX-03 → FIX-06)
-- [ ] 08-01-PLAN.md — FIX-04: camada de normalização de lucro (raiz) + roteamento no valuation + rebaseline cascata
+- [x] 08-01-PLAN.md — FIX-04: camada de normalização de lucro (raiz) + roteamento no valuation + rebaseline cascata ✅ 2026-06-26
 - [ ] 08-02-PLAN.md — FIX-02: reconciliação g_alto × g_fundamentos (payout≥100%⇒g=0) + golden
 - [ ] 08-03-PLAN.md — FIX-03: CAPM 'local' com Selic ao vivo (BCB) + fallback gracioso + rebaseline de Ke
 - [ ] 08-04-PLAN.md — FIX-06: banda = sensibilidade real + DY recorrente + setor + golden de regressão VULC3
