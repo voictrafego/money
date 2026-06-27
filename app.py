@@ -12,6 +12,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from analista import grafico
 from analista.core import comparables as cmp
 from analista.core import multiples as mult
 from analista.core import screening as sc
@@ -172,6 +173,49 @@ if modo.startswith("🔎"):
                     yaxis_title="R$", xaxis_title=None, showlegend=False,
                 )
                 st.plotly_chart(fig, width="stretch")
+
+            # Controles técnicos consultivos (UI-03/UI-05): os widgets SÓ capturam estado em
+            # st.session_state["tec_estado"] (mesmas chaves de grafico.estado_padrao()); o desenho
+            # dos overlays/subpainéis a partir desse estado é o Plan 05. app.py segue read-only.
+            st.session_state.setdefault("tec_estado", grafico.estado_padrao())
+            est = st.session_state["tec_estado"]
+            with st.expander("⚙️ Indicadores técnicos (consultivo)", expanded=False):
+                st.caption(
+                    "Consultivo — auxilia o *timing*. O veredito do método (acima) continua o decisório.",
+                    help=h("tec_indicadores"),
+                )
+                ct, cc, cf, cm = st.columns(4)
+                with ct:
+                    st.markdown("**Tendência**", help=h("tec_mm"))
+                    est["tendencia"]["on"] = st.toggle(
+                        "Médias móveis", value=est["tendencia"]["on"], help=h("tec_mm"))
+                    est["tendencia"]["tipo"] = st.radio(
+                        "Tipo", ["sma", "ema"],
+                        index=0 if est["tendencia"]["tipo"] == "sma" else 1,
+                        format_func=str.upper, horizontal=True, help=h("tec_mm"))
+                    est["tendencia"]["janelas"] = st.multiselect(
+                        "Janelas", [20, 50, 200], default=est["tendencia"]["janelas"],
+                        help=h("tec_cross"))
+                with cc:
+                    st.markdown("**Canais**", help=h("tec_donchian"))
+                    est["canais"]["donchian_on"] = st.toggle(
+                        "Donchian", value=est["canais"]["donchian_on"], help=h("tec_donchian"))
+                    est["canais"]["donchian_janela"] = st.radio(
+                        "Janela Donchian", [20, 55],
+                        index=0 if est["canais"]["donchian_janela"] == 20 else 1,
+                        horizontal=True, help=h("tec_donchian"))
+                    est["canais"]["bollinger_on"] = st.toggle(
+                        "Bollinger", value=est["canais"]["bollinger_on"], help=h("tec_bollinger"))
+                with cf:
+                    st.markdown("**Força**", help=h("tec_adx"))
+                    est["forca"]["on"] = st.toggle(
+                        "ADX", value=est["forca"]["on"], help=h("tec_adx"))
+                with cm:
+                    st.markdown("**Momentum**", help=h("tec_rsi"))
+                    est["momentum"]["rsi_on"] = st.toggle(
+                        "RSI", value=est["momentum"]["rsi_on"], help=h("tec_rsi"))
+                    est["momentum"]["macd_on"] = st.toggle(
+                        "MACD", value=est["momentum"]["macd_on"], help=h("tec_macd"))
 
             tab1, tab2, tab3 = st.tabs(["📈 Múltiplos & Crescimento", "💵 Valuation (DDM)", "📋 Fundamentos (10 anos)"])
 
