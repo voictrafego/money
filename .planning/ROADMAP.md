@@ -138,7 +138,10 @@ Detalhes das fases concluídas mantidos abaixo em "Phase Details".
   3. Com payout sustentável < 100%, `g_fundamentos` (`ROE_norm × (1 − payout_sustentável)`) deixa de ser zerado por saturação do clamp em tickers cujo payout cru passou de 100% num único ano — o crescimento por fundamentos volta a existir.
   4. Validado em VULC3 (caso-limite) **e** em ≥2 tickers normais (ex.: TAEE11/EGIE3, payout alto recorrente): o expurgo só atua sobre anos realmente extraordinários e não rebaixa o payout de quem distribui muito de forma sustentável.
   5. A fronteira per-ano é preservada — `payout(ano)` cru segue alimentando a tabela "Fundamentos (por ano)", o detector de armadilha (payout >100%) e a elegibilidade do screening (Cap. 8); só o agregado de valuation muda de base. Golden de valuation (TEST-07) verdes ou rebaselinados deliberadamente.
-**Plans**: TBD
+**Plans**: 3 plans (3 waves)
+- [ ] 09-01-PLAN.md — Primitiva pura `mediana_payout` (mediana sobre série completa, sem clamp) + goldens unitários (PAY-01)
+- [ ] 09-02-PLAN.md — `payout_valuation` mediano/sem-clamp + DY recorrente earnings-based + rebaseline deliberado dos goldens (PAY-01, DYR-01)
+- [ ] 09-03-PLAN.md — Trava de validação multi-ticker (offline + live VULC3/TAEE11/EGIE3/ITUB4/BBAS3) + registro do cross-effect Fase 10
 
 ### Phase 10: Crescimento robusto + de-poison do screening
 **Goal**: O crescimento histórico exibido e o crescimento usado no screening (Garimpo BSD + Ranking por múltiplos) passam a vir de uma estimativa **robusta** sobre a série **normalizada** — não CAGR endpoint-a-endpoint nem CAGR sobre lucro/dividendo CRU — impedindo que um único ano extraordinário envenene o g exibido e o ranqueamento. GROW-02 gateia as telas: a metodologia (Fase 9) já aterrissou antes das telas que a consomem.
@@ -180,7 +183,7 @@ Fases concluídas executaram em ordem numérica (4 → 5 → 6 → 8 → 7). v1.
 | 6. Integração na engine + composite + alerta + CLI | v1.2 | 2/2 | Complete | 2026-06-26 |
 | 8. Saneamento do motor DDM (caso VULC3) | v1.2 | 4/4 | Complete | 2026-06-27 |
 | 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 5/5 | Complete | 2026-06-27 |
-| 9. Payout sustentável + DY recorrente (núcleo de metodologia) | v1.3 | 0/TBD | Not started | - |
+| 9. Payout sustentável + DY recorrente (núcleo de metodologia) | v1.3 | 0/3 | Planned | - |
 | 10. Crescimento robusto + de-poison do screening | v1.3 | 0/TBD | Not started | - |
 | 11. Apresentação, hierarquia e trava multi-ticker | v1.3 | 0/TBD | Not started | - |
 
