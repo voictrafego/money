@@ -95,7 +95,7 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] 07-02-PLAN.md — Glossário dos indicadores técnicos (tooltips UI-05)
 - [x] 07-03-PLAN.md — grafico.py: lógica pura de overlays/subpainéis/layout/marcadores (UI-01/02/03/04)
 - [x] 07-04-PLAN.md — app.py: controles HÍBRIDOS (session_state) + enquadramento subordinado + degradação (UI-03/05/06)
-- [ ] 07-05-PLAN.md — app.py: make_subplots dinâmico + overlays + subpainéis + marcadores + fresh-reader checkpoint (UI-01/02/04/06)
+- [x] 07-05-PLAN.md — app.py: make_subplots dinâmico + overlays + subpainéis + marcadores + fresh-reader checkpoint (UI-01/02/04/06)
 **UI hint**: yes
 
 ### Phase 8: Saneamento do motor DDM (caso VULC3)

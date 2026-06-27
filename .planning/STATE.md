@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: — Indicadores de tendência
-status: executing
+status: verifying
 stopped_at: "Completed 08-04-PLAN.md (FIX-06 guardrails + golden de regressão VULC3). Fase 8 completa (4/4). Próximo: Phase 7 (UI)."
-last_updated: "2026-06-27T12:32:33.674Z"
+last_updated: "2026-06-27T12:43:31.889Z"
 last_activity: 2026-06-27
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 16
-  completed_plans: 15
-  percent: 94
+  completed_plans: 16
+  percent: 100
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 
 Phase: 07 (ui-overlays-subpain-is-controles-e-enquadramento) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-06-27
 
-Progress: [█████████░] 94%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -68,6 +68,7 @@ Progress: [█████████░] 94%
 | Phase 07 P02 | 6 | 2 tasks | 2 files |
 | Phase 07 P03 | 14 | 2 tasks | 2 files |
 | Phase 07 P04 | 8 | 2 tasks | 1 files |
+| Phase 07 P05 | 5 | 3 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,9 @@ Recent decisions affecting current work:
 - [Phase ?]: [07-02] Glossário técnico: 11 chaves tec_* em glossario.G lidas por h('tec_*'); contrato (existência + tom consultivo, sem 'compre'/'venda') travado por tests/test_glossario.py.
 - [Phase ?]: [07-03] Montagem do gráfico técnico (overlays/subpainéis/marcadores/layout) extraída p/ grafico.py puro golden-coberto; overlays_preco e subpaineis_ativos devolvem SPEC completo (série+níveis 20/25,30/70,0), app.py não mapeia nome→série nem hardcoda níveis; subpainel só com série não-toda-NaN; marcadores varrem a série inteira nas datas exatas.
 - [Phase ?]: [07-04] Controles técnicos no app.py capturam estado em st.session_state['tec_estado'] (chaves de grafico.estado_padrao()); enquadramento UI-06: veredito no banner (decisório), técnico em markdown/caption (consultivo); degradação timing_resumo vazio ⇒ caption indisponível. Plan 05 consome o estado p/ desenhar overlays.
+- [Phase ?]: [07-05] Gráfico migrado p/ make_subplots dinâmico dirigido por grafico.* (overlays_preco/subpaineis_ativos via SubpainelSpec/marcadores_eventos/layout_subplots): row 1 preço NOMINAL+banda DDM+rangeselector preservados (UI-01/UI-04), subpainéis só dos osciladores ativos sem nome→série/níveis hardcoded (UI-02); app.py read-only.
+- [Phase ?]: [07-05] Slot do gráfico reservado com st.container() no topo e preenchido APÓS os controles no mesmo rerun (Rule-3): render lê tec_estado recém-atualizado ⇒ toggle redesenha sem lag de 1 clique (UI-03 observável), preservando ordem visual gráfico-no-topo.
+- [Phase ?]: [07-05] Fresh-reader UI-06 APROVADO (checkpoint humano): fundamento decisório no banner, técnico consultivo; alinhamento split ITSA4 confirmado como tradeoff esperado, degradação graciosa OK. Fase 7 completa (5/5).
 
 ### Pending Todos
 
@@ -126,7 +130,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-27T12:32:17.472Z
+Last session: 2026-06-27T12:42:42.759Z
 Stopped at: Completed 08-04-PLAN.md (FIX-06 guardrails + golden de regressão VULC3). Fase 8 completa (4/4). Próximo: Phase 7 (UI).
 Resume file: None
 
