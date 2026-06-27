@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: — Saneamento residual do valuation
 status: executing
-stopped_at: Completed 10-01-PLAN.md
-last_updated: "2026-06-27T23:30:00.000Z"
-last_activity: 2026-06-27 -- Phase 10 Plan 01 completed (GROW-01)
+stopped_at: Completed 10-02-PLAN.md
+last_updated: "2026-06-27T23:23:02.298Z"
+last_activity: 2026-06-27
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
-  percent: 67
+  completed_plans: 5
+  percent: 83
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 ## Current Position
 
 Phase: 10 (crescimento-robusto-de-poison-do-screening) — EXECUTING
-Plan: 2 of 3
-Status: Executing Phase 10
-Last activity: 2026-06-27 -- Phase 10 Plan 01 completed (GROW-01)
+Plan: 3 of 3
+Status: Ready to execute
+Last activity: 2026-06-27 -- Phase 10 Plan 02 completed (GROW-02)
 
 **v1.3 — execução 9 → 10 → 11 (metodologia antes das telas que a consomem):**
 
@@ -67,6 +67,7 @@ Last activity: 2026-06-27 -- Phase 10 Plan 01 completed (GROW-01)
 | Phase 09 P02 | 5min | 3 tasks | 3 files |
 | Phase 9 P03 | 25min | 2 tasks | 2 files |
 | Phase 10 P01 | 12min | 2 tasks | 3 files |
+| Phase 10 P02 | 9min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,7 @@ Recent decisions affecting current work (v1.3 — saneamento residual):
 - [Phase ?]: Phase 9 Plan 02: payout_valuation delega à mediana sobre série completa (sem janela 3a, sem clamp 1.0); DY recorrente vira earnings-based (payout_valuation × lpa_valuation ÷ preço); 4 goldens rebaselinados deliberadamente
 - [Phase 9]: Phase 9 Plan 03: trava de validação multi-ticker em 2 camadas (golden offline de propriedade + checkpoint live dos 5 tickers reais aprovado: VULC3 43.1%/DY6.3%, TAEE11 217.9%/DY8.4%, EGIE3 49.9%, ITUB4 31.2%, BBAS3 18.8%); cross-effect payout-sem-clamp → regressão P/L registrado para a Fase 10 (screening.py intocado, D-06)
 - [Phase 10]: Phase 10 Plan 01 (GROW-01): g_historico passa a vir de regressão log-linear (OLS de ln, g=exp(slope)-1) sobre a série de lucro normalizada inteira via novo estimador puro growth.crescimento_log_linear; fronteira de None idêntica ao CAGR (None/len<2/ponto<=0 → None, D-03); fonte única reusada pelo screening no Plan 02 (D-04); 166 testes verdes sem rebaseline (golden de valor exato reservados ao 10-03/T2)
+- [Phase 10]: Phase 10 Plan 02 (GROW-02): BSD calcula crescimento_lucro/_dividendos/_fc_3a via growth.crescimento_log_linear sobre normalizacao.serie_winsorizada (série completa, D-04/D-05) — crescimento_lucro_3a == report.g_historico por construção; ajustar_regressao_pl clampa payout em [0,1] na entrada do fit (de-poison de b1, TAEE11~2.16, D-06) sem reintroduzir clamp no canônico payout_valuation (D-03); per-ano CRU e bandas REFERENCIA_BSD intactos (D-07); 166 testes verdes
 
 ### Pending Todos
 
@@ -113,9 +115,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-27T23:30:00.000Z
-Stopped at: Completed 10-01-PLAN.md
-Resume file: .planning/phases/10-crescimento-robusto-de-poison-do-screening/10-02-PLAN.md
+Last session: 2026-06-27T23:22:38.285Z
+Stopped at: Completed 10-02-PLAN.md
+Resume file: .planning/phases/10-crescimento-robusto-de-poison-do-screening/10-03-PLAN.md
 
 ## Operator Next Steps
 

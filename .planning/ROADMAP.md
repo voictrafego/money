@@ -155,7 +155,7 @@ Detalhes das fases concluídas mantidos abaixo em "Phase Details".
   5. A fronteira per-ano permanece intacta — `roe(ano)`/`payout(ano)`/lucro CRU seguem alimentando a elegibilidade per-ano (Cap. 8) e a tabela "Fundamentos (por ano)"; só os **agregados de crescimento** mudam de base.
 **Plans**: 3 plans (3 waves)
 - [x] 10-01-PLAN.md — GROW-01: estimador puro `crescimento_log_linear` (growth.py) + swap do g_historico (report.py)
-- [ ] 10-02-PLAN.md — GROW-02: BSD calcula crescimento via log-linear sobre série winsorizada (screening.py) + clamp do payout no fit da regressão de preço-alvo (comparables.py, D-06)
+- [x] 10-02-PLAN.md — GROW-02: BSD calcula crescimento via log-linear sobre série winsorizada (screening.py) + clamp do payout no fit da regressão de preço-alvo (comparables.py, D-06)
 - [ ] 10-03-PLAN.md — Validação multi-ticker (VULC3 + ITUB4/EGIE3/TAEE11/BBAS3) offline + live + rebaseline deliberado dos golden
 
 ### Phase 11: Apresentação, hierarquia e trava multi-ticker
@@ -187,7 +187,7 @@ Fases concluídas executaram em ordem numérica (4 → 5 → 6 → 8 → 7). v1.
 | 8. Saneamento do motor DDM (caso VULC3) | v1.2 | 4/4 | Complete | 2026-06-27 |
 | 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 5/5 | Complete | 2026-06-27 |
 | 9. Payout sustentável + DY recorrente (núcleo de metodologia) | v1.3 | 3/3 | Complete   | 2026-06-27 |
-| 10. Crescimento robusto + de-poison do screening | v1.3 | 0/3 | Planned | - |
+| 10. Crescimento robusto + de-poison do screening | v1.3 | 2/3 | In Progress|  |
 | 11. Apresentação, hierarquia e trava multi-ticker | v1.3 | 0/TBD | Not started | - |
 
 ---
