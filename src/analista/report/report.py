@@ -99,6 +99,12 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             )
             a.ke = capm.ke_eua_ajustada(c.beta, params)
 
+    # DDM-FIX-01 (caso VULC3): o crescimento da fase explícita não pode exceder Ke.
+    # Acima disso o fator (1+g_alto)/(1+Ke) > 1 e a soma dos 10 anos infla a cada ano
+    # em vez de convergir — artefato matemático, não tese de valor. Teto econômico = Ke.
+    if a.g_alto is not None and a.ke is not None:
+        a.g_alto = min(a.g_alto, a.ke)
+
     # --- DDM de dois estágios (Cap. 15/17) ---
     payout_proj = c.payout_valuation()  # média 3a + clamp 1.0 (função canônica única)
     n = cfg["ddm"]["n_anos_explicito"]
@@ -117,23 +123,43 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             sens["delta_ke"], sens["delta_g"],
         )
 
+    # --- Flags de risco (armadilhas de dividendos, Cap. 6) — usadas no veredito E nos alertas ---
+    dy = a.multiplos.get("DY")
+    payout_ult = c.payout(ult)
+    flag_dy = dy is not None and dy > 0.15
+    flag_payout = payout_ult is not None and payout_ult > 1.0
+
     # --- Veredito ---
     valores = [r.valor_intrinseco for r in (a.ddm_h, a.ddm_constante) if r]
     if valores:
         a.vmin, a.vmax = min(valores), max(valores)
     if valores and a.preco_atual:
         if a.preco_atual < a.vmin:
-            a.veredito = f"SUBAVALIADA — preço R$ {a.preco_atual:.2f} abaixo do intervalo intrínseco R$ {a.vmin:.2f}–{a.vmax:.2f}"
+            # DDM-FIX-05 (caso VULC3): não rotular "SUBAVALIADA" quando flags de risco
+            # contradizem a tese de desconto. Preço abaixo do intrínseco + payout>100% ou
+            # DY>15% costuma ser divergência de modelo / armadilha, não barganha.
+            if flag_payout or flag_dy:
+                motivos = []
+                if flag_payout:
+                    motivos.append("payout > 100%")
+                if flag_dy:
+                    motivos.append("DY > 15%")
+                a.veredito = (
+                    f"VERIFICAR — preço R$ {a.preco_atual:.2f} abaixo do intervalo intrínseco "
+                    f"R$ {a.vmin:.2f}–{a.vmax:.2f}, mas sinais de risco ({', '.join(motivos)}) "
+                    f"contradizem a tese de desconto: possível divergência de modelo."
+                )
+            else:
+                a.veredito = f"SUBAVALIADA — preço R$ {a.preco_atual:.2f} abaixo do intervalo intrínseco R$ {a.vmin:.2f}–{a.vmax:.2f}"
         elif a.preco_atual > a.vmax:
             a.veredito = f"SOBREAVALIADA — preço R$ {a.preco_atual:.2f} acima do intervalo intrínseco R$ {a.vmin:.2f}–{a.vmax:.2f}"
         else:
             a.veredito = f"NO INTERVALO — preço R$ {a.preco_atual:.2f} dentro de R$ {a.vmin:.2f}–{a.vmax:.2f}"
 
     # --- Alertas / armadilhas de dividendos (Cap. 6) ---
-    dy = a.multiplos.get("DY")
-    if dy is not None and dy > 0.15:
+    if flag_dy:
         a.alertas.append("DY > 15%: possível armadilha de dividendos (Cap. 6) — verificar sustentabilidade.")
-    if c.payout(ult) is not None and c.payout(ult) > 1.0:
+    if flag_payout:
         a.alertas.append("Payout > 100%: distribui mais que o lucro (reservas) — insustentável no longo prazo.")
     if not lucro_positivo:
         a.alertas.append("Prejuízo em algum ano da janela: fundamentos inconsistentes para dividendos.")
