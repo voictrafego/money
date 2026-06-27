@@ -15,10 +15,13 @@ import yaml
 
 from analista.core import indicators
 from analista.grafico import (
+    Marcador,
     OverlaySpec,
     SubpainelSpec,
     estado_padrao,
     layout_subplots,
+    leitura_tecnica_disponivel,
+    marcadores_eventos,
     overlays_preco,
     subpaineis_ativos,
 )
@@ -145,3 +148,59 @@ def test_layout_subplots():
     assert l2["rows"] == 3
     assert sum(l2["row_heights"]) == pytest.approx(1.0)
     assert l2["row_heights"][0] == max(l2["row_heights"])
+
+
+# --------------------------------------------------------------------------- #
+# marcadores_eventos — datas EXATAS lendo a.sinais + close (UI-04)
+# --------------------------------------------------------------------------- #
+def _serie_golden_cross() -> pd.Series:
+    """Baixa longa seguida de alta sustentada → MM50 cruza acima da MM200 numa data conhecida."""
+    down = np.linspace(100.0, 50.0, 200)
+    up = np.linspace(50.0, 160.0, 140)
+    closes = np.concatenate([down, up])
+    idx = pd.date_range("2019-01-01", periods=len(closes), freq="B")
+    return pd.Series(closes, index=idx)
+
+
+def test_marcador_golden_cross_data_exata():
+    sinais = _sinais(_serie_golden_cross())
+    diff = (sinais.tendencia.sma50 - sinais.tendencia.sma200).dropna()
+    sign = np.sign(diff)
+    esperado = None
+    for i in range(1, len(diff)):
+        if sign.iloc[i] > 0 and sign.iloc[i - 1] <= 0:
+            esperado = diff.index[i]
+            break
+    assert esperado is not None
+
+    marcs = marcadores_eventos(sinais, sinais.close)
+    assert all(isinstance(m, Marcador) for m in marcs)
+    golden = [m for m in marcs if m.tipo == "golden_cross"]
+    assert any(m.data == esperado for m in golden)
+    alvo = next(m for m in golden if m.data == esperado)
+    assert "Golden" in alvo.rotulo
+    assert alvo.y == pytest.approx(float(sinais.tendencia.sma50.loc[esperado]))
+
+
+def test_marcador_rompimento_maxima_data_exata():
+    vals = [100.0] * 30 + [115.0] * 30
+    idx = pd.date_range("2020-01-01", periods=len(vals), freq="B")
+    sinais = _sinais(pd.Series(vals, index=idx))
+    marcs = marcadores_eventos(sinais, sinais.close)
+    novas = [m for m in marcs if m.tipo == "nova_maxima"]
+    assert novas, "esperava ao menos um rompimento de máxima"
+    assert novas[0].data == idx[30]
+
+
+def test_serie_curta_degrada_para_vazio():
+    idx = pd.date_range("2021-01-01", periods=10, freq="B")
+    sinais = _sinais(pd.Series([100.0] * 10, index=idx))
+    assert marcadores_eventos(sinais, sinais.close) == []
+    assert leitura_tecnica_disponivel(sinais) is False
+
+
+def test_leitura_disponivel_true_e_none():
+    sinais = _sinais(_close_valido(300))
+    assert leitura_tecnica_disponivel(sinais) is True
+    assert leitura_tecnica_disponivel(None) is False
+    assert marcadores_eventos(None, None) == []
