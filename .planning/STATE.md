@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: — Indicadores de tendência
-status: ready_to_plan
-stopped_at: "Completed 08-04-PLAN.md (FIX-06 guardrails + golden de regressão VULC3). Fase 8 completa (4/4). Próximo: Phase 7 (UI)."
-last_updated: "2026-06-27T12:43:31.889Z"
+milestone: v1.3
+milestone_name: Saneamento residual do valuation
+status: planning
+last_updated: "2026-06-27T16:45:21.559Z"
 last_activity: 2026-06-27
 progress:
-  total_phases: 5
-  completed_phases: 6
-  total_plans: 16
-  completed_plans: 16
-  percent: 120
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,12 +24,10 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 
 ## Current Position
 
-Phase: 08
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-06-27
-
-Progress: [██████████] 100%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-06-27 — Milestone v1.3 started
 
 ## Performance Metrics
 

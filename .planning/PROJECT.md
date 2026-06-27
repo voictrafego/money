@@ -36,21 +36,23 @@ em `cfg`. Tudo espelhado na CLI em `relatorio_markdown`. Suíte: 103 testes verd
 (valuation) preservada. Pendência advisory do code review (CR-01: assimetria de degradação da
 `matriz_leitura`) registrada em `06-REVIEW.md` para corrigir antes da Fase 7. Próximo: Fase 7 — UI.
 
-## Current Milestone: v1.2 Indicadores de tendência (timing) na aba Analisar
+## Current Milestone: v1.3 Saneamento residual do valuation — generalização dos múltiplos & crescimento sustentável
 
-**Goal:** Adicionar indicadores técnicos de tendência — consultivos, ligáveis/desligáveis — à aba
-Analisar para auxiliar o *timing* de entrada e disparar um alerta de reverificação quando o preço
-rompe a tendência (possível perda de fundamentos). Estritamente consultivo: o veredito
-fundamentalista (DDM/múltiplos) continua sendo a base e nunca é sobrescrito.
+**Goal:** Tornar os múltiplos de renda/crescimento (DY recorrente, payout sustentável, g histórico)
+fiéis e robustos **para qualquer ticker** — expurgando não-recorrentes por **regra geral**, nunca por
+ajuste de caso — e impedir que esses números contaminem Garimpo/Ranking. O caso VULC3 (lucro/dividendo
+extraordinário, payout >100%) é apenas o diagnóstico; a correção precisa valer para todo o universo e
+não regredir tickers normais (ITUB4/EGIE3/TAEE11/BBAS3).
 
 **Target features:**
-- Médias móveis (SMA/EMA 20/50/200) + cruzamentos (golden/death cross) e posição preço×MM200
-- Canais de alta/baixa (Donchian máx/mín + Bandas de Bollinger) com rompimentos
-- Força/inclinação da tendência (ADX + inclinação) para dizer SE há tendência e a direção
-- Momentum (RSI + MACD) para o timing fino de entrada
-- Painel de controles na aba Analisar para ligar/desligar e selecionar quais indicadores exibir
-- Resumo de sinal de *timing de entrada* (consultivo)
-- Alerta de venda/reverificação: rompimento técnico (ex.: perda da MM200) → "reveja os fundamentos"
+- DY recorrente sustentável: refletir provento sustentável (lucro normalizado × payout sustentável),
+  não a mediana de 3 anos de dividendos que cai na era de payout >100% — e formatado como % na UI
+- Payout sustentável que expurga não-recorrentes de forma geral (hoje a média 3a encosta em 100%)
+- g histórico robusto (não endpoint-a-endpoint sensível a ano de fundo) + screening (BSD/Ranking)
+  deixando de usar CAGR sobre lucro/dividendo CRU
+- Hierarquia do header: destaque ao DY recorrente; DY trailing inflado vira secundário/rotulado
+- Payout "último ano" exibindo o valor cru real (não o payout_valuation clampado)
+- Rebaseline deliberado e justificado dos golden (TEST-07) só quando a metodologia mudar
 
 ## Requirements
 
@@ -85,12 +87,12 @@ fundamentalista (DDM/múltiplos) continua sendo a base e nunca é sobrescrito.
 
 ### Active
 
-<!-- Marco v1.2 — indicadores de tendência (timing) na aba Analisar. REQ-IDs em REQUIREMENTS.md. -->
+<!-- Marco v1.3 — saneamento residual do valuation (generalização). REQ-IDs em REQUIREMENTS.md. -->
 
-- [ ] Indicadores de tendência consultivos (médias móveis, canais, força/inclinação, momentum) na aba Analisar
-- [ ] Controles para ligar/desligar e selecionar quais indicadores ver no gráfico
-- [ ] Sinal de timing de entrada (consultivo, não altera o veredito barato/caro)
-- [ ] Alerta de venda/reverificação ao rompimento técnico (preço perde a tendência → revisar fundamentos)
+- [ ] DY recorrente sustentável (lucro normalizado × payout sustentável) e formatado como % na UI
+- [ ] Payout sustentável que expurga não-recorrentes por regra geral (não a média 3a que encosta em 100%)
+- [ ] g histórico robusto + screening (BSD/Ranking) sem CAGR sobre lucro/dividendo cru
+- [ ] Hierarquia do header com DY recorrente em destaque; payout "último ano" cru exibido
 
 ### Out of Scope
 
@@ -157,4 +159,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-26 — Fase 6 completa (integração engine + composite + alerta + CLI); 103 testes verdes*
+*Last updated: 2026-06-27 — Marco v1.3 iniciado (saneamento residual do valuation); v1.2 concluído (Fase 7, 150 testes verdes)*
