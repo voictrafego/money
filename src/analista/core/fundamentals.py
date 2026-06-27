@@ -74,20 +74,19 @@ class CompanyData:
     def payout(self, ano: int) -> Optional[float]:
         return mult.dividend_payout(self.dpa(ano), self.lpa(ano))
 
-    def payout_valuation(self, janela: int = 3) -> Optional[float]:
+    def payout_valuation(self) -> Optional[float]:
         """Payout-para-valuation: definição ÚNICA usada por DDM (Analisar) e regressão (Ranking).
 
-        Média do payout cru dos `janela` últimos anos (ignorando os None), com clamp em
-        1.0 (uma empresa não pode projetar distribuir mais que 100% do lucro). Substitui o
-        antigo `_media_payout_3a`+clamp local do report, eliminando a divergência CR-02/WR-03
-        (Analisar usava média 3a+clamp; Ranking usava 1 ano sem clamp). `payout(ano)` cru
-        continua existindo para a exibição por ano.
+        Mediana do payout sobre a série histórica COMPLETA (PAY-01); o expurgo de anos
+        não-recorrentes é intrínseco à mediana (um desvio do próprio histórico é descartado
+        sem marcar/excluir anos — D-01). SEM clamp em 1.0: a mediana pode ser legitimamente
+        >100% para quem distribui de caixa regulatório acima do lucro contábil (TAEE11 ≈ 216%,
+        D-03) — o piso já existente `g_alto = max(0, …)` no report trata payout>100% sem piso
+        novo. `payout(ano)` CRU segue alimentando a tabela por ano, o detector de armadilha e
+        o screening per-ano (D-06). Canônico, chamado sem args nas 3 superfícies (FIX-04).
         """
-        anos = self.anos_ordenados()[-janela:]
-        vals = [v for v in (self.payout(a) for a in anos) if v is not None]
-        if not vals:
-            return None
-        return min(sum(vals) / len(vals), 1.0)
+        serie = [self.payout(a) for a in self.anos_ordenados()]
+        return norm.mediana_payout(serie)
 
     def roe(self, ano: int) -> Optional[float]:
         """ROE com PL médio ((PL_ini + PL_fim)/2); None quando falta o PL inicial.
