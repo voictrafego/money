@@ -86,6 +86,9 @@ class SinaisTecnicos:
     canais: Canais
     forca: Forca
     momentum: Momentum
+    # Close split-adjusted usada pelos indicadores, exposta read-only para os marcadores
+    # de evento da UI (UI-04). Aditiva (default None) p/ não quebrar o contrato do plan 05-01.
+    close: pd.Series = None
 
 
 # --------------------------------------------------------------------------- #
@@ -418,4 +421,5 @@ def calcular(ohlc: "pd.DataFrame", cfg: dict) -> SinaisTecnicos:
         canais=_canais(ohlc, cfg),
         forca=_forca(ohlc, cfg),
         momentum=_momentum(close, cfg),
+        close=close,   # read-only: a MESMA close split-adjusted já usada (não recalcula)
     )
