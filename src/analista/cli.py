@@ -132,14 +132,17 @@ def cmd_rank(args, cfg):
 
     nomes, ML, ROE, PL, EY, DP = [], [], [], [], [], []
     for c in empresas:
+        # FIX-04: ROE/LPA/payout de valuation saem dos métodos canônicos normalizados,
+        # idênticos ao Analisar e ao Ranking do app. Inclui payout_valuation no lugar do
+        # payout(ult) cru — alinha de quebra a divergência cli↔app pré-existente do payout.
         ult = c.ultimo_ano()
-        lpa = c.lpa(ult)
+        lpa = c.lpa_valuation()
         nomes.append(c.ticker)
         ML.append(mult.margem_liquida(c.lucro_liquido.get(ult), c.vendas_liquidas.get(ult)))
-        ROE.append(c.roe(ult))
+        ROE.append(c.roe_valuation())
         PL.append(mult.preco_lucro(c.preco_atual, lpa))
         EY.append(mult.earnings_yield(lpa, c.preco_atual))
-        DP.append(c.payout(ult))
+        DP.append(c.payout_valuation())
 
     ranking = cmp.ranking_por_multiplos(nomes, {"ML": ML, "ROE": ROE, "PL": PL, "EY": EY})
 
@@ -148,9 +151,8 @@ def cmd_rank(args, cfg):
     alvos = {}
     if reg:
         for c in empresas:
-            ult = c.ultimo_ano()
             pa = cmp.preco_alvo_por_regressao(
-                reg, c.payout(ult), c.roe(ult), c.lpa(ult), c.preco_atual)
+                reg, c.payout_valuation(), c.roe_valuation(), c.lpa_valuation(), c.preco_atual)
             if pa:
                 alvos[c.ticker] = pa
 

@@ -84,3 +84,57 @@ def test_dy_atual_fallback_para_ano_base():
 def test_company_data_expoe_ano_dpa():
     c = CompanyData(ticker="X", anos=[2024])
     assert hasattr(c, "ano_dpa")
+
+
+# --------------------------------------------------------------------------- #
+# FIX-04 (Task 2): métodos canônicos de valuation (base de lucro normalizada)
+# --------------------------------------------------------------------------- #
+def test_roe_valuation_igual_ao_cru_quando_lucro_estavel():
+    # Empresa estável: base normalizada == lucro cru => roe_valuation == roe(ult).
+    c = CompanyData(ticker="X", anos=[2021, 2022, 2023, 2024])
+    for a in c.anos:
+        c.lucro_liquido[a] = 100
+        c.patrimonio_liquido[a] = 1000
+    ult = c.ultimo_ano()
+    assert c.roe_valuation() is not None
+    assert abs(c.roe_valuation() - c.roe(ult)) < 1e-9
+
+
+def test_roe_valuation_suaviza_ano_atipico():
+    # Último ano com lucro 3x os demais: o ROE cru dispara, mas a base normalizada
+    # (mediana dos 3 últimos = 100) segura o roe_valuation MUITO abaixo do cru.
+    c = CompanyData(ticker="X", anos=[2021, 2022, 2023, 2024])
+    c.lucro_liquido = {2021: 100, 2022: 100, 2023: 100, 2024: 300}
+    for a in c.anos:
+        c.patrimonio_liquido[a] = 1000
+    ult = c.ultimo_ano()
+    # base = mediana([100,100,300]) = 100; roe_valuation = 100/PL_medio.
+    assert c.roe_valuation() < c.roe(ult)
+    assert abs(c.roe_valuation() - c.roe(ult) / 3) < 1e-9  # 100 vs 300 sobre o mesmo PL
+
+
+def test_lpa_valuation_usa_base_normalizada():
+    # LPA de valuation = base normalizada / nº ações do último ano (não o lucro cru de 1 ano).
+    c = CompanyData(ticker="X", anos=[2022, 2023, 2024])
+    c.lucro_liquido = {2022: 100, 2023: 100, 2024: 300}
+    c.num_acoes = {2022: 100, 2023: 100, 2024: 100}
+    # base = mediana([100,100,300]) = 100 => LPA valuation = 100/100 = 1.0 (não 3.0 do cru).
+    assert abs(c.lpa_valuation() - 1.0) < 1e-9
+
+
+def test_roe_valuation_none_sem_pl_inicial():
+    # Mesma fronteira do roe(ano) cru: sem PL do ano anterior, ROE de valuation é None.
+    c = CompanyData(ticker="X", anos=[2023, 2024])
+    c.lucro_liquido = {2023: 100, 2024: 100}
+    c.patrimonio_liquido = {2024: 1000}  # falta 2023 (ano-1 do último)
+    assert c.roe_valuation() is None
+
+
+def test_metodos_crus_por_ano_permanecem_intactos():
+    # Fronteira FIX-04: a normalização NÃO toca os crus por ano (exibição/screening).
+    c = CompanyData(ticker="X", anos=[2023, 2024])
+    c.lucro_liquido = {2023: 100, 2024: 300}
+    c.patrimonio_liquido = {2023: 1000, 2024: 1000}
+    c.num_acoes = {2023: 100, 2024: 100}
+    assert c.lpa(2024) == 3.0                  # cru por ano inalterado
+    assert abs(c.roe(2024) - 300 / 1000) < 1e-9  # PL médio cru inalterado

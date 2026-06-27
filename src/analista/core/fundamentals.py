@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 from . import multiples as mult
+from . import normalizacao as norm
 
 
 @dataclass
@@ -94,12 +95,59 @@ class CompanyData:
         Base ÚNICA em toda a série: usa `roe_medio` (PL médio) quando há PL do ano anterior
         e do próprio ano. No 1º ano da janela (sem PL ano-1) retorna None em vez de cair
         silenciosamente para o PL final — assim a série nunca mistura bases (WR-01).
+
+        CRU por ano: continua sendo a base da exibição "Fundamentos (por ano)" e do
+        screening (Cap. 8, elegibilidade histórica per-ano). NÃO é o número de valuation —
+        para isso use `roe_valuation()` (base de lucro normalizada). Fronteira FIX-04.
         """
         pl_ini = self.patrimonio_liquido.get(ano - 1)
         pl_fim = self.patrimonio_liquido.get(ano)
         if pl_ini is None:
             return None
         return mult.roe_medio(self.lucro_liquido.get(ano), pl_ini, pl_fim)
+
+    # ------------------------------------------------------------------ #
+    # FIX-04: métodos canônicos de VALUATION (base de lucro normalizada).
+    #
+    # `roe_valuation` / `lpa_valuation` são o número-síntese ÚNICO de qualidade
+    # consumido por TODAS as superfícies de valuation (Analisar + Ranking app + Ranking
+    # cli), substituindo o `roe(ult)`/`lpa(ult)` CRU de um único exercício. Espelham o
+    # padrão de `payout_valuation` (canônico, chamado sem args em todas as superfícies →
+    # consistência entre menus por construção). Os defaults `anos_media=3`/`winsor=0.10`
+    # espelham o bloco `normalizacao` do config.yaml (knob canônico documentado).
+    #
+    # FRONTEIRA: `roe(ano)`/`lpa(ano)`/`payout(ano)`/`lucro_liquido` CRUS continuam
+    # alimentando a tabela por ano e o screening (semântica de elegibilidade per-ano).
+    # ------------------------------------------------------------------ #
+    def base_lucro_normalizada(self, anos_media: int = 3, winsor: float = 0.10) -> Optional[float]:
+        """Base de lucro robusta a UM exercício atípico (mediana/média winsorizada dos
+        últimos `anos_media` anos). É o lucro que o valuation consome no lugar do cru."""
+        return norm.base_normalizada(self.serie("lucro_liquido"), anos_media, winsor)
+
+    def serie_lucro_normalizada(self, winsor: float = 0.10) -> List[float]:
+        """Série de lucro winsorizada (mesmo comprimento) p/ o CAGR de valuation — um ano
+        atípico no início/fim deixa de distorcer o `g_historico`."""
+        return norm.serie_winsorizada(self.serie("lucro_liquido"), winsor)
+
+    def lpa_valuation(self, anos_media: int = 3, winsor: float = 0.10) -> Optional[float]:
+        """LPA canônico de valuation: base de lucro normalizada / nº de ações do último ano."""
+        base = self.base_lucro_normalizada(anos_media, winsor)
+        return mult.lpa(base, self.num_acoes.get(self.ultimo_ano()))
+
+    def roe_valuation(self, anos_media: int = 3, winsor: float = 0.10) -> Optional[float]:
+        """ROE canônico de valuation: base de lucro normalizada / PL médio do último ano.
+
+        Mesma fronteira de None que `roe(ano)` (sem PL do ano anterior → None), só trocando
+        o lucro cru do último ano pela base normalizada."""
+        base = self.base_lucro_normalizada(anos_media, winsor)
+        if base is None:
+            return None
+        ult = self.ultimo_ano()
+        if ult is None:
+            return None
+        pl_ini = self.patrimonio_liquido.get(ult - 1)
+        pl_fim = self.patrimonio_liquido.get(ult)
+        return mult.roe_medio(base, pl_ini, pl_fim)
 
     def dy_atual(self) -> Optional[float]:
         """DY corrente. Usa o DPA dos últimos 12 meses reais quando disponível (WR-04);

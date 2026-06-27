@@ -51,24 +51,31 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     ult = c.ultimo_ano()
     a = AnaliseAcao(ticker=c.ticker, nome=c.nome, setor=c.setor, preco_atual=c.preco_atual)
 
-    # --- Múltiplos (Cap. 10), no último ano ---
-    lpa = c.lpa(ult)
-    dpa = c.dpa(ult)
+    # --- Múltiplos (Cap. 10) ---
+    # FIX-04: os múltiplos de VALUATION (ROE, LPA→P/L/EY, payout, DY) saem dos métodos
+    # canônicos normalizados — o MESMO número que o Ranking (app/cli) consome (Core Value).
+    # ML segue cru (margem do último ano, métrica de exibição, não síntese de valuation).
+    lpa = c.lpa_valuation()        # base de lucro normalizada / nº ações (não o cru de 1 ano)
+    dpa = c.dpa(ult)               # dividendos crus (não dependem de lucro → fora do FIX-04)
     a.multiplos = {
         "ML": mult.margem_liquida(c.lucro_liquido.get(ult), c.vendas_liquidas.get(ult)),
-        "ROE": c.roe(ult),
+        "ROE": c.roe_valuation(),
         "P/L": mult.preco_lucro(c.preco_atual, lpa),
         "EY": mult.earnings_yield(lpa, c.preco_atual),
-        "DP (payout)": c.payout(ult),
+        "DP (payout)": c.payout_valuation(),
         "CDC": mult.cobertura_dividendos_caixa(c.fco.get(ult), c.num_acoes.get(ult), dpa),
-        "DY": mult.dividend_yield(dpa, c.preco_atual),
+        "DY": c.dy_atual(),        # canônico (trailing-12m c/ fallback), igual em todo o app
     }
 
     # --- Crescimento (Cap. 14) ---
-    lucros = c.serie("lucro_liquido")
+    # CAGR sobre a série de lucro NORMALIZADA (winsorizada): um exercício atípico no
+    # início/fim deixa de inflar o g histórico. A série CRUA segue valendo p/ os fatos
+    # per-ano do ciclo de vida (lucrou/decresceu em cada ano).
+    lucros_raw = c.serie("lucro_liquido")
+    lucros = c.serie_lucro_normalizada()
     if len(lucros) >= 2:
         a.g_historico = growth.cagr(lucros[0], lucros[-1], len(lucros) - 1)
-    a.g_fundamentos = growth.crescimento_por_fundamentos(c.roe(ult), c.payout(ult))
+    a.g_fundamentos = growth.crescimento_por_fundamentos(c.roe_valuation(), c.payout_valuation())
     g_estavel = cfg["ddm"]["g_estavel"]
     a.g_estavel = g_estavel
     # o livro prioriza o crescimento histórico do lucro quando o payout variou;
@@ -79,8 +86,10 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     a.g_alto = g_alto
 
     # --- Estágio do ciclo de vida (Cap. 8) ---
-    lucro_positivo = all(v > 0 for v in lucros) if lucros else False
-    lucro_decrescente = len(lucros) >= 2 and lucros[-1] < lucros[0]
+    # Fatos per-ano: "lucrou em todos os anos?" / "decresceu?" leem a série CRUA — são
+    # observações históricas de elegibilidade, não o número-síntese de valuation.
+    lucro_positivo = all(v > 0 for v in lucros_raw) if lucros_raw else False
+    lucro_decrescente = len(lucros_raw) >= 2 and lucros_raw[-1] < lucros_raw[0]
     a.estagio = lifecycle.classificar_estagio(
         a.g_historico, c.payout(ult), lucro_positivo, lucro_decrescente
     )
@@ -124,8 +133,11 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
         )
 
     # --- Flags de risco (armadilhas de dividendos, Cap. 6) — usadas no veredito E nos alertas ---
+    # FIX-04: os flags leem dado CRU de propósito. O payout_valuation é clampado em 1.0,
+    # então NUNCA dispararia o alerta ">100%" (desligaria silenciosamente o DDM-FIX-05);
+    # o detector de armadilha tem de ver o payout reportado do último ano (VULC3: 124,7%).
     dy = a.multiplos.get("DY")
-    payout_ult = c.payout(ult)
+    payout_ult = c.payout(ult)   # CRU (não payout_valuation) — detector de armadilha
     flag_dy = dy is not None and dy > 0.15
     flag_payout = payout_ult is not None and payout_ult > 1.0
 

@@ -316,10 +316,13 @@ else:
         else:
             nomes, ML, ROE, PL, EY, DP = [], [], [], [], [], []
             for c in empresas:
-                u = c.ultimo_ano(); lpa = c.lpa(u)
+                # FIX-04: ROE/LPA de valuation saem dos métodos canônicos normalizados —
+                # o MESMO número que o Analisar exibe (Core Value). app.py segue read-only:
+                # só troca QUAL método canônico lê, não recalcula método.
+                u = c.ultimo_ano(); lpa = c.lpa_valuation()
                 nomes.append(c.ticker)
                 ML.append(mult.margem_liquida(c.lucro_liquido.get(u), c.vendas_liquidas.get(u)))
-                ROE.append(c.roe(u))
+                ROE.append(c.roe_valuation())
                 PL.append(mult.preco_lucro(c.preco_atual, lpa))
                 EY.append(mult.earnings_yield(lpa, c.preco_atual))
                 DP.append(c.payout_valuation())  # payout canônico (média 3a + clamp), igual ao Analisar
@@ -328,8 +331,7 @@ else:
             alvos = {}
             if reg:
                 for c in empresas:
-                    u = c.ultimo_ano()
-                    pa = cmp.preco_alvo_por_regressao(reg, c.payout_valuation(), c.roe(u), c.lpa(u), c.preco_atual)
+                    pa = cmp.preco_alvo_por_regressao(reg, c.payout_valuation(), c.roe_valuation(), c.lpa_valuation(), c.preco_atual)
                     if pa:
                         alvos[c.ticker] = pa
             rows = []
