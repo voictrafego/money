@@ -217,6 +217,20 @@ if modo.startswith("🔎"):
                     est["momentum"]["macd_on"] = st.toggle(
                         "MACD", value=est["momentum"]["macd_on"], help=h("tec_macd"))
 
+            # Enquadramento subordinado (UI-06): o veredito fundamentalista (acima) é o selo
+            # decisório; a leitura técnica é CONSULTIVA e secundária — markdown/caption discreto,
+            # nunca banner de veredito, voz de timing/reverificação (jamais "compre/venda").
+            st.markdown("---")
+            if grafico.leitura_tecnica_disponivel(a.sinais) and a.timing_resumo:
+                st.markdown(f"**Timing (consultivo):** {esc_md(a.timing_resumo)}", help=h("tec_timing"))
+                if a.matriz_leitura:                       # fundamento-primeiro (D-04)
+                    st.markdown(esc_md(a.matriz_leitura))
+                if a.alerta_reverificacao:                 # voz de reverificação, nunca venda
+                    st.info(f"🔎 {esc_md(a.alerta_reverificacao)}")
+            else:
+                # Degradação holística (Plan 01): timing_resumo vazio ⇒ sem leitura, sem quebrar a aba.
+                st.caption("Leitura técnica indisponível — histórico insuficiente para os indicadores")
+
             tab1, tab2, tab3 = st.tabs(["📈 Múltiplos & Crescimento", "💵 Valuation (DDM)", "📋 Fundamentos (10 anos)"])
 
             with tab1:
