@@ -109,3 +109,26 @@ Phases execute in numeric order: 4 → 5 → 6 → 7
 
 ---
 *Próximo passo: `/gsd-execute-phase 5`*
+
+---
+
+## Backlog
+
+### Phase 999.1: Saneamento do motor DDM (caso VULC3) (BACKLOG)
+
+**Goal:** Corrigir a divergência estrutural do valuation fundamentalista exposta pelo caso VULC3 (intrínseco R$ 167–334 vs preço R$ 14, veredito "SUBAVALIADA" sobre uma divergência de modelo). Achados verificados linha a linha no código em `.planning/phases/999.1-saneamento-do-motor-ddm-caso-vulc3/FINDINGS.md`.
+
+**Requirements:** TBD (6 fixes priorizados por alavancagem — ver FINDINGS.md):
+- DDM-FIX-01: trava `g_alto < Ke` no `ddm_dois_estagios` (mata a explosão; maior ROI)
+- DDM-FIX-02: amarrar `g_alto` a `g_fundamentos`/payout (hoje ignora `g_fundamentos`)
+- DDM-FIX-03: refrescar inputs do CAPM (rf/EMBI vivos ou abordagem local/Selic; hoje hardcoded de 2019)
+- DDM-FIX-04: normalização de lucro (expurgo de não-recorrentes) — raiz a montante
+- DDM-FIX-05: veredito consome flags de risco (payout>100%, DY>15%) em vez de ignorá-las
+- DDM-FIX-06: guardrails/regressão — DY recorrente vs trailing, banda = sensibilidade real (não 2 cenários), setor correto
+
+**Plans:** 0 plans
+
+**Nota de sequenciamento:** Não bloqueia v1.2 (Phases 5–7), mas o veredito furado alimenta a matriz fundamento×técnico da Phase 6 (TIMING-02). Promover a milestone próprio após v1.2.
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
