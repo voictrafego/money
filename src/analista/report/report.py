@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
+import pandas as pd
 from tabulate import tabulate
 
 from ..core import capm, ddm, growth, indicators, lifecycle
@@ -213,7 +214,16 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     # indicators.calcular já degrada frame vazio para "indisponivel" (ponto único, DATA-03).
     base = cfg.get("indicadores", {}).get("base_temporal", "semanal")
     ohlc = c.ohlc_ajustado
-    if base == "semanal" and ohlc is not None and len(ohlc) > 0:
+    # WR-01: o resample só roda quando o frame é realmente datetime-indexado e tem as
+    # colunas OHLC; caso contrário cai no frame original e a degradação de
+    # indicators.calcular (ponto único) cuida do resto, sem TypeError/KeyError aqui.
+    if (
+        base == "semanal"
+        and ohlc is not None
+        and len(ohlc) > 0
+        and isinstance(ohlc.index, pd.DatetimeIndex)
+        and set(indicators._COLUNAS_OHLC).issubset(ohlc.columns)
+    ):
         ohlc = ohlc.resample("W-FRI").agg(
             {"Open": "first", "High": "max", "Low": "min", "Close": "last"}
         ).dropna()
@@ -254,6 +264,11 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     # Ambos read-only sobre o fundamento: LÊEM a.veredito/a.sinais já calculados, sem
     # recalcular nem tocar veredito/vmin/vmax. Helpers puros p/ travar por golden direto.
     a.matriz_leitura = _matriz_leitura(a.veredito, a.timing_estado)
+    # CR-01: degradação HOLÍSTICA — quando o read técnico degrada (timing_resumo vazio),
+    # nenhum derivado pode afirmar um estado fabricado. A matriz colapsa junto com o timing,
+    # mesmo que o estado tenha caído para "sem_tendencia" e o veredito DDM esteja preenchido.
+    if not a.timing_resumo:
+        a.matriz_leitura = ""
     a.alerta_reverificacao = _alerta_reverificacao(a.sinais)
 
     return a
@@ -437,15 +452,17 @@ def relatorio_markdown(c: CompanyData, a: AnaliseAcao, cfg: dict) -> str:
     # Sinais técnicos (consultivos) — espelha o read da engine (CLI-01 / D-13).
     # Paridade CLI↔UI gratuita (ambos consomem a.sinais/analisar_acao, ponto único).
     L.append("## Sinais técnicos (consultivos)")
-    if (a.sinais is None or a.timing_estado == ""
-            or a.sinais.tendencia.posicao_mm200 == "indisponivel"):
-        # Degradação graciosa (DATA-03), espelha o fallback do DDM.
+    if a.sinais is None or not a.timing_resumo:
+        # Degradação graciosa (DATA-03), espelha o fallback do DDM. A guarda por
+        # `not a.timing_resumo` (IN-01: remove a condição morta timing_estado=="") cobre
+        # também o caso só-de-força (ADX indisponível com MM200 disponível, CR-01).
         L.append("_Histórico de preços insuficiente para o read técnico._")
         L.append("")
     else:
         L.append(f"**Timing de entrada:** {a.timing_resumo}")
         L.append("")
-        L.append(a.matriz_leitura)              # fundamento-primeiro (D-04)
+        if a.matriz_leitura:                    # IN-02: sem linha em branco espúria
+            L.append(a.matriz_leitura)          # fundamento-primeiro (D-04)
         if a.alerta_reverificacao:
             L.append("")
             L.append(f"- ⚠️ {a.alerta_reverificacao}")
