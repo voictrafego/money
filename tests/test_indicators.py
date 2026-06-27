@@ -395,3 +395,13 @@ def test_sinais_close_paridade():
     sinais = indicators.calcular(ohlc, cfg)
 
     assert sinais.close.equals(ohlc["Close"])
+
+
+def test_sinais_close_frame_vazio():
+    # 07-01 / DATA-03: frame vazio/None degrada para uma close Series VAZIA (sem exceção),
+    # espelhando o guard de borda existente — a UI não quebra ao acessar sinais.close.
+    cfg = _cfg_ind()
+    for entrada in (None, pd.DataFrame()):
+        sinais = indicators.calcular(entrada, cfg)
+        assert isinstance(sinais.close, pd.Series)
+        assert len(sinais.close) == 0
