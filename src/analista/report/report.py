@@ -12,7 +12,7 @@ from typing import Dict, List, Optional
 
 from tabulate import tabulate
 
-from ..core import capm, ddm, growth, lifecycle
+from ..core import capm, ddm, growth, indicators, lifecycle
 from ..core import multiples as mult
 from ..core.fundamentals import CompanyData
 
@@ -38,6 +38,12 @@ class AnaliseAcao:
     vmax: Optional[float] = None
     veredito: str = ""
     alertas: List[str] = field(default_factory=list)
+    # --- Phase 6: read técnico consultivo (aditivo, read-only sobre o fundamento) ---
+    sinais: Optional["indicators.SinaisTecnicos"] = None   # populado por indicators.calcular
+    timing_estado: str = ""                                # "tendencia_de_alta"|"sem_tendencia"|"atencao"
+    timing_resumo: str = ""                                # frase PT consultiva (TIMING-01)
+    matriz_leitura: str = ""                               # frase curada fundamento×técnico (Plan 02)
+    alerta_reverificacao: Optional[str] = None             # None se nada rompeu (Plan 02)
 
 
 def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
