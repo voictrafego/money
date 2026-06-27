@@ -40,3 +40,15 @@ def ipca_12m() -> Optional[float]:
     """IPCA acumulado 12 meses em fração. None se indisponível."""
     v = _ultimo_valor(IPCA_12M)
     return v / 100.0 if v is not None else None
+
+
+def selic_para_capm(fallback: float) -> float:
+    """rf do CAPM local (Cap. 16/17): Selic ao vivo do BCB quando disponível, senão o
+    fallback de config. Puro e sem exceção — espelha o padrão `selic_meta() or 0.105` já
+    usado p/ o corte de DY nos entry points.
+
+    Pureza da engine (FIX-03): isto é chamado SÓ nos pontos de entrada (cli/app), que
+    resolvem o rf uma única vez e o injetam em `cfg['capm']['rf_local']`. `analisar_acao`
+    NÃO chama esta função — permanece offline/determinística lendo o rf já resolvido.
+    """
+    return selic_meta() or fallback

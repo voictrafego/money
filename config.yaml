@@ -57,9 +57,20 @@ normalizacao:
   anos_media: 3             # médias trienais (espírito BSD Cap. 8.4)
   winsor: 0.10              # winsorização a 10% nos extremos (>=5 pontos)
 
-# --- Cap. 16: CAPM (custo de capital do acionista) ---
+# --- Cap. 16/17: CAPM (custo de capital do acionista) ---
 capm:
-  abordagem: "eua_ajustada"   # "eua_ajustada" (T-Bond+EMBI+inflação) ou "local"
+  abordagem: "local"          # FIX-03: CAPM local (Cap. 17.2) com Selic ao vivo do BCB (rf)
+                              # + ERP Brasil fixo + beta. "eua_ajustada" (literais 2019) segue
+                              # disponível como fallback de método (legado do caso Itaú).
+  # --- abordagem "local" (default, FIX-03 — Ke coerente com o custo de capital de hoje) ---
+  erp_local: 0.06             # ERP Brasil aplicado SOBRE a Selic: ~4,5% de mercado maduro
+                              # (Damodaran) + ~1,5% de prêmio small-cap/iliquidez. A Selic já
+                              # precifica risco-país + inflação, então o ERP é só o prêmio de equity.
+  selic_fallback: 0.105       # Selic de referência quando o BCB (selic_meta) está indisponível.
+  rf_local: 0.105             # rf do CAPM local: os entry points (cli/app) SOBRESCREVEM com a
+                              # Selic ao vivo do BCB; default == selic_fallback p/ a engine rodar
+                              # offline/determinística nos testes (sem chamar a rede).
+  # --- abordagem "eua_ajustada" (legado/fallback de método, literais do livro fim de 2019) ---
   rf_us: 0.0192               # T-Bond EUA 10a (livro, fim de 2019)
   embi_brasil: 0.0214         # risco-país EMBI+ (livro)
   erp_us: 0.0620              # prêmio de risco histórico EUA (livro)

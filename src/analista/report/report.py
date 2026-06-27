@@ -109,8 +109,11 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     a.beta = c.beta
     if c.beta is not None:
         if cap.get("abordagem") == "local":
-            a.ke = capm.ke_local(c.beta, cap["rf_us"] + cap["embi_brasil"],
-                                 cap["erp_us"] + cap["embi_brasil"])
+            # FIX-03 (CAPM ao vivo, caso VULC3): Ke local = rf + beta × ERP Brasil. O rf
+            # (cap["rf_local"]) é a Selic ao vivo do BCB, JÁ injetada pelos entry points
+            # (cli/app); offline (testes) ele vale o selic_fallback do config. A engine NÃO
+            # toca a rede aqui — lê apenas o rf resolvido em cfg, mantendo-se pura/determinística.
+            a.ke = capm.ke_local(c.beta, cap["rf_local"], cap["erp_local"])
         else:
             params = capm.CapmParams(
                 rf_us=cap["rf_us"], embi_brasil=cap["embi_brasil"], erp_us=cap["erp_us"],
