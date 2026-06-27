@@ -27,6 +27,15 @@ RSI/MACD) a partir do OHLC via `indicators.calcular(ohlc, cfg) → SinaisTecnico
 travada por golden tests (Wilder, no-repaint, split ITSA4, ADX×TradingView). Suíte: 92 testes
 verdes. Próximo: Fase 6 — integração na engine + composite + alerta + CLI.
 
+**Fase 6 completa (2026-06-26):** os sinais técnicos passam a viver em `AnaliseAcao` via
+`analisar_acao` (popula `a.sinais` por `indicators.calcular`), com o composite de *timing de entrada*
+(3 estados macro pela árvore MM200×ADX), a matriz fundamento×técnico (fundamento sempre líder), o
+alerta de reverificação (OR de perda-MM200 / death cross / perda da mínima do Donchian — voz
+"reverifique os fundamentos", nunca venda) e a base temporal diária/semanal (default semanal, W-FRI)
+em `cfg`. Tudo espelhado na CLI em `relatorio_markdown`. Suíte: 103 testes verdes; invariante TEST-07
+(valuation) preservada. Pendência advisory do code review (CR-01: assimetria de degradação da
+`matriz_leitura`) registrada em `06-REVIEW.md` para corrigir antes da Fase 7. Próximo: Fase 7 — UI.
+
 ## Current Milestone: v1.2 Indicadores de tendência (timing) na aba Analisar
 
 **Goal:** Adicionar indicadores técnicos de tendência — consultivos, ligáveis/desligáveis — à aba
@@ -148,4 +157,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-24 — início do marco v1.2 (indicadores de tendência / timing na aba Analisar)*
+*Last updated: 2026-06-26 — Fase 6 completa (integração engine + composite + alerta + CLI); 103 testes verdes*
