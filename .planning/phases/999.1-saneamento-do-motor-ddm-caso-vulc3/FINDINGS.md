@@ -53,12 +53,14 @@ Um intrínseco de 11x–23x o preço, sustentado por 5 anos sem nunca tocar a co
 
 ## Fixes priorizados (por alavancagem)
 
-- **DDM-FIX-01** — trava `g_alto < Ke` (ou clamp `g_alto = min(g_alto, Ke − margem)`) em `ddm_dois_estagios`/`analisar_acao`. ~3 linhas, mata a explosão sozinha. **Maior ROI.**
+- **DDM-FIX-01** ✅ **FEITO** (commit em `report.py`, 2026-06-26) — trava `g_alto = min(g_alto, Ke)` em `analisar_acao` antes do DDM. Mata a explosão. VULC3: intrínseco caiu de R$167–334 para R$86–105.
 - **DDM-FIX-02** — reconciliar `g_alto` com `g_fundamentos`/payout; payout 100% ⇒ g sustentável 0 por construção.
 - **DDM-FIX-03** — refrescar inputs do CAPM (rf/EMBI do BCB ao vivo, ou abordagem `local` com Selic). Hoje são valores de 2019.
 - **DDM-FIX-04** — normalização de lucro (expurgo de não-recorrentes) antes de ROE/CAGR/payout/DY. Maior esforço, raiz a montante.
-- **DDM-FIX-05** — veredito consome as flags: rebaixar "SUBAVALIADA" para "divergência de modelo / verificar" quando payout>100% ou DY>15%.
+- **DDM-FIX-05** ✅ **FEITO** (mesmo commit) — veredito rebaixa "SUBAVALIADA" → "VERIFICAR — possível divergência de modelo" quando payout>100% ou DY>15%. Matriz fundamento×técnico degrada para vazio (token do veredito muda). VULC3: selo deixa de ser verde.
 - **DDM-FIX-06** — guardrails/regressão: DY recorrente vs trailing; banda = sensibilidade real (não 2 cenários); setor correto; caso VULC3 como teste de regressão.
+
+> **Estado parcial (2026-06-26):** FIX-01 e FIX-05 aplicados fora da cerimônia GSD a pedido do usuário (bypass explícito), com 103 testes verdes e verificação ao vivo no VULC3. Restam **FIX-02, 03, 04, 06** — mudanças de metodologia que exigem discutir/planejar e **rebaselining deliberado dos 64 golden tests**. Promover este item com `/gsd-review-backlog` para tratá-las.
 
 ## Conexão com o trabalho em andamento (v1.2)
 
