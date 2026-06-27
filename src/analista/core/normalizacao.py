@@ -75,6 +75,22 @@ def base_normalizada(
     return media_winsorizada(janela, winsor)
 
 
+def mediana_payout(valores: Sequence[Number]) -> Number:
+    """Payout sustentável: mediana do payout sobre a série histórica COMPLETA (PAY-01).
+
+    "Extraordinário" = desvio do PRÓPRIO histórico, capturado pela mediana sobre TODOS
+    os anos válidos (sem janela de 3a, D-04). SEM clamp em 1.0 (D-03): a mediana pode
+    ser legitimamente >100% — transmissora que distribui de caixa regulatório acima do
+    lucro contábil (TAEE11 ≈ 2.16). Vazio/só-None -> None; 1 ano -> o próprio valor.
+    """
+    limpos = _limpar(valores)
+    if not limpos:
+        return None
+    if len(limpos) == 1:
+        return limpos[0]
+    return float(median(limpos))
+
+
 def serie_winsorizada(valores: Sequence[Number], winsor: float = 0.10) -> List[float]:
     """Série (mesmo comprimento dos pontos válidos) com os extremos winsorizados.
 
