@@ -91,11 +91,20 @@ if modo.startswith("🔎"):
                              help=h("ticker")).strip().upper()
     rodar = col2.button("Analisar", type="primary", use_container_width=True)
 
+    # Persiste o ticker analisado em session_state em vez de gatear a análise no retorno
+    # EFÊMERO do botão. `rodar` só é True no rerun do clique; ao mexer num toggle técnico o
+    # Streamlit reexecuta com rodar=False e o bloco inteiro (veredito + gráfico + controles)
+    # sumiria — quebrando o UI-03. Gatear pelo ticker ativo deixa o toggle redesenhar o
+    # gráfico sem recoleta (montar() é @st.cache_data → barato nos reruns).
     if rodar and ticker:
-        with st.spinner(f"Coletando dados de {ticker} (CVM + Yahoo)..."):
-            c = montar(ticker, ANO_BASE, N_ANOS)
+        st.session_state["analise_ticker"] = ticker
+
+    ticker_ativo = st.session_state.get("analise_ticker")
+    if ticker_ativo:
+        with st.spinner(f"Coletando dados de {ticker_ativo} (CVM + Yahoo)..."):
+            c = montar(ticker_ativo, ANO_BASE, N_ANOS)
         if c is None or not c.anos:
-            st.error(f"Não encontrei dados suficientes para {ticker}. "
+            st.error(f"Não encontrei dados suficientes para {ticker_ativo}. "
                      "Confira o ticker ou adicione o mapeamento em data/ticker_map.json.")
         else:
             # FIX-03: injeta o rf do CAPM (Selic ao vivo) em CFG antes da engine. Reusa
