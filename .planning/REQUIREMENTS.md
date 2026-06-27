@@ -44,9 +44,9 @@
 
 ### Apresentação e controles (UI)
 
-- [ ] **UI-01**: Overlays (MMs / Donchian / Bollinger) desenhados no eixo de preço do gráfico existente
-- [ ] **UI-02**: Osciladores (RSI / MACD / ADX) renderizados em subpainéis dinâmicos (make_subplots), criados só quando ativos
-- [ ] **UI-03**: User pode ligar/desligar e selecionar quais indicadores exibir; estado mantido por sessão; o gráfico redesenha o subconjunto escolhido
+- [x] **UI-01**: Overlays (MMs / Donchian / Bollinger) desenhados no eixo de preço do gráfico existente
+- [x] **UI-02**: Osciladores (RSI / MACD / ADX) renderizados em subpainéis dinâmicos (make_subplots), criados só quando ativos
+- [x] **UI-03**: User pode ligar/desligar e selecionar quais indicadores exibir; estado mantido por sessão; o gráfico redesenha o subconjunto escolhido
 - [x] **UI-04**: Eventos (cruzamentos / rompimentos) marcados nas datas exatas no gráfico
 - [x] **UI-05**: Tooltips de glossário (ícone ?) para cada novo indicador, com definições acessíveis (paridade com o glossário do app)
 - [x] **UI-06**: O bloco técnico é apresentado como **subordinado** ao veredito fundamentalista (off por padrão, seção secundária, linguagem consultiva) — critério de aceite: leitor novo numa tela "cara + timing bullish" reconhece o fundamento como decisório
@@ -114,9 +114,9 @@ Mapeamento requisito → fase. Preenchido na criação do roadmap.
 | TIMING-02 | Phase 6 | Complete |
 | TIMING-03 | Phase 6 | Complete |
 | TIMING-04 | Phase 6 | Complete |
-| UI-01 | Phase 7 | Pending |
-| UI-02 | Phase 7 | Pending |
-| UI-03 | Phase 7 | Pending |
+| UI-01 | Phase 7 | Complete |
+| UI-02 | Phase 7 | Complete |
+| UI-03 | Phase 7 | Complete |
 | UI-04 | Phase 7 | Complete |
 | UI-05 | Phase 7 | Complete |
 | UI-06 | Phase 7 | Complete |

@@ -93,7 +93,7 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
 **Plans**: 5 plans (3 waves)
 - [x] 07-01-PLAN.md — Engine read-side: degradação holística (CR-01/IN-02) + close exposta em SinaisTecnicos + golden
 - [x] 07-02-PLAN.md — Glossário dos indicadores técnicos (tooltips UI-05)
-- [ ] 07-03-PLAN.md — grafico.py: lógica pura de overlays/subpainéis/layout/marcadores (UI-01/02/03/04)
+- [x] 07-03-PLAN.md — grafico.py: lógica pura de overlays/subpainéis/layout/marcadores (UI-01/02/03/04)
 - [ ] 07-04-PLAN.md — app.py: controles HÍBRIDOS (session_state) + enquadramento subordinado + degradação (UI-03/05/06)
 - [ ] 07-05-PLAN.md — app.py: make_subplots dinâmico + overlays + subpainéis + marcadores + fresh-reader checkpoint (UI-01/02/04/06)
 **UI hint**: yes
