@@ -34,7 +34,7 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] **Phase 4: Encanamento de dados + série correta** - Preserva o frame OHLC já baixado e prepara a série split-adjusted para os indicadores, sem novo comportamento e sem quebrar os 64 golden tests
 - [x] **Phase 5: Motor de indicadores puro** - `core/indicators.py` com as 4 famílias hand-rolled (SMA/EMA+cruzamentos, Donchian+Bollinger+squeeze, ADX+inclinação, RSI+MACD), travado por golden tests (Wilder, no-repaint, split)
 - [x] **Phase 6: Integração na engine + composite + alerta + CLI** - Liga os sinais em `analisar_acao`, deriva o resumo de timing e a matriz fundamento×técnico, o alerta de reverificação e a paridade na CLI
-- [ ] **Phase 8: Saneamento do motor DDM (caso VULC3)** - Corrige a divergência estrutural do valuation fundamentalista (g×Ke, g×payout, CAPM ao vivo, normalização de lucro, guardrails) com rebaselining deliberado dos golden tests. Promovida do backlog 999.1; executa antes da Phase 7
+- [x] **Phase 8: Saneamento do motor DDM (caso VULC3)** - Corrige a divergência estrutural do valuation fundamentalista (g×Ke, g×payout, CAPM ao vivo, normalização de lucro, guardrails) com rebaselining deliberado dos golden tests. Promovida do backlog 999.1; executa antes da Phase 7 — completed 2026-06-27
 - [ ] **Phase 7: UI — overlays, subpainéis, controles e enquadramento** - Renderiza overlays e osciladores no gráfico com toggles, marcadores de evento, tooltips e enquadramento subordinado ao fundamento
 
 ## Phase Details
@@ -107,7 +107,7 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] 08-01-PLAN.md — FIX-04: camada de normalização de lucro (raiz) + roteamento no valuation + rebaseline cascata ✅ 2026-06-26
 - [x] 08-02-PLAN.md — FIX-02: reconciliação g_alto × g_fundamentos (payout≥100%⇒g=0) + golden ✅ 2026-06-26
 - [x] 08-03-PLAN.md — FIX-03: CAPM 'local' com Selic ao vivo (BCB) + fallback gracioso + rebaseline de Ke ✅ 2026-06-26
-- [ ] 08-04-PLAN.md — FIX-06: banda = sensibilidade real + DY recorrente + setor + golden de regressão VULC3
+- [x] 08-04-PLAN.md — FIX-06: banda = sensibilidade real + DY recorrente + setor + golden de regressão VULC3 ✅ 2026-06-27
 
 ## Progress
 
@@ -122,11 +122,11 @@ Phases execute in numeric order: 4 → 5 → 6 → 8 → 7 (Phase 8 antes da 7 �
 | 4. Encanamento de dados + série correta | v1.2 | 2/2 | Complete | 2026-06-26 |
 | 5. Motor de indicadores puro | v1.2 | 3/3 | Complete | 2026-06-26 |
 | 6. Integração na engine + composite + alerta + CLI | v1.2 | 2/2 | Complete | 2026-06-26 |
-| 8. Saneamento do motor DDM (caso VULC3) | v1.2 | 3/4 | In Progress | - |
+| 8. Saneamento do motor DDM (caso VULC3) | v1.2 | 4/4 | Complete | 2026-06-27 |
 | 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 0/TBD | Not started | - |
 
 ---
-*Próximo passo: `/gsd-execute-phase 8` (4 planos sequenciais — cascata FIX-04→02→03→06)*
+*Próximo passo: `/gsd-plan-phase 7` (UI — overlays/subpainéis, sobre o motor fundamentalista saneado). Phase 8 fechada (4/4).*
 
 ---
 
