@@ -104,7 +104,12 @@ def overlays_preco(estado: Optional[dict], sinais) -> List[OverlaySpec]:
             mapa = {20: tend.ema20, 50: tend.ema50, 200: tend.ema200}
         else:
             mapa = {20: tend.sma20, 50: tend.sma50, 200: tend.sma200}
-        for j in t.get("janelas") or [20, 50, 200]:
+        # Ausência da chave (estado parcial) ⇒ defaults; lista vazia EXPLÍCITA (usuário
+        # desmarcou todas as janelas) ⇒ desenha nada — não reapresenta os defaults (WR-01).
+        janelas = t.get("janelas")
+        if janelas is None:
+            janelas = [20, 50, 200]
+        for j in janelas:
             serie = mapa.get(j)
             if serie is None:
                 continue
@@ -217,13 +222,23 @@ def marcadores_eventos(sinais, close: Optional[pd.Series]) -> List[Marcador]:
     canais = sinais.canais
     sup, inf = canais.donchian_sup, canais.donchian_inf
     if sup is not None and inf is not None:
-        for data in close.index.intersection(sup.index):
+        # Marca a TRANSIÇÃO para fora do canal (um evento por rompimento), não cada barra
+        # acima/abaixo — espelha a lógica de cruzamento das MMs e evita cluster de marcadores
+        # numa alta/baixa sustentada (WR-02). Estado: +1 acima, -1 abaixo, 0 dentro/indefinido.
+        estado_ant = 0
+        for data in close.index.intersection(sup.index).sort_values():
             c = close.loc[data]
             s, ival = sup.loc[data], inf.loc[data]
+            estado = 0
             if pd.notna(c) and pd.notna(s) and c > s:
-                out.append(Marcador(data, float(s), "nova_maxima", "Rompimento da máxima (Donchian)"))
+                estado = 1
             elif pd.notna(c) and pd.notna(ival) and c < ival:
+                estado = -1
+            if estado == 1 and estado_ant != 1:
+                out.append(Marcador(data, float(s), "nova_maxima", "Rompimento da máxima (Donchian)"))
+            elif estado == -1 and estado_ant != -1:
                 out.append(Marcador(data, float(ival), "perda_minima", "Perda da mínima (Donchian)"))
+            estado_ant = estado
 
     out.sort(key=lambda m: m.data)
     return out

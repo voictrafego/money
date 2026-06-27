@@ -83,6 +83,15 @@ def test_overlays_sma_vs_ema_e_janelas():
     assert ov[1].serie.equals(sinais.tendencia.ema200)
 
 
+def test_overlays_janelas_vazias_nao_redesenha_defaults():
+    # Desmarcar TODAS as janelas (lista vazia explícita) ⇒ nenhuma MM desenhada — não
+    # reapresenta os defaults [20,50,200] (WR-01).
+    sinais = _sinais(_close_valido())
+    est = estado_padrao()
+    est["tendencia"] = {"on": True, "tipo": "sma", "janelas": []}
+    assert overlays_preco(est, sinais) == []
+
+
 def test_overlays_donchian_55_e_bollinger():
     sinais = _sinais(_close_valido())
     est = estado_padrao()
@@ -190,6 +199,18 @@ def test_marcador_rompimento_maxima_data_exata():
     novas = [m for m in marcs if m.tipo == "nova_maxima"]
     assert novas, "esperava ao menos um rompimento de máxima"
     assert novas[0].data == idx[30]
+
+
+def test_marcador_rompimento_nao_duplica_em_alta_sustentada():
+    # Alta monotônica longa: o preço supera o canal Donchian em CADA barra, mas o rompimento
+    # é UM evento — transição-para-fora-do-canal, não um marcador por barra (WR-02).
+    flat = [100.0] * 40
+    rise = list(np.linspace(101.0, 200.0, 80))
+    idx = pd.date_range("2020-01-01", periods=len(flat) + len(rise), freq="B")
+    sinais = _sinais(pd.Series(flat + rise, index=idx))
+    novas = [m for m in marcadores_eventos(sinais, sinais.close) if m.tipo == "nova_maxima"]
+    assert novas, "esperava o rompimento inicial da máxima"
+    assert len(novas) <= 3, f"transição-only deveria evitar cluster, veio {len(novas)} marcadores"
 
 
 def test_serie_curta_degrada_para_vazio():
