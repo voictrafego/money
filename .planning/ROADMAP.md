@@ -32,8 +32,9 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
 **Milestone Goal:** Adicionar indicadores técnicos consultivos (médias móveis + cruzamentos, canais, força/inclinação, momentum) à aba Analisar para auxiliar o *timing* de entrada e disparar um alerta de reverificação ao rompimento de tendência. Estritamente consultivo: o veredito fundamentalista (DDM/múltiplos) continua sendo a base e nunca é sobrescrito. Sem nova chamada de rede, sem nova dependência de TA, `app.py` read-only, e os 64 testes golden continuam verdes.
 
 - [x] **Phase 4: Encanamento de dados + série correta** - Preserva o frame OHLC já baixado e prepara a série split-adjusted para os indicadores, sem novo comportamento e sem quebrar os 64 golden tests
-- [ ] **Phase 5: Motor de indicadores puro** - `core/indicators.py` com as 4 famílias hand-rolled (SMA/EMA+cruzamentos, Donchian+Bollinger+squeeze, ADX+inclinação, RSI+MACD), travado por golden tests (Wilder, no-repaint, split)
-- [ ] **Phase 6: Integração na engine + composite + alerta + CLI** - Liga os sinais em `analisar_acao`, deriva o resumo de timing e a matriz fundamento×técnico, o alerta de reverificação e a paridade na CLI
+- [x] **Phase 5: Motor de indicadores puro** - `core/indicators.py` com as 4 famílias hand-rolled (SMA/EMA+cruzamentos, Donchian+Bollinger+squeeze, ADX+inclinação, RSI+MACD), travado por golden tests (Wilder, no-repaint, split)
+- [x] **Phase 6: Integração na engine + composite + alerta + CLI** - Liga os sinais em `analisar_acao`, deriva o resumo de timing e a matriz fundamento×técnico, o alerta de reverificação e a paridade na CLI
+- [ ] **Phase 8: Saneamento do motor DDM (caso VULC3)** - Corrige a divergência estrutural do valuation fundamentalista (g×Ke, g×payout, CAPM ao vivo, normalização de lucro, guardrails) com rebaselining deliberado dos golden tests. Promovida do backlog 999.1; executa antes da Phase 7
 - [ ] **Phase 7: UI — overlays, subpainéis, controles e enquadramento** - Renderiza overlays e osciladores no gráfico com toggles, marcadores de evento, tooltips e enquadramento subordinado ao fundamento
 
 ## Phase Details
@@ -92,10 +93,22 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
 **Plans**: TBD
 **UI hint**: yes
 
+### Phase 8: Saneamento do motor DDM (caso VULC3)
+**Goal**: Corrigir a divergência estrutural do valuation fundamentalista exposta pelo caso VULC3 (intrínseco R$ 167–334 vs preço R$ 14, veredito "SUBAVALIADA" sobre uma divergência de modelo). Promovida do backlog 999.1. FIX-01 (trava `g_alto ≤ Ke`) e FIX-05 (veredito consome flags) já aplicados; restam FIX-02/03/04/06 — mudanças de metodologia com rebaselining deliberado dos golden tests.
+**Depends on**: Phase 6 (a matriz fundamento×técnico lê `a.veredito`; saneamento melhora a qualidade do token líder). Executa antes da Phase 7.
+**Requirements**: DDM-FIX-02, DDM-FIX-03, DDM-FIX-04, DDM-FIX-06 (FIX-01, FIX-05 ✅ feitos). Detalhes verificados linha-a-linha em `08-saneamento-do-motor-ddm/FINDINGS.md`.
+**Success Criteria** (what must be TRUE):
+  1. **FIX-04 (raiz):** o lucro consumido por ROE/CAGR/payout/DY passa por uma camada de normalização (expurgo de não-recorrentes) em vez do lucro CVM cru.
+  2. **FIX-02:** o `g_alto` adotado é reconciliado com `g_fundamentos`/payout (payout ≥100% ⇒ g sustentável → 0), não mais um haircut arbitrário do CAGR.
+  3. **FIX-03:** os inputs do CAPM (rf/ERP/EMBI) vêm de dado vivo (BCB/Selic) ou abordagem local, não dos literais de 2019; Ke resultante coerente com small cap BR.
+  4. **FIX-06:** guardrails de apresentação — DY recorrente vs trailing, banda intrínseca = sensibilidade real (não 2 cenários binários), setor correto; VULC3 vira caso de regressão.
+  5. Os golden tests são **rebaselinados deliberadamente** (valores corretos mudam) e voltam a ficar verdes com os novos números justificados — não "verde a qualquer custo".
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 4 → 5 → 6 → 7
+Phases execute in numeric order: 4 → 5 → 6 → 8 → 7 (Phase 8 antes da 7 — saneamento do DDM antes da UI)
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -105,30 +118,14 @@ Phases execute in numeric order: 4 → 5 → 6 → 7
 | 4. Encanamento de dados + série correta | v1.2 | 2/2 | Complete | 2026-06-26 |
 | 5. Motor de indicadores puro | v1.2 | 3/3 | Complete | 2026-06-26 |
 | 6. Integração na engine + composite + alerta + CLI | v1.2 | 2/2 | Complete | 2026-06-26 |
+| 8. Saneamento do motor DDM (caso VULC3) | v1.2 | 0/TBD | Planning | - |
 | 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 0/TBD | Not started | - |
 
 ---
-*Próximo passo: `/gsd-plan-phase 7` (UI — ainda não planejada; ver nota de sequenciamento do 999.1)*
+*Próximo passo: `/gsd-plan-phase 8` (saneamento do DDM — promovido do backlog 999.1)*
 
 ---
 
 ## Backlog
 
-### Phase 999.1: Saneamento do motor DDM (caso VULC3) (BACKLOG)
-
-**Goal:** Corrigir a divergência estrutural do valuation fundamentalista exposta pelo caso VULC3 (intrínseco R$ 167–334 vs preço R$ 14, veredito "SUBAVALIADA" sobre uma divergência de modelo). Achados verificados linha a linha no código em `.planning/phases/999.1-saneamento-do-motor-ddm-caso-vulc3/FINDINGS.md`.
-
-**Requirements:** TBD (6 fixes priorizados por alavancagem — ver FINDINGS.md):
-- DDM-FIX-01: trava `g_alto < Ke` no `ddm_dois_estagios` (mata a explosão; maior ROI)
-- DDM-FIX-02: amarrar `g_alto` a `g_fundamentos`/payout (hoje ignora `g_fundamentos`)
-- DDM-FIX-03: refrescar inputs do CAPM (rf/EMBI vivos ou abordagem local/Selic; hoje hardcoded de 2019)
-- DDM-FIX-04: normalização de lucro (expurgo de não-recorrentes) — raiz a montante
-- DDM-FIX-05: veredito consome flags de risco (payout>100%, DY>15%) em vez de ignorá-las
-- DDM-FIX-06: guardrails/regressão — DY recorrente vs trailing, banda = sensibilidade real (não 2 cenários), setor correto
-
-**Plans:** 0 plans
-
-**Nota de sequenciamento:** Não bloqueia v1.2 (Phases 5–7), mas o veredito furado alimenta a matriz fundamento×técnico da Phase 6 (TIMING-02). Promover a milestone próprio após v1.2.
-
-Plans:
-- [ ] TBD (promote with /gsd-review-backlog when ready)
+_Vazio. O item 999.1 (Saneamento do motor DDM) foi promovido para a **Phase 8** em 2026-06-26._
