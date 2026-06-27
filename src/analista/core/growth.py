@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from typing import Optional, Sequence
 
+import numpy as np
+
 Number = Optional[float]
 
 
@@ -44,6 +46,33 @@ def crescimento_aritmetico(serie: Sequence[float]) -> Number:
     if not variacoes:
         return None
     return sum(variacoes) / len(variacoes)
+
+
+def crescimento_log_linear(serie: Sequence[float]) -> Number:
+    """Tendência de crescimento por regressão log-linear (Cap. 14).
+
+    Estimador robusto que SUBSTITUI o CAGR endpoint-a-endpoint do `g_historico`: em vez de
+    olhar só o primeiro e o último ponto (sensível a um único ano de fundo/topo), ajusta a
+    TENDÊNCIA usando TODOS os pontos da série. OLS de ln(série) contra o tempo
+    (x = 0..n-1, passo de 1 ano); o coeficiente angular (slope) é o crescimento log médio
+    anual e g anualizado = exp(slope) − 1 (anualizado por construção, passo de x = 1 ano).
+
+    Explicabilidade ("tendência de crescimento") e simplicidade (numpy.polyfit) são o motivo
+    da escolha (D-01); Theil-Sen e média aparada de YoY foram rejeitados como over-engineering
+    para ≤8-10 pontos já winsorizados (D-02). Esta é a fonte única reusada também pelo
+    screening — consistência Analisar↔Screening por construção (D-04).
+
+    Fronteira de None IDÊNTICA ao CAGR (D-03): série None, len < 2, ou QUALQUER ponto
+    None/≤ 0 (prejuízo, onde ln é indefinido) ⇒ None. Não há fallback aritmético (mudaria a
+    fronteira de None). A série é recebida CRUA — a winsorização é feita a montante.
+    """
+    if serie is None or len(serie) < 2:
+        return None
+    if any(v is None or v <= 0 for v in serie):
+        return None
+    x = np.arange(len(serie))
+    slope = np.polyfit(x, np.log(serie), 1)[0]
+    return float(np.exp(slope) - 1.0)
 
 
 def crescimento_por_fundamentos(roe: float, payout: float) -> Number:
