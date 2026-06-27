@@ -6,7 +6,7 @@ status: planning
 last_updated: "2026-06-27T16:45:21.559Z"
 last_activity: 2026-06-27
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,20 +20,25 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-24)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação.
-**Current focus:** Phase 07 — ui-overlays-subpain-is-controles-e-enquadramento
+**Current focus:** Phase 9 — Payout sustentável + DY recorrente (núcleo de metodologia)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-06-27 — Milestone v1.3 started
+Phase: 9 — Payout sustentável + DY recorrente (núcleo de metodologia)
+Plan: — (roadmap criado; aguardando planejamento da fase)
+Status: Roadmap v1.3 criado (3 fases, 8 requisitos mapeados 8/8)
+Last activity: 2026-06-27 — Roadmap v1.3 criado (Phases 9-11)
+
+**v1.3 — execução 9 → 10 → 11 (metodologia antes das telas que a consomem):**
+- Phase 9 (DYR-01, PAY-01): payout sustentável geral + DY recorrente = lucro normalizado × payout sustentável
+- Phase 10 (GROW-01, GROW-02): g histórico robusto + Garimpo/Ranking sobre série normalizada (gateia as telas)
+- Phase 11 (DYR-02, PAY-02, HIER-01, TEST-08): % na tabela, payout cru do último ano, header com DY rec. em destaque, trava multi-ticker + rebaseline deliberado
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 19 (v1.0 + v1.1)
+- Total plans completed: 25 (v1.0 + v1.1 + v1.2)
 - Average duration: — min
 - Total execution time: — hours
 
@@ -44,65 +49,33 @@ Last activity: 2026-06-27 — Milestone v1.3 started
 | 01 | 5 | - | - |
 | 02 | 2 | - | - |
 | 03 | 2 | - | - |
+| 04 | 2 | - | - |
 | 05 | 3 | - | - |
 | 06 | 2 | - | - |
+| 08 | 4 | - | - |
 | 07 | 5 | - | - |
 
 **Recent Trend:**
 
-- Last 5 plans: —
+- Last 5 plans: 08-04, 07-01, 07-02, 07-03, 07-04, 07-05 (v1.2 fechado, 150 testes verdes)
 - Trend: —
 
 *Updated after each plan completion*
-| Phase 04 P02 | 10 | 2 tasks | 1 files |
-| Phase 05 P01 | 18 | 3 tasks | 3 files |
-| Phase 06 P01 | 4 | 3 tasks | 3 files |
-| Phase 06 P02 | 5 | 2 tasks | 2 files |
-| Phase 08 P01 | — | 3 tasks | 6 files |
-| Phase 08 P02 | ~20 | 2 tasks | 3 files |
-| Phase 08 P03 | ~25 | 2 tasks | 7 files |
-| Phase 08 P04 | ~35 | 2 tasks | 6 files |
-| Phase 07 P01 | 12 | 3 tasks | 4 files |
-| Phase 07 P02 | 6 | 2 tasks | 2 files |
-| Phase 07 P03 | 14 | 2 tasks | 2 files |
-| Phase 07 P04 | 8 | 2 tasks | 1 files |
-| Phase 07 P05 | 5 | 3 tasks | 1 files |
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+Recent decisions affecting current work (v1.3 — saneamento residual):
 
-- app.py é read-only: só lê campos da engine, nunca recalcula método (locked, Phase 2).
-- Série do gráfico = Close nominal (`auto_adjust=False`); indicadores usam série split-adjusted (não dividend-adjusted) — eixo nominal preserva alinhamento com a banda DDM (CR-01).
-- Análise técnica (v1.2) é **consultiva**, nunca altera o veredito fundamentalista; rompimento técnico dispara **reverificação** dos fundamentos, não venda.
-- [v1.2 research]: OHLC já está em memória em `coletar_mercado` (`tk.history(period="5y", auto_adjust=False)`) — preservar `dm.ohlc`, não fazer nova chamada de rede (espelha o padrão `serie_precos`).
-- [v1.2 research]: hand-roll total dos indicadores em numpy/pandas/scipy — **sem nova dependência de TA** (`ta`/`pandas-ta`/`TA-Lib` incompatíveis com numpy 2.4.6 / pandas 3.0.3).
-- [v1.2 research]: RSI/ADX exigem suavização de **Wilder** (`ewm(alpha=1/length, adjust=False)`, seed SMA), não EMA padrão — travar com golden test cruzado com TradingView.
-- [v1.2 research]: `a.sinais` (`SinaisTecnicos`) calculado em `report.analisar_acao` — ponto único compartilhado por CLI e UI; paridade gratuita.
-- [Phase ?]: [05-01] SinaisTecnicos nested por família; cross/posição×MM200 SEMPRE sobre SMA (D-03); RSI Wilder SMA-seeded = 70.5328; MACD usa EMA padrão, não Wilder.
-- [05-03] ADX dupla-Wilder: 1ª suavização do DMI com start=1 (barra 0 = diff indefinido) → 1º DI no índice 14; 2ª suavização do DX com start=length → 1º ADX no índice 27. calcular() agrega as 4 famílias com guard de borda → fully-indisponivel. Checkpoint TEST-03 (ADX × TradingView) APROVADO e literais congelados em test_adx_wilder_referencia.
-- [Phase ?]: [06-02] Matriz e alerta extraídos em helpers puros (_matriz_leitura/_alerta_reverificacao) read-only sobre o fundamento — golden travável com input pinado; token do veredito via startswith porque 'NO INTERVALO' é bi-palavra
-- [08-01] FIX-04: base de lucro normalizada (`normalizacao.py`) vira o número-síntese canônico ÚNICO do valuation. `roe_valuation()`/`lpa_valuation()`/`payout_valuation()` chamados SEM args nas 3 superfícies (Analisar/Ranking app/Ranking cli) → consistência entre menus por construção (espelha o padrão payout_valuation).
-- [08-01] Primitiva: mediana p/ 2≤N<5, média winsorizada p/ N≥5 (winsor percentil não morde poucos pontos); knob `normalizacao` no config separado do `bsd` (valuation ≠ screening).
-- [08-01] Fronteira travada: `roe(ano)`/`lpa(ano)`/`payout(ano)`/`lucro_liquido` CRUS seguem na tabela "Fundamentos (por ano)" e no screening (elegibilidade per-ano Cap. 8). Flags de risco (payout>100%, DY>15%) leem CRU — payout_valuation clampado em 1.0 nunca dispararia o DDM-FIX-05.
-- [08-01] CAGR de valuation usa série winsorizada (`serie_lucro_normalizada`); lucro_positivo/decrescente do ciclo de vida seguem na série crua (fatos per-ano).
-- [08-02] FIX-02: o g_alto da fase explícita é subordinado ao g sustentável — TETO = g_fundamentos (ROE_norm × (1−payout_valuation)), precedência g_fund → teto absoluto 0.25 → trava ≤Ke (FIX-01). Payout ≥100% ⇒ g_fund ≤0 ⇒ g_alto=0; piso artificial g_estavel REMOVIDO da seleção do g_alto (g_estavel segue só como taxa da perpetuidade no DDM). VULC3 (payout_valuation=100%): g_alto adotado = 0,0 (antes 25%), DDM ainda finito.
-- [08-02] g_fund é TETO (min com o CAGR), não substituto: série constante (CAGR=0) ⇒ g_alto=0 mesmo com g_fund>0 — a empresa que não cresceu o lucro não projeta crescimento.
-- [08-03] FIX-03: CAPM 'local' vira o default — Ke = rf (Selic ao vivo do BCB) + beta × ERP Brasil (0,06), com fallback gracioso (`macro.selic_para_capm`: selic_meta() or selic_fallback de config). Pureza da engine: rede só nos entry points (cli/app injetam `cfg['capm']['rf_local']`); `analisar_acao` lê o rf de cfg e permanece offline (grep selic_meta em report.py == 0). VULC3 Ke: 9,43% (2019) → 15,78% (fallback) / 19,53% (Selic viva 14,25% em 2026) — faixa small cap BR.
-- [08-03] Rebaseline de caso-limite recalibra a FIXTURE, nunca o assert: o Ke maior fez a alvo SUBAVALIADA flipar (série constante cola o intrínseco no limiar DY>15% ⇒ vira "VERIFICAR") — corrigido tornando a alvo crescente (g_alto>0); TRKE PL 1987→1700 p/ g_fund>Ke. test_ke_itau_capm (literais do livro) intacto.
-- [08-04] FIX-06 (capstone): banda intrínseca vmin/vmax = min/max da matriz Ke×g (sensibilidade REAL, já calculada), não o toggle binário ddm_constante×ddm_h; fallback gracioso p/ matriz só-None (T-08-07). DY recorrente (dy_recorrente sobre provento normalizado, reusa a primitiva do Plan 01) distinto do dy_atual() trailing — ambos exibidos, trailing preservado. Setor override display-only por ticker (dict {cd_cvm,setor} no ticker_map; resolver() vira wrapper sobre _resolver_base) — VULC3=11762, "Calçados (Consumo Cíclico)".
-- [08-04] Golden de regressão VULC3 (test_vulc3_regressao.py) trava a cascata domada end-to-end: base normalizada 4000<12000 extraordinário (FIX-04), g_alto=0 (FIX-02), Ke 15,78% (FIX-03), intrínseco 2,3× preço — não 11–23× (FIX-01/06), veredito VERIFICAR não verde (FIX-05), ROE/payout Analisar==Ranking. Nenhum golden existente precisou rebaseline (banda mais larga não virou caso algum). Suíte 133 verde.
-- [Phase ?]: [07-01] Degradacao holistica: timing_resumo vazio colapsa matriz_leitura (CR-01); markdown por not a.timing_resumo (IN-01); resample W-FRI por DatetimeIndex+colunas (WR-01).
-- [Phase ?]: [07-01] SinaisTecnicos.close (campo aditivo default None) expoe a close split-adjusted ja usada, read-only, para os marcadores de evento da UI (UI-04).
-- [Phase ?]: [07-02] Glossário técnico: 11 chaves tec_* em glossario.G lidas por h('tec_*'); contrato (existência + tom consultivo, sem 'compre'/'venda') travado por tests/test_glossario.py.
-- [Phase ?]: [07-03] Montagem do gráfico técnico (overlays/subpainéis/marcadores/layout) extraída p/ grafico.py puro golden-coberto; overlays_preco e subpaineis_ativos devolvem SPEC completo (série+níveis 20/25,30/70,0), app.py não mapeia nome→série nem hardcoda níveis; subpainel só com série não-toda-NaN; marcadores varrem a série inteira nas datas exatas.
-- [Phase ?]: [07-04] Controles técnicos no app.py capturam estado em st.session_state['tec_estado'] (chaves de grafico.estado_padrao()); enquadramento UI-06: veredito no banner (decisório), técnico em markdown/caption (consultivo); degradação timing_resumo vazio ⇒ caption indisponível. Plan 05 consome o estado p/ desenhar overlays.
-- [Phase ?]: [07-05] Gráfico migrado p/ make_subplots dinâmico dirigido por grafico.* (overlays_preco/subpaineis_ativos via SubpainelSpec/marcadores_eventos/layout_subplots): row 1 preço NOMINAL+banda DDM+rangeselector preservados (UI-01/UI-04), subpainéis só dos osciladores ativos sem nome→série/níveis hardcoded (UI-02); app.py read-only.
-- [Phase ?]: [07-05] Slot do gráfico reservado com st.container() no topo e preenchido APÓS os controles no mesmo rerun (Rule-3): render lê tec_estado recém-atualizado ⇒ toggle redesenha sem lag de 1 clique (UI-03 observável), preservando ordem visual gráfico-no-topo.
-- [Phase ?]: [07-05] Fresh-reader UI-06 APROVADO (checkpoint humano): fundamento decisório no banner, técnico consultivo; alinhamento split ITSA4 confirmado como tradeoff esperado, degradação graciosa OK. Fase 7 completa (5/5).
+- A camada `normalizacao.py` (base_normalizada = mediana p/ 2≤N<5, média winsorizada p/ N≥5; serie_winsorizada) já é o número-síntese canônico do valuation (FIX-04). O v1.3 **estende/generaliza** essa primitiva para payout, provento recorrente e crescimento — não reescreve o DDM.
+- Raiz compartilhada DYR-01 + PAY-01: definir um **payout sustentável geral** que expurga anos não-recorrentes (>100%) por regra data-driven; o DY recorrente deriva de **lucro normalizado × payout sustentável** (não a mediana crua de 3 anos de dividendos). Acoplados → mesma fase (Phase 9, núcleo de metodologia).
+- Hoje `payout_valuation()` é a média crua de 3 anos clampada em 1.0 → satura em 100% num ano extraordinário e zera `g_fundamentos`. PAY-01 substitui pelo expurgo de não-recorrentes.
+- Hoje `dy_recorrente`/`dpa_recorrente` derivam de `base_normalizada(serie("dividendos"))` (mediana de dividendos CRUS) — cai inteira numa era de payout >100%. DYR-01 re-deriva de lucro normalizado × payout sustentável.
+- GROW-02 (de-poison do Garimpo/Ranking) **gateia** as telas → metodologia (Phase 9) aterrissa antes; crescimento robusto + screening normalizado na Phase 10.
+- TEST-08 é a **trava de fechamento** (Phase 11): valida contra ITUB4/EGIE3/TAEE11/BBAS3 + VULC3; rebaseline de golden só **deliberado e justificado** (extensão de TEST-07). NÃO tunar a um ticker — fixes generalizam.
+- app.py é read-only (locked, Phase 2): DYR-02/PAY-02/HIER-01 são apresentação sobre campos já expostos pela engine, sem recálculo de método.
 
 ### Pending Todos
 
@@ -114,9 +87,9 @@ None yet.
 
 [Issues that affect future work]
 
-- Invariante TEST-07: os 64 golden tests de valuation existentes devem continuar verdes ao final de cada fase do marco — nenhuma fórmula do livro pode mudar.
-- Pontos de validação (não pesquisa): Phase 4 — testar série split-adjusted com ticker de split conhecido antes de fechar; Phase 5 — cruzar fixture RSI/ADX com TradingView antes de travar o golden; Phase 7 — fresh-reader test ("cara + timing bullish") como critério de aceite explícito de UI-06.
-- Degradação graciosa (DATA-03) deve seguir o padrão do aviso GRAF-03 já existente, sem quebrar a aba quando `hist`/OHLC vier vazio.
+- **Invariante TEST-07 → TEST-08:** os golden de valuation devem seguir verdes ao final de cada fase OU mudar apenas por rebaseline deliberado e justificado. Nenhuma fórmula do livro (DDM Cap. 13-17) pode ser reescrita.
+- **Não tunar a um ticker:** o expurgo de não-recorrentes deve valer para qualquer ticker. Validar VULC3 (caso-limite) E tickers normais de payout alto legítimo (TAEE11/EGIE3) para não rebaixar payout sustentável de quem distribui muito de forma recorrente.
+- **Fronteira per-ano preservada:** `payout(ano)`/`roe(ano)`/lucro CRU seguem alimentando a tabela "Fundamentos (por ano)", o detector de armadilha (payout>100%) e a elegibilidade do screening (Cap. 8) — só os agregados de valuation/crescimento mudam de base.
 
 ## Deferred Items
 
@@ -125,13 +98,15 @@ Items acknowledged and carried forward from previous milestone close:
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
 | Docs engine | DDM-DOC-01 (alinhar docstring/teste de t em ddm.py, IN-06) | v2 | 2026-06-04 |
+| Refino | Payout-alvo por setor configurável | v2+ | 2026-06-27 |
+| UI | Sinalização explícita de "ano extraordinário" na tabela de Fundamentos por ano | v2+ | 2026-06-27 |
 
 ## Session Continuity
 
-Last session: 2026-06-27T12:42:42.759Z
-Stopped at: Completed 08-04-PLAN.md (FIX-06 guardrails + golden de regressão VULC3). Fase 8 completa (4/4). Próximo: Phase 7 (UI).
+Last session: 2026-06-27T16:45:21.559Z
+Stopped at: Roadmap v1.3 criado (Phases 9-11; 8/8 requisitos mapeados). Próximo: `/gsd-plan-phase 9`.
 Resume file: None
 
 ## Operator Next Steps
 
-- Planejar a primeira fase com `/gsd-plan-phase 4`
+- Planejar a primeira fase do v1.3 com `/gsd-plan-phase 9`

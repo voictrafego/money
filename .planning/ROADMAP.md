@@ -4,7 +4,8 @@
 
 - ✅ **v1.0 — Consistência entre menus** — Phases 1-2 (shipped 2026-06-05)
 - ✅ **v1.1 — Gráfico de preço na aba Analisar** — Phase 3 (shipped 2026-06-23)
-- 🚧 **v1.2 — Indicadores de tendência (timing) na aba Analisar** — Phases 4-7 (in progress)
+- ✅ **v1.2 — Indicadores de tendência (timing) na aba Analisar** — Phases 4-8 (shipped 2026-06-27)
+- 🚧 **v1.3 — Saneamento residual do valuation** — Phases 9-11 (in progress)
 
 ## Phases
 
@@ -27,15 +28,28 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
 
 </details>
 
-### 🚧 v1.2 — Indicadores de tendência (timing) na aba Analisar (In Progress)
+<details>
+<summary>✅ v1.2 — Indicadores de tendência (timing) na aba Analisar (Phases 4-8) — SHIPPED 2026-06-27</summary>
 
-**Milestone Goal:** Adicionar indicadores técnicos consultivos (médias móveis + cruzamentos, canais, força/inclinação, momentum) à aba Analisar para auxiliar o *timing* de entrada e disparar um alerta de reverificação ao rompimento de tendência. Estritamente consultivo: o veredito fundamentalista (DDM/múltiplos) continua sendo a base e nunca é sobrescrito. Sem nova chamada de rede, sem nova dependência de TA, `app.py` read-only, e os 64 testes golden continuam verdes.
+**Milestone Goal:** Adicionar indicadores técnicos consultivos (médias móveis + cruzamentos, canais, força/inclinação, momentum) à aba Analisar para auxiliar o *timing* de entrada e disparar um alerta de reverificação ao rompimento de tendência. Estritamente consultivo: o veredito fundamentalista (DDM/múltiplos) continua sendo a base e nunca é sobrescrito. Sem nova chamada de rede, sem nova dependência de TA, `app.py` read-only.
 
-- [x] **Phase 4: Encanamento de dados + série correta** - Preserva o frame OHLC já baixado e prepara a série split-adjusted para os indicadores, sem novo comportamento e sem quebrar os 64 golden tests
-- [x] **Phase 5: Motor de indicadores puro** - `core/indicators.py` com as 4 famílias hand-rolled (SMA/EMA+cruzamentos, Donchian+Bollinger+squeeze, ADX+inclinação, RSI+MACD), travado por golden tests (Wilder, no-repaint, split)
-- [x] **Phase 6: Integração na engine + composite + alerta + CLI** - Liga os sinais em `analisar_acao`, deriva o resumo de timing e a matriz fundamento×técnico, o alerta de reverificação e a paridade na CLI
-- [x] **Phase 8: Saneamento do motor DDM (caso VULC3)** - Corrige a divergência estrutural do valuation fundamentalista (g×Ke, g×payout, CAPM ao vivo, normalização de lucro, guardrails) com rebaselining deliberado dos golden tests. Promovida do backlog 999.1; executa antes da Phase 7 — completed 2026-06-27
-- [ ] **Phase 7: UI — overlays, subpainéis, controles e enquadramento** - Renderiza overlays e osciladores no gráfico com toggles, marcadores de evento, tooltips e enquadramento subordinado ao fundamento
+- [x] **Phase 4: Encanamento de dados + série correta** (2/2 plans) — completed 2026-06-26
+- [x] **Phase 5: Motor de indicadores puro** (3/3 plans) — completed 2026-06-26
+- [x] **Phase 6: Integração na engine + composite + alerta + CLI** (2/2 plans) — completed 2026-06-26
+- [x] **Phase 8: Saneamento do motor DDM (caso VULC3)** (4/4 plans) — completed 2026-06-27 (executou antes da 7)
+- [x] **Phase 7: UI — overlays, subpainéis, controles e enquadramento** (5/5 plans) — completed 2026-06-27 (150 testes verdes)
+
+Detalhes das fases concluídas mantidos abaixo em "Phase Details".
+
+</details>
+
+### 🚧 v1.3 — Saneamento residual do valuation (In Progress)
+
+**Milestone Goal:** Tornar os múltiplos de renda/crescimento (DY recorrente, payout sustentável, g histórico) fiéis e robustos **para qualquer ticker** — expurgando não-recorrentes por **regra geral**, nunca por ajuste de caso — e impedir que esses números contaminem Garimpo/Ranking. O caso VULC3 (lucro/dividendo extraordinário, payout >100%) é apenas o diagnóstico; a correção precisa valer para todo o universo e não regredir tickers normais (ITUB4/EGIE3/TAEE11/BBAS3). Estende a camada de normalização (`normalizacao.py`) já existente — não reescreve o DDM.
+
+- [ ] **Phase 9: Payout sustentável + DY recorrente (núcleo de metodologia)** - Define um payout sustentável geral que expurga anos não-recorrentes (>100%) e deriva o DY recorrente de lucro normalizado × payout sustentável, robusto para qualquer ticker
+- [ ] **Phase 10: Crescimento robusto + de-poison do screening** - g histórico robusto (não endpoint-a-endpoint) e Garimpo/Ranking calculando crescimento sobre a série normalizada, não sobre lucro/dividendo CRU
+- [ ] **Phase 11: Apresentação, hierarquia e trava multi-ticker** - DY recorrente em destaque e formatado como %, payout cru do último ano exibido, e trava de validação multi-ticker com rebaseline deliberado dos golden
 
 ## Phase Details
 
@@ -81,6 +95,22 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] 06-01-PLAN.md — Engine: popular a.sinais + composite de timing (MM200/ADX) + base temporal semanal (W-FRI) + golden TEST-06
 - [x] 06-02-PLAN.md — Matriz fundamento×técnico + alerta de reverificação + seção CLI consultiva + invariante TEST-07
 
+### Phase 8: Saneamento do motor DDM (caso VULC3)
+**Goal**: Corrigir a divergência estrutural do valuation fundamentalista exposta pelo caso VULC3 (intrínseco R$ 167–334 vs preço R$ 14, veredito "SUBAVALIADA" sobre uma divergência de modelo). Promovida do backlog 999.1. FIX-01 (trava `g_alto ≤ Ke`) e FIX-05 (veredito consome flags) já aplicados; restam FIX-02/03/04/06 — mudanças de metodologia com rebaselining deliberado dos golden tests.
+**Depends on**: Phase 6 (a matriz fundamento×técnico lê `a.veredito`; saneamento melhora a qualidade do token líder). Executa antes da Phase 7.
+**Requirements**: DDM-FIX-02, DDM-FIX-03, DDM-FIX-04, DDM-FIX-06 (FIX-01, FIX-05 ✅ feitos). Detalhes verificados linha-a-linha em `08-saneamento-do-motor-ddm/FINDINGS.md`.
+**Success Criteria** (what must be TRUE):
+  1. **FIX-04 (raiz):** o lucro consumido por ROE/CAGR/payout/DY passa por uma camada de normalização (expurgo de não-recorrentes) em vez do lucro CVM cru.
+  2. **FIX-02:** o `g_alto` adotado é reconciliado com `g_fundamentos`/payout (payout ≥100% ⇒ g sustentável → 0), não mais um haircut arbitrário do CAGR.
+  3. **FIX-03:** os inputs do CAPM (rf/ERP/EMBI) vêm de dado vivo (BCB/Selic) ou abordagem local, não dos literais de 2019; Ke resultante coerente com small cap BR.
+  4. **FIX-06:** guardrails de apresentação — DY recorrente vs trailing, banda intrínseca = sensibilidade real (não 2 cenários binários), setor correto; VULC3 vira caso de regressão.
+  5. Os golden tests são **rebaselinados deliberadamente** (valores corretos mudam) e voltam a ficar verdes com os novos números justificados — não "verde a qualquer custo".
+**Plans**: 4 plans (sequenciais — cascata FIX-04 → FIX-02 → FIX-03 → FIX-06)
+- [x] 08-01-PLAN.md — FIX-04: camada de normalização de lucro (raiz) + roteamento no valuation + rebaseline cascata ✅ 2026-06-26
+- [x] 08-02-PLAN.md — FIX-02: reconciliação g_alto × g_fundamentos (payout≥100%⇒g=0) + golden ✅ 2026-06-26
+- [x] 08-03-PLAN.md — FIX-03: CAPM 'local' com Selic ao vivo (BCB) + fallback gracioso + rebaseline de Ke ✅ 2026-06-26
+- [x] 08-04-PLAN.md — FIX-06: banda = sensibilidade real + DY recorrente + setor + golden de regressão VULC3 ✅ 2026-06-27
+
 ### Phase 7: UI — overlays, subpainéis, controles e enquadramento
 **Goal**: A aba Analisar passa a desenhar os overlays no eixo de preço e os osciladores em subpainéis dinâmicos, com controles para ligar/desligar e selecionar indicadores, marcadores de evento nas datas exatas, tooltips de glossário, e um enquadramento que mantém o veredito fundamentalista visivelmente decisório — tudo lendo `a.sinais` em modo read-only.
 **Depends on**: Phase 6 (`app.py` lê `a.sinais`, que precisa existir em `AnaliseAcao`)
@@ -98,26 +128,47 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] 07-05-PLAN.md — app.py: make_subplots dinâmico + overlays + subpainéis + marcadores + fresh-reader checkpoint (UI-01/02/04/06)
 **UI hint**: yes
 
-### Phase 8: Saneamento do motor DDM (caso VULC3)
-**Goal**: Corrigir a divergência estrutural do valuation fundamentalista exposta pelo caso VULC3 (intrínseco R$ 167–334 vs preço R$ 14, veredito "SUBAVALIADA" sobre uma divergência de modelo). Promovida do backlog 999.1. FIX-01 (trava `g_alto ≤ Ke`) e FIX-05 (veredito consome flags) já aplicados; restam FIX-02/03/04/06 — mudanças de metodologia com rebaselining deliberado dos golden tests.
-**Depends on**: Phase 6 (a matriz fundamento×técnico lê `a.veredito`; saneamento melhora a qualidade do token líder). Executa antes da Phase 7.
-**Requirements**: DDM-FIX-02, DDM-FIX-03, DDM-FIX-04, DDM-FIX-06 (FIX-01, FIX-05 ✅ feitos). Detalhes verificados linha-a-linha em `08-saneamento-do-motor-ddm/FINDINGS.md`.
+### Phase 9: Payout sustentável + DY recorrente (núcleo de metodologia)
+**Goal**: O payout-para-valuation e o DY recorrente passam a refletir a renda **sustentável** de qualquer ticker — expurgando anos não-recorrentes (payout >100% / distribuição extraordinária) por **regra geral**, não por ajuste de caso — em vez da média/mediana crua de 3 anos que satura no clamp de 100% num único ano atípico. É o núcleo de metodologia do marco: estende a primitiva de `normalizacao.py` para payout e provento; o DDM (Cap. 13-17) não é reescrito, só passa a consumir inputs saneados.
+**Depends on**: Phase 8 (a camada `normalizacao.py` / `payout_valuation` / `roe_valuation` já existe; esta fase generaliza o expurgo de não-recorrentes sobre elas)
+**Requirements**: DYR-01, PAY-01
 **Success Criteria** (what must be TRUE):
-  1. **FIX-04 (raiz):** o lucro consumido por ROE/CAGR/payout/DY passa por uma camada de normalização (expurgo de não-recorrentes) em vez do lucro CVM cru.
-  2. **FIX-02:** o `g_alto` adotado é reconciliado com `g_fundamentos`/payout (payout ≥100% ⇒ g sustentável → 0), não mais um haircut arbitrário do CAGR.
-  3. **FIX-03:** os inputs do CAPM (rf/ERP/EMBI) vêm de dado vivo (BCB/Selic) ou abordagem local, não dos literais de 2019; Ke resultante coerente com small cap BR.
-  4. **FIX-06:** guardrails de apresentação — DY recorrente vs trailing, banda intrínseca = sensibilidade real (não 2 cenários binários), setor correto; VULC3 vira caso de regressão.
-  5. Os golden tests são **rebaselinados deliberadamente** (valores corretos mudam) e voltam a ficar verdes com os novos números justificados — não "verde a qualquer custo".
-**Plans**: 4 plans (sequenciais — cascata FIX-04 → FIX-02 → FIX-03 → FIX-06)
-- [x] 08-01-PLAN.md — FIX-04: camada de normalização de lucro (raiz) + roteamento no valuation + rebaseline cascata ✅ 2026-06-26
-- [x] 08-02-PLAN.md — FIX-02: reconciliação g_alto × g_fundamentos (payout≥100%⇒g=0) + golden ✅ 2026-06-26
-- [x] 08-03-PLAN.md — FIX-03: CAPM 'local' com Selic ao vivo (BCB) + fallback gracioso + rebaseline de Ke ✅ 2026-06-26
-- [x] 08-04-PLAN.md — FIX-06: banda = sensibilidade real + DY recorrente + setor + golden de regressão VULC3 ✅ 2026-06-27
+  1. `payout_valuation()` deixa de ser a média crua de 3 anos clampada em 1.0: anos não-recorrentes (payout >100%) são expurgados por **regra geral data-driven** (sem constante por empresa), devolvendo um payout sustentável < 100% para VULC3 e estável para tickers de payout alto legítimo.
+  2. O **DY recorrente** passa a derivar de **lucro normalizado × payout sustentável** (não a mediana crua de 3 anos de dividendos), permanecendo robusto mesmo quando o dividendo cru de toda a janela cai numa era de payout >100%.
+  3. Com payout sustentável < 100%, `g_fundamentos` (`ROE_norm × (1 − payout_sustentável)`) deixa de ser zerado por saturação do clamp em tickers cujo payout cru passou de 100% num único ano — o crescimento por fundamentos volta a existir.
+  4. Validado em VULC3 (caso-limite) **e** em ≥2 tickers normais (ex.: TAEE11/EGIE3, payout alto recorrente): o expurgo só atua sobre anos realmente extraordinários e não rebaixa o payout de quem distribui muito de forma sustentável.
+  5. A fronteira per-ano é preservada — `payout(ano)` cru segue alimentando a tabela "Fundamentos (por ano)", o detector de armadilha (payout >100%) e a elegibilidade do screening (Cap. 8); só o agregado de valuation muda de base. Golden de valuation (TEST-07) verdes ou rebaselinados deliberadamente.
+**Plans**: TBD
+
+### Phase 10: Crescimento robusto + de-poison do screening
+**Goal**: O crescimento histórico exibido e o crescimento usado no screening (Garimpo BSD + Ranking por múltiplos) passam a vir de uma estimativa **robusta** sobre a série **normalizada** — não CAGR endpoint-a-endpoint nem CAGR sobre lucro/dividendo CRU — impedindo que um único ano extraordinário envenene o g exibido e o ranqueamento. GROW-02 gateia as telas: a metodologia (Fase 9) já aterrissou antes das telas que a consomem.
+**Depends on**: Phase 9 (consome a base normalizada e o payout sustentável saneados; o screening de-poisoned não pode ranquear sobre um payout cru saturado)
+**Requirements**: GROW-01, GROW-02
+**Success Criteria** (what must be TRUE):
+  1. O `g_historico` exibido usa uma estimativa **robusta** de crescimento (ex.: regressão log-linear / inclinação sobre a série normalizada), não mais o `cagr(lucros[0], lucros[-1])` endpoint-a-endpoint — um único ano de fundo/topo deixa de mandar no g.
+  2. `indicadores_bsd` (Garimpo) calcula os fatores de crescimento de lucro, dividendos e fundamentos sobre a série **normalizada**, não `cagr_serie(c.lucro_liquido)`/`c.dividendos` crus — um ano extraordinário deixa de inflar/envenenar o BSD.
+  3. O Ranking por múltiplos consome crescimento/ROE/payout normalizados (consistente com o Analisar), de modo que a mesma empresa não ranqueia barata por um g cru inflado num único ano.
+  4. Validado: em VULC3 o ano extraordinário não infla o BSD nem o g exibido; em tickers normais (ITUB4/EGIE3/TAEE11/BBAS3) o ranqueamento e o g não regridem materialmente vs. o estado atual.
+  5. A fronteira per-ano permanece intacta — `roe(ano)`/`payout(ano)`/lucro CRU seguem alimentando a elegibilidade per-ano (Cap. 8) e a tabela "Fundamentos (por ano)"; só os **agregados de crescimento** mudam de base.
+**Plans**: TBD
+
+### Phase 11: Apresentação, hierarquia e trava multi-ticker
+**Goal**: A UI passa a destacar a renda sustentável (DY recorrente formatado como % e em destaque no header), rebaixar o DY trailing inflado a contexto rotulado, e exibir o payout **cru real** do último ano como número distinto do payout sustentável de valuation. O marco fecha com a trava de validação multi-ticker (ITUB4/EGIE3/TAEE11/BBAS3 + VULC3) e o rebaseline **deliberado e justificado** dos golden — extensão do invariante TEST-07.
+**Depends on**: Phase 10 (a UI lê os campos saneados da engine em modo read-only; a trava valida a cascata de metodologia completa — payout sustentável + DY recorrente + crescimento robusto — ponta a ponta)
+**Requirements**: DYR-02, PAY-02, HIER-01, TEST-08
+**Success Criteria** (what must be TRUE):
+  1. Na tabela de Múltiplos do app, **"DY rec." é formatado como %** (paridade com ML/ROE/DY/EY), nunca como decimal cru "0.20" — hoje cai no ramo `fmt_num` por não estar na lista de campos percentuais (DYR-02).
+  2. A linha **"Payout (último ano)" exibe o payout cru real** do último ano (ex.: 124,7% em VULC3), distinto da linha "Payout p/ valuation" (sustentável) — hoje ambas leem `payout_valuation()` clampado e mostram o mesmo valor (PAY-02).
+  3. O **header do Analisar dá destaque ao DY recorrente** (sustentável) como métrica principal e rebaixa/rotula o DY trailing como histórico/inflado, evitando induzir o usuário à armadilha de dividendos que o próprio app sinaliza (HIER-01).
+  4. A mudança de metodologia é validada contra **ITUB4, EGIE3, TAEE11, BBAS3** além de VULC3: os golden de valuation seguem verdes **OU** são rebaselinados **deliberadamente com justificativa registrada**, comprovando que tickers sem distorção não regridem (TEST-08).
+  5. `app.py` permanece read-only — o destaque/rotulagem/formatação é apresentação sobre `dy_recorrente`/`dy_atual`/`payout`/`payout_valuation` já expostos pela engine, sem recalcular método.
+**Plans**: TBD
+**UI hint**: yes
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 4 → 5 → 6 → 8 → 7 (Phase 8 antes da 7 — saneamento do DDM antes da UI)
+Fases concluídas executaram em ordem numérica (4 → 5 → 6 → 8 → 7). v1.3 executa 9 → 10 → 11 (metodologia antes das telas que a consomem; UI + trava por último).
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -128,10 +179,13 @@ Phases execute in numeric order: 4 → 5 → 6 → 8 → 7 (Phase 8 antes da 7 �
 | 5. Motor de indicadores puro | v1.2 | 3/3 | Complete | 2026-06-26 |
 | 6. Integração na engine + composite + alerta + CLI | v1.2 | 2/2 | Complete | 2026-06-26 |
 | 8. Saneamento do motor DDM (caso VULC3) | v1.2 | 4/4 | Complete | 2026-06-27 |
-| 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 0/TBD | Not started | - |
+| 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 5/5 | Complete | 2026-06-27 |
+| 9. Payout sustentável + DY recorrente (núcleo de metodologia) | v1.3 | 0/TBD | Not started | - |
+| 10. Crescimento robusto + de-poison do screening | v1.3 | 0/TBD | Not started | - |
+| 11. Apresentação, hierarquia e trava multi-ticker | v1.3 | 0/TBD | Not started | - |
 
 ---
-*Próximo passo: `/gsd-plan-phase 7` (UI — overlays/subpainéis, sobre o motor fundamentalista saneado). Phase 8 fechada (4/4).*
+*Próximo passo: `/gsd-plan-phase 9` (núcleo de metodologia — payout sustentável + DY recorrente).*
 
 ---
 

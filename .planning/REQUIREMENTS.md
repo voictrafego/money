@@ -42,4 +42,15 @@
 
 ## Traceability
 
-<!-- Preenchido pelo roadmapper: REQ-ID → Fase -->
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| DYR-01 | Phase 9 | Pending |
+| PAY-01 | Phase 9 | Pending |
+| GROW-01 | Phase 10 | Pending |
+| GROW-02 | Phase 10 | Pending |
+| DYR-02 | Phase 11 | Pending |
+| PAY-02 | Phase 11 | Pending |
+| HIER-01 | Phase 11 | Pending |
+| TEST-08 | Phase 11 | Pending |
+
+**Coverage:** 8/8 requisitos v1.3 mapeados — sem órfãos, sem duplicatas.
