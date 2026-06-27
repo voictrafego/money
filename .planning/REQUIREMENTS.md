@@ -38,8 +38,8 @@
 ### Timing consultivo (TIMING)
 
 - [x] **TIMING-01**: User vê um resumo de "timing de entrada" (composite consultivo: tendência de alta / sem tendência / atenção) em linguagem natural
-- [ ] **TIMING-02**: O resumo cruza o veredito DDM (barato/caro) com o sinal técnico numa matriz fundamento×técnico, sem recalcular nem sobrescrever o fundamento
-- [ ] **TIMING-03**: User recebe um alerta de "reveja os fundamentos" quando o preço perde a tendência (perda da MM200 / death cross / rompimento da mínima do Donchian), enquadrado como reverificação e nunca como ordem de venda
+- [x] **TIMING-02**: O resumo cruza o veredito DDM (barato/caro) com o sinal técnico numa matriz fundamento×técnico, sem recalcular nem sobrescrever o fundamento
+- [x] **TIMING-03**: User recebe um alerta de "reveja os fundamentos" quando o preço perde a tendência (perda da MM200 / death cross / rompimento da mínima do Donchian), enquadrado como reverificação e nunca como ordem de venda
 - [x] **TIMING-04**: User pode escolher a base temporal dos alertas de tendência (diário ou semanal; padrão semanal); o gráfico visual permanece diário
 
 ### Apresentação e controles (UI)
@@ -53,7 +53,7 @@
 
 ### Paridade de engine (CLI)
 
-- [ ] **CLI-01**: A CLI imprime uma seção "Sinais técnicos (consultivos)" espelhando os mesmos sinais da engine (mesmo padrão CLI↔UI já validado)
+- [x] **CLI-01**: A CLI imprime uma seção "Sinais técnicos (consultivos)" espelhando os mesmos sinais da engine (mesmo padrão CLI↔UI já validado)
 
 ### Travas de fidelidade (TEST)
 
@@ -111,8 +111,8 @@ Mapeamento requisito → fase. Preenchido na criação do roadmap.
 | MOM-01 | Phase 5 | Complete |
 | MOM-02 | Phase 5 | Complete |
 | TIMING-01 | Phase 6 | Complete |
-| TIMING-02 | Phase 6 | Pending |
-| TIMING-03 | Phase 6 | Pending |
+| TIMING-02 | Phase 6 | Complete |
+| TIMING-03 | Phase 6 | Complete |
 | TIMING-04 | Phase 6 | Complete |
 | UI-01 | Phase 7 | Pending |
 | UI-02 | Phase 7 | Pending |
@@ -120,7 +120,7 @@ Mapeamento requisito → fase. Preenchido na criação do roadmap.
 | UI-04 | Phase 7 | Pending |
 | UI-05 | Phase 7 | Pending |
 | UI-06 | Phase 7 | Pending |
-| CLI-01 | Phase 6 | Pending |
+| CLI-01 | Phase 6 | Complete |
 | TEST-03 | Phase 5 | Complete |
 | TEST-04 | Phase 5 | Complete |
 | TEST-05 | Phase 5 | Complete |

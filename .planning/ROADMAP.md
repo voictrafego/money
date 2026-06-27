@@ -78,7 +78,7 @@ Detalhes completos: `.planning/milestones/v1.1-ROADMAP.md`
   5. `relatorio_markdown` imprime uma seção "Sinais técnicos (consultivos)" espelhando os mesmos sinais da engine (CLI-01), e as regras de desempate do composite estão travadas por golden test em casos-limite — ex.: acima da MM200 mas ADX < 20 (TEST-06).
 **Plans**: 2 plans
 - [x] 06-01-PLAN.md — Engine: popular a.sinais + composite de timing (MM200/ADX) + base temporal semanal (W-FRI) + golden TEST-06
-- [ ] 06-02-PLAN.md — Matriz fundamento×técnico + alerta de reverificação + seção CLI consultiva + invariante TEST-07
+- [x] 06-02-PLAN.md — Matriz fundamento×técnico + alerta de reverificação + seção CLI consultiva + invariante TEST-07
 
 ### Phase 7: UI — overlays, subpainéis, controles e enquadramento
 **Goal**: A aba Analisar passa a desenhar os overlays no eixo de preço e os osciladores em subpainéis dinâmicos, com controles para ligar/desligar e selecionar indicadores, marcadores de evento nas datas exatas, tooltips de glossário, e um enquadramento que mantém o veredito fundamentalista visivelmente decisório — tudo lendo `a.sinais` em modo read-only.

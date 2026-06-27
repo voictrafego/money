@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: — Indicadores de tendência
-status: executing
+status: verifying
 stopped_at: Phase 6 context gathered
-last_updated: "2026-06-27T00:38:12.377Z"
+last_updated: "2026-06-27T00:46:21.842Z"
 last_activity: 2026-06-27
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 6
-  percent: 86
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 
 Phase: 06 (integra-o-na-engine-composite-alerta-cli) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-06-27
 
-Progress: [█████████░] 86%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Progress: [█████████░] 86%
 | Phase 04 P02 | 10 | 2 tasks | 1 files |
 | Phase 05 P01 | 18 | 3 tasks | 3 files |
 | Phase 06 P01 | 4 | 3 tasks | 3 files |
+| Phase 06 P02 | 5 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,7 @@ Recent decisions affecting current work:
 - [v1.2 research]: `a.sinais` (`SinaisTecnicos`) calculado em `report.analisar_acao` — ponto único compartilhado por CLI e UI; paridade gratuita.
 - [Phase ?]: [05-01] SinaisTecnicos nested por família; cross/posição×MM200 SEMPRE sobre SMA (D-03); RSI Wilder SMA-seeded = 70.5328; MACD usa EMA padrão, não Wilder.
 - [05-03] ADX dupla-Wilder: 1ª suavização do DMI com start=1 (barra 0 = diff indefinido) → 1º DI no índice 14; 2ª suavização do DX com start=length → 1º ADX no índice 27. calcular() agrega as 4 famílias com guard de borda → fully-indisponivel. Checkpoint TEST-03 (ADX × TradingView) APROVADO e literais congelados em test_adx_wilder_referencia.
+- [Phase ?]: [06-02] Matriz e alerta extraídos em helpers puros (_matriz_leitura/_alerta_reverificacao) read-only sobre o fundamento — golden travável com input pinado; token do veredito via startswith porque 'NO INTERVALO' é bi-palavra
 
 ### Pending Todos
 
@@ -100,7 +102,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-27T00:38:03.366Z
+Last session: 2026-06-27T00:46:12.072Z
 Stopped at: Phase 6 context gathered
 Resume file: None
 
