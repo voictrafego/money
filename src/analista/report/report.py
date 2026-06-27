@@ -144,6 +144,50 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
         a.alertas.append(
             f"Ainda sem DFP de {ano_base} na CVM para esta empresa; análise usa fundamentos até {ult}."
         )
+
+    # --- Read técnico consultivo (timing de entrada) — TIMING-01/04, ponto único CLI/UI ---
+    # Passo 1: base temporal (D-10/D-12). Resample W-FRI quando "semanal" (default),
+    # sobre o frame split-adjusted (CR-01, NUNCA c.ohlc). Sem segundo guard de None/curto —
+    # indicators.calcular já degrada frame vazio para "indisponivel" (ponto único, DATA-03).
+    base = cfg.get("indicadores", {}).get("base_temporal", "semanal")
+    ohlc = c.ohlc_ajustado
+    if base == "semanal" and ohlc is not None and len(ohlc) > 0:
+        ohlc = ohlc.resample("W-FRI").agg(
+            {"Open": "first", "High": "max", "Low": "min", "Close": "last"}
+        ).dropna()
+    # Passo 2: popular os sinais (calcular sempre devolve um SinaisTecnicos).
+    a.sinais = indicators.calcular(ohlc, cfg)
+
+    # Passo 3: árvore de decisão composite (D-01/D-02/D-03) — MM200 dá a direção,
+    # ADX confirma a força. Lê os rótulos JÁ classificados (não relê o float do ADX).
+    pos = a.sinais.tendencia.posicao_mm200
+    forca = a.sinais.forca.forca_adx
+    if pos == "indisponivel" or forca == "indisponivel":
+        a.timing_estado = "sem_tendencia"      # degradação graciosa (DATA-03), sem exceção
+        a.timing_resumo = ""
+    elif pos == "acima" and forca == "forte":
+        a.timing_estado = "tendencia_de_alta"
+        resumo = "Tendência de alta confirmada (preço acima da MM200, ADX forte)"
+        # Passo 4: matiz fino (D-03) — RSI/MACD refinam a frase, NUNCA mudam o estado.
+        if a.sinais.momentum.nivel_rsi == "sobrecomprado":
+            resumo += " — porém sobrecomprado; pode valer esperar um pullback."
+        else:
+            resumo += "."
+        a.timing_resumo = resumo
+    elif pos == "abaixo":
+        a.timing_estado = "atencao"
+        resumo = "Atenção: preço abaixo da MM200 (viés de baixa)"
+        if a.sinais.momentum.cruzamento_macd == "cruz_baixa":
+            resumo += " — cruzamento de baixa do MACD reforça o sinal."
+        else:
+            resumo += "."
+        a.timing_resumo = resumo
+    else:  # acima da MM200 mas ADX fraco/neutro — caso-limite canônico D-02/TEST-06
+        a.timing_estado = "sem_tendencia"
+        a.timing_resumo = (
+            "Sem tendência definida (lateral / força fraca) — não é timing de entrada confirmado."
+        )
+
     return a
 
 
