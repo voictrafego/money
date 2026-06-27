@@ -78,10 +78,12 @@ def test_vulc3_cascata_domada_regressao():
     assert base < c.lucro_liquido[ANO_EXTRAORDINARIO]
 
     # ---- FIX-02 (reconciliação g × payout) ----
-    # payout_valuation ≥ 100% ⇒ g sustentável = ROE × (1 − payout) ≤ 0 ⇒ g_alto cai a 0
-    # (sem o piso artificial g_estavel). Empresa que distribui tudo NÃO projeta crescimento.
-    assert c.payout_valuation() == 1.0
-    assert a.g_fundamentos == 0.0
+    # PAY-01/D-03: a VULC3 sintética tem div ≥ lucro em todo ano ⇒ a MEDIANA do payout cai
+    # na era de payout >100% (≈1.25, sem clamp; o expurgo é intrínseco à mediana).
+    assert c.payout_valuation() > 1.0
+    # payout sustentável >100% ⇒ g_fund = ROE × (1 − payout) ≤ 0 (crescimento_por_fundamentos
+    # não tem piso); o piso max(0, …) do report pina g_alto = 0 (L85 segue valendo).
+    assert a.g_fundamentos <= 0.0
     assert a.g_alto == 0.0
 
     # ---- FIX-03 (CAPM local com Selic) ----

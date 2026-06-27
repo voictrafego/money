@@ -1,7 +1,7 @@
 """Testes da consistência de agregação na engine (Fase 01).
 
 Cobrem as funções canônicas que os 3 modos (Analisar/Garimpo/Ranking) compartilham:
-- payout_valuation (CR-02/WR-03): janela 3a + clamp 1.0, definição única
+- payout_valuation (PAY-01): mediana sobre a série histórica completa, SEM clamp — definição única (CR-02/WR-03)
 - roe (WR-01): base de PL consistente em toda a série (PL médio; None sem PL inicial)
 - dy_atual (WR-04): trailing-12m quando disponível, com ano-base exposto
 """
@@ -10,25 +10,27 @@ from analista.core.fundamentals import CompanyData
 
 
 # --------------------------------------------------------------------------- #
-# Task 1: payout_valuation — média 3a com clamp 1.0
+# Task 1: payout_valuation — mediana sobre a série completa, SEM clamp
 # --------------------------------------------------------------------------- #
-def test_payout_valuation_clamp_em_1():
-    # payout médio 3a > 1.0 deve ser cravado em 1.0
+def test_payout_valuation_sem_clamp_mediana_legitima_acima_de_1():
+    # D-03: sem clamp — payout 1.5 em todo ano ⇒ mediana = 1.5 (mediana legítima >1.0,
+    # ex. transmissora que distribui de caixa regulatório acima do lucro contábil).
     c = CompanyData(ticker="X", anos=[2022, 2023, 2024])
     c.lucro_liquido = {2022: 100, 2023: 100, 2024: 100}
     c.dividendos = {2022: 150, 2023: 150, 2024: 150}  # payout 1.5 cada
     c.num_acoes = {2022: 1, 2023: 1, 2024: 1}
-    assert c.payout_valuation() == 1.0
+    assert c.payout_valuation() == 1.5
 
 
-def test_payout_valuation_media_dos_3_ultimos_anos():
+def test_payout_valuation_mediana_da_serie_completa():
     c = CompanyData(ticker="X", anos=[2021, 2022, 2023, 2024])
     c.lucro_liquido = {2021: 100, 2022: 100, 2023: 100, 2024: 100}
-    # payouts: 2021=0.2 (ignorado, fora da janela 3a), 2022=.6, 2023=.7, 2024=.8
+    # D-04: série COMPLETA (4 anos) ⇒ 2021=0.2 ENTRA na mediana (não mais ignorado pela janela 3a)
+    # payouts: 2021=0.2, 2022=.6, 2023=.7, 2024=.8 ⇒ mediana = (0.6+0.7)/2 = 0.65
     c.dividendos = {2021: 20, 2022: 60, 2023: 70, 2024: 80}
     c.num_acoes = {2021: 1, 2022: 1, 2023: 1, 2024: 1}
     v = c.payout_valuation()
-    assert abs(v - (0.6 + 0.7 + 0.8) / 3) < 1e-9
+    assert abs(v - 0.65) < 1e-9
 
 
 def test_payout_valuation_ignora_none():
