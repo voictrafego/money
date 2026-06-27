@@ -37,10 +37,10 @@
 
 ### Timing consultivo (TIMING)
 
-- [ ] **TIMING-01**: User vê um resumo de "timing de entrada" (composite consultivo: tendência de alta / sem tendência / atenção) em linguagem natural
+- [x] **TIMING-01**: User vê um resumo de "timing de entrada" (composite consultivo: tendência de alta / sem tendência / atenção) em linguagem natural
 - [ ] **TIMING-02**: O resumo cruza o veredito DDM (barato/caro) com o sinal técnico numa matriz fundamento×técnico, sem recalcular nem sobrescrever o fundamento
 - [ ] **TIMING-03**: User recebe um alerta de "reveja os fundamentos" quando o preço perde a tendência (perda da MM200 / death cross / rompimento da mínima do Donchian), enquadrado como reverificação e nunca como ordem de venda
-- [ ] **TIMING-04**: User pode escolher a base temporal dos alertas de tendência (diário ou semanal; padrão semanal); o gráfico visual permanece diário
+- [x] **TIMING-04**: User pode escolher a base temporal dos alertas de tendência (diário ou semanal; padrão semanal); o gráfico visual permanece diário
 
 ### Apresentação e controles (UI)
 
@@ -62,7 +62,7 @@
 - [x] **TEST-03**: Golden test trava RSI e ADX com suavização de **Wilder** (`ewm(alpha=1/length, adjust=False)`, seed SMA) contra fixtures de referência (cruzados com TradingView)
 - [x] **TEST-04**: No-repaint test garante que os sinais não usam dados futuros — `indicador(série[:k])[-1] == indicador(série)[k-1]`
 - [x] **TEST-05**: Test cobre a série split-adjusted num ticker com split conhecido (sem cruzamentos espúrios na data do split)
-- [ ] **TEST-06**: Test trava as regras de desempate do composite de timing (casos-limite: ex.: "acima da MM200 mas ADX < 20")
+- [x] **TEST-06**: Test trava as regras de desempate do composite de timing (casos-limite: ex.: "acima da MM200 mas ADX < 20")
 - [x] **TEST-07**: Invariante — os 64 golden tests de valuation existentes permanecem verdes (nenhuma fórmula do livro alterada)
 
 ## Future Requirements (v2+)
@@ -110,10 +110,10 @@ Mapeamento requisito → fase. Preenchido na criação do roadmap.
 | FORCE-02 | Phase 5 | Pending |
 | MOM-01 | Phase 5 | Complete |
 | MOM-02 | Phase 5 | Complete |
-| TIMING-01 | Phase 6 | Pending |
+| TIMING-01 | Phase 6 | Complete |
 | TIMING-02 | Phase 6 | Pending |
 | TIMING-03 | Phase 6 | Pending |
-| TIMING-04 | Phase 6 | Pending |
+| TIMING-04 | Phase 6 | Complete |
 | UI-01 | Phase 7 | Pending |
 | UI-02 | Phase 7 | Pending |
 | UI-03 | Phase 7 | Pending |
@@ -124,7 +124,7 @@ Mapeamento requisito → fase. Preenchido na criação do roadmap.
 | TEST-03 | Phase 5 | Complete |
 | TEST-04 | Phase 5 | Complete |
 | TEST-05 | Phase 5 | Complete |
-| TEST-06 | Phase 6 | Pending |
+| TEST-06 | Phase 6 | Complete |
 | TEST-07 | Phase 4 | Complete |
 
 **Coverage:**
