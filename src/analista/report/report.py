@@ -70,13 +70,14 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     }
 
     # --- Crescimento (Cap. 14) ---
-    # CAGR sobre a série de lucro NORMALIZADA (winsorizada): um exercício atípico no
-    # início/fim deixa de inflar o g histórico. A série CRUA segue valendo p/ os fatos
-    # per-ano do ciclo de vida (lucrou/decresceu em cada ano).
+    # Tendência log-linear (regressão de ln(lucro) sobre o tempo) na série de lucro
+    # NORMALIZADA (winsorizada): usa TODOS os pontos, então um exercício atípico no
+    # início/fim deixa de mandar no g histórico (não mais endpoint-a-endpoint). A série
+    # CRUA segue valendo p/ os fatos per-ano do ciclo de vida (lucrou/decresceu em cada ano).
     lucros_raw = c.serie("lucro_liquido")
     lucros = c.serie_lucro_normalizada()
     if len(lucros) >= 2:
-        a.g_historico = growth.cagr(lucros[0], lucros[-1], len(lucros) - 1)
+        a.g_historico = growth.crescimento_log_linear(lucros)
     # g_fundamentos usa o MESMO payout do valuation (payout_valuation) ⇒ é o g SUSTENTÁVEL,
     # quanto a empresa consegue reinvestir: g_fund = ROE_normalizado × (1 − payout_valuation).
     a.g_fundamentos = growth.crescimento_por_fundamentos(c.roe_valuation(), c.payout_valuation())
