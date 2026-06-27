@@ -103,12 +103,12 @@ Phases execute in numeric order: 4 → 5 → 6 → 7
 | 2. Apresentação e Travas de Consistência | v1.0 | 2/2 | Complete | 2026-06-05 |
 | 3. Gráfico de Preço na aba Analisar | v1.1 | 2/2 | Complete | 2026-06-23 |
 | 4. Encanamento de dados + série correta | v1.2 | 2/2 | Complete | 2026-06-26 |
-| 5. Motor de indicadores puro | v1.2 | 0/3 | Not started | - |
+| 5. Motor de indicadores puro | v1.2 | 3/3 | Complete | 2026-06-26 |
 | 6. Integração na engine + composite + alerta + CLI | v1.2 | 0/2 | Planned | - |
 | 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 0/TBD | Not started | - |
 
 ---
-*Próximo passo: `/gsd-execute-phase 5`*
+*Próximo passo: `/gsd-execute-phase 6`*
 
 ---
 
