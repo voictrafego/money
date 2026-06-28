@@ -129,10 +129,16 @@ def matriz_sensibilidade(
     """Matriz de valor intrínseco variando Ke (linhas) e g_alto (colunas) — Cap. 12/17."""
     linhas: List[List[Number]] = []
     for dke in deltas_ke:
+        ke_cell = ke + dke
         linha: List[Number] = []
         for dg in deltas_g:
+            # AUD-VAL-01: reaplica a trava g ≤ Ke POR CÉLULA (espelha report.py:130-131). Sem
+            # isto, na célula Ke-baixo/g-alto o fator (1+g)/(1+Ke) > 1 faz a fase explícita
+            # inflar em vez de convergir; como vmin/vmax saem do min/max desta matriz, o vmax
+            # estourava e alargava a banda intrínseca, distorcendo o veredito.
+            g_cell = min(max(0.0, g_alto + dg), ke_cell)
             res = ddm_dois_estagios(
-                dpa_inicial, g_alto + dg, n, g_estavel, ke + dke, decrescente, tributacao
+                dpa_inicial, g_cell, n, g_estavel, ke_cell, decrescente, tributacao
             )
             linha.append(res.valor_intrinseco if res else None)
         linhas.append(linha)
