@@ -70,6 +70,9 @@ def ranking_por_multiplos(
 # Abaixo deste n, ajustar 3 parâmetros sobre poucas observações deixa a regressão
 # instável (overfitting/multicolinearidade) e o veredito de preço-alvo pouco confiável.
 LIMIAR_AMOSTRA = 10
+# Abaixo deste R², a regressão explica pouco da variação de P/L do setor — o preço-alvo
+# derivado é frágil e o veredito Subavaliada/Cara não deve ser lido com confiança (AUD-CMP-02).
+LIMIAR_R2 = 0.5
 
 
 @dataclass
@@ -86,6 +89,11 @@ class RegressaoPL:
     def amostra_pequena(self) -> bool:
         """Poucas empresas para 3 parâmetros → regressão instável."""
         return self.n < LIMIAR_AMOSTRA
+
+    @property
+    def r2_baixo(self) -> bool:
+        """R² < 0,5 → a regressão explica pouco do P/L do setor; preço-alvo pouco confiável."""
+        return self.r2 < LIMIAR_R2
 
     @property
     def roe_sinal_invertido(self) -> bool:
