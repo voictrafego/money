@@ -108,7 +108,9 @@ def cmd_screen(args, cfg):
         b = bsd_map.get(l["ticker"], {})
         l["bsd"] = round(b.get("bsd") or 0, 1)
         l["bsd_acima_80"] = b.get("acima_de_80", False)
-    linhas.sort(key=lambda x: x["bsd"], reverse=True)
+    # AUD-CONS-03: ordena (passa filtros, BSD) como o app (app.py:416) — uma ação com BSD
+    # alto que REPROVA no corte custom não pode aparecer no topo no CLI e abaixo no app.
+    linhas.sort(key=lambda x: (x["passou_custom"], x["bsd"]), reverse=True)
 
     csv_path = os.path.join(OUT_DIR, "screen.csv")
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
