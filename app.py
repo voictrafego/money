@@ -268,6 +268,17 @@ if modo.startswith("🔎"):
                     for i, spec in enumerate(specs):
                         r = i + 2
                         for rotulo, s in spec.series:
+                            # AUD-IND-01 (plot): o histograma do MACD é (MACD − Sinal) e deve ser
+                            # BARRAS (verde ≥0 / vermelho <0), não uma linha — como linha no mesmo
+                            # eixo das linhas MACD/Sinal ele somia e parecia "reto".
+                            if rotulo == "Histograma":
+                                fig.add_trace(go.Bar(
+                                    x=s.index, y=s.values, name=rotulo,
+                                    marker_color=["#2ca02c" if (v is not None and v >= 0) else "#d62728"
+                                                  for v in s.values],
+                                    hovertemplate=f"{rotulo}<br>%{{x|%d/%m/%Y}}<br>%{{y:.2f}}<extra></extra>",
+                                ), row=r, col=1)
+                                continue
                             fig.add_trace(go.Scatter(
                                 x=s.index, y=s.values, mode="lines", name=rotulo,
                                 hovertemplate=f"{rotulo}<br>%{{x|%d/%m/%Y}}<br>%{{y:.2f}}<extra></extra>",
@@ -511,6 +522,14 @@ else:
                         "overfitting/multicolinearidade e acaba penalizando as empresas mais "
                         "rentáveis. Aqui o preço-alvo da regressão pode discordar do **Analisar "
                         "a fundo** (DDM); nesse caso, confie mais no DDM."
+                    )
+                # RANK-CONF-04 (AUD-CMP-02): R² baixo → regressão explica pouco do P/L do setor.
+                if reg.r2_baixo:
+                    st.warning(
+                        f"⚠️ **R² baixo ({reg.r2:.2f}).** A regressão explica pouco da variação de "
+                        f"P/L entre as comparáveis — o preço-alvo e o veredito *Subavaliada/Cara* "
+                        f"são pouco confiáveis. Use comparáveis mais homogêneas (mesmo segmento) ou "
+                        f"confie mais no **Analisar a fundo** (DDM)."
                     )
                 # RANK-CONF-03: orientação fixa de mesmo segmento (sempre que há tabela).
                 st.caption(
