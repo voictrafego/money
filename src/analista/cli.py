@@ -62,10 +62,13 @@ def cmd_analyze(args, cfg):
         print("Não foi possível montar a empresa (verifique ticker e conexão).")
         return 1
     c = empresas[0]
-    # FIX-03: resolve o rf do CAPM uma vez (Selic ao vivo do BCB, ou o fallback do config)
-    # e injeta em cfg ANTES da engine — a rede vive aqui, no entry point; analisar_acao
-    # permanece offline lendo cfg["capm"]["rf_local"].
-    cfg["capm"]["rf_local"] = macro.selic_para_capm(cfg["capm"]["selic_fallback"])
+    # FIX-03: resolve o rf do CAPM uma vez e injeta em cfg ANTES da engine — a rede vive aqui,
+    # no entry point; analisar_acao permanece offline lendo cfg["capm"]["rf_local"]. Rf =
+    # Selic through-the-cycle (média ~10 anos), não a spot: numa perpetuidade a taxa reflete o
+    # juro de LP, não o pico de ciclo (o corte do DY, abaixo, segue na Selic spot).
+    cfg["capm"]["rf_local"] = macro.selic_ciclo_para_capm(
+        cfg["capm"]["selic_fallback"], cfg["capm"].get("rf_ciclo_anos", 10)
+    )
     a = report.analisar_acao(c, cfg)
     md = report.relatorio_markdown(c, a, cfg)
     destino = os.path.join(OUT_DIR, f"{c.ticker}.md")

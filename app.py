@@ -43,6 +43,13 @@ def selic_atual():
     return macro.selic_meta() or 0.105
 
 
+@st.cache_data(show_spinner=False, ttl=3600)
+def rf_capm(fallback, anos):
+    """rf do CAPM/DDM: Selic through-the-cycle (média ~10 anos), não a spot — numa
+    perpetuidade a taxa de desconto reflete o juro de LP. Uma chamada de rede por execução."""
+    return macro.selic_ciclo_para_capm(fallback, anos)
+
+
 CFG = carregar_config()
 ANO_BASE = CFG["universo"]["ano_base"]
 N_ANOS = CFG["universo"]["anos_historico"]
@@ -107,11 +114,13 @@ if modo.startswith("🔎"):
             st.error(f"Não encontrei dados suficientes para {ticker_ativo}. "
                      "Confira o ticker ou adicione o mapeamento em data/ticker_map.json.")
         else:
-            # FIX-03: injeta o rf do CAPM (Selic ao vivo) em CFG antes da engine. Reusa
-            # selic_atual() — @st.cache_data garante UMA chamada de rede por execução,
-            # compartilhada com a métrica da sidebar. app.py segue read-only: só injeta
-            # input de config, não recalcula o método.
-            CFG["capm"]["rf_local"] = selic_atual()
+            # FIX-03: injeta o rf do CAPM em CFG antes da engine. Rf = Selic through-the-cycle
+            # (média ~10 anos), não a spot — numa perpetuidade a taxa reflete o juro de LP (a
+            # sidebar/corte de DY seguem na Selic spot via selic_atual()). @st.cache_data
+            # garante UMA chamada de rede por execução. app.py segue read-only.
+            CFG["capm"]["rf_local"] = rf_capm(
+                CFG["capm"]["selic_fallback"], CFG["capm"].get("rf_ciclo_anos", 10)
+            )
             a = report.analisar_acao(c, CFG)
 
             st.markdown(f"### {a.ticker} — {a.nome}")

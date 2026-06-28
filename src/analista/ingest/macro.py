@@ -6,7 +6,9 @@ API pública: https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados
 
 from __future__ import annotations
 
-from typing import Optional
+import datetime
+import time
+from typing import List, Optional
 
 import requests
 
@@ -52,3 +54,47 @@ def selic_para_capm(fallback: float) -> float:
     NÃO chama esta função — permanece offline/determinística lendo o rf já resolvido.
     """
     return selic_meta() or fallback
+
+
+def _selic_historico(anos: int = 10) -> List[float]:
+    """Meta Selic diária dos últimos `anos` anos, em fração (lista). [] em qualquer falha.
+
+    Consulta por intervalo de datas: a série diária 432 do SGS limita `/ultimos` a 20 pontos
+    e a janela diária a 10 anos — por isso usamos dataInicial/dataFinal logo abaixo de 10 anos.
+    """
+    hoje = datetime.date.today()
+    ini = hoje - datetime.timedelta(days=anos * 365)  # < 10 anos exatos (respeita a trava do BCB)
+    url = (
+        f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{SELIC_META}/dados"
+        f"?formato=json&dataInicial={ini.strftime('%d/%m/%Y')}&dataFinal={hoje.strftime('%d/%m/%Y')}"
+    )
+    # O SGS é intermitente (timeouts esporádicos por IP); re-tenta antes de degradar p/ a Selic
+    # spot — assim uma falha pontual não congela o rf no pico de ciclo (a sidebar cacheia 1h).
+    for tentativa in range(3):
+        try:
+            resp = requests.get(url, timeout=30)
+            resp.raise_for_status()
+            dados = resp.json()
+            if isinstance(dados, list) and dados:
+                return [float(d["valor"].replace(",", ".")) / 100.0 for d in dados]
+        except (requests.RequestException, ValueError, KeyError, TypeError):
+            pass
+        if tentativa < 2:
+            time.sleep(0.5 * (tentativa + 1))
+    return []
+
+
+def selic_ciclo_para_capm(fallback: float, anos: int = 10) -> float:
+    """rf do CAPM/DDM = Selic MÉDIA dos últimos `anos` anos (through-the-cycle).
+
+    Numa perpetuidade (DDM), a taxa de desconto deve refletir o juro de LONGO PRAZO, não o
+    pico de ciclo: a Selic spot (ex.: 14,25%) infla o Ke e subavalia todo o mercado de
+    dividendos. A média de ~10 anos da meta Selic (BCB) é um rf "through-the-cycle" objetivo
+    e auto-atualizável. Degradação graciosa: sem a série histórica → Selic spot
+    (`selic_para_capm`) → fallback de config. Chamado SÓ nos entry points (a engine lê cfg e
+    permanece determinística).
+    """
+    hist = _selic_historico(anos)
+    if hist:
+        return sum(hist) / len(hist)
+    return selic_para_capm(fallback)
