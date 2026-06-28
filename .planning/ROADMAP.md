@@ -49,7 +49,7 @@ Detalhes das fases concluídas mantidos abaixo em "Phase Details".
 
 - [x] **Phase 9: Payout sustentável + DY recorrente (núcleo de metodologia)** - Define um payout sustentável geral que expurga anos não-recorrentes (>100%) e deriva o DY recorrente de lucro normalizado × payout sustentável, robusto para qualquer ticker (completed 2026-06-27)
 - [x] **Phase 10: Crescimento robusto + de-poison do screening** - g histórico robusto (não endpoint-a-endpoint) e Garimpo/Ranking calculando crescimento sobre a série normalizada, não sobre lucro/dividendo CRU (completed 2026-06-27)
-- [ ] **Phase 11: Apresentação, hierarquia e trava multi-ticker** - DY recorrente em destaque e formatado como %, payout cru do último ano exibido, e trava de validação multi-ticker com rebaseline deliberado dos golden
+- [x] **Phase 11: Apresentação, hierarquia e trava multi-ticker** - DY recorrente em destaque e formatado como %, payout cru do último ano exibido, e trava de validação multi-ticker com rebaseline deliberado dos golden (completed 2026-06-28)
 
 ## Phase Details
 
@@ -171,7 +171,7 @@ Detalhes das fases concluídas mantidos abaixo em "Phase Details".
 **Plans**: 3 plans (3 waves)
 - [x] 11-01-PLAN.md — Helpers puros de apresentação (presentation.py: header_dy, linhas_multiplos, fmt_pct/num) + golden multi-ticker (TEST-08 layer a)
 - [x] 11-02-PLAN.md — app.py religa header m3 (HIER-01) + tabela Múltiplos % e payout duplo (DYR-02/PAY-02) + varredura de rótulos no glossário
-- [ ] 11-03-PLAN.md — Checkpoint live dos 5 tickers no Streamlit (TEST-08 layer b)
+- [x] 11-03-PLAN.md — Checkpoint live dos 5 tickers no Streamlit (TEST-08 layer b)
 **UI hint**: yes
 
 ## Progress
