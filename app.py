@@ -87,6 +87,15 @@ st.sidebar.markdown("---")
 st.sidebar.metric("Selic (corte do DY)", fmt_pct(selic_atual()), help=h("selic"))
 st.sidebar.caption(f"Janela: {N_ANOS} anos · até {ANO_BASE} (quando já divulgado na CVM)")
 
+st.sidebar.markdown("---")
+st.sidebar.caption(
+    "⚠️ **Aviso.** Ferramenta de apoio à análise, de caráter educacional. "
+    "**Não é recomendação de compra ou venda** nem consultoria/análise de valores "
+    "mobiliários (CVM Res. 19/20). Os números podem conter erros ou dados desatualizados; "
+    "rentabilidade passada não garante resultados futuros. Toda decisão de investimento é "
+    "de responsabilidade exclusiva do usuário — verifique os dados na fonte (CVM/RI) antes de decidir."
+)
+
 
 # =========================================================================== #
 # 1) ANALISAR UMA AÇÃO
