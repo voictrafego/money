@@ -214,8 +214,10 @@ def indicadores_bsd(c: CompanyData, anos_media: int = 3) -> Dict[str, Optional[f
         vals = [v for v in vals if v is not None]
         return sum(vals) / len(vals) if vals else None
 
-    # 1. payout médio
-    payout = media([c.payout(a) for a in anos])
+    # 1. payout sustentável (AUD-SCR-01): mediana do histórico completo (payout_valuation),
+    #    o MESMO número do Analisar/Ranking — não a média aritmética do payout CRU 3a, que um
+    #    ano de lucro deprimido inflava no fator de maior peso do BSD (30/100).
+    payout = c.payout_valuation()
 
     # 2. cobertura de juros: (Lucro + Despesa de juros) / Despesa de juros (proxy de LAJIR/juros)
     cob = []
@@ -233,20 +235,22 @@ def indicadores_bsd(c: CompanyData, anos_media: int = 3) -> Dict[str, Optional[f
             fc_ll.append(f / ll)
     fc_sobre_lucro = media(fc_ll) if fc_ll else None
 
-    # 4. dividend yield atual
-    dy = c.dy_atual()
+    # 4. dividend yield recorrente (AUD-SCR-03): leitura sustentável (mesmo do Analisar), não
+    #    o trailing-12m que inclui extraordinários e cravava nota máxima por provento de evento.
+    dy = c.dy_recorrente()
 
     # 5. desempenho relativo do preço (6m vs Ibov)
     desempenho = c.desempenho_relativo_6m
 
-    # 6. variação tangível no valor contábil: CAGR de (PL - intangível)
+    # 6. variação tangível no valor contábil (AUD-SCR-02): tendência LOG-LINEAR sobre a série
+    #    COMPLETA winsorizada de (PL − intangível) — mesmo estimador robusto dos demais
+    #    crescimentos do BSD. Antes era CAGR endpoint-a-endpoint (só base e ponta da janela 3a),
+    #    distorcido por um PL atípico numa das pontas.
     def tangivel(a):
         pl, intang = c.patrimonio_liquido.get(a), c.ativo_intangivel.get(a, 0)
         return None if pl is None else pl - (intang or 0)
-    if len(anos) >= 2:
-        var_tangivel = growth.cagr(tangivel(anos[0]), tangivel(anos[-1]), len(anos) - 1)
-    else:
-        var_tangivel = None
+    serie_tang = [t for t in (tangivel(a) for a in c.anos_ordenados()) if t is not None]
+    var_tangivel = growth.crescimento_log_linear(normalizacao.serie_winsorizada(serie_tang))
 
     # 7. crescimento esperado do lucro no longo prazo (analistas; proxy = g por fundamentos).
     #    Sem estimativa de analistas, usa a MÉDIA de roe/payout na MESMA janela `anos_media`
