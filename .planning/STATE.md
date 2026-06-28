@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: — Saneamento residual do valuation (SHIPPED 2026-06-28)
-status: milestone-complete
-stopped_at: v1.3 arquivado + tag; próximo marco v2.0 Comercialização via /gsd-new-milestone
-last_updated: "2026-06-28T23:30:00.000Z"
+milestone: v2.0
+milestone_name: Comercialização (produto cobrável)
+status: planning
+last_updated: "2026-06-28T23:36:02.995Z"
 last_activity: 2026-06-28
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,16 +24,10 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 
 ## Current Position
 
-Phase: 11 (apresenta-o-hierarquia-e-trava-multi-ticker) — COMPLETE
-Plan: 3 of 3 (todos concluídos)
-Status: Phase complete — marco v1.3 fechado (checkpoint live aprovado)
-Last activity: 2026-06-28
-
-**v1.3 — execução 9 → 10 → 11 (metodologia antes das telas que a consomem):**
-
-- Phase 9 (DYR-01, PAY-01): payout sustentável geral + DY recorrente = lucro normalizado × payout sustentável
-- Phase 10 (GROW-01, GROW-02): g histórico robusto + Garimpo/Ranking sobre série normalizada (gateia as telas)
-- Phase 11 (DYR-02, PAY-02, HIER-01, TEST-08): % na tabela, payout cru do último ano, header com DY rec. em destaque, trava multi-ticker + rebaseline deliberado
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-06-28 — Milestone v2.0 started
 
 ## Performance Metrics
 
