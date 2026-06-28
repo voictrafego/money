@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: — Saneamento residual do valuation
 status: planning
-stopped_at: Phase 11 context gathered
-last_updated: "2026-06-28T00:22:42.265Z"
+stopped_at: Phase 11 UI-SPEC approved
+last_updated: "2026-06-28T00:30:05.930Z"
 last_activity: 2026-06-27
 progress:
   total_phases: 8
@@ -118,9 +118,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-28T00:22:42.261Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-apresenta-o-hierarquia-e-trava-multi-ticker/11-CONTEXT.md
+Last session: 2026-06-28T00:30:05.927Z
+Stopped at: Phase 11 UI-SPEC approved
+Resume file: .planning/phases/11-apresenta-o-hierarquia-e-trava-multi-ticker/11-UI-SPEC.md
 
 ## Operator Next Steps
 
