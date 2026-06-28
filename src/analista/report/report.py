@@ -156,6 +156,13 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     payout_ult = c.payout(ult)   # CRU (não payout_valuation) — detector de armadilha
     flag_dy = dy is not None and dy > 0.15
     flag_payout = payout_ult is not None and payout_ult > 1.0
+    # AUD-VAL-02: dividendo pago em ano de prejuízo (LPA ≤ 0, DPA > 0). Com o payout agora None
+    # nesse caso (multiples.dividend_payout), o teste payout>100% não pega — é armadilha explícita
+    # (distribuição de reservas/caixa sem lucro), tratada à parte e somada às salvaguardas do veredito.
+    lpa_ult, dpa_ult = c.lpa(ult), c.dpa(ult)
+    flag_div_prejuizo = (
+        dpa_ult is not None and dpa_ult > 0 and lpa_ult is not None and lpa_ult <= 0
+    )
 
     # --- Veredito ---
     # FIX-06 (item H): a banda intrínseca vmin/vmax = min/max da matriz de SENSIBILIDADE
@@ -176,10 +183,12 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             # DDM-FIX-05 (caso VULC3): não rotular "SUBAVALIADA" quando flags de risco
             # contradizem a tese de desconto. Preço abaixo do intrínseco + payout>100% ou
             # DY>15% costuma ser divergência de modelo / armadilha, não barganha.
-            if flag_payout or flag_dy:
+            if flag_payout or flag_dy or flag_div_prejuizo:
                 motivos = []
                 if flag_payout:
                     motivos.append("payout > 100%")
+                if flag_div_prejuizo:
+                    motivos.append("dividendo pago em ano de prejuízo")
                 if flag_dy:
                     motivos.append("DY > 15%")
                 a.veredito = (
@@ -199,6 +208,8 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
         a.alertas.append("DY > 15%: possível armadilha de dividendos (Cap. 6) — verificar sustentabilidade.")
     if flag_payout:
         a.alertas.append("Payout > 100%: distribui mais que o lucro (reservas) — insustentável no longo prazo.")
+    if flag_div_prejuizo:
+        a.alertas.append("Dividendo pago em ano de prejuízo (LPA ≤ 0): distribuição de reservas/caixa sem lucro — armadilha de dividendos (Cap. 6).")
     if not lucro_positivo:
         a.alertas.append("Prejuízo em algum ano da janela: fundamentos inconsistentes para dividendos.")
     if a.ke is None:

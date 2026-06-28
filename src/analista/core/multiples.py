@@ -75,7 +75,14 @@ def earnings_yield(lpa: float, preco: float) -> Number:
 # 10.2 Múltiplos de dividendos
 # --------------------------------------------------------------------------- #
 def dividend_payout(dpa: float, lpa: float) -> Number:
-    """DP = DPA / LPA (10.2.1). >100% = distribui mais que o lucro (reservas)."""
+    """DP = DPA / LPA (10.2.1). >100% = distribui mais que o lucro (reservas).
+
+    AUD-VAL-02: LPA ≤ 0 (ano de prejuízo) torna o payout INDEFINIDO (None), não um número
+    negativo. Payout negativo não é "<0% distribuído" — é uma armadilha (dividendo pago de
+    reservas no prejuízo). Devolver None expurga o ano da mediana de `payout_valuation` em vez
+    de arrastá-la para baixo; o detector de armadilha trata o caso LPA≤0/DPA>0 à parte (report)."""
+    if lpa is not None and lpa <= 0:
+        return None
     return _safe_div(dpa, lpa)
 
 
