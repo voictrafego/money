@@ -53,7 +53,8 @@ G: dict[str, str] = {
     ),
     "tab_crescimento": (
         "**Crescimento e custo de capital (Cap. 14/16)**\n\n"
-        "- **g histórico (CAGR)**: crescimento médio do lucro nos últimos anos.\n"
+        "- **g histórico (tendência log-linear)**: ritmo de crescimento do lucro estimado por "
+        "regressão log-linear sobre a série de lucro normalizada (mede a tendência, robusta a anos atípicos).\n"
         "- **g por fundamentos**: ROE × (1 − payout), o crescimento que a empresa se autofinancia.\n"
         "- **g alto**: taxa adotada para a fase de crescimento.\n"
         "- **g estável (perpetuidade)**: taxa perpétua; não deve superar o crescimento do PIB.\n"
@@ -104,8 +105,9 @@ G: dict[str, str] = {
     ),
     "payout_dual": (
         "**Por que dois payouts?** O *Payout (último ano)* é a fatia do lucro distribuída no exercício "
-        "mais recente. O *Payout p/ valuation (média 3a)* é a média projetada dos últimos 3 anos "
-        "(com teto de 100%), e é esse que o modelo de valuation (DDM) usa para estimar o valor justo. "
+        "mais recente (valor cru, pode estar distorcido por um ano atípico). O *Payout p/ valuation "
+        "(sustentável)* é a **mediana da série histórica completa** (sem teto/clamp), e é esse que o "
+        "modelo de valuation (DDM) usa para estimar o valor justo — mais robusto a anos extremos. "
         "Quando os dois divergem, o app mostra ambos para você entender de onde vem o preço-alvo."
     ),
     "indisponivel": (
