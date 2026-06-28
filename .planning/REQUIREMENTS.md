@@ -27,7 +27,7 @@
 
 ### Travas de fidelidade (TEST)
 
-- [ ] **TEST-08**: A mudança de metodologia é validada contra um conjunto de **tickers normais** (ITUB4, EGIE3, TAEE11, BBAS3) além do caso-limite VULC3 — golden de valuation seguem verdes OU são rebaselinados **deliberadamente com justificativa**, garantindo que tickers sem distorção não regridem (extensão do invariante TEST-07)
+- [x] **TEST-08**: A mudança de metodologia é validada contra um conjunto de **tickers normais** (ITUB4, EGIE3, TAEE11, BBAS3) além do caso-limite VULC3 — golden de valuation seguem verdes OU são rebaselinados **deliberadamente com justificativa**, garantindo que tickers sem distorção não regridem (extensão do invariante TEST-07)
 
 ## Future Requirements (v2+)
 
@@ -51,6 +51,6 @@
 | DYR-02 | Phase 11 | Pending |
 | PAY-02 | Phase 11 | Pending |
 | HIER-01 | Phase 11 | Pending |
-| TEST-08 | Phase 11 | Pending |
+| TEST-08 | Phase 11 | Complete |
 
 **Coverage:** 8/8 requisitos v1.3 mapeados — sem órfãos, sem duplicatas.
