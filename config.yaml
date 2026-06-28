@@ -102,4 +102,8 @@ indicadores:
   rsi_faixas: [30, 70]
   macd: [12, 26, 9]
   regressao_janela: 90       # ~1 trimestre
-  base_temporal: "semanal"   # "semanal" (resample W-FRI) | "diario" — default semanal (TIMING-04 / D-12)
+  base_temporal: "diario"    # "diario" | "semanal" (resample W-FRI). AUD-IND-01: default DIÁRIO —
+                             # os params acima (RSI14/MACD12-26-9/SMA200/squeeze126/regressão90) são
+                             # calibrados p/ barra diária; rodá-los no frame semanal (W-FRI, ~260 barras
+                             # em 5a) dava RSI em onda quadrada e histograma MACD reto. É o caminho que
+                             # os goldens validam (tests forçam "diario").
