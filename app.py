@@ -453,7 +453,7 @@ else:
                 # só troca QUAL método canônico lê, não recalcula método.
                 u = c.ultimo_ano(); lpa = c.lpa_valuation()
                 nomes.append(c.ticker)
-                ML.append(mult.margem_liquida(c.lucro_liquido.get(u), c.vendas_liquidas.get(u)))
+                ML.append(c.margem_valuation())  # AUD-RANK-01: ML normalizada, igual a ROE/PL/EY do ranque
                 ROE.append(c.roe_valuation())
                 PL.append(mult.preco_lucro(c.preco_atual, lpa))
                 EY.append(mult.earnings_yield(lpa, c.preco_atual))

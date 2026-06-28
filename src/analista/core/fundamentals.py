@@ -148,6 +148,18 @@ class CompanyData:
         pl_fim = self.patrimonio_liquido.get(ult)
         return mult.roe_medio(base, pl_ini, pl_fim)
 
+    def margem_valuation(self, anos_media: int = 3, winsor: float = 0.10) -> Optional[float]:
+        """ML canônica de valuation: base de lucro normalizada / base de vendas normalizada.
+
+        AUD-RANK-01: o Ranking por múltiplos consome ROE/LPA/EY já normalizados, mas o ML
+        saía cru do último ano — um exercício atípico inflava (ou um prejuízo zerava/negativava)
+        a margem e movia a empresa no ranque por um número que o resto do app já descarta.
+        Espelha `roe_valuation`/`lpa_valuation` (mesma fronteira de None) p/ consistência entre
+        superfícies. O ML CRU do último ano segue na tela Analisar (métrica de exibição)."""
+        lucro = self.base_lucro_normalizada(anos_media, winsor)
+        vendas = norm.base_normalizada(self.serie("vendas_liquidas"), anos_media, winsor)
+        return mult.margem_liquida(lucro, vendas)
+
     def dy_atual(self) -> Optional[float]:
         """DY corrente. Usa o DPA dos últimos 12 meses reais quando disponível (WR-04);
         senão cai para o DPA do último ano-calendário coletado (fallback)."""
