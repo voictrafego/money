@@ -19,7 +19,7 @@ from analista.core import multiples as mult
 from analista.core import screening as sc
 from analista.glossario import h
 from analista.ingest import build, macro
-from analista.report import report
+from analista.report import presentation, report
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 import yaml
@@ -131,7 +131,9 @@ if modo.startswith("🔎"):
             m1, m2, m3, m4, m5 = st.columns(5)
             m1.metric("Preço atual", esc_md(fmt_rs(a.preco_atual)), help=h("preco"))
             m2.metric("Valor intrínseco (DDM)", esc_md(intervalo), help=h("valor_intrinseco"))
-            m3.metric("Dividend Yield", fmt_pct(a.multiplos.get("DY")), help=h("dy"))
+            hdr = presentation.header_dy(a.multiplos.get("DY rec."), a.multiplos.get("DY"))
+            m3.metric(hdr["label"], hdr["value"], delta=hdr["delta"],
+                      delta_color="off", help=hdr["help"])
             m4.metric("ROE", fmt_pct(a.multiplos.get("ROE")), help=h("roe"))
             m5.metric("Ke (custo capital)", fmt_pct(a.ke), help=h("ke"))
 
@@ -312,25 +314,17 @@ if modo.startswith("🔎"):
                 cma, cmb = st.columns(2)
                 with cma:
                     st.markdown("**Múltiplos (Cap. 10)**", help=h("tab_multiplos"))
-                    st.caption("Dois payouts: o do último ano e o usado no valuation (DDM).",
+                    st.caption("Dois payouts: o cru do último ano e o sustentável usado no valuation (DDM).",
                                help=h("payout_dual"))
-                    payout_ult = a.multiplos.get("DP (payout)")  # = c.payout(ult), último ano cru
-                    payout_proj = c.payout_valuation()           # média 3a + clamp 1.0 (usado no DDM)
-                    rows = []
-                    for k, val in a.multiplos.items():
-                        if k == "DP (payout)":
-                            rows.append(("Payout (último ano)", fmt_pct(payout_ult)))
-                            rows.append(("Payout p/ valuation (média 3a)", fmt_pct(payout_proj)))
-                        elif k in ("ML", "ROE", "DY", "EY"):
-                            rows.append((k, fmt_pct(val)))
-                        else:
-                            rows.append((k, fmt_num(val)))
+                    payout_ult = c.payout(c.ultimo_ano())  # CRU do último ano (paridade report.py L156)
+                    payout_proj = c.payout_valuation()     # sustentável (mediana sem clamp) usado no DDM
+                    rows = presentation.linhas_multiplos(a.multiplos, payout_ult, payout_proj)
                     st.dataframe(pd.DataFrame(rows, columns=["Múltiplo", "Valor"]),
                                  hide_index=True, use_container_width=True)
                 with cmb:
                     st.markdown("**Crescimento e custo de capital (Cap. 14/16)**", help=h("tab_crescimento"))
                     st.dataframe(pd.DataFrame([
-                        ("g histórico (CAGR lucro)", fmt_pct(a.g_historico)),
+                        ("g histórico (tendência log-linear)", fmt_pct(a.g_historico)),
                         ("g por fundamentos", fmt_pct(a.g_fundamentos)),
                         ("g alto adotado", fmt_pct(a.g_alto)),
                         ("g estável (perpetuidade)", fmt_pct(a.g_estavel)),
@@ -463,7 +457,7 @@ else:
                 ROE.append(c.roe_valuation())
                 PL.append(mult.preco_lucro(c.preco_atual, lpa))
                 EY.append(mult.earnings_yield(lpa, c.preco_atual))
-                DP.append(c.payout_valuation())  # payout canônico (média 3a + clamp), igual ao Analisar
+                DP.append(c.payout_valuation())  # payout canônico sustentável (mediana), igual ao Analisar
             ranking = cmp.ranking_por_multiplos(nomes, {"ML": ML, "ROE": ROE, "PL": PL, "EY": EY})
             reg = cmp.ajustar_regressao_pl(PL, DP, ROE)
             alvos = {}
