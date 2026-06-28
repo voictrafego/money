@@ -168,7 +168,10 @@ Detalhes das fases concluídas mantidos abaixo em "Phase Details".
   3. O **header do Analisar dá destaque ao DY recorrente** (sustentável) como métrica principal e rebaixa/rotula o DY trailing como histórico/inflado, evitando induzir o usuário à armadilha de dividendos que o próprio app sinaliza (HIER-01).
   4. A mudança de metodologia é validada contra **ITUB4, EGIE3, TAEE11, BBAS3** além de VULC3: os golden de valuation seguem verdes **OU** são rebaselinados **deliberadamente com justificativa registrada**, comprovando que tickers sem distorção não regridem (TEST-08).
   5. `app.py` permanece read-only — o destaque/rotulagem/formatação é apresentação sobre `dy_recorrente`/`dy_atual`/`payout`/`payout_valuation` já expostos pela engine, sem recalcular método.
-**Plans**: TBD
+**Plans**: 3 plans (3 waves)
+- [ ] 11-01-PLAN.md — Helpers puros de apresentação (presentation.py: header_dy, linhas_multiplos, fmt_pct/num) + golden multi-ticker (TEST-08 layer a)
+- [ ] 11-02-PLAN.md — app.py religa header m3 (HIER-01) + tabela Múltiplos % e payout duplo (DYR-02/PAY-02) + varredura de rótulos no glossário
+- [ ] 11-03-PLAN.md — Checkpoint live dos 5 tickers no Streamlit (TEST-08 layer b)
 **UI hint**: yes
 
 ## Progress
@@ -188,7 +191,7 @@ Fases concluídas executaram em ordem numérica (4 → 5 → 6 → 8 → 7). v1.
 | 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 5/5 | Complete | 2026-06-27 |
 | 9. Payout sustentável + DY recorrente (núcleo de metodologia) | v1.3 | 3/3 | Complete   | 2026-06-27 |
 | 10. Crescimento robusto + de-poison do screening | v1.3 | 3/3 | Complete    | 2026-06-27 |
-| 11. Apresentação, hierarquia e trava multi-ticker | v1.3 | 0/TBD | Not started | - |
+| 11. Apresentação, hierarquia e trava multi-ticker | v1.3 | 0/3 | Planned | - |
 
 ---
 *Próximo passo: `/gsd-plan-phase 9` (núcleo de metodologia — payout sustentável + DY recorrente).*
