@@ -160,7 +160,7 @@ def cmd_rank(args, cfg):
             if pa:
                 alvos[c.ticker] = pa
 
-    print(f"\n{'#':>2} {'TICKER':10} {'NOTA':>6}  {'P/L alvo':>9}  {'UPSIDE':>7}")
+    print(f"\n{'#':>2} {'TICKER':10} {'NOTA':>6}  {'ALVO R$':>9}  {'UPSIDE':>7}")
     for i, r in enumerate(ranking, 1):
         pa = alvos.get(r["empresa"])
         alvo = f"{pa.preco_alvo:.2f}" if pa else "-"
