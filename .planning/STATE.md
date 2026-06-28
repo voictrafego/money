@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: — Saneamento residual do valuation
 status: executing
-stopped_at: Phase 11 UI-SPEC approved
-last_updated: "2026-06-28T01:03:28.908Z"
+stopped_at: Completed 11-02-PLAN.md
+last_updated: "2026-06-28T01:09:08.955Z"
 last_activity: 2026-06-28
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
-  percent: 78
+  completed_plans: 8
+  percent: 89
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 ## Current Position
 
 Phase: 11 (apresenta-o-hierarquia-e-trava-multi-ticker) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-06-28
 
@@ -70,6 +70,7 @@ Last activity: 2026-06-28
 | Phase 10 P01 | 12min | 2 tasks | 3 files |
 | Phase 10 P02 | 9min | 2 tasks | 2 files |
 | Phase 10 P03 | 22min | 3 tasks | 1 file |
+| Phase 11 P02 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,8 @@ Recent decisions affecting current work (v1.3 — saneamento residual):
 - [Phase 10]: Phase 10 Plan 01 (GROW-01): g_historico passa a vir de regressão log-linear (OLS de ln, g=exp(slope)-1) sobre a série de lucro normalizada inteira via novo estimador puro growth.crescimento_log_linear; fronteira de None idêntica ao CAGR (None/len<2/ponto<=0 → None, D-03); fonte única reusada pelo screening no Plan 02 (D-04); 166 testes verdes sem rebaseline (golden de valor exato reservados ao 10-03/T2)
 - [Phase 10]: Phase 10 Plan 02 (GROW-02): BSD calcula crescimento_lucro/_dividendos/_fc_3a via growth.crescimento_log_linear sobre normalizacao.serie_winsorizada (série completa, D-04/D-05) — crescimento_lucro_3a == report.g_historico por construção; ajustar_regressao_pl clampa payout em [0,1] na entrada do fit (de-poison de b1, TAEE11~2.16, D-06) sem reintroduzir clamp no canônico payout_valuation (D-03); per-ano CRU e bandas REFERENCIA_BSD intactos (D-07); 166 testes verdes
 - [Phase 10]: Phase 10 Plan 03 (trava de aceite): golden offline de propriedade multi-ticker (test_growth_robusto_multiticker.py, 5 testes) trava critérios a/b/c + consistência D-04; suíte completa 171 testes verde SEM rebaseline (nenhum assert de valor exato sobre g_historico/crescimento_*_3a); checkpoint live dos 5 tickers reais APROVADO — VULC3 g 31,5% < endpoint-CAGR 47,2% (spike não infla), normais não regridem, TAEE11 P/L alvo 40,06 sensato após clamp, buckets BSD sem colapso, REFERENCIA_BSD intacta (D-07). Phase 10 fechada (GROW-01/GROW-02)
+- [Phase ?]: app.py virou chamador fino da camada de apresentação (header_dy/linhas_multiplos), read-only
+- [Phase ?]: Payout cru lê c.payout(c.ultimo_ano()), distinto do sustentável c.payout_valuation() (mediana sem clamp)
 
 ### Pending Todos
 
@@ -118,8 +121,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-28T01:03:28.905Z
-Stopped at: Phase 11 UI-SPEC approved
+Last session: 2026-06-28T01:09:08.950Z
+Stopped at: Completed 11-02-PLAN.md
 Resume file: None
 
 ## Operator Next Steps

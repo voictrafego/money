@@ -9,12 +9,12 @@
 ### Renda recorrente (DYR)
 
 - [x] **DYR-01**: O DY recorrente reflete o provento **sustentável** (lucro normalizado × payout sustentável), robusto a anos de distribuição extraordinária — não a mediana crua dos últimos 3 anos de dividendos, que pode cair inteira numa era de payout >100% (vale para qualquer ticker)
-- [ ] **DYR-02**: O DY recorrente é exibido formatado como **%** na tabela de Múltiplos do app (paridade com ML/ROE/DY), nunca como decimal cru ("0.20")
+- [x] **DYR-02**: O DY recorrente é exibido formatado como **%** na tabela de Múltiplos do app (paridade com ML/ROE/DY), nunca como decimal cru ("0.20")
 
 ### Payout sustentável (PAY)
 
 - [x] **PAY-01**: O payout-para-valuation **expurga anos não-recorrentes** (distribuição extraordinária / payout >100%) por regra geral, devolvendo um payout sustentável para qualquer ticker — não a média crua de 3 anos que encosta no clamp de 100% e zera o crescimento por fundamentos
-- [ ] **PAY-02**: O app exibe o payout **cru do último ano** (valor real, ex.: 124,7%) como número distinto do payout sustentável de valuation — hoje as duas linhas ("Payout (último ano)" e "Payout p/ valuation") mostram o mesmo valor clampado
+- [x] **PAY-02**: O app exibe o payout **cru do último ano** (valor real, ex.: 124,7%) como número distinto do payout sustentável de valuation — hoje as duas linhas ("Payout (último ano)" e "Payout p/ valuation") mostram o mesmo valor clampado
 
 ### Crescimento robusto (GROW)
 
@@ -23,7 +23,7 @@
 
 ### Hierarquia de apresentação (HIER)
 
-- [ ] **HIER-01**: O cabeçalho do Analisar dá **destaque ao DY recorrente** (sustentável) e rebaixa/rotula o DY trailing como histórico/inflado, evitando induzir o usuário à armadilha de dividendos que o próprio app sinaliza
+- [x] **HIER-01**: O cabeçalho do Analisar dá **destaque ao DY recorrente** (sustentável) e rebaixa/rotula o DY trailing como histórico/inflado, evitando induzir o usuário à armadilha de dividendos que o próprio app sinaliza
 
 ### Travas de fidelidade (TEST)
 
@@ -48,9 +48,9 @@
 | PAY-01 | Phase 9 | Complete |
 | GROW-01 | Phase 10 | Complete |
 | GROW-02 | Phase 10 | Complete |
-| DYR-02 | Phase 11 | Pending |
-| PAY-02 | Phase 11 | Pending |
-| HIER-01 | Phase 11 | Pending |
+| DYR-02 | Phase 11 | Complete |
+| PAY-02 | Phase 11 | Complete |
+| HIER-01 | Phase 11 | Complete |
 | TEST-08 | Phase 11 | Complete |
 
 **Coverage:** 8/8 requisitos v1.3 mapeados — sem órfãos, sem duplicatas.

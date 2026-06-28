@@ -170,7 +170,7 @@ Detalhes das fases concluídas mantidos abaixo em "Phase Details".
   5. `app.py` permanece read-only — o destaque/rotulagem/formatação é apresentação sobre `dy_recorrente`/`dy_atual`/`payout`/`payout_valuation` já expostos pela engine, sem recalcular método.
 **Plans**: 3 plans (3 waves)
 - [x] 11-01-PLAN.md — Helpers puros de apresentação (presentation.py: header_dy, linhas_multiplos, fmt_pct/num) + golden multi-ticker (TEST-08 layer a)
-- [ ] 11-02-PLAN.md — app.py religa header m3 (HIER-01) + tabela Múltiplos % e payout duplo (DYR-02/PAY-02) + varredura de rótulos no glossário
+- [x] 11-02-PLAN.md — app.py religa header m3 (HIER-01) + tabela Múltiplos % e payout duplo (DYR-02/PAY-02) + varredura de rótulos no glossário
 - [ ] 11-03-PLAN.md — Checkpoint live dos 5 tickers no Streamlit (TEST-08 layer b)
 **UI hint**: yes
 
@@ -191,7 +191,7 @@ Fases concluídas executaram em ordem numérica (4 → 5 → 6 → 8 → 7). v1.
 | 7. UI — overlays, subpainéis, controles e enquadramento | v1.2 | 5/5 | Complete | 2026-06-27 |
 | 9. Payout sustentável + DY recorrente (núcleo de metodologia) | v1.3 | 3/3 | Complete   | 2026-06-27 |
 | 10. Crescimento robusto + de-poison do screening | v1.3 | 3/3 | Complete    | 2026-06-27 |
-| 11. Apresentação, hierarquia e trava multi-ticker | v1.3 | 1/3 | In Progress|  |
+| 11. Apresentação, hierarquia e trava multi-ticker | v1.3 | 2/3 | In Progress|  |
 
 ---
 *Próximo passo: `/gsd-plan-phase 9` (núcleo de metodologia — payout sustentável + DY recorrente).*
