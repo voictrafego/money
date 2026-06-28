@@ -174,23 +174,38 @@ def _distribuicoes_proventos(df: Optional[pd.DataFrame], cd_cvm: int) -> Optiona
     return abs(float(rows["VL_CONTA"].astype(float).sum())) * escala
 
 
-def _consolidado_ou_individual(ano: int, base: str):
-    """Tenta o consolidado; se vazio, usa o individual."""
-    df = _ler_demonstracao(ano, f"{base}_con")
-    if df is None or df.empty:
-        df = _ler_demonstracao(ano, f"{base}_ind")
-    return df
+def _tem_empresa(df: Optional[pd.DataFrame], cd_cvm: int) -> bool:
+    return df is not None and not df.empty and (df["CD_CVM"] == cd_cvm).any()
+
+
+def _consolidado_ou_individual(ano: int, base: str, cd_cvm: int):
+    """Consolidado quando a EMPRESA está nele; senão o individual.
+
+    Antes caía para o individual só quando o frame consolidado estava GLOBALMENTE vazio — o
+    que ignorava empresas single-entity (sem subsidiárias para consolidar, ex.: SANEPAR), que
+    publicam SÓ o individual e somem do consolidado (cheio de outras empresas). Resultado: a
+    análise não achava lucro e abortava com "não encontrei dados". Agora a escolha é POR
+    EMPRESA: usa o consolidado se o CD_CVM estiver nele, senão o individual.
+    """
+    con = _ler_demonstracao(ano, f"{base}_con")
+    if _tem_empresa(con, cd_cvm):
+        return con
+    ind = _ler_demonstracao(ano, f"{base}_ind")
+    if _tem_empresa(ind, cd_cvm):
+        return ind
+    # nenhum contém a empresa: devolve o que existir (mantém o comportamento de _valor_conta→None)
+    return con if (con is not None and not con.empty) else ind
 
 
 def fundamentos_do_ano(cd_cvm: int, ano: int) -> Dict[str, Optional[float]]:
     """Extrai as contas-chave de uma empresa em um ano."""
-    dre = _consolidado_ou_individual(ano, "DRE")
-    bpa = _consolidado_ou_individual(ano, "BPA")
-    bpp = _consolidado_ou_individual(ano, "BPP")
+    dre = _consolidado_ou_individual(ano, "DRE", cd_cvm)
+    bpa = _consolidado_ou_individual(ano, "BPA", cd_cvm)
+    bpp = _consolidado_ou_individual(ano, "BPP", cd_cvm)
     dfc = None
     for prefixo in ("DFC_MI_con", "DFC_MD_con", "DFC_MI_ind", "DFC_MD_ind"):
         cand = _ler_demonstracao(ano, prefixo)
-        if cand is not None and not cand.empty:
+        if _tem_empresa(cand, cd_cvm):  # POR EMPRESA (single-entity some do _con global cheio)
             dfc = cand
             break
 
