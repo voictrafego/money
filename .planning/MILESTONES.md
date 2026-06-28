@@ -1,5 +1,33 @@
 # Milestones
 
+## v1.3 Saneamento residual do valuation (Shipped: 2026-06-28)
+
+**Phases completed:** 3 phases (09–11), 9 plans
+
+**Key accomplishments:**
+
+- Payout sustentável geral (mediana sobre a série completa, sem clamp em 100%) + DY recorrente earnings-based (lucro normalizado × payout sustentável), robustos a anos extraordinários para qualquer ticker (Fase 9 — DYR-01/PAY-01).
+- g histórico robusto via regressão log-linear (não endpoint-a-endpoint) e Garimpo/Ranking calculando crescimento sobre a série normalizada, não o lucro/dividendo CRU (Fase 10 — GROW-01/GROW-02).
+- Apresentação: DY recorrente em destaque no header, payout cru do último ano exibido à parte, % na tabela de Múltiplos, e trava de validação multi-ticker (VULC3 + ITUB4/EGIE3/TAEE11/BBAS3) com rebaseline deliberado dos golden (Fase 11 — DYR-02/PAY-02/HIER-01/TEST-08). 8/8 requisitos.
+- **Auditoria online + correção de dados (mesma sessão, deployado):** 4 bugs que faziam 4/4 ações saírem "sobreavaliada" — unit XXXX11 (P/L 3×/5×), proventos sem JCP (payout-mediana pela metade nos bancos → DFC da CVM), Ke=Selic spot → through-the-cycle (média 10a), empresas single-entity invisíveis (seleção consolidado/individual por empresa) + ticker_map +60 via FCA. Mais disclaimer legal. 191 testes verdes; deployado na VPS.
+
+**Known deferred items at close:** 4 (2 quick-tasks obsoletos, 1 UAT parcial sem cenários abertos, 1 verificação humana da Fase 10) — ver STATE.md Deferred Items. Trabalho validado por 191 testes + checagens ao vivo.
+
+---
+
+## v1.2 Indicadores de tendência (timing) na aba Analisar (Shipped: 2026-06-27)
+
+**Phases completed:** 5 phases (4–8), 16 plans
+
+**Key accomplishments:**
+
+- `core/indicators.py` puro calcula 4 famílias (Tendência SMA/EMA+cross, Canais Donchian/Bollinger/squeeze, Força ADX/inclinação, Momentum RSI/MACD) do OHLC, com matemática travada por golden (Wilder, no-repaint, split ITSA4, ADX×TradingView).
+- Sinais técnicos vivem em `AnaliseAcao` via `analisar_acao`, com composite de timing (árvore MM200×ADX), matriz fundamento×técnico (fundamento sempre líder) e alerta de reverificação (voz "reverifique os fundamentos", nunca venda); base temporal semanal (W-FRI).
+- Saneamento do motor DDM (caso VULC3): camada de normalização de lucro (FIX-04), reconciliação g_alto×g_fundamentos, CAPM 'local' com Selic do BCB, banda = sensibilidade real + DY recorrente (Fase 8).
+- UI: overlays/subpainéis/controles do gráfico de indicadores + glossário (tooltips), encanamento OHLC/split-adjusted preservado da ingestão até a engine (Fases 4/7). 150 testes verdes.
+
+---
+
 ## v1.1 Gráfico de preço na aba Analisar (Shipped: 2026-06-23)
 
 **Phases completed:** 3 phases, 9 plans, 20 tasks

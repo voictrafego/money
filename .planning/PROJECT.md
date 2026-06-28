@@ -14,45 +14,36 @@ a mesma ação não pode parecer barata num menu e cara/ausente em outro sem exp
 
 ## Current State
 
-**v1.1 shipped 2026-06-23.** A aba "Analisar" agora mostra um gráfico Plotly do preço de
-fechamento de 5 anos com a banda do valor intrínseco do DDM sobreposta, botões de período
-(30D/6M/1A/5A) e degradação graciosa quando o Yahoo falha. Dois marcos completos (v1.0
-consistência + v1.1 gráfico); 64 testes golden verdes.
+**v1.3 shipped 2026-06-28.** Quatro marcos completos (v1.0 consistência · v1.1 gráfico ·
+v1.2 indicadores de timing · v1.3 saneamento do valuation). Suíte 191 testes verdes; app
+deployado na VPS (Streamlit em money.voictech.com.br).
 
-**Marco ativo: v1.2 — Indicadores de tendência (timing) na aba Analisar.**
+**v1.3 — Saneamento residual do valuation (fases 9–11):** payout sustentável geral (mediana
+sem clamp), DY recorrente earnings-based, g histórico log-linear robusto, screening sobre série
+normalizada e trava multi-ticker (8/8 requisitos).
 
-**Fase 5 completa (2026-06-26):** o módulo puro `core/indicators.py` calcula as 4 famílias
-(Tendência SMA/EMA+cross, Canais Donchian/Bollinger/squeeze, Força ADX/inclinação, Momentum
-RSI/MACD) a partir do OHLC via `indicators.calcular(ohlc, cfg) → SinaisTecnicos`, com a matemática
-travada por golden tests (Wilder, no-repaint, split ITSA4, ADX×TradingView). Suíte: 92 testes
-verdes. Próximo: Fase 6 — integração na engine + composite + alerta + CLI.
+**Auditoria online + correção de dados (2026-06-28, mesma sessão, deployado):** a auditoria do
+app ao vivo revelou 4/4 ações saindo "sobreavaliada" — 4 bugs de dados/método corrigidos:
+(1) **unit XXXX11** (num_acoes na base de units — P/L 3×/5× inflado); (2) **proventos sem JCP**
+(payout-mediana vinha pela metade nos bancos — agora div+JCP da DFC da CVM); (3) **Ke usava
+Selic spot** → agora Selic through-the-cycle (média 10a); (4) **empresas single-entity** sumiam
+(seleção consolidado/individual agora por empresa) + ticker_map ampliado em 60 tickers via FCA.
+Mais disclaimer legal (software educacional, não recomendação). Continuação natural do tema v1.3
+(fidelidade do valuation para qualquer ticker).
 
-**Fase 6 completa (2026-06-26):** os sinais técnicos passam a viver em `AnaliseAcao` via
-`analisar_acao` (popula `a.sinais` por `indicators.calcular`), com o composite de *timing de entrada*
-(3 estados macro pela árvore MM200×ADX), a matriz fundamento×técnico (fundamento sempre líder), o
-alerta de reverificação (OR de perda-MM200 / death cross / perda da mínima do Donchian — voz
-"reverifique os fundamentos", nunca venda) e a base temporal diária/semanal (default semanal, W-FRI)
-em `cfg`. Tudo espelhado na CLI em `relatorio_markdown`. Suíte: 103 testes verdes; invariante TEST-07
-(valuation) preservada. Pendência advisory do code review (CR-01: assimetria de degradação da
-`matriz_leitura`) registrada em `06-REVIEW.md` para corrigir antes da Fase 7. Próximo: Fase 7 — UI.
+**Próximo marco: v2.0 — Comercialização (produto cobrável).** Decisões: assinatura paga (trial
+7d → mensal, Asaas); começar produtizando (auth → planos/gate → billing recorrente →
+multiusuário); posicionamento como software educacional (sem recomendação).
 
-## Current Milestone: v1.3 Saneamento residual do valuation — generalização dos múltiplos & crescimento sustentável
+## Current Milestone: v2.0 — Comercialização (produto cobrável)
 
-**Goal:** Tornar os múltiplos de renda/crescimento (DY recorrente, payout sustentável, g histórico)
-fiéis e robustos **para qualquer ticker** — expurgando não-recorrentes por **regra geral**, nunca por
-ajuste de caso — e impedir que esses números contaminem Garimpo/Ranking. O caso VULC3 (lucro/dividendo
-extraordinário, payout >100%) é apenas o diagnóstico; a correção precisa valer para todo o universo e
-não regredir tickers normais (ITUB4/EGIE3/TAEE11/BBAS3).
+**Goal:** Transformar o protótipo de usuário único num produto que cobra: autenticação, trial de
+7 dias → assinatura mensal (Asaas), gate de acesso e multiusuário — posicionado como software
+educacional (sem recomendação). Decisão de arquitetura-chave a resolver no discuss/requirements:
+como colar auth+billing num app Streamlit (provável híbrido: front/checkout no stack
+React+Vite+n8n+Asaas na frente do Streamlit). Requisitos detalhados via `/gsd-new-milestone`.
 
-**Target features:**
-- DY recorrente sustentável: refletir provento sustentável (lucro normalizado × payout sustentável),
-  não a mediana de 3 anos de dividendos que cai na era de payout >100% — e formatado como % na UI
-- Payout sustentável que expurga não-recorrentes de forma geral (hoje a média 3a encosta em 100%)
-- g histórico robusto (não endpoint-a-endpoint sensível a ano de fundo) + screening (BSD/Ranking)
-  deixando de usar CAGR sobre lucro/dividendo CRU
-- Hierarquia do header: destaque ao DY recorrente; DY trailing inflado vira secundário/rotulado
-- Payout "último ano" exibindo o valor cru real (não o payout_valuation clampado)
-- Rebaseline deliberado e justificado dos golden (TEST-07) só quando a metodologia mudar
+_(v1.3 e marcos anteriores arquivados em `.planning/milestones/`.)_
 
 ## Requirements
 

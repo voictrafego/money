@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.3
-milestone_name: — Saneamento residual do valuation
-status: phase-complete
-stopped_at: Completed Phase 11 (11-03 checkpoint aprovado)
-last_updated: "2026-06-28T01:20:00.000Z"
+milestone_name: — Saneamento residual do valuation (SHIPPED 2026-06-28)
+status: milestone-complete
+stopped_at: v1.3 arquivado + tag; próximo marco v2.0 Comercialização via /gsd-new-milestone
+last_updated: "2026-06-28T23:30:00.000Z"
 last_activity: 2026-06-28
 progress:
-  total_phases: 8
+  total_phases: 3
   completed_phases: 3
   total_plans: 9
   completed_plans: 9
@@ -118,6 +118,10 @@ Items acknowledged and carried forward from previous milestone close:
 | Docs engine | DDM-DOC-01 (alinhar docstring/teste de t em ddm.py, IN-06) | v2 | 2026-06-04 |
 | Refino | Payout-alvo por setor configurável | v2+ | 2026-06-27 |
 | UI | Sinalização explícita de "ano extraordinário" na tabela de Fundamentos por ano | v2+ | 2026-06-27 |
+| quick_task | 260620-oa9-ajustar-tela-2-ranking-por-multiplos (arquivo ausente/obsoleto) | stale | 2026-06-28 (v1.3 close) |
+| quick_task | 260622-cg9-robustez-da-resolucao-de-tickers-retry (arquivo ausente; coberto pelo fix single-entity + ticker_map +60) | stale/resolvido | 2026-06-28 (v1.3 close) |
+| uat | Fase 10 10-HUMAN-UAT.md parcial (0 cenários abertos) — validado por checkpoint live aprovado + 191 testes | accepted | 2026-06-28 (v1.3 close) |
+| verification | Fase 10 10-VERIFICATION.md human_needed — coberto por checkpoint live dos 5 tickers (aprovado) | accepted | 2026-06-28 (v1.3 close) |
 
 ## Session Continuity
 
