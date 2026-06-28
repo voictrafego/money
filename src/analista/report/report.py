@@ -203,6 +203,20 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
         a.alertas.append("Prejuízo em algum ano da janela: fundamentos inconsistentes para dividendos.")
     if a.ke is None:
         a.alertas.append("Beta indisponível: não foi possível calcular Ke nem o DDM.")
+    elif a.ddm_constante is None:
+        # AUD-VAL-03: Ke existe mas o DDM não rodou — algum outro insumo está None. Não some
+        # em silêncio (Core Value): nomeia o que faltou em vez de exibir a tela sem veredito.
+        faltou = []
+        if lpa is None:
+            faltou.append("LPA normalizado")
+        if payout_proj is None:
+            faltou.append("payout sustentável")
+        if a.g_alto is None:
+            faltou.append("crescimento (g)")
+        if a.ke is not None and a.ke <= g_estavel:
+            faltou.append("Ke ≤ g estável (perpetuidade não converge)")
+        motivo = ", ".join(faltou) if faltou else "insumo de valuation indisponível"
+        a.alertas.append(f"DDM não calculado ({motivo}): sem valor intrínseco nem veredito.")
     ano_base = cfg.get("universo", {}).get("ano_base")
     if ano_base is not None and ult is not None and ult < ano_base:
         a.alertas.append(
@@ -403,7 +417,7 @@ def relatorio_markdown(c: CompanyData, a: AnaliseAcao, cfg: dict) -> str:
 
     # Crescimento e custo de capital
     L.append("## Crescimento e custo de capital (Cap. 14 e 16)")
-    L.append(f"- g histórico (CAGR do lucro): **{_pct(a.g_historico)}**")
+    L.append(f"- g histórico (tendência log-linear): **{_pct(a.g_historico)}**")
     L.append(f"- g por fundamentos (ROE × retenção): **{_pct(a.g_fundamentos)}**")
     L.append(f"- g alto adotado: **{_pct(a.g_alto)}**  |  g estável (perpetuidade): **{_pct(a.g_estavel)}**")
     L.append(f"- Beta: **{_num(a.beta)}**  |  Ke (CAPM): **{_pct(a.ke)}**")
