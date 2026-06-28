@@ -67,9 +67,14 @@ capm:
                               # (Damodaran) + ~1,5% de prêmio small-cap/iliquidez. A Selic já
                               # precifica risco-país + inflação, então o ERP é só o prêmio de equity.
   selic_fallback: 0.105       # Selic de referência quando o BCB (selic_meta) está indisponível.
+  rf_ciclo_anos: 10           # rf do CAPM = Selic MÉDIA destes últimos N anos (through-the-cycle).
+                              # Numa perpetuidade (DDM) a taxa deve refletir o juro de LP, não o
+                              # pico de ciclo: a Selic spot (~14%) inflaria o Ke e marcaria quase
+                              # tudo como "sobreavaliada". A média 10a (~9,6%) é objetiva e
+                              # auto-atualiza. O CORTE do DY (Cap. 8) segue usando a Selic SPOT.
   rf_local: 0.105             # rf do CAPM local: os entry points (cli/app) SOBRESCREVEM com a
-                              # Selic ao vivo do BCB; default == selic_fallback p/ a engine rodar
-                              # offline/determinística nos testes (sem chamar a rede).
+                              # Selic through-the-cycle do BCB; default == selic_fallback p/ a
+                              # engine rodar offline/determinística nos testes (sem chamar a rede).
   # --- abordagem "eua_ajustada" (legado/fallback de método, literais do livro fim de 2019) ---
   rf_us: 0.0192               # T-Bond EUA 10a (livro, fim de 2019)
   embi_brasil: 0.0214         # risco-país EMBI+ (livro)

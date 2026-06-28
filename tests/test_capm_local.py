@@ -63,6 +63,29 @@ def test_resolvedor_rf_degrada_para_fallback(monkeypatch):
     assert macro.selic_para_capm(0.105) == 0.105
 
 
+# --------------------------------------------------------------------------- #
+# Problema 3 — rf "through-the-cycle" (média da Selic), não a spot
+# --------------------------------------------------------------------------- #
+def test_rf_ciclo_usa_media_da_serie(monkeypatch):
+    """Com a série histórica disponível, o rf do CAPM é a MÉDIA dela (não a Selic spot)."""
+    monkeypatch.setattr(macro, "_selic_historico", lambda anos=10: [0.14, 0.10, 0.06, 0.02])
+    assert macro.selic_ciclo_para_capm(0.105) == 0.08  # média de 14/10/6/2%
+
+
+def test_rf_ciclo_degrada_para_spot_depois_fallback(monkeypatch):
+    """Sem a série (rede fora): cai para a Selic spot; sem spot, para o fallback do config."""
+    monkeypatch.setattr(macro, "_selic_historico", lambda anos=10: [])
+    monkeypatch.setattr(macro, "selic_meta", lambda: 0.1425)
+    assert macro.selic_ciclo_para_capm(0.105) == 0.1425  # spot
+    monkeypatch.setattr(macro, "selic_meta", lambda: None)
+    assert macro.selic_ciclo_para_capm(0.105) == 0.105   # fallback
+
+
+def test_config_tem_rf_ciclo_anos():
+    """O config shipado documenta a janela do rf through-the-cycle."""
+    assert _cfg()["capm"]["rf_ciclo_anos"] >= 1
+
+
 def test_engine_offline_ke_determinístico():
     """`analisar_acao` consome o rf_local do cfg (fallback) SEM tocar a rede ⇒ Ke determinístico.
 
