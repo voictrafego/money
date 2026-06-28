@@ -156,6 +156,11 @@ def preco_alvo_por_regressao(
     dp_clamp = min(max(dp, 0.0), 1.0)
     payout_fora_faixa = dp_clamp != dp
     pl_esperado = reg.prever(dp_clamp, roe)
+    # AUD-CMP-03: P/L esperado ≤ 0 é economicamente absurdo (regressão extrapolada fora do
+    # suporte — ex.: ROE alto com b_ROE<0, caso roe_sinal_invertido). Gera preço-alvo e upside
+    # negativos e um veredito "Cara" espúrio. Trata como indisponível (preço-alvo "—"), não Cara.
+    if pl_esperado <= 0:
+        return None
     pl_corrente = preco_corrente / lpa
     preco_alvo = pl_esperado * lpa
     upside = preco_alvo / preco_corrente - 1.0 if preco_corrente else None
