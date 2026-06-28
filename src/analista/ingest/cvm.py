@@ -146,6 +146,34 @@ def _valor_conta(
     return None
 
 
+def _distribuicoes_proventos(df: Optional[pd.DataFrame], cd_cvm: int) -> Optional[float]:
+    """Proventos PAGOS no ano (dividendos + JCP) na seção de financiamento da DFC (6.03.*).
+
+    Casado por NOME (DS_CONTA contém "dividendo"), porque os códigos 6.03.NN NÃO são
+    padronizados entre empresas (em TAEE 6.03.04 é "Debêntures - Juros"; o provento está em
+    6.03.09). Inclui o JCP — que o Yahoo historicamente NÃO captura para bancos, subestimando
+    o payout e, por consequência, o DDM. Exclui pagamentos a minoritários e proventos
+    RECEBIDOS. Soma as linhas casadas (algumas empresas separam div e JCP) e devolve o valor
+    absoluto (a saída de caixa vem negativa). None quando não há linha de provento na DFC.
+    """
+    if df is None:
+        return None
+    sub = df[df["CD_CVM"] == cd_cvm]
+    if sub.empty:
+        return None
+    escala = 1000 if sub["ESCALA_MOEDA"].iloc[0] == "MIL" else 1
+    fin = sub[sub["CD_CONTA"].astype("string").str.startswith("6.03", na=False)]
+    if fin.empty:
+        return None
+    ds = fin["DS_CONTA"].map(_norm)
+    incluir = ds.str.contains("dividendo", na=False)
+    excluir = ds.str.contains("nao control|minoritar|recebid", na=False, regex=True)
+    rows = fin[(incluir & ~excluir).values]
+    if rows.empty:
+        return None
+    return abs(float(rows["VL_CONTA"].astype(float).sum())) * escala
+
+
 def _consolidado_ou_individual(ano: int, base: str):
     """Tenta o consolidado; se vazio, usa o individual."""
     df = _ler_demonstracao(ano, f"{base}_con")
@@ -198,4 +226,6 @@ def fundamentos_do_ano(cd_cvm: int, ano: int) -> Dict[str, Optional[float]]:
         # LPA básico por ação ON (R$/ação) — NÃO aplicar escala MIL.
         "lpa": _valor_conta(dre, cd_cvm, ["3.99.01.01", "3.99.01"],
                             ["Lucro por Ação"], aplicar_escala=False),
+        # Proventos pagos no ano (div + JCP) — fonte completa p/ o payout (Yahoo perde JCP).
+        "dividendos_distribuidos": _distribuicoes_proventos(dfc, cd_cvm),
     }
