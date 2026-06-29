@@ -1059,6 +1059,67 @@ def _padroes(
 
 
 # --------------------------------------------------------------------------- #
+# Checklist de sinais (SIG-01) — agregação READ-ONLY de rótulos já computados
+# --------------------------------------------------------------------------- #
+def _checklist(
+    tend: "Tendencia",
+    canais: "Canais",
+    mom: "Momentum",
+    vol: "Volume",
+    padroes: "Padroes",
+) -> Checklist:
+    """Agrega 6 sinais liga/desliga LENDO rótulos JÁ computados pelas famílias (SIG-01).
+
+    Pura composição read-only: NÃO recalcula nenhum indicador — só consome strings/flags já
+    validadas pelos goldens (`Canais.rompimento_donchian`, `Tendencia.cruzamento`,
+    `Momentum.nivel_rsi`/`cruzamento_macd`, `Volume.rompimento_com_volume`, `Padroes.lista`).
+    Os booleanos derivam dessas strings — não introduz números novos.
+
+    Firewall de copy (D-01): `nome`/`detalhe` são chaves estáveis/neutras. "ativo" = sinal
+    disparado/relevante, JAMAIS "compre/venda" (o gate de copy é da Fase 16).
+
+    Degradação graciosa (T-14-09): `padroes` None vira lista vazia; nunca levanta.
+    """
+    lista_padroes = padroes.lista if padroes is not None else []
+    if lista_padroes:
+        detalhe_padrao = "|".join(f"{p.tipo}:{p.estado}" for p in lista_padroes)
+    else:
+        detalhe_padrao = "nenhum"
+    return Checklist(sinais=[
+        Sinal(
+            "rompimento",
+            canais.rompimento_donchian not in ("nenhum", "indisponivel"),
+            canais.rompimento_donchian,
+        ),
+        Sinal(
+            "cruzamento_mm",
+            tend.cruzamento in ("golden_cross", "death_cross"),
+            tend.cruzamento,
+        ),
+        Sinal(
+            "rsi",
+            mom.nivel_rsi in ("sobrecomprado", "sobrevendido"),
+            mom.nivel_rsi,
+        ),
+        Sinal(
+            "macd",
+            mom.cruzamento_macd in ("cruz_alta", "cruz_baixa"),
+            mom.cruzamento_macd,
+        ),
+        Sinal(
+            "padrao",
+            any(p.estado == "confirmado" for p in lista_padroes),
+            detalhe_padrao,
+        ),
+        Sinal(
+            "volume",
+            bool(vol.rompimento_com_volume),
+            "rompimento_com_volume",
+        ),
+    ])
+
+
+# --------------------------------------------------------------------------- #
 # Família Volume — MM de volume + flag rompimento com volume (VOL-01, D-11)
 # --------------------------------------------------------------------------- #
 def _volume(ohlc: pd.DataFrame, cfg: dict) -> Volume:
@@ -1199,14 +1260,24 @@ def calcular(
     _niveis_fib(niveis, pivos, contexto, nominal, cfg)
     # Stop técnico (mais conservador, D-08) + R:R formatado/degradável (RR-01, D-09).
     _niveis_stop_rr(niveis, contexto, forca.atr, nominal, cfg)
+    # Famílias computadas UMA vez e reusadas no return (D-02; sem recomputo).
+    tendencia = _tendencia(close, cfg)
+    momentum = _momentum(close, cfg)
+    volume = _volume(ohlc, cfg)
+    # Padrões gráficos (família de PREÇO → frame nominal, igual a _pivos/_niveis; PAT-01).
+    padroes = _padroes(pivos, nominal, volume, cfg)
+    # Checklist read-only: agrega rótulos já computados em booleanos liga/desliga (SIG-01).
+    checklist = _checklist(tendencia, canais, momentum, volume, padroes)
     return SinaisTecnicos(
-        tendencia=_tendencia(close, cfg),
+        tendencia=tendencia,
         canais=canais,
         forca=forca,
-        momentum=_momentum(close, cfg),
+        momentum=momentum,
         close=close,   # read-only: a MESMA close split-adjusted já usada (não recalcula)
         pivos=pivos,
         contexto=contexto,
         niveis=niveis,
-        volume=_volume(ohlc, cfg),
+        volume=volume,
+        padroes=padroes,
+        checklist=checklist,
     )
