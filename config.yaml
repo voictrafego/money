@@ -116,3 +116,22 @@ indicadores:
                              # calibrados p/ barra diária; rodá-los no frame semanal (W-FRI, ~260 barras
                              # em 5a) dava RSI em onda quadrada e histograma MACD reto. É o caminho que
                              # os goldens validam (tests forçam "diario").
+
+# --- v1.4 Fase 14: padrões gráficos sobre pivôs (Murphy) — MVP duplo topo/fundo + OCO ---
+# Limiares GEOMÉTRICOS do detector de padrões. Vivem aqui (config-driven) e não hardcoded:
+# ajuste sem deploy e os goldens os pinam via _cfg_ind(). Valores iniciais são ASSUMED (A1–A7
+# do 14-RESEARCH, confiança LOW-MEDIUM) — a calibração multi-ticker é o plano 14-05. Bloco NOVO,
+# irmão de `indicadores:`; nenhuma linha de `indicadores:` é tocada (anti-rebaseline, Pitfall 5).
+padroes:
+  lookback_pivos: 8           # nº de pivôs confirmados mais recentes varridos (janela de busca);
+                              # curto demais perde padrões longos, longo demais casa pivôs sem relação
+  price_tolerance_pct: 0.03   # simetria de PREÇO entre os 2 topos/fundos do duplo (<=3%): frouxo vira
+                              # pareidolia, rígido não detecta o padrão real
+  shoulder_symmetry_pct: 0.05 # simetria dos 2 ombros da OCO (<=5%): a OCO é o padrão mais sensível à
+                              # simetria, daí a folga maior que o duplo
+  head_min_prominence_pct: 0.02  # a cabeça da OCO deve exceder CADA ombro em >=2% — anti-falso-OCO em
+                                 # série lateral (três topos quase iguais não são OCO)
+  min_pattern_height_pct: 0.03   # altura mínima (measured-move) como % da neckline (>=3%): filtro
+                                 # anti-ruído p/ não casar micro-zigue-zagues sem alvo relevante
+  exigir_volume_confirma: true   # confirmação exige rompimento da neckline COM volume>MM na barra
+                                 # fechada; sem volume o padrão fica "em_formacao" (nunca "confirmado")

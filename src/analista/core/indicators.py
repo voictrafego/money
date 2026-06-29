@@ -132,6 +132,41 @@ class ContextoTendencia:
 
 
 @dataclass
+class PadraoGrafico:
+    # Padrão gráfico de Murphy detectado sobre pivôs no-repaint (PAT-01, Fase 14 plano 02/03).
+    # Strings estáveis/neutras (D-01): a renderização/copy é da Fase 16, NUNCA "compre/venda".
+    tipo: str                   # "duplo_topo" | "duplo_fundo" | "oco" | "oco_invertido" (chave estável)
+    estado: str                 # "em_formacao" | "confirmado"
+    neckline: float             # linha de pescoço (vale/pico intermediário; reta na posição de rompimento p/ OCO)
+    alvo: float                 # measured-move (altura projetada além da neckline)
+    altura: float               # altura do padrão (base da projeção do alvo)
+    pivos_envolvidos: dict      # {ts: preco} dos pivôs âncora — auditabilidade (espelha Niveis.pivos_ancora)
+
+
+@dataclass
+class Padroes:
+    # Lista de padrões detectados na janela (Open Q3: lista, ranqueamento é da Fase 15).
+    # Aditiva (default vazio) — [] = nenhum padrão (degradação graciosa, sem exceção).
+    lista: list = field(default_factory=list)           # [PadraoGrafico, ...]
+
+
+@dataclass
+class Sinal:
+    # Sinal técnico liga/desliga do checklist (SIG-01). Apenas LÊ rótulos já computados.
+    # Chaves estáveis/neutras (D-01): "ativo" = sinal disparado/relevante, NUNCA "compre/venda".
+    nome: str                   # "rompimento" | "cruzamento_mm" | "rsi" | "macd" | "padrao" | "volume"
+    ativo: bool                 # liga/desliga
+    detalhe: str                # rótulo neutro já existente (ex.: "nova_maxima", "duplo_topo:confirmado")
+
+
+@dataclass
+class Checklist:
+    # Agregação read-only de sinais que torna explícito *por que* o setup existe (SIG-01).
+    # Aditiva (default vazio) — degradação graciosa quando nada disparou.
+    sinais: list = field(default_factory=list)          # [Sinal, ...]
+
+
+@dataclass
 class SinaisTecnicos:
     tendencia: Tendencia
     canais: Canais
@@ -152,6 +187,12 @@ class SinaisTecnicos:
     # Família Volume: MM de volume + flag de rompimento com volume (Fase 13 plano 03).
     # Aditiva (default None) p/ manter o contrato travado 100% retrocompatível.
     volume: "Volume" = None
+    # Padrões gráficos (duplo topo/fundo, OCO) sobre pivôs no-repaint (Fase 14, PAT-01).
+    # Aditiva (default None) p/ manter o contrato travado 100% retrocompatível.
+    padroes: "Padroes" = None
+    # Checklist de sinais liga/desliga — por que o setup existe (Fase 14, SIG-01).
+    # Aditiva (default None) p/ manter o contrato travado 100% retrocompatível.
+    checklist: "Checklist" = None
 
 
 # --------------------------------------------------------------------------- #
