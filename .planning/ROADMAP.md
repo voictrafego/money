@@ -67,8 +67,12 @@ nem na regra `app.py` read-only.
   3. A engine produz S/R como faixas/zonas (clusters de pivôs + Donchian), e os níveis de entrada (pullback / retração Fibonacci), stop (swing-low/high e/ou ATR×m) e alvo (retração 38,2/50/61,8% + extensão 161,8%) ancorados em dois pivôs documentados.
   4. A engine calcula a relação Risco:Retorno como razão ("1 : 2,5") e degrada para "indisponível" quando o risco é zero/indefinido (sem infinito).
   5. A família Volume (MM de volume + flag "rompimento com volume acima da média") é adicionada de forma aditiva ao contrato `SinaisTecnicos`; 191 goldens verdes + novos goldens da fase.
-**Plans**: TBD
-**Research**: recomendado (`/gsd-research-phase`) — calibração empírica de `prominence`/`distance` dos pivôs para ações B3 (confiança MEDIUM); tratar como params em `config.yaml`.
+**Plans**: 4 plans
+- [ ] 13-01-PLAN.md — Pivôs fractal de Williams (no-repaint) + ATR exposto do TR do ADX (PIVOT-01)
+- [ ] 13-02-PLAN.md — Contexto de tendência: Dow diário + alinhamento semanal→diário (W-FRI) (TREND-01, TREND-02)
+- [ ] 13-03-PLAN.md — Zonas S/R (cluster k×ATR + Donchian) + família Volume (LEVEL-01, VOL-01)
+- [ ] 13-04-PLAN.md — Fibonacci entrada/alvo + stop conservador + R:R (LEVEL-02/03/04, RR-01)
+**Research**: dispensado por decisão D-02 (CONTEXT) — defaults derivados do método; params em `config.yaml` (calibração empírica deferida).
 
 ### Phase 14: Padrões Gráficos + Checklist de Sinais
 **Goal**: A engine detecta padrões gráficos (duplo topo/fundo + OCO) sobre pivôs com rótulo "em formação" vs "confirmado" e alvo measured-move, e compõe um checklist explícito de sinais disparados.
@@ -115,7 +119,7 @@ nem na regra `app.py` read-only.
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 12. Ingestão Intraday + Timeframe | v1.4 | 2/2 | Complete   | 2026-06-29 |
-| 13. Pivôs, Contexto e Níveis | v1.4 | 0/TBD | Not started | - |
+| 13. Pivôs, Contexto e Níveis | v1.4 | 0/4 | Not started | - |
 | 14. Padrões Gráficos + Checklist | v1.4 | 0/TBD | Not started | - |
 | 15. Montagem do Setup + Score | v1.4 | 0/TBD | Not started | - |
 | 16. Página Streamlit + Gráfico | v1.4 | 0/TBD | Not started | - |
