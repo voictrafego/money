@@ -876,7 +876,7 @@ def _padroes(
     volume: "Volume",
     cfg: dict,
 ) -> Padroes:
-    """Detecta DUPLO TOPO e DUPLO FUNDO sobre pivôs CONFIRMADOS (PAT-01, regras de Murphy).
+    """Detecta DUPLO TOPO/FUNDO e OCO/OCO INVERTIDO sobre pivôs CONFIRMADOS (PAT-01, Murphy).
 
     Geometria 100% determinística sobre os pivôs no-repaint da Fase 13 (`pivot_high`/`pivot_low`,
     já confirmados via `.dropna()`) no frame NOMINAL (família de PREÇO, D-02). A neckline do duplo
@@ -965,6 +965,95 @@ def _padroes(
                     altura=altura,
                     pivos_envolvidos={ts1: f1, ts2: f2, ts_pico: neckline},
                 ))
+
+    # Limiares específicos da OCO + eixo-x POSICIONAL (Pitfall 3: timestamp em ns explode a reta).
+    shoulder_sym = cfg_pad["shoulder_symmetry_pct"]
+    head_prom = cfg_pad["head_min_prominence_pct"]
+    pos_fechada = len(nominal) - 2                    # posição inteira da barra FECHADA (iloc[-2])
+
+    def _pos(ts):
+        return nominal.index.get_loc(ts)             # POSIÇÃO inteira 0..n-1, NUNCA timestamp em ns
+
+    # --- OCO (ombro-cabeça-ombro): 3 topos (LS, cabeça, RS) + 2 fundos intercalados ---
+    # cabeça (do meio) excede AMBOS os ombros por head_min_prominence_pct; ombros ~simétricos.
+    # Neckline INCLINADA pela reta dos 2 fundos por POSIÇÃO inteira da barra (Pitfall 3).
+    if len(topos) >= 3 and len(fundos) >= 2:
+        ls, cabeca, rs = float(topos.iloc[-3]), float(topos.iloc[-2]), float(topos.iloc[-1])
+        ts_ls, ts_cabeca, ts_rs = topos.index[-3], topos.index[-2], topos.index[-1]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            prom_e = (cabeca - ls) / cabeca
+            prom_d = (cabeca - rs) / cabeca
+            sim_ombros = abs(ls - rs) / ((ls + rs) / 2.0)
+        f1_sel = fundos[(fundos.index > ts_ls) & (fundos.index < ts_cabeca)]
+        f2_sel = fundos[(fundos.index > ts_cabeca) & (fundos.index < ts_rs)]
+        if (
+            np.isfinite(prom_e) and np.isfinite(prom_d) and np.isfinite(sim_ombros)
+            and prom_e >= head_prom and prom_d >= head_prom and sim_ombros <= shoulder_sym
+            and len(f1_sel) and len(f2_sel)
+        ):
+            f1, ts_f1 = float(f1_sel.min()), f1_sel.idxmin()
+            f2, ts_f2 = float(f2_sel.min()), f2_sel.idxmin()
+            pos_f1, pos_f2 = _pos(ts_f1), _pos(ts_f2)
+            if pos_f2 != pos_f1:                      # guard reta degenerada (divisão por zero)
+                m = (f2 - f1) / (pos_f2 - pos_f1)     # inclinação por ÍNDICE posicional
+                neck_romp = f1 + m * (pos_fechada - pos_f1)        # extrapola até a barra fechada
+                neck_cabeca = f1 + m * (_pos(ts_cabeca) - pos_f1)  # neckline sob a cabeça
+                altura = cabeca - neck_cabeca
+                with np.errstate(divide="ignore", invalid="ignore"):
+                    altura_pct = altura / cabeca
+                if np.isfinite(altura_pct) and altura_pct >= min_h:
+                    rompeu = close_f < neck_romp                  # rompimento p/ BAIXO
+                    confirmado = rompeu and (vol_ok if exigir_vol else True)
+                    lista.append(PadraoGrafico(
+                        tipo="oco",
+                        estado="confirmado" if confirmado else "em_formacao",
+                        neckline=float(neck_romp),
+                        alvo=float(neck_romp - altura),           # measured-move p/ BAIXO
+                        altura=float(altura),
+                        pivos_envolvidos={
+                            ts_ls: ls, ts_f1: f1, ts_cabeca: cabeca, ts_f2: f2, ts_rs: rs,
+                        },
+                    ))
+
+    # --- OCO invertido (espelho): 3 fundos (cabeça mais BAIXA) + 2 topos intercalados ---
+    # Neckline pelos 2 topos; rompe p/ CIMA; alvo = neckline + altura.
+    if len(fundos) >= 3 and len(topos) >= 2:
+        ls, cabeca, rs = float(fundos.iloc[-3]), float(fundos.iloc[-2]), float(fundos.iloc[-1])
+        ts_ls, ts_cabeca, ts_rs = fundos.index[-3], fundos.index[-2], fundos.index[-1]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            prom_e = (ls - cabeca) / cabeca           # ombro acima da cabeça (cabeça mais baixa)
+            prom_d = (rs - cabeca) / cabeca
+            sim_ombros = abs(ls - rs) / ((ls + rs) / 2.0)
+        t1_sel = topos[(topos.index > ts_ls) & (topos.index < ts_cabeca)]
+        t2_sel = topos[(topos.index > ts_cabeca) & (topos.index < ts_rs)]
+        if (
+            np.isfinite(prom_e) and np.isfinite(prom_d) and np.isfinite(sim_ombros)
+            and prom_e >= head_prom and prom_d >= head_prom and sim_ombros <= shoulder_sym
+            and len(t1_sel) and len(t2_sel)
+        ):
+            p1, ts_p1 = float(t1_sel.max()), t1_sel.idxmax()
+            p2, ts_p2 = float(t2_sel.max()), t2_sel.idxmax()
+            pos_p1, pos_p2 = _pos(ts_p1), _pos(ts_p2)
+            if pos_p2 != pos_p1:                      # guard reta degenerada
+                m = (p2 - p1) / (pos_p2 - pos_p1)
+                neck_romp = p1 + m * (pos_fechada - pos_p1)
+                neck_cabeca = p1 + m * (_pos(ts_cabeca) - pos_p1)
+                altura = neck_cabeca - cabeca
+                with np.errstate(divide="ignore", invalid="ignore"):
+                    altura_pct = altura / cabeca
+                if np.isfinite(altura_pct) and altura_pct >= min_h:
+                    rompeu = close_f > neck_romp                  # rompimento p/ CIMA
+                    confirmado = rompeu and (vol_ok if exigir_vol else True)
+                    lista.append(PadraoGrafico(
+                        tipo="oco_invertido",
+                        estado="confirmado" if confirmado else "em_formacao",
+                        neckline=float(neck_romp),
+                        alvo=float(neck_romp + altura),           # measured-move p/ CIMA
+                        altura=float(altura),
+                        pivos_envolvidos={
+                            ts_ls: ls, ts_p1: p1, ts_cabeca: cabeca, ts_p2: p2, ts_rs: rs,
+                        },
+                    ))
 
     return Padroes(lista=lista)
 
