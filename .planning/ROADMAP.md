@@ -84,7 +84,12 @@ nem na regra `app.py` read-only.
   3. Os limiares geométricos (tolerância de simetria, proporção mínima, nº de toques) vivem no `config.yaml` e foram validados multi-ticker para evitar enxurrada de falso positivo.
   4. A engine expõe um checklist de sinais (rompimento, cruzamento de MM, RSI/MACD, padrão, volume) com status liga/desliga, tornando explícito *por que* o setup existe.
   5. 191 goldens verdes + novos goldens da fase; triângulos/bandeiras ficam explicitamente **fora** do MVP da v1.4.
-**Plans**: TBD
+**Plans**: 5 plans
+- [ ] 14-01-PLAN.md — Contrato: bloco config `padroes:` + dataclasses PadraoGrafico/Padroes/Sinal/Checklist + flag bidirecional `volume_acima_mm` (PAT-01, SIG-01)
+- [ ] 14-02-PLAN.md — Detector duplo topo/fundo (neckline horizontal) + measured-move + no-repaint (PAT-01)
+- [ ] 14-03-PLAN.md — Detector OCO/OCO invertido (neckline inclinada por posição) + no-repaint (PAT-01)
+- [ ] 14-04-PLAN.md — Checklist de sinais (`_checklist`) + wiring em `calcular` + integração/degradação (SIG-01, PAT-01)
+- [ ] 14-05-PLAN.md — Calibração multi-ticker dos limiares (checkpoint humano anti-pareidolia) (PAT-01)
 **Research**: **fortemente recomendado** (`/gsd-research-phase`) — heurísticos de OCO/duplo topo-fundo têm confiança LOW-MEDIUM; definir limiares geométricos e estratégia de fixtures antes de codar.
 
 ### Phase 15: Montagem do Setup (SetupSwing) + Score
