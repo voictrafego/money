@@ -109,6 +109,10 @@ class Niveis:
     fib_retracoes: dict = None                          # {"382","500","618"} → preço
     alvo: Number = None                                 # extensão de Fibonacci 161,8%
     pivos_ancora: dict = None                           # {fundo_ts,fundo_preco,topo_ts,topo_preco}
+    # Stop técnico (mais conservador entre swing e ATR×m, D-08) e Risco:Retorno (RR-01, D-09).
+    # Aditivos: `stop` None e `risco_retorno` "indisponivel" quando não há níveis direcionais.
+    stop: Number = None                                 # stop técnico (mais distante da entrada)
+    risco_retorno: str = "indisponivel"                 # "1 : 2,5" (vírgula BR) ou "indisponivel"
 
 
 @dataclass
@@ -747,6 +751,64 @@ def _niveis_fib(
     }
 
 
+def _niveis_stop_rr(
+    niveis: Niveis, contexto: "ContextoTendencia", atr: pd.Series,
+    ohlc_nominal: pd.DataFrame, cfg: dict,
+) -> None:
+    """Stop técnico (mais conservador entre swing e ATR×m) + Risco:Retorno (LEVEL-03, RR-01).
+
+    Stop (D-08): o mais CONSERVADOR (mais DISTANTE da entrada) entre o swing estrutural (preço do
+    pivô âncora — fundo em "alta", topo em "baixa") e ATR×m — respeita a estrutura sem ficar
+    apertado demais. Em "alta" `stop = min(swing, entrada_ref − m·ATR)` (o mais baixo); em "baixa"
+    `stop = max(swing, entrada_ref + m·ATR)` (o mais alto). `entrada_ref` = ponto médio da
+    `entrada_zona`. `m = cfg["indicadores"]["stop_atr_m"]`; o ATR é REUSADO (`atr_wilder`, último
+    valor válido), NUNCA recalculado (D-08).
+
+    R:R (D-09): `risco = |entrada_ref − stop|`, `retorno = |alvo − entrada_ref|`, formatado como
+    `"1 : {retorno/risco}"` com vírgula decimal BR (1 casa). A razão usa `np.divide` sob
+    `np.errstate` (divisão por zero → inf, não exceção); `risco ≤ 0`, NaN/inf, ou `entrada_zona`/
+    `alvo`/`pivos_ancora` ausentes → `risco_retorno = "indisponivel"`, NUNCA infinito (mitiga
+    T-13-09).
+
+    Degradação graciosa: sem `entrada_zona`/`alvo` (lateral/indisponivel), sem âncora, ou sem ATR
+    válido → `stop` permanece None e `risco_retorno` "indisponivel", sem exceção. Muta `niveis`.
+    """
+    if niveis.entrada_zona is None or niveis.alvo is None or niveis.pivos_ancora is None:
+        return
+    dow = contexto.dow_diario if contexto is not None else "indisponivel"
+    if dow not in ("alta", "baixa"):
+        return
+
+    atr_validos = atr.dropna() if atr is not None else pd.Series([], dtype=float)
+    if not len(atr_validos):
+        return
+    atr_val = float(atr_validos.iloc[-1])
+    m = cfg["indicadores"]["stop_atr_m"]
+
+    low, high = niveis.entrada_zona
+    entrada_ref = (low + high) / 2.0
+
+    if dow == "alta":
+        swing = niveis.pivos_ancora["fundo_preco"]
+        atr_stop = entrada_ref - m * atr_val
+        stop = min(swing, atr_stop)               # mais distante para BAIXO (mais conservador)
+    else:
+        swing = niveis.pivos_ancora["topo_preco"]
+        atr_stop = entrada_ref + m * atr_val
+        stop = max(swing, atr_stop)               # mais distante para CIMA (mais conservador)
+    niveis.stop = stop
+
+    risco = abs(entrada_ref - stop)
+    retorno = abs(niveis.alvo - entrada_ref)
+    # Razão protegida: risco==0 → np.divide dá inf (não exceção, sob errstate) → "indisponivel".
+    with np.errstate(divide="ignore", invalid="ignore"):
+        razao = np.divide(retorno, risco)
+    if risco <= 0 or not np.isfinite(razao):
+        niveis.risco_retorno = "indisponivel"
+    else:
+        niveis.risco_retorno = "1 : " + f"{float(razao):.1f}".replace(".", ",")
+
+
 # --------------------------------------------------------------------------- #
 # Família Volume — MM de volume + flag rompimento com volume (VOL-01, D-11)
 # --------------------------------------------------------------------------- #
@@ -873,6 +935,8 @@ def calcular(
     )
     # Fibonacci ancorado no último impulso confirmado (LEVEL-02/04, D-07) — mescla no Niveis.
     _niveis_fib(niveis, pivos, contexto, nominal, cfg)
+    # Stop técnico (mais conservador, D-08) + R:R formatado/degradável (RR-01, D-09).
+    _niveis_stop_rr(niveis, contexto, forca.atr, nominal, cfg)
     return SinaisTecnicos(
         tendencia=_tendencia(close, cfg),
         canais=canais,
