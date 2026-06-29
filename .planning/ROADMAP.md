@@ -36,7 +36,7 @@ nem na regra `app.py` read-only.
 - Dependência rígida entre camadas: **ingest → core math → report/dataclass → UI**. A ordem não é negociável.
 
 - [x] **Phase 12: Ingestão Intraday + Timeframe** — Camada de dados OHLCV multi-timeframe isolada do pipeline diário (DATA-01/02/03) (completed 2026-06-29)
-- [ ] **Phase 13: Pivôs, Contexto de Tendência e Níveis** — Pivôs no-repaint → Dow/multi-TF, S/R, stop, Fibonacci, R:R, volume (PIVOT/TREND/LEVEL/RR/VOL)
+- [x] **Phase 13: Pivôs, Contexto de Tendência e Níveis** — Pivôs no-repaint → Dow/multi-TF, S/R, stop, Fibonacci, R:R, volume (PIVOT/TREND/LEVEL/RR/VOL)
 - [ ] **Phase 14: Padrões Gráficos + Checklist de Sinais** — Duplo topo/fundo + OCO sobre pivôs e checklist liga/desliga (PAT-01, SIG-01)
 - [ ] **Phase 15: Montagem do Setup (SetupSwing) + Score** — Dataclass read-only firewall + score ponderado explicável com R:R como gate (SCORE-01)
 - [ ] **Phase 16: Página Streamlit + Gráfico do Momento** — 4º menu read-only, candlestick com overlays, botão Atualizar e disclaimer (SWING-01/02, CHART-01)
@@ -71,7 +71,7 @@ nem na regra `app.py` read-only.
 - [x] 13-01-PLAN.md — Pivôs fractal de Williams (no-repaint) + ATR exposto do TR do ADX (PIVOT-01)
 - [x] 13-02-PLAN.md — Contexto de tendência: Dow diário + alinhamento semanal→diário (W-FRI) (TREND-01, TREND-02)
 - [x] 13-03-PLAN.md — Zonas S/R (cluster k×ATR + Donchian) + família Volume (LEVEL-01, VOL-01)
-- [ ] 13-04-PLAN.md — Fibonacci entrada/alvo + stop conservador + R:R (LEVEL-02/03/04, RR-01)
+- [x] 13-04-PLAN.md — Fibonacci entrada/alvo + stop conservador + R:R (LEVEL-02/03/04, RR-01)
 **Research**: dispensado por decisão D-02 (CONTEXT) — defaults derivados do método; params em `config.yaml` (calibração empírica deferida).
 
 ### Phase 14: Padrões Gráficos + Checklist de Sinais

@@ -30,13 +30,13 @@
 
 - [x] **PIVOT-01**: A engine detecta **pivôs (swing highs/lows)** de forma determinística e **sem lookahead** (no-repaint: série truncada em t == em t+1 para barras fechadas).
 - [x] **LEVEL-01**: A página exibe **suporte/resistência** (pivôs em cluster + Donchian) como **faixas/zonas** rotuladas ("Suporte ~R$ X" / "Resistência ~R$ Y"), nunca pontos exatos.
-- [ ] **LEVEL-02**: A página exibe uma **zona de entrada** sugerida como nível (pullback / retração de Fibonacci), apresentada como referência de estudo.
-- [ ] **LEVEL-03**: A página exibe o **stop técnico** ancorado em estrutura — **swing-low/high** e/ou **ATR×m** (ATR exposto a partir do TR já calculado no ADX) — como nível.
-- [ ] **LEVEL-04**: A página exibe **alvo/projeção** via **Fibonacci** (retração 38,2/50/61,8% para entrada; extensão 161,8% para alvo) ancorado em dois pivôs.
+- [x] **LEVEL-02**: A página exibe uma **zona de entrada** sugerida como nível (pullback / retração de Fibonacci), apresentada como referência de estudo.
+- [x] **LEVEL-03**: A página exibe o **stop técnico** ancorado em estrutura — **swing-low/high** e/ou **ATR×m** (ATR exposto a partir do TR já calculado no ADX) — como nível.
+- [x] **LEVEL-04**: A página exibe **alvo/projeção** via **Fibonacci** (retração 38,2/50/61,8% para entrada; extensão 161,8% para alvo) ancorado em dois pivôs.
 
 ### Risco, Volume & Sinais (RR / VOL / SIG)
 
-- [ ] **RR-01**: A página calcula e exibe a **relação Risco:Retorno** de entrada/stop/alvo como razão ("1 : 2,5"), com **degradação para "indisponível"** quando o risco é zero/indefinido (sem infinito).
+- [x] **RR-01**: A página calcula e exibe a **relação Risco:Retorno** de entrada/stop/alvo como razão ("1 : 2,5"), com **degradação para "indisponível"** quando o risco é zero/indefinido (sem infinito).
 - [x] **VOL-01**: A engine adiciona a família **Volume** (média móvel de volume + flag "rompimento com volume acima da média") como confirmação, de forma aditiva ao contrato `SinaisTecnicos`.
 - [ ] **SIG-01**: A página exibe um **checklist de sinais técnicos disparados** (rompimento, cruzamento de MM, RSI/MACD, padrão, volume) com status **liga/desliga**, tornando explícito *por que* o setup existe.
 
@@ -82,10 +82,10 @@
 | TREND-01 | Phase 13 | Complete |
 | TREND-02 | Phase 13 | Complete |
 | LEVEL-01 | Phase 13 | Complete |
-| LEVEL-02 | Phase 13 | Pending |
-| LEVEL-03 | Phase 13 | Pending |
-| LEVEL-04 | Phase 13 | Pending |
-| RR-01 | Phase 13 | Pending |
+| LEVEL-02 | Phase 13 | Done |
+| LEVEL-03 | Phase 13 | Done |
+| LEVEL-04 | Phase 13 | Done |
+| RR-01 | Phase 13 | Done |
 | VOL-01 | Phase 13 | Complete |
 | PAT-01 | Phase 14 | Pending |
 | SIG-01 | Phase 14 | Pending |
