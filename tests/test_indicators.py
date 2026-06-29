@@ -421,7 +421,7 @@ def _frame_pivos(n: int = 80) -> pd.DataFrame:
     high = close + 0.5
     low = close - 0.5
     idx = pd.date_range("2021-01-01", periods=n, freq="B")
-    return pd.DataFrame({"High": high, "Low": low, "Close": close}, index=idx)
+    return pd.DataFrame({"Open": close, "High": high, "Low": low, "Close": close}, index=idx)
 
 
 def test_config_pivo_n():

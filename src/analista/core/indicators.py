@@ -81,6 +81,15 @@ class Momentum:
 
 
 @dataclass
+class Pivos:
+    pivot_high: pd.Series       # preço do High nas barras de topo CONFIRMADO, NaN nas demais
+    pivot_low: pd.Series        # preço do Low nas barras de fundo CONFIRMADO, NaN nas demais
+    ultimo_topo: Number         # preço do topo confirmado mais recente (ou None)
+    ultimo_fundo: Number        # preço do fundo confirmado mais recente (ou None)
+    n: int                      # N do fractal de Williams efetivamente usado
+
+
+@dataclass
 class SinaisTecnicos:
     tendencia: Tendencia
     canais: Canais
@@ -89,6 +98,9 @@ class SinaisTecnicos:
     # Close split-adjusted usada pelos indicadores, exposta read-only para os marcadores
     # de evento da UI (UI-04). Aditiva (default None) p/ não quebrar o contrato do plan 05-01.
     close: pd.Series = None
+    # Pivôs (swing highs/lows) — primitivo da Fase 13 (S/R, Fibonacci, Dow, padrões).
+    # Aditiva (default None) para manter o contrato travado 100% retrocompatível.
+    pivos: "Pivos" = None
 
 
 # --------------------------------------------------------------------------- #
@@ -398,6 +410,55 @@ def _momentum(close: pd.Series, cfg: dict) -> Momentum:
 
 
 # --------------------------------------------------------------------------- #
+# Pivôs (PIVOT-01) — fractal de Williams, CAUSAL e no-repaint (D-01/D-03)
+# --------------------------------------------------------------------------- #
+def _pivos(ohlc: pd.DataFrame, cfg: dict) -> Pivos:
+    """Pivôs (swing highs/lows) pelo fractal de Williams — CAUSAL e no-repaint (D-01/D-03).
+
+    Um TOPO em t é a barra cujo High é ESTRITAMENTE maior que os N Highs de cada lado
+    (t-N..t-1 e t+1..t+N); o FUNDO é análogo com Low e min. A confirmação só acontece
+    quando t+N FECHA — por isso as N barras mais recentes ficam SEMPRE NaN (faltam barras
+    fechadas à direita) e um pivô já confirmado NUNCA muda quando chegam novas barras: o
+    no-repaint é trivial e determinístico (D-03). É o motivo de NÃO usar detectores por
+    prominência do scipy (a prominência depende da janela e pode repaint na borda — proibido
+    por D-01). Espelha a causalidade do Donchian (`.shift(1)`), mas aqui a janela é simétrica
+    e o lag de N barras é o preço explícito do no-repaint.
+
+    Degradação graciosa: frame com < 2N+1 barras → séries todo-NaN e
+    `ultimo_topo`/`ultimo_fundo` None, sem levantar exceção.
+    """
+    ind = cfg["indicadores"]
+    N = ind["pivo_n"]
+    high, low = ohlc["High"], ohlc["Low"]
+    n_bar = len(high)
+
+    pivot_high = pd.Series(np.nan, index=ohlc.index)
+    pivot_low = pd.Series(np.nan, index=ohlc.index)
+
+    if n_bar >= 2 * N + 1:
+        h = high.to_numpy(float)
+        l = low.to_numpy(float)
+        # Só varre barras com N vizinhos JÁ FECHADOS de cada lado (i+N <= último índice).
+        for i in range(N, n_bar - N):
+            jan_h = h[i - N:i + N + 1]
+            if h[i] == jan_h.max() and (jan_h == h[i]).sum() == 1:   # único máximo → estrito
+                pivot_high.iloc[i] = h[i]
+            jan_l = l[i - N:i + N + 1]
+            if l[i] == jan_l.min() and (jan_l == l[i]).sum() == 1:   # único mínimo → estrito
+                pivot_low.iloc[i] = l[i]
+
+    topos = pivot_high.dropna()
+    fundos = pivot_low.dropna()
+    ultimo_topo = float(topos.iloc[-1]) if len(topos) else None
+    ultimo_fundo = float(fundos.iloc[-1]) if len(fundos) else None
+
+    return Pivos(
+        pivot_high=pivot_high, pivot_low=pivot_low,
+        ultimo_topo=ultimo_topo, ultimo_fundo=ultimo_fundo, n=N,
+    )
+
+
+# --------------------------------------------------------------------------- #
 # Entry-point — agrega as 4 famílias sobre o OHLC split-adjusted (CR-01)
 # --------------------------------------------------------------------------- #
 _COLUNAS_OHLC = ("Open", "High", "Low", "Close")
@@ -422,4 +483,5 @@ def calcular(ohlc: "pd.DataFrame", cfg: dict) -> SinaisTecnicos:
         forca=_forca(ohlc, cfg),
         momentum=_momentum(close, cfg),
         close=close,   # read-only: a MESMA close split-adjusted já usada (não recalcula)
+        pivos=_pivos(ohlc, cfg),
     )
