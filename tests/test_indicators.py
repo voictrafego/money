@@ -1009,3 +1009,107 @@ def test_calcular_popula_fib():
     assert anc["topo_preco"] > anc["fundo_preco"]
     # no-repaint: âncora em pivôs CONFIRMADOS → entrada_zona é uma faixa (low<high)
     assert sinais.niveis.entrada_zona[0] < sinais.niveis.entrada_zona[1]
+
+
+# --------------------------------------------------------------------------- #
+# Stop técnico (mais conservador entre swing e ATR×m, D-08) + R:R (RR-01, D-09)
+# --------------------------------------------------------------------------- #
+def _atr_const(valor: float, n: int = 20) -> pd.Series:
+    """ATR com último valor válido conhecido (resto NaN) p/ os goldens de stop/RR."""
+    idx = pd.date_range("2021-01-01", periods=n, freq="B")
+    return pd.Series([np.nan] * (n - 1) + [valor], index=idx)
+
+
+def _niveis_com_fib(entrada_zona, alvo, fundo_preco=None, topo_preco=None) -> "indicators.Niveis":
+    """Niveis com os campos de Fibonacci já preenchidos (isola o cálculo de stop/RR)."""
+    n = indicators.Niveis()
+    n.entrada_zona = entrada_zona
+    n.alvo = alvo
+    n.fib_retracoes = {"382": None, "500": None, "618": None}
+    n.pivos_ancora = {
+        "fundo_ts": None, "fundo_preco": fundo_preco,
+        "topo_ts": None, "topo_preco": topo_preco,
+    }
+    return n
+
+
+def test_niveis_stop_swing_mais_distante():
+    # Alta: swing-low (90) é MAIS DISTANTE da entrada (97) que ATR×m (97-3=94) → stop == swing (D-08).
+    cfg = _cfg_ind()
+    n = _niveis_com_fib((95.0, 99.0), alvo=120.0, fundo_preco=90.0)   # entrada_ref=97
+    ctx = indicators.ContextoTendencia("alta", "alinhado_alta")
+    indicators._niveis_stop_rr(n, ctx, _atr_const(2.0), None, cfg)    # m=1.5 → atr_stop=94
+    assert n.stop == pytest.approx(90.0)
+
+
+def test_niveis_stop_atr_mais_distante():
+    # Alta: ATR×m é MAIS DISTANTE (97-15=82) que o swing (90) → stop == atr_stop (D-08).
+    cfg = _cfg_ind()
+    m = cfg["indicadores"]["stop_atr_m"]
+    n = _niveis_com_fib((95.0, 99.0), alvo=120.0, fundo_preco=90.0)   # entrada_ref=97
+    ctx = indicators.ContextoTendencia("alta", "alinhado_alta")
+    indicators._niveis_stop_rr(n, ctx, _atr_const(10.0), None, cfg)
+    assert n.stop == pytest.approx(97.0 - m * 10.0)                   # 82
+
+
+def test_niveis_stop_baixa_mais_alto():
+    # Baixa: stop é o MAIS DISTANTE para CIMA → max(swing=topo, atr_stop) (D-08).
+    cfg = _cfg_ind()
+    n = _niveis_com_fib((101.0, 105.0), alvo=80.0, topo_preco=110.0)  # entrada_ref=103
+    ctx = indicators.ContextoTendencia("baixa", "alinhado_baixa")
+    indicators._niveis_stop_rr(n, ctx, _atr_const(2.0), None, cfg)    # atr_stop=103+3=106
+    assert n.stop == pytest.approx(110.0)                            # swing (mais alto)
+
+
+def test_niveis_rr_formatado():
+    # R:R razão 2,5 → string "1 : 2,5" (vírgula decimal BR). entrada_ref=97, stop=90 (risco 7),
+    # alvo=114.5 (retorno 17.5) → 17.5/7 = 2.5.
+    cfg = _cfg_ind()
+    n = _niveis_com_fib((95.0, 99.0), alvo=114.5, fundo_preco=90.0)
+    ctx = indicators.ContextoTendencia("alta", "alinhado_alta")
+    indicators._niveis_stop_rr(n, ctx, _atr_const(2.0), None, cfg)
+    assert n.stop == pytest.approx(90.0)
+    assert n.risco_retorno == "1 : 2,5"
+
+
+def test_niveis_rr_risco_zero_indisponivel():
+    # Risco == 0 (stop == entrada_ref, ATR=0 e swing==entrada_ref) → "indisponivel", NUNCA inf (D-09).
+    cfg = _cfg_ind()
+    n = _niveis_com_fib((97.0, 97.0), alvo=120.0, fundo_preco=97.0)
+    ctx = indicators.ContextoTendencia("alta", "alinhado_alta")
+    indicators._niveis_stop_rr(n, ctx, _atr_const(0.0), None, cfg)
+    assert n.risco_retorno == "indisponivel"
+    assert "inf" not in n.risco_retorno.lower()
+
+
+def test_niveis_stop_rr_lateral_degrada():
+    # dow lateral / sem entrada_zona → stop None e risco_retorno "indisponivel", sem exceção (D-09).
+    cfg = _cfg_ind()
+    n = indicators.Niveis()                              # entrada_zona/alvo None
+    ctx = indicators.ContextoTendencia("lateral", "indisponivel")
+    indicators._niveis_stop_rr(n, ctx, _atr_const(2.0), None, cfg)
+    assert n.stop is None
+    assert n.risco_retorno == "indisponivel"
+
+
+def test_calcular_popula_stop_rr():
+    # calcular popula stop (mais conservador) e risco_retorno (string), nunca infinito.
+    cfg = _cfg_ind()
+    t = np.arange(120)
+    df = _frame_trend(50.0 + 5.0 * np.sin(t / 6.0) + 0.15 * t)   # alta
+    sinais = indicators.calcular(df, cfg)
+    assert sinais.contexto.dow_diario == "alta"
+    assert sinais.niveis.stop is not None
+    assert isinstance(sinais.niveis.risco_retorno, str)
+    assert "inf" not in sinais.niveis.risco_retorno.lower()
+    # stop em alta fica ABAIXO da entrada (proteção estrutural)
+    entrada_ref = sum(sinais.niveis.entrada_zona) / 2.0
+    assert sinais.niveis.stop < entrada_ref
+
+
+def test_rr_usa_errstate():
+    # D-09: o cálculo da razão R:R é protegido com np.errstate (nunca divisão por zero/inf).
+    raiz = Path(__file__).resolve().parents[1]
+    fonte = (raiz / "src" / "analista" / "core" / "indicators.py").read_text(encoding="utf-8")
+    bloco = fonte[fonte.index("def _niveis_stop_rr"):]
+    assert "errstate" in bloco
