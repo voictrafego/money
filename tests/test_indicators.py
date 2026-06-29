@@ -913,3 +913,99 @@ def test_calcular_volume_degrada_sem_coluna():
     assert sinais.volume is not None
     assert sinais.volume.volume_mm is None
     assert sinais.volume.rompimento_com_volume is False
+
+
+# --------------------------------------------------------------------------- #
+# Fibonacci ancorado no último impulso confirmado (LEVEL-02/04, D-07)
+# --------------------------------------------------------------------------- #
+def _pivos_ts(topos: dict, fundos: dict, n_barras: int = 10) -> "indicators.Pivos":
+    """Pivos determinístico com topos/fundos em posições/preços conhecidos (com timestamps)."""
+    idx = pd.date_range("2021-01-01", periods=n_barras, freq="B")
+    ph = pd.Series(np.nan, index=idx)
+    pl = pd.Series(np.nan, index=idx)
+    for i, p in topos.items():
+        ph.iloc[i] = p
+    for i, p in fundos.items():
+        pl.iloc[i] = p
+    t = ph.dropna()
+    f = pl.dropna()
+    return indicators.Pivos(
+        pivot_high=ph, pivot_low=pl,
+        ultimo_topo=float(t.iloc[-1]) if len(t) else None,
+        ultimo_fundo=float(f.iloc[-1]) if len(f) else None, n=2,
+    )
+
+
+def test_niveis_fib_alta():
+    # Impulso de alta F→T confirmado (fundo antes do topo): retração de entrada 38,2/50/61,8%
+    # ancorada no topo e extensão de alvo 161,8% projetada do fundo (LEVEL-02/04, D-07).
+    cfg = _cfg_ind()
+    pivos = _pivos_ts(topos={5: 120.0}, fundos={2: 100.0})
+    ctx = indicators.ContextoTendencia(dow_diario="alta", alinhamento_mtf="alinhado_alta")
+    niveis = indicators.Niveis()
+    indicators._niveis_fib(niveis, pivos, ctx, None, cfg)
+    F, T = 100.0, 120.0
+    R = T - F
+    assert niveis.entrada_zona[0] == pytest.approx(T - R * 0.618)   # 61,8% (mais fundo)
+    assert niveis.entrada_zona[1] == pytest.approx(T - R * 0.382)   # 38,2% (mais raso)
+    assert niveis.fib_retracoes["500"] == pytest.approx(T - R * 0.5)
+    assert niveis.alvo == pytest.approx(F + R * 1.618)
+    assert niveis.pivos_ancora["fundo_preco"] == 100.0
+    assert niveis.pivos_ancora["topo_preco"] == 120.0
+    assert niveis.pivos_ancora["fundo_ts"] < niveis.pivos_ancora["topo_ts"]
+
+
+def test_niveis_fib_baixa():
+    # Impulso de baixa T→F (topo antes do fundo): espelha — retração medida do fundo p/ cima,
+    # alvo projetado abaixo do topo.
+    cfg = _cfg_ind()
+    pivos = _pivos_ts(topos={2: 120.0}, fundos={5: 100.0})
+    ctx = indicators.ContextoTendencia(dow_diario="baixa", alinhamento_mtf="alinhado_baixa")
+    niveis = indicators.Niveis()
+    indicators._niveis_fib(niveis, pivos, ctx, None, cfg)
+    F, T = 100.0, 120.0
+    R = T - F
+    assert niveis.entrada_zona[0] == pytest.approx(F + R * 0.382)
+    assert niveis.entrada_zona[1] == pytest.approx(F + R * 0.618)
+    assert niveis.fib_retracoes["500"] == pytest.approx(F + R * 0.5)
+    assert niveis.alvo == pytest.approx(T - R * 1.618)
+    assert niveis.pivos_ancora["topo_ts"] < niveis.pivos_ancora["fundo_ts"]
+
+
+def test_niveis_fib_lateral_degrada():
+    # dow "lateral" → níveis direcionais não fazem sentido: entrada/alvo/âncora None, sem exceção.
+    cfg = _cfg_ind()
+    pivos = _pivos_ts(topos={5: 120.0}, fundos={2: 100.0})
+    ctx = indicators.ContextoTendencia(dow_diario="lateral", alinhamento_mtf="indisponivel")
+    niveis = indicators.Niveis()
+    indicators._niveis_fib(niveis, pivos, ctx, None, cfg)
+    assert niveis.entrada_zona is None
+    assert niveis.alvo is None
+    assert niveis.pivos_ancora is None
+
+
+def test_niveis_fib_sem_par_degrada():
+    # dow "alta" mas SEM fundo confirmado antes do último topo → sem par âncora → None.
+    cfg = _cfg_ind()
+    pivos = _pivos_ts(topos={2: 120.0}, fundos={5: 100.0})   # fundo DEPOIS do topo
+    ctx = indicators.ContextoTendencia(dow_diario="alta", alinhamento_mtf="alinhado_alta")
+    niveis = indicators.Niveis()
+    indicators._niveis_fib(niveis, pivos, ctx, None, cfg)
+    assert niveis.entrada_zona is None and niveis.alvo is None and niveis.pivos_ancora is None
+
+
+def test_calcular_popula_fib():
+    # calcular popula os níveis de Fibonacci de forma aditiva; âncora auditável (2 pivôs ts+preço).
+    cfg = _cfg_ind()
+    t = np.arange(120)
+    df = _frame_trend(50.0 + 5.0 * np.sin(t / 6.0) + 0.15 * t)   # tendência de alta
+    sinais = indicators.calcular(df, cfg)
+    assert sinais.contexto.dow_diario == "alta"
+    assert sinais.niveis.entrada_zona is not None
+    assert sinais.niveis.alvo is not None
+    anc = sinais.niveis.pivos_ancora
+    assert anc is not None
+    assert anc["fundo_ts"] < anc["topo_ts"]            # fundo→topo (impulso de alta)
+    assert anc["topo_preco"] > anc["fundo_preco"]
+    # no-repaint: âncora em pivôs CONFIRMADOS → entrada_zona é uma faixa (low<high)
+    assert sinais.niveis.entrada_zona[0] < sinais.niveis.entrada_zona[1]
