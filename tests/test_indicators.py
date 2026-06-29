@@ -440,8 +440,9 @@ def test_pivos_no_repaint_truncacao():
     full = indicators._pivos(df, cfg)
     for k in (40, 60):
         pk = indicators._pivos(df.iloc[:k], cfg)
-        # barras fechadas no truncado: índices 0..k-1-N (têm N barras à direita no slice).
-        lim = k - N
+        # barras confirmáveis no truncado: índices 0..k-2-N (a última barra do slice é
+        # tratada como VIVA → o último confirmável é k-2-N, exclui a barra viva).
+        lim = k - N - 1
         np.testing.assert_allclose(
             pk.pivot_high.iloc[:lim].to_numpy(float),
             full.pivot_high.iloc[:lim].to_numpy(float),
@@ -455,14 +456,41 @@ def test_pivos_no_repaint_truncacao():
 
 
 def test_pivos_lag_confirmacao():
-    # As N barras mais recentes NUNCA são pivô confirmado (faltam N barras à direita) — D-03.
+    # As N+1 barras mais recentes NUNCA são pivô confirmado: a barra viva (não-fechada) é
+    # excluída da janela à direita, mais as N que ainda não têm N vizinhos FECHADOS — D-03,
+    # coerente com a invariante iloc[-2] da fase (CR-01 / no-repaint na borda).
     cfg = _cfg_ind()
     df = _frame_pivos()
     N = cfg["indicadores"]["pivo_n"]
     p = indicators._pivos(df, cfg)
-    assert p.pivot_high.iloc[-N:].isna().all()
-    assert p.pivot_low.iloc[-N:].isna().all()
+    assert p.pivot_high.iloc[-(N + 1):].isna().all()
+    assert p.pivot_low.iloc[-(N + 1):].isna().all()
     assert p.n == N
+
+
+def test_pivos_no_repaint_barra_viva():
+    # GATE no-repaint da borda (CR-01): o pivô CONFIRMADO mais recente NÃO pode depender da
+    # ÚLTIMA barra (potencialmente viva). Mutar High/Low da barra viva para um extremo não
+    # pode alterar NENHUM pivô já confirmado.
+    cfg = _cfg_ind()
+    df = _frame_pivos()
+    base = indicators._pivos(df, cfg)
+
+    viva = df.copy()
+    viva.iloc[-1, viva.columns.get_loc("High")] = 1e6     # topo absurdo na barra viva
+    viva.iloc[-1, viva.columns.get_loc("Low")] = -1e6     # fundo absurdo na barra viva
+    mutado = indicators._pivos(viva, cfg)
+
+    # Nenhum pivô confirmado mudou de valor (NaN↔NaN inclusive) ao mexer só na barra viva.
+    np.testing.assert_allclose(
+        base.pivot_high.to_numpy(float), mutado.pivot_high.to_numpy(float), equal_nan=True
+    )
+    np.testing.assert_allclose(
+        base.pivot_low.to_numpy(float), mutado.pivot_low.to_numpy(float), equal_nan=True
+    )
+    # E a barra viva extrema NÃO virou pivô confirmado (continua NaN na ponta).
+    assert pd.isna(mutado.pivot_high.iloc[-1])
+    assert pd.isna(mutado.pivot_low.iloc[-1])
 
 
 def test_pivos_teeth():

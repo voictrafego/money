@@ -484,14 +484,17 @@ def _pivos(ohlc: pd.DataFrame, cfg: dict) -> Pivos:
 
     Um TOPO em t é a barra cujo High é ESTRITAMENTE maior que os N Highs de cada lado
     (t-N..t-1 e t+1..t+N); o FUNDO é análogo com Low e min. A confirmação só acontece
-    quando t+N FECHA — por isso as N barras mais recentes ficam SEMPRE NaN (faltam barras
-    fechadas à direita) e um pivô já confirmado NUNCA muda quando chegam novas barras: o
+    quando t+N FECHA e essa barra t+N NÃO é a barra viva — por isso as N+1 barras mais
+    recentes ficam SEMPRE NaN (a barra viva mais as N que ainda não têm N vizinhos
+    FECHADOS à direita), coerente com a invariante `iloc[-2]` da fase (D-04): o pivô mais
+    recente nunca depende da última barra (não-fechada), eliminando o repaint na borda.
+    Um pivô já confirmado NUNCA muda quando chegam novas barras: o
     no-repaint é trivial e determinístico (D-03). É o motivo de NÃO usar detectores por
     prominência do scipy (a prominência depende da janela e pode repaint na borda — proibido
     por D-01). Espelha a causalidade do Donchian (`.shift(1)`), mas aqui a janela é simétrica
     e o lag de N barras é o preço explícito do no-repaint.
 
-    Degradação graciosa: frame com < 2N+1 barras → séries todo-NaN e
+    Degradação graciosa: frame com < 2N+2 barras → séries todo-NaN e
     `ultimo_topo`/`ultimo_fundo` None, sem levantar exceção.
     """
     ind = cfg["indicadores"]
@@ -502,11 +505,13 @@ def _pivos(ohlc: pd.DataFrame, cfg: dict) -> Pivos:
     pivot_high = pd.Series(np.nan, index=ohlc.index)
     pivot_low = pd.Series(np.nan, index=ohlc.index)
 
-    if n_bar >= 2 * N + 1:
+    if n_bar >= 2 * N + 2:
         h = high.to_numpy(float)
         l = low.to_numpy(float)
-        # Só varre barras com N vizinhos JÁ FECHADOS de cada lado (i+N <= último índice).
-        for i in range(N, n_bar - N):
+        # Precisa de N vizinhos à esquerda E N FECHADOS à direita (i+N <= n_bar-2, barra
+        # viva excluída). As N+1 barras finais ficam SEMPRE não-confirmadas (NaN) — o pivô
+        # mais recente nunca depende da última barra (não-fechada), eliminando o repaint.
+        for i in range(N, n_bar - N - 1):
             jan_h = h[i - N:i + N + 1]
             if h[i] == jan_h.max() and (jan_h == h[i]).sum() == 1:   # único máximo → estrito
                 pivot_high.iloc[i] = h[i]
