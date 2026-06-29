@@ -93,6 +93,14 @@ class Pivos:
 
 
 @dataclass
+class ContextoTendencia:
+    # Rótulo de Dow no diário e alinhamento multi-timeframe (semanal→diário).
+    # Strings estáveis/neutras (NUNCA copy natural — D-01): a renderização é da Fase 16.
+    dow_diario: str             # "alta" | "baixa" | "lateral" | "indisponivel"
+    alinhamento_mtf: str        # "alinhado_alta" | "alinhado_baixa" | "conflito" | "indisponivel"
+
+
+@dataclass
 class SinaisTecnicos:
     tendencia: Tendencia
     canais: Canais
@@ -104,6 +112,9 @@ class SinaisTecnicos:
     # Pivôs (swing highs/lows) — primitivo da Fase 13 (S/R, Fibonacci, Dow, padrões).
     # Aditiva (default None) para manter o contrato travado 100% retrocompatível.
     pivos: "Pivos" = None
+    # Contexto de tendência: Dow no diário + alinhamento semanal→diário (Fase 13 plano 02).
+    # Aditiva (default None) p/ manter o contrato travado 100% retrocompatível.
+    contexto: "ContextoTendencia" = None
 
 
 # --------------------------------------------------------------------------- #
@@ -475,6 +486,59 @@ def _pivos(ohlc: pd.DataFrame, cfg: dict) -> Pivos:
         pivot_high=pivot_high, pivot_low=pivot_low,
         ultimo_topo=ultimo_topo, ultimo_fundo=ultimo_fundo, n=N,
     )
+
+
+# --------------------------------------------------------------------------- #
+# Contexto de tendência: sequência de Dow + alinhamento multi-TF (TREND-01/02)
+# --------------------------------------------------------------------------- #
+# Limiares do DESEMPATE de Dow (D-05): reusam a semântica de força já existente.
+_DOW_ADX_MIN = 20.0      # ADX < 20 = sem tendência mensurável (mesmo corte de _forca).
+_DOW_SLOPE_BAND = 5.0    # %/ano: zona morta p/ o slope ser "claramente" direcional; dentro
+                         # dela a inclinação é flat e o desempate cai para "lateral".
+
+
+def _dow(pivos: "Pivos", ohlc: pd.DataFrame, cfg: dict) -> str:
+    """Rótulo de Dow no diário a partir dos pivôs CONFIRMADOS (TREND-01, D-05).
+
+    Regra de Dow: comparando os DOIS últimos topos e os DOIS últimos fundos confirmados —
+    topos crescentes E fundos crescentes (HH+HL) → "alta"; topos decrescentes E fundos
+    decrescentes (LH+LL) → "baixa". Quando a sequência é AMBÍGUA (ex.: HH+LL, ou < 2 topos /
+    < 2 fundos confirmados), o DESEMPATE reusa os indicadores já existentes (NÃO reimplementa
+    ADX/MM — D-05): há tendência mensurável se `adx_wilder >= 20`; a direção vem do sinal da
+    inclinação anualizada de `regressao_trailing`, com uma zona morta (`_DOW_SLOPE_BAND`) para
+    exigir slope "claramente" positivo/negativo — caso contrário → "lateral". ADX NaN / slope
+    NaN (frame curto, sem como desempatar) → "indisponivel". Determinístico por construção.
+    """
+    ind = cfg["indicadores"]
+    if pivos is not None:
+        topos = pivos.pivot_high.dropna()
+        fundos = pivos.pivot_low.dropna()
+    else:
+        topos = fundos = pd.Series([], dtype=float)
+
+    if len(topos) >= 2 and len(fundos) >= 2:
+        hh = topos.iloc[-1] > topos.iloc[-2]
+        hl = fundos.iloc[-1] > fundos.iloc[-2]
+        lh = topos.iloc[-1] < topos.iloc[-2]
+        ll = fundos.iloc[-1] < fundos.iloc[-2]
+        if hh and hl:
+            return "alta"
+        if lh and ll:
+            return "baixa"
+
+    # Sequência ambígua → desempate por inclinação/ADX já existentes (D-05).
+    adx, _pdi, _ndi = adx_wilder(ohlc, ind["adx_janela"])
+    slope, _r2 = regressao_trailing(ohlc["Close"], ind["regressao_janela"])
+    if len(adx.dropna()) == 0 or pd.isna(adx.iloc[-1]) or pd.isna(slope.iloc[-1]):
+        return "indisponivel"
+
+    tem_tendencia = adx.iloc[-1] >= _DOW_ADX_MIN
+    sl = slope.iloc[-1]
+    if tem_tendencia and sl > _DOW_SLOPE_BAND:
+        return "alta"
+    if tem_tendencia and sl < -_DOW_SLOPE_BAND:
+        return "baixa"
+    return "lateral"
 
 
 # --------------------------------------------------------------------------- #
