@@ -819,3 +819,97 @@ def test_niveis_degrada_sem_pivos():
     nulo = indicators.calcular(None, cfg)
     assert nulo.niveis is not None
     assert nulo.niveis.suportes == [] and nulo.niveis.resistencias == []
+
+
+# --------------------------------------------------------------------------- #
+# Família Volume — MM de volume + flag rompimento com volume (VOL-01, D-11)
+# --------------------------------------------------------------------------- #
+def test_config_volume_janela():
+    # O config.yaml shipado expõe a janela da MM de volume (VOL-01).
+    cfg = _cfg_ind()
+    assert cfg["indicadores"]["volume_janela"] == 20
+
+
+def _frame_ohlcv(close, high=None, low=None, volume=None, start="2021-01-01") -> pd.DataFrame:
+    """Frame OHLCV determinístico (coluna Volume) para os goldens da família Volume."""
+    close = np.asarray(close, dtype=float)
+    high = close + 0.5 if high is None else np.asarray(high, dtype=float)
+    low = close - 0.5 if low is None else np.asarray(low, dtype=float)
+    volume = np.full(len(close), 1000.0) if volume is None else np.asarray(volume, dtype=float)
+    idx = pd.date_range(start, periods=len(close), freq="B")
+    return pd.DataFrame(
+        {"Open": close, "High": high, "Low": low, "Close": close, "Volume": volume}, index=idx
+    )
+
+
+def test_volume_rompimento_com_volume():
+    # Barra FECHADA (iloc[-2]) rompe a Donchian superior COM volume acima da MM → flag True.
+    cfg = _cfg_ind()
+    n = 40
+    close = np.full(n, 100.0)
+    close[-2] = 130.0            # barra fechada rompe a banda superior
+    close[-1] = 131.0            # barra viva — ignorada (D-04)
+    vol = np.full(n, 1000.0)
+    vol[-2] = 5000.0             # volume acima da média na barra fechada
+    df = _frame_ohlcv(close, high=close + 0.5, volume=vol)
+    v = indicators._volume(df, cfg)
+    assert v.rompimento_com_volume is True
+    assert v.volume_mm is not None
+
+
+def test_volume_rompimento_sem_volume():
+    # Mesmo rompimento, mas volume NÃO acima da média na barra fechada → flag False.
+    cfg = _cfg_ind()
+    n = 40
+    close = np.full(n, 100.0)
+    close[-2] = 130.0
+    close[-1] = 131.0
+    df = _frame_ohlcv(close, high=close + 0.5)        # volume constante (= MM) → não confirma
+    v = indicators._volume(df, cfg)
+    assert v.rompimento_com_volume is False
+
+
+def test_volume_degrada_sem_coluna():
+    # Frame SEM coluna Volume (como os 191 goldens) → volume_mm None, flag False, sem exceção.
+    cfg = _cfg_ind()
+    close = np.full(40, 100.0)
+    df = _frame_ohlc(close).assign(Open=close)        # só OHLC, sem Volume
+    v = indicators._volume(df, cfg)
+    assert v.volume_mm is None
+    assert v.rompimento_com_volume is False
+
+
+def test_volume_frame_curto():
+    # Frame curto → volume_mm todo-NaN e flag False (degradação), sem exceção.
+    cfg = _cfg_ind()
+    df = _frame_ohlcv(np.full(10, 100.0))
+    v = indicators._volume(df, cfg)
+    assert v.volume_mm.isna().all()
+    assert v.rompimento_com_volume is False
+
+
+def test_volume_mm_min_periods():
+    # volume_mm usa min_periods == volume_janela (NaN com histórico curto, não valor parcial).
+    cfg = _cfg_ind()
+    janela = cfg["indicadores"]["volume_janela"]
+    df = _frame_ohlcv(np.full(janela + 5, 100.0))
+    v = indicators._volume(df, cfg)
+    assert v.volume_mm.iloc[: janela - 1].isna().all()
+    assert not pd.isna(v.volume_mm.iloc[janela - 1])
+
+
+def test_calcular_popula_volume():
+    # calcular popula SinaisTecnicos.volume de forma aditiva quando há coluna Volume.
+    cfg = _cfg_ind()
+    sinais = indicators.calcular(_frame_ohlcv(np.full(60, 100.0)), cfg)
+    assert sinais.volume is not None
+    assert sinais.volume.volume_mm is not None
+
+
+def test_calcular_volume_degrada_sem_coluna():
+    # Frame OHLC sem Volume (os 191 goldens) → volume.volume_mm None, sem exceção.
+    cfg = _cfg_ind()
+    sinais = indicators.calcular(_frame_ohlc_longo(), cfg)
+    assert sinais.volume is not None
+    assert sinais.volume.volume_mm is None
+    assert sinais.volume.rompimento_com_volume is False
