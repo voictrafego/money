@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: verifying
+status: ready_to_plan
 stopped_at: Completed 14-03-PLAN.md (detector OCO/OCO invertido + neckline inclinada por posição + gate no-repaint; 266 testes verdes)
 last_updated: "2026-06-29T23:22:13.838Z"
 last_activity: 2026-06-29
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 11
   completed_plans: 11
-  percent: 100
+  percent: 80
 ---
 
 # Project State
@@ -25,16 +25,16 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 
 ## Current Position
 
-Phase: 14 (Padrões Gráficos + Checklist de Sinais) — EXECUTING
-Plan: 5 of 5
-Status: Phase complete — ready for verification
+Phase: 15
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-06-29
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 28 (v1.0 + v1.1 + v1.2) + v1.3 (Fases 9–11)
+- Total plans completed: 33 (v1.0 + v1.1 + v1.2) + v1.3 (Fases 9–11)
 - Average duration: — min
 - Total execution time: — hours
 
@@ -53,6 +53,7 @@ Last activity: 2026-06-29
 | 09 | 3 | - | - |
 | 10 | 3 | - | - |
 | 11 | 2 | - | - |
+| 14 | 5 | - | - |
 
 **Recent Trend:**
 
