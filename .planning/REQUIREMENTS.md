@@ -38,11 +38,11 @@
 
 - [x] **RR-01**: A página calcula e exibe a **relação Risco:Retorno** de entrada/stop/alvo como razão ("1 : 2,5"), com **degradação para "indisponível"** quando o risco é zero/indefinido (sem infinito).
 - [x] **VOL-01**: A engine adiciona a família **Volume** (média móvel de volume + flag "rompimento com volume acima da média") como confirmação, de forma aditiva ao contrato `SinaisTecnicos`.
-- [ ] **SIG-01**: A página exibe um **checklist de sinais técnicos disparados** (rompimento, cruzamento de MM, RSI/MACD, padrão, volume) com status **liga/desliga**, tornando explícito *por que* o setup existe.
+- [x] **SIG-01**: A página exibe um **checklist de sinais técnicos disparados** (rompimento, cruzamento de MM, RSI/MACD, padrão, volume) com status **liga/desliga**, tornando explícito *por que* o setup existe.
 
 ### Padrões & Score (PAT / SCORE)
 
-- [ ] **PAT-01**: A engine detecta **duplo topo/fundo + OCO (ombro-cabeça-ombro)** sobre pivôs, com rótulo **"em formação" vs "confirmado"** (exige rompimento + volume) e **alvo measured-move** — escopo MVP honesto (triângulos/bandeiras ficam fora do v1.4).
+- [x] **PAT-01**: A engine detecta **duplo topo/fundo + OCO (ombro-cabeça-ombro)** sobre pivôs, com rótulo **"em formação" vs "confirmado"** (exige rompimento + volume) e **alvo measured-move** — escopo MVP honesto (triângulos/bandeiras ficam fora do v1.4).
 - [ ] **SCORE-01**: A página exibe um **score ponderado explicável** (decomposição visível peso a peso: tendência domina) + **grade qualitativa**, com **R:R como gate/modulador**; pesos parametrizados no `config.yaml`.
 
 ### Gráfico (CHART)
@@ -87,8 +87,8 @@
 | LEVEL-04 | Phase 13 | Done |
 | RR-01 | Phase 13 | Done |
 | VOL-01 | Phase 13 | Complete |
-| PAT-01 | Phase 14 | Pending |
-| SIG-01 | Phase 14 | Pending |
+| PAT-01 | Phase 14 | Complete |
+| SIG-01 | Phase 14 | Complete |
 | SCORE-01 | Phase 15 | Pending |
 | SWING-01 | Phase 16 | Pending |
 | SWING-02 | Phase 16 | Pending |

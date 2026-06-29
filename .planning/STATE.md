@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
 status: executing
-stopped_at: Completed 13-04-PLAN.md (Phase 13 complete, 4/4 plans; 251 testes verdes)
-last_updated: "2026-06-29T22:37:35.178Z"
-last_activity: 2026-06-29 -- Phase 14 planning complete
+stopped_at: Completed 14-01-PLAN.md (contrato aditivo + flag volume_acima_mm; 255 testes verdes)
+last_updated: "2026-06-29T22:46:51.132Z"
+last_activity: 2026-06-29 -- Phase 14 plano 01 concluído
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 11
-  completed_plans: 6
-  percent: 55
+  completed_plans: 7
+  percent: 64
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-29)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação. No v1.4, a página de swing **EXIBE** sinais técnicos fiéis a Murphy e **NUNCA recomenda**.
-**Current focus:** Phase 13 — piv-s-contexto-de-tend-ncia-e-n-veis
+**Current focus:** Phase 14 — Padrões Gráficos + Checklist de Sinais
 
 ## Current Position
 
-Phase: 13 (piv-s-contexto-de-tend-ncia-e-n-veis) — COMPLETE (4/4 plans)
-Plan: 4 of 4 — done
+Phase: 14 (Padrões Gráficos + Checklist de Sinais) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-06-29 -- Phase 14 planning complete
+Last activity: 2026-06-29
 
 ## Performance Metrics
 
@@ -64,6 +64,7 @@ Last activity: 2026-06-29 -- Phase 14 planning complete
 | Phase 13 P02 | 10min | 2 tasks | 2 files |
 | Phase 13 P03 | ~9min | 2 tasks | 3 files |
 | Phase 13 P04 | ~11min | 2 tasks | 2 files |
+| Phase 14 P01 | ~8min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - [Phase 13]: Dow no diário via sequência de pivôs (HH/HL) + desempate adx_wilder(>=20)/regressao_trailing(zona morta 5%/ano) → lateral (D-05); semanal por resample W-FRI do próprio frame (D-04, sem rede); conflito multi-TF é rótulo aditivo que modula, nunca bloqueia (D-06)
 - [Phase 13]: S/R como ZONAS (low,high) por cluster single-linkage de pivôs (gap < cluster_k×ATR) + banda mínima 0.5×k×ATR → nunca pontos (D-10); Donchian 55 como faixa externa; param OPCIONAL ohlc_nominal em calcular rota famílias de PREÇO (pivôs+níveis) pelo nominal (D-02); família Volume (MM + flag rompimento na barra fechada iloc[-2], D-11) aditiva ao SinaisTecnicos
 - [Phase 13]: Fibonacci ANCORADO no último impulso confirmado (par de pivôs coerente com dow_diario: alta=fundo→topo, baixa=topo→fundo) — retração entrada 38,2/50/61,8% + extensão alvo 161,8%, no-repaint, pivos_ancora auditável (D-07); stop = mais conservador entre swing estrutural e ATR×m (min em alta / max em baixa, D-08); R:R "1 : x,y" via np.divide sob np.errstate → "indisponivel" se risco≤0/NaN/inf, NUNCA infinito (D-09)
+- [Phase ?]: [Phase 14]: contrato aditivo de padrões (PadraoGrafico/Padroes/Sinal/Checklist) + flag bidirecional volume_acima_mm (barra fechada, agnóstica de direção, Open Q2); detectores em core/indicators.py (OQ1); Padroes.lista é lista (OQ3)
 
 ### Pending Todos
 
@@ -125,8 +127,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-29T21:30:00.000Z
-Stopped at: Completed 13-04-PLAN.md (Phase 13 complete, 4/4 plans; 251 testes verdes)
+Last session: 2026-06-29T22:46:50.000Z
+Stopped at: Completed 14-01-PLAN.md (contrato aditivo padrões + flag volume_acima_mm; 255 testes verdes)
 Resume file: None
 
 ## Operator Next Steps
