@@ -718,3 +718,104 @@ def test_atr_exposto_em_forca_adx_intacto():
 
     nulo = indicators.calcular(None, cfg)
     assert isinstance(nulo.forca.atr, pd.Series)
+
+
+# --------------------------------------------------------------------------- #
+# Zonas de Suporte/Resistência por cluster de pivôs (LEVEL-01, D-10) + ohlc_nominal (D-02)
+# --------------------------------------------------------------------------- #
+def test_config_cluster_k():
+    # O config.yaml shipado expõe o k da largura da zona S/R (= k×ATR — D-10).
+    cfg = _cfg_ind()
+    assert cfg["indicadores"]["cluster_k"] == 1.0
+
+
+def _pivos_manual(precos_topo, precos_fundo, n_barras: int = 6) -> "indicators.Pivos":
+    """Constrói um Pivos determinístico com preços de pivô conhecidos para o clustering."""
+    idx = pd.date_range("2021-01-01", periods=n_barras, freq="B")
+    ph = pd.Series(np.nan, index=idx)
+    pl = pd.Series(np.nan, index=idx)
+    for i, p in enumerate(precos_topo):
+        ph.iloc[i] = p
+    for j, p in enumerate(precos_fundo):
+        pl.iloc[len(precos_topo) + j] = p
+    topos = ph.dropna()
+    fundos = pl.dropna()
+    return indicators.Pivos(
+        pivot_high=ph, pivot_low=pl,
+        ultimo_topo=float(topos.iloc[-1]) if len(topos) else None,
+        ultimo_fundo=float(fundos.iloc[-1]) if len(fundos) else None,
+        n=2,
+    )
+
+
+def test_niveis_sr_cluster_zonas():
+    # Pivôs próximos (gap < k×ATR) fundem numa ÚNICA zona (low,high) com low<high (faixa,
+    # não ponto); pivôs distantes geram zonas separadas. Suportes abaixo, resistências acima
+    # do close da barra FECHADA (iloc[-2], D-04 herdado).
+    cfg = _cfg_ind()
+    idx = pd.date_range("2021-01-01", periods=6, freq="B")
+    close = pd.Series([104.0, 104.0, 104.0, 104.0, 105.0, 106.0], index=idx)  # iloc[-2]=105
+    ohlc = pd.DataFrame(
+        {"Open": close, "High": close + 0.5, "Low": close - 0.5, "Close": close}
+    )
+    # k×ATR = 1.0×1.0 = 1.0: 100.0 e 100.8 (gap 0.8 < 1.0) fundem; 110.0 (gap 9.2) separa.
+    pivos = _pivos_manual(precos_topo=[110.0], precos_fundo=[100.0, 100.8])
+    atr = pd.Series([np.nan] * 5 + [1.0], index=idx)
+
+    niveis = indicators._niveis_sr(pivos, ohlc, atr, None, None, cfg)
+    assert len(niveis.suportes) == 1            # 100.0 e 100.8 fundidos numa zona
+    assert len(niveis.resistencias) == 1        # 110.0 separado
+    low, high = niveis.suportes[0]
+    assert low < high                           # faixa, NUNCA ponto
+    assert high <= 105.0                        # suporte abaixo do close fechado
+    rlow, rhigh = niveis.resistencias[0]
+    assert rlow < rhigh
+    assert rlow >= 105.0                         # resistência acima do close fechado
+
+
+def test_niveis_donchian_externo():
+    # As referências Donchian externas batem a ponta de donchian_*_55 (D-10).
+    cfg = _cfg_ind()
+    sinais = indicators.calcular(_frame_ohlc_longo(), cfg)
+    assert sinais.niveis is not None
+    c = sinais.canais
+    assert sinais.niveis.donchian_externo_sup == pytest.approx(
+        c.donchian_sup_55.dropna().iloc[-1], abs=1e-9
+    )
+    assert sinais.niveis.donchian_externo_inf == pytest.approx(
+        c.donchian_inf_55.dropna().iloc[-1], abs=1e-9
+    )
+
+
+def test_niveis_ohlc_nominal_aditivo():
+    # Sem ohlc_nominal: pivôs idênticos ao comportamento anterior. Com ohlc_nominal diferente
+    # (preços dobrados): zonas/pivôs de PREÇO mudam (D-02), sem tocar indicadores.
+    cfg = _cfg_ind()
+    df = _frame_pivos()
+    base = indicators.calcular(df, cfg)
+    assert base.niveis is not None
+    assert base.niveis.suportes or base.niveis.resistencias    # há zonas
+
+    nominal = df * 2.0                                          # frame nominal dobrado
+    com_nominal = indicators.calcular(df, cfg, ohlc_nominal=nominal)
+    assert com_nominal.pivos.ultimo_topo == pytest.approx(base.pivos.ultimo_topo * 2.0)
+    # indicadores (close split-adjusted) inalterados — o ATR continua o do df
+    np.testing.assert_allclose(
+        com_nominal.forca.atr.to_numpy(float), base.forca.atr.to_numpy(float),
+        equal_nan=True, atol=1e-9,
+    )
+
+
+def test_niveis_degrada_sem_pivos():
+    # Frame curto / sem pivôs / ATR NaN → zonas vazias e referências None, sem exceção.
+    cfg = _cfg_ind()
+    close = np.linspace(10.0, 12.0, 6)
+    df = _frame_ohlc(close).assign(Open=close)
+    sinais = indicators.calcular(df, cfg)
+    assert sinais.niveis is not None
+    assert sinais.niveis.suportes == []
+    assert sinais.niveis.resistencias == []
+
+    nulo = indicators.calcular(None, cfg)
+    assert nulo.niveis is not None
+    assert nulo.niveis.suportes == [] and nulo.niveis.resistencias == []
