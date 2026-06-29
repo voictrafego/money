@@ -86,7 +86,7 @@ nem na regra `app.py` read-only.
   5. 191 goldens verdes + novos goldens da fase; triângulos/bandeiras ficam explicitamente **fora** do MVP da v1.4.
 **Plans**: 5 plans
 - [x] 14-01-PLAN.md — Contrato: bloco config `padroes:` + dataclasses PadraoGrafico/Padroes/Sinal/Checklist + flag bidirecional `volume_acima_mm` (PAT-01, SIG-01)
-- [ ] 14-02-PLAN.md — Detector duplo topo/fundo (neckline horizontal) + measured-move + no-repaint (PAT-01)
+- [x] 14-02-PLAN.md — Detector duplo topo/fundo (neckline horizontal) + measured-move + no-repaint (PAT-01)
 - [ ] 14-03-PLAN.md — Detector OCO/OCO invertido (neckline inclinada por posição) + no-repaint (PAT-01)
 - [ ] 14-04-PLAN.md — Checklist de sinais (`_checklist`) + wiring em `calcular` + integração/degradação (SIG-01, PAT-01)
 - [ ] 14-05-PLAN.md — Calibração multi-ticker dos limiares (checkpoint humano anti-pareidolia) (PAT-01)
@@ -125,7 +125,7 @@ nem na regra `app.py` read-only.
 |-------|-----------|----------------|--------|-----------|
 | 12. Ingestão Intraday + Timeframe | v1.4 | 2/2 | Complete   | 2026-06-29 |
 | 13. Pivôs, Contexto e Níveis | v1.4 | 3/4 | In Progress|  |
-| 14. Padrões Gráficos + Checklist | v1.4 | 1/5 | In Progress|  |
+| 14. Padrões Gráficos + Checklist | v1.4 | 2/5 | In Progress|  |
 | 15. Montagem do Setup + Score | v1.4 | 0/TBD | Not started | - |
 | 16. Página Streamlit + Gráfico | v1.4 | 0/TBD | Not started | - |
 
