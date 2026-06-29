@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
 status: executing
-stopped_at: Completed 14-02-PLAN.md (detector duplo topo/fundo + gate no-repaint; 260 testes verdes)
-last_updated: "2026-06-29T22:56:18.299Z"
-last_activity: 2026-06-29 -- Phase 14 plano 02 concluído
+stopped_at: Completed 14-03-PLAN.md (detector OCO/OCO invertido + neckline inclinada por posição + gate no-repaint; 266 testes verdes)
+last_updated: "2026-06-29T23:08:14.682Z"
+last_activity: 2026-06-29
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 11
-  completed_plans: 8
-  percent: 73
+  completed_plans: 9
+  percent: 82
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 ## Current Position
 
 Phase: 14 (Padrões Gráficos + Checklist de Sinais) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-06-29
 
@@ -66,6 +66,7 @@ Last activity: 2026-06-29
 | Phase 13 P04 | ~11min | 2 tasks | 2 files |
 | Phase 14 P01 | ~8min | 2 tasks | 3 files |
 | Phase 14 P02 | ~10min | 2 tasks | 2 files |
+| Phase 14 P03 | ~12min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - [Phase 13]: Fibonacci ANCORADO no último impulso confirmado (par de pivôs coerente com dow_diario: alta=fundo→topo, baixa=topo→fundo) — retração entrada 38,2/50/61,8% + extensão alvo 161,8%, no-repaint, pivos_ancora auditável (D-07); stop = mais conservador entre swing estrutural e ATR×m (min em alta / max em baixa, D-08); R:R "1 : x,y" via np.divide sob np.errstate → "indisponivel" se risco≤0/NaN/inf, NUNCA infinito (D-09)
 - [Phase ?]: [Phase 14]: contrato aditivo de padrões (PadraoGrafico/Padroes/Sinal/Checklist) + flag bidirecional volume_acima_mm (barra fechada, agnóstica de direção, Open Q2); detectores em core/indicators.py (OQ1); Padroes.lista é lista (OQ3)
 - [Phase 14]: _padroes detecta duplo topo/fundo sobre pivôs confirmados (.dropna()) com neckline horizontal (vale.min/pico.max), estado em_formacao/confirmado (rompimento na barra fechada iloc[-2] + volume_acima_mm config-driven) e measured-move (altura projetada além da neckline); no-repaint provado por truncação; wiring em calcular deferido ao checklist (14-04)
+- [Phase ?]: Neckline da OCO por POSIÇÃO inteira da barra (get_loc), nunca timestamp em ns (Pitfall 3 / T-14-06); guard de reta degenerada (pos_f2==pos_f1)
 
 ### Pending Todos
 
@@ -129,8 +131,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-29T22:56:18.295Z
-Stopped at: Completed 14-02-PLAN.md (detector duplo topo/fundo + gate no-repaint; 260 testes verdes)
+Last session: 2026-06-29T23:08:01.873Z
+Stopped at: Completed 14-03-PLAN.md (detector OCO/OCO invertido + neckline inclinada por posição + gate no-repaint; 266 testes verdes)
 Resume file: None
 
 ## Operator Next Steps
