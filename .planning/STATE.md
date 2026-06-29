@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
 status: executing
-stopped_at: Phase 13 complete (4/4 plans)
-last_updated: "2026-06-29T21:30:00.000Z"
-last_activity: 2026-06-29
+stopped_at: Completed 13-04-PLAN.md (Phase 13 complete, 4/4 plans; 251 testes verdes)
+last_updated: "2026-06-29T22:37:35.178Z"
+last_activity: 2026-06-29 -- Phase 14 planning complete
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 6
+  total_plans: 11
   completed_plans: 6
-  percent: 100
+  percent: 55
 ---
 
 # Project State
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 
 Phase: 13 (piv-s-contexto-de-tend-ncia-e-n-veis) — COMPLETE (4/4 plans)
 Plan: 4 of 4 — done
-Status: Phase 13 concluída; próxima é a Fase 14 (Padrões Gráficos + Checklist)
-Last activity: 2026-06-29
+Status: Ready to execute
+Last activity: 2026-06-29 -- Phase 14 planning complete
 
 ## Performance Metrics
 

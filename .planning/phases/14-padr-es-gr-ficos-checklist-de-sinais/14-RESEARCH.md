@@ -400,9 +400,12 @@ def _frame_duplo_topo():
 > Todos os limiares (A1–A4) são **LOW-MEDIUM confidence** e são o ponto central a discutir/calibrar
 > antes de cravar. A validação multi-ticker faz parte do aceite (Success Criterion 3).
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Onde hospedar os detectores: `indicators.py` ou novo `core/padroes.py`?**
+> Resolvidas no planejamento da Fase 14 (commit `f35c988`). OQ1–OQ3 fixadas no `<objective>` do
+> plano 14-01; OQ4 deferida explicitamente ao checkpoint de calibração multi-ticker do plano 14-05.
+
+1. **RESOLVED — hospedado em `indicators.py`.** Onde hospedar os detectores: `indicators.py` ou novo `core/padroes.py`?
    - O que sabemos: Fase 13 pôs pivôs/níveis/volume DENTRO de `indicators.py`; o marco fala de
      `core/setups.py` (mas isso era a montagem do `SetupSwing`, que é da Fase 15 / `report/setup.py`).
    - O que é incerto: `indicators.py` já tem 972 linhas; um `core/padroes.py` importado por `calcular`
@@ -410,18 +413,18 @@ def _frame_duplo_topo():
    - Recomendação: manter em `indicators.py` por consistência e single-assembly-point (`calcular`), OU
      extrair p/ `core/padroes.py` SE o planner preferir — ambos são aditivos. Decidir no discuss/plan.
 
-2. **Flag de volume bidirecional para confirmar rompimentos de BAIXA (duplo topo/OCO).**
+2. **RESOLVED — `volume_acima_mm: bool` aditivo em `Volume`.** Flag de volume bidirecional para confirmar rompimentos de BAIXA (duplo topo/OCO).
    - O que sabemos: `Volume.rompimento_com_volume` só cobre rompimento da Donchian SUPERIOR (alta).
    - O que é incerto: generalizar `_volume` (aditivo, novo campo direcional) vs. helper local de
      confirmação no detector que lê `volume_mm` + `volume` da barra fechada.
    - Recomendação: expor `volume_acima_mm: bool` (barra fechada, agnóstico de direção) aditivamente em
      `Volume`, e o detector decide direção pela neckline. Não criar segunda MM.
 
-3. **Múltiplos padrões simultâneos: lista ou "o mais recente/relevante"?**
+3. **RESOLVED — retornar lista (`Padroes.lista`).** Múltiplos padrões simultâneos: lista ou "o mais recente/relevante"?
    - Recomendação: retornar **lista** (`Padroes.lista`), deixando o ranqueamento/seleção p/ a Fase 15
      (score) e a renderização p/ a Fase 16. Mantém a engine descritiva, não prescritiva.
 
-4. **Tolerância temporal entre os pivôs do padrão (largura mín/máx do padrão em barras).**
+4. **RESOLVED — deferida à calibração do plano 14-05.** Tolerância temporal entre os pivôs do padrão (largura mín/máx do padrão em barras).
    - Não há param sugerido ainda; talvez necessário p/ evitar casar topos longe demais. Avaliar se
      `lookback_pivos` já basta ou se cabe um `max_largura_barras`. Decidir na calibração multi-ticker.
 
