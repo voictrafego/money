@@ -515,6 +515,77 @@ def test_calcular_pivos():
 # --------------------------------------------------------------------------- #
 # ATR exposto a partir do TR da cadeia do ADX (D-08) — insumo de LEVEL-01/03
 # --------------------------------------------------------------------------- #
+# --------------------------------------------------------------------------- #
+# Contexto de tendência: Dow no diário (TREND-01, D-05) — sequência de pivôs + desempate
+# --------------------------------------------------------------------------- #
+def _frame_trend(close) -> pd.DataFrame:
+    """Frame OHLC determinístico (4 colunas) para os goldens de Dow/alinhamento."""
+    close = np.asarray(close, dtype=float)
+    idx = pd.date_range("2021-01-01", periods=len(close), freq="B")
+    return pd.DataFrame(
+        {"Open": close, "High": close + 0.5, "Low": close - 0.5, "Close": close}, index=idx
+    )
+
+
+def test_dow_alta_hh_hl():
+    # Seno com drift de alta → topos e fundos confirmados CRESCENTES (HH+HL) → "alta".
+    cfg = _cfg_ind()
+    t = np.arange(120)
+    df = _frame_trend(50.0 + 5.0 * np.sin(t / 6.0) + 0.15 * t)
+    pivos = indicators._pivos(df, cfg)
+    assert indicators._dow(pivos, df, cfg) == "alta"
+
+
+def test_dow_baixa_lh_ll():
+    # Seno com drift de baixa → topos e fundos DECRESCENTES (LH+LL) → "baixa".
+    cfg = _cfg_ind()
+    t = np.arange(120)
+    df = _frame_trend(50.0 + 5.0 * np.sin(t / 6.0) - 0.15 * t)
+    pivos = indicators._pivos(df, cfg)
+    assert indicators._dow(pivos, df, cfg) == "baixa"
+
+
+def test_dow_lateral_ambiguo_adx_fraco():
+    # Série ruidosa de lado: sequência de pivôs ambígua + ADX fraco (<20) → "lateral".
+    cfg = _cfg_ind()
+    rng = np.random.default_rng(7)
+    df = _frame_trend(100.0 + rng.normal(0, 1.0, 240))
+    pivos = indicators._pivos(df, cfg)
+    assert indicators._dow(pivos, df, cfg) == "lateral"
+
+
+def test_dow_desempate_por_slope_adx():
+    # Rampa linear: 0 pivôs confirmados, mas ADX forte + slope claramente +/- → desempate
+    # reusa MM/ADX existentes (D-05) e resolve direção.
+    cfg = _cfg_ind()
+    up = _frame_trend(np.linspace(10.0, 40.0, 120))
+    dn = _frame_trend(np.linspace(40.0, 10.0, 120))
+    assert indicators._dow(indicators._pivos(up, cfg), up, cfg) == "alta"
+    assert indicators._dow(indicators._pivos(dn, cfg), dn, cfg) == "baixa"
+
+
+def test_dow_frame_curto_indisponivel():
+    # Frame curto: sem pivôs e ADX NaN → "indisponivel" (degradação graciosa).
+    cfg = _cfg_ind()
+    df = _frame_trend(np.linspace(10.0, 12.0, 8))
+    pivos = indicators._pivos(df, cfg)
+    assert indicators._dow(pivos, df, cfg) == "indisponivel"
+
+
+def test_dow_deterministico():
+    # Mesma entrada → mesmo rótulo (determinístico).
+    cfg = _cfg_ind()
+    t = np.arange(120)
+    df = _frame_trend(50.0 + 5.0 * np.sin(t / 6.0) + 0.15 * t)
+    pivos = indicators._pivos(df, cfg)
+    r1 = indicators._dow(pivos, df, cfg)
+    r2 = indicators._dow(pivos, df, cfg)
+    assert r1 == r2 == "alta"
+
+
+# --------------------------------------------------------------------------- #
+# ATR exposto a partir do TR da cadeia do ADX (D-08) — insumo de LEVEL-01/03
+# --------------------------------------------------------------------------- #
 def test_config_stop_atr_m():
     # O config.yaml shipado expõe o multiplicador do ATR no stop técnico (D-08, default 1.5).
     cfg = _cfg_ind()
