@@ -890,6 +890,12 @@ def _contexto(ohlc: pd.DataFrame, cfg: dict) -> ContextoTendencia:
         semanal = ohlc.resample("W-FRI").agg(
             {"Open": "first", "High": "max", "Low": "min", "Close": "last"}
         ).dropna()
+        # WR-02: a SEMANA corrente (ainda aberta) repinta intra-semana — seu candle muda a
+        # cada novo dia. Se o period_end (sexta) da última barra semanal for FUTURO em
+        # relação ao último dia diário, a semana não fechou → descarta-a (não-confirmada),
+        # coerente com a invariante iloc[-2] da fase.
+        if len(semanal) and semanal.index[-1].normalize() > ohlc.index[-1].normalize():
+            semanal = semanal.iloc[:-1]
         # WR-01: o slope é anualizado por ~52 barras/ano no semanal (não 252 do diário),
         # senão sairia ~4,85× inflado e quase toda inclinação viraria "direcional".
         dow_semanal = _dow(_pivos(semanal, cfg), semanal, cfg, periodos_ano=52.0)
