@@ -4,14 +4,14 @@ milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
 status: executing
 stopped_at: Completed 14-03-PLAN.md (detector OCO/OCO invertido + neckline inclinada por posição + gate no-repaint; 266 testes verdes)
-last_updated: "2026-06-29T23:08:14.682Z"
+last_updated: "2026-06-29T23:16:09.339Z"
 last_activity: 2026-06-29
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 11
-  completed_plans: 9
-  percent: 82
+  completed_plans: 10
+  percent: 91
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 ## Current Position
 
 Phase: 14 (Padrões Gráficos + Checklist de Sinais) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-06-29
 
@@ -67,6 +67,7 @@ Last activity: 2026-06-29
 | Phase 14 P01 | ~8min | 2 tasks | 3 files |
 | Phase 14 P02 | ~10min | 2 tasks | 2 files |
 | Phase 14 P03 | ~12min | 2 tasks | 2 files |
+| Phase 14 P04 | ~8min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - [Phase ?]: [Phase 14]: contrato aditivo de padrões (PadraoGrafico/Padroes/Sinal/Checklist) + flag bidirecional volume_acima_mm (barra fechada, agnóstica de direção, Open Q2); detectores em core/indicators.py (OQ1); Padroes.lista é lista (OQ3)
 - [Phase 14]: _padroes detecta duplo topo/fundo sobre pivôs confirmados (.dropna()) com neckline horizontal (vale.min/pico.max), estado em_formacao/confirmado (rompimento na barra fechada iloc[-2] + volume_acima_mm config-driven) e measured-move (altura projetada além da neckline); no-repaint provado por truncação; wiring em calcular deferido ao checklist (14-04)
 - [Phase ?]: Neckline da OCO por POSIÇÃO inteira da barra (get_loc), nunca timestamp em ns (Pitfall 3 / T-14-06); guard de reta degenerada (pos_f2==pos_f1)
+- [Phase 14]: _checklist agrega 6 sinais liga/desliga READ-ONLY (lê rótulos já computados, zero recálculo); calcular() popula padroes/checklist em SinaisTecnicos ponta-a-ponta; firewall de copy D-01 e degradação graciosa verdes (271 testes)
 
 ### Pending Todos
 
@@ -131,7 +133,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-29T23:08:01.873Z
+Last session: 2026-06-29T23:15:46.003Z
 Stopped at: Completed 14-03-PLAN.md (detector OCO/OCO invertido + neckline inclinada por posição + gate no-repaint; 266 testes verdes)
 Resume file: None
 
