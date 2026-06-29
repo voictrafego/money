@@ -71,8 +71,25 @@
 
 ## Traceability
 
-<!-- Preenchido pelo roadmapper: REQ-ID → Fase -->
+<!-- REQ-ID → Fase (preenchido pelo roadmapper 2026-06-29). Cobertura: 18/18. -->
 
-| REQ-ID | Fase |
-|--------|------|
-| _(a mapear pelo roadmapper)_ | — |
+| REQ-ID | Fase | Status |
+|--------|------|--------|
+| DATA-01 | Phase 12 | Pending |
+| DATA-02 | Phase 12 | Pending |
+| DATA-03 | Phase 12 | Pending |
+| PIVOT-01 | Phase 13 | Pending |
+| TREND-01 | Phase 13 | Pending |
+| TREND-02 | Phase 13 | Pending |
+| LEVEL-01 | Phase 13 | Pending |
+| LEVEL-02 | Phase 13 | Pending |
+| LEVEL-03 | Phase 13 | Pending |
+| LEVEL-04 | Phase 13 | Pending |
+| RR-01 | Phase 13 | Pending |
+| VOL-01 | Phase 13 | Pending |
+| PAT-01 | Phase 14 | Pending |
+| SIG-01 | Phase 14 | Pending |
+| SCORE-01 | Phase 15 | Pending |
+| SWING-01 | Phase 16 | Pending |
+| SWING-02 | Phase 16 | Pending |
+| CHART-01 | Phase 16 | Pending |
