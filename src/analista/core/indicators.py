@@ -121,6 +121,9 @@ class Volume:
     # Aditiva (default None/False) — nenhum campo existente de SinaisTecnicos muda.
     volume_mm: pd.Series = None                         # MM de volume (None se sem coluna Volume)
     rompimento_com_volume: bool = False                 # rompimento Donchian sup + volume > MM
+    # Flag bidirecional (Fase 14, Open Q2): volume da barra fechada > MM, AGNÓSTICO de direção.
+    # Confirma rompimentos de BAIXA (duplo topo/OCO) — o detector decide a direção pela neckline.
+    volume_acima_mm: bool = False                       # volume[iloc-2] > volume_mm[iloc-2]
 
 
 @dataclass
@@ -889,6 +892,7 @@ def _volume(ohlc: pd.DataFrame, cfg: dict) -> Volume:
     volume_mm = vol.rolling(janela, min_periods=janela).mean()
 
     flag = False
+    flag_vol = False
     if len(ohlc) >= 2:
         j_curto = ind["donchian"][0]
         donchian_sup = ohlc["High"].rolling(j_curto, min_periods=j_curto).max().shift(1)
@@ -896,10 +900,14 @@ def _volume(ohlc: pd.DataFrame, cfg: dict) -> Volume:
         vmm_f = volume_mm.iloc[-2]
         vol_f = vol.iloc[-2]
         close_f = ohlc["Close"].iloc[-2]
+        # Parte AGNÓSTICA de direção (Open Q2): só compara volume fechado vs MM fechada.
+        # Mesmo guard pd.isna; NÃO cria segunda MM (reusa vmm_f/vol_f já computados).
+        if not (pd.isna(vmm_f) or pd.isna(vol_f)):
+            flag_vol = bool(vol_f > vmm_f)
         if not (pd.isna(dsup_f) or pd.isna(vmm_f) or pd.isna(vol_f)):
             flag = bool(close_f > dsup_f and vol_f > vmm_f)
 
-    return Volume(volume_mm=volume_mm, rompimento_com_volume=flag)
+    return Volume(volume_mm=volume_mm, rompimento_com_volume=flag, volume_acima_mm=flag_vol)
 
 
 # --------------------------------------------------------------------------- #
