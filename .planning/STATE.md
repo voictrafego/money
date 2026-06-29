@@ -4,14 +4,14 @@ milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
 status: executing
 stopped_at: Phase 13 context gathered
-last_updated: "2026-06-29T20:12:38.967Z"
+last_updated: "2026-06-29T20:21:58.735Z"
 last_activity: 2026-06-29
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
-  percent: 67
+  completed_plans: 5
+  percent: 83
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 ## Current Position
 
 Phase: 13 (piv-s-contexto-de-tend-ncia-e-n-veis) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-06-29
 
@@ -62,6 +62,7 @@ Last activity: 2026-06-29
 *Updated after each plan completion*
 | Phase 12 P02 | ~4 min | 1 tasks | 1 files |
 | Phase 13 P02 | 10min | 2 tasks | 2 files |
+| Phase 13 P03 | ~9min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - **MVP de padrões honesto** (Phase 14): só duplo topo/fundo + OCO; triângulos/bandeiras ficam fora do v1.4.
 - [Phase 12]: Cache intraday em app.py: frame_intraday(ticker,timeframe,nonce) TTL 300s; nonce so na chave (invalidacao targetada por par), zero clear global (D-08)
 - [Phase 13]: Dow no diário via sequência de pivôs (HH/HL) + desempate adx_wilder(>=20)/regressao_trailing(zona morta 5%/ano) → lateral (D-05); semanal por resample W-FRI do próprio frame (D-04, sem rede); conflito multi-TF é rótulo aditivo que modula, nunca bloqueia (D-06)
+- [Phase 13]: S/R como ZONAS (low,high) por cluster single-linkage de pivôs (gap < cluster_k×ATR) + banda mínima 0.5×k×ATR → nunca pontos (D-10); Donchian 55 como faixa externa; param OPCIONAL ohlc_nominal em calcular rota famílias de PREÇO (pivôs+níveis) pelo nominal (D-02); família Volume (MM + flag rompimento na barra fechada iloc[-2], D-11) aditiva ao SinaisTecnicos
 
 ### Pending Todos
 
@@ -121,7 +123,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-29T20:11:28.187Z
+Last session: 2026-06-29T20:21:58.731Z
 Stopped at: Phase 13 context gathered
 Resume file: None
 
