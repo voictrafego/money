@@ -1,6 +1,8 @@
 """Trava a matemática dos indicadores (Wilder vs TradingView, no-repaint, tendência sobre SMA)."""
 
+import re
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
@@ -1445,3 +1447,144 @@ def test_padroes_no_repaint_truncacao_oco():
     # monotonicidade: uma vez "confirmado", permanece (sem flip de volta = sem repaint):
     primeiro_conf = next(i for i, e in enumerate(estados) if e == "confirmado")
     assert all(e == "confirmado" for e in estados[primeiro_conf:])
+
+
+# --------------------------------------------------------------------------- #
+# Checklist de sinais (SIG-01) — agregação read-only liga/desliga
+# --------------------------------------------------------------------------- #
+def _sinal(checklist: "indicators.Checklist", nome: str) -> "indicators.Sinal":
+    """Retorna o Sinal de nome dado no checklist (ou None)."""
+    for s in checklist.sinais:
+        if s.nome == nome:
+            return s
+    return None
+
+
+def _familias_stub(
+    rompimento_donchian="nenhum",
+    cruzamento="nenhum",
+    nivel_rsi="neutro",
+    cruzamento_macd="nenhum",
+    rompimento_com_volume=False,
+    padroes=None,
+):
+    """Stubs duck-typed (só os rótulos que _checklist LÊ — zero recálculo)."""
+    tend = SimpleNamespace(cruzamento=cruzamento)
+    canais = SimpleNamespace(rompimento_donchian=rompimento_donchian)
+    mom = SimpleNamespace(nivel_rsi=nivel_rsi, cruzamento_macd=cruzamento_macd)
+    vol = SimpleNamespace(rompimento_com_volume=rompimento_com_volume)
+    padroes = padroes if padroes is not None else indicators.Padroes(lista=[])
+    return tend, canais, mom, vol, padroes
+
+
+def test_checklist_liga_desliga():
+    # Cada Sinal.ativo reflete o rótulo lido da família (read-only, zero recálculo).
+    # Tudo neutro → todos OFF.
+    off = indicators._checklist(*_familias_stub())
+    assert [s.nome for s in off.sinais] == [
+        "rompimento", "cruzamento_mm", "rsi", "macd", "padrao", "volume",
+    ]
+    assert all(s.ativo is False for s in off.sinais)
+    # rótulos que DISPARAM cada sinal:
+    on = indicators._checklist(*_familias_stub(
+        rompimento_donchian="nova_maxima",
+        cruzamento="golden_cross",
+        nivel_rsi="sobrecomprado",
+        cruzamento_macd="cruz_alta",
+        rompimento_com_volume=True,
+    ))
+    assert _sinal(on, "rompimento").ativo is True
+    assert _sinal(on, "cruzamento_mm").ativo is True
+    assert _sinal(on, "rsi").ativo is True
+    assert _sinal(on, "macd").ativo is True
+    assert _sinal(on, "volume").ativo is True
+    # "indisponivel" NUNCA conta como ativo (degradação):
+    indisp = indicators._checklist(*_familias_stub(
+        rompimento_donchian="indisponivel",
+        cruzamento="indisponivel",
+        nivel_rsi="indisponivel",
+        cruzamento_macd="indisponivel",
+    ))
+    assert all(
+        s.ativo is False for s in indisp.sinais if s.nome != "padrao"
+    )
+    # detalhe carrega o rótulo neutro já existente (não copy natural):
+    assert _sinal(on, "rompimento").detalhe == "nova_maxima"
+    assert _sinal(on, "cruzamento_mm").detalhe == "golden_cross"
+    assert _sinal(off, "volume").detalhe == "rompimento_com_volume"
+
+
+def test_checklist_padrao_confirmado_ativa():
+    # Padrão confirmado na lista → sinal "padrao" ON com detalhe "tipo:estado".
+    pad_conf = indicators.Padroes(lista=[indicators.PadraoGrafico(
+        tipo="duplo_topo", estado="confirmado", neckline=60.0, alvo=50.0,
+        altura=10.0, pivos_envolvidos={},
+    )])
+    ck = indicators._checklist(*_familias_stub(padroes=pad_conf))
+    assert _sinal(ck, "padrao").ativo is True
+    assert _sinal(ck, "padrao").detalhe == "duplo_topo:confirmado"
+    # Só "em_formacao" (nada confirmado) → sinal OFF, mas detalhe descreve o que existe.
+    pad_form = indicators.Padroes(lista=[indicators.PadraoGrafico(
+        tipo="oco", estado="em_formacao", neckline=60.0, alvo=50.0,
+        altura=10.0, pivos_envolvidos={},
+    )])
+    ck2 = indicators._checklist(*_familias_stub(padroes=pad_form))
+    assert _sinal(ck2, "padrao").ativo is False
+    assert _sinal(ck2, "padrao").detalhe == "oco:em_formacao"
+    # Lista vazia → OFF, detalhe neutro "nenhum" (não copy natural).
+    ck3 = indicators._checklist(*_familias_stub(padroes=indicators.Padroes(lista=[])))
+    assert _sinal(ck3, "padrao").ativo is False
+    assert _sinal(ck3, "padrao").detalhe == "nenhum"
+    # Guard de degradação: padroes None não levanta.
+    ck4 = indicators._checklist(*_familias_stub(padroes=None))
+    assert _sinal(ck4, "padrao").ativo is False
+
+
+def test_calcular_integra_padroes_checklist():
+    # calcular() popula padroes (Padroes) e checklist (6 sinais nomeados) — integração ponta-a-ponta.
+    cfg = _cfg_ind()
+    s = indicators.calcular(_frame_ohlc_longo(), cfg)
+    assert isinstance(s.padroes, indicators.Padroes)
+    assert isinstance(s.checklist, indicators.Checklist)
+    assert [x.nome for x in s.checklist.sinais] == [
+        "rompimento", "cruzamento_mm", "rsi", "macd", "padrao", "volume",
+    ]
+    # nenhum golden existente quebra: as 4 famílias seguem presentes.
+    for fam in ("tendencia", "canais", "forca", "momentum"):
+        assert getattr(s, fam) is not None
+
+
+def test_calcular_frame_curto_degrada():
+    # Frame curto: padroes.lista vazia e TODOS os sinais ativo=False, SEM exceção (T-14-09).
+    cfg = _cfg_ind()
+    df = _frame_ohlcv(np.linspace(50.0, 51.0, 5))     # 5 barras só
+    s = indicators.calcular(df, cfg)
+    assert s.padroes.lista == []
+    assert len(s.checklist.sinais) == 6
+    assert all(x.ativo is False for x in s.checklist.sinais)
+
+
+def test_checklist_sem_copy_natural():
+    # FIREWALL DE COPY (D-01): nenhum nome/detalhe contém linguagem imperativa/recomendatória.
+    cfg = _cfg_ind()
+    s = indicators.calcular(_frame_ohlc_longo(), cfg)
+    pad_conf = indicators.Padroes(lista=[indicators.PadraoGrafico(
+        tipo="duplo_fundo", estado="confirmado", neckline=60.0, alvo=70.0,
+        altura=10.0, pivos_envolvidos={},
+    )])
+    on = indicators._checklist(*_familias_stub(
+        rompimento_donchian="nova_maxima", cruzamento="golden_cross",
+        nivel_rsi="sobrecomprado", cruzamento_macd="cruz_alta",
+        rompimento_com_volume=True, padroes=pad_conf,
+    ))
+    # Termos imperativos/recomendatórios como PALAVRA (word boundary): rótulos neutros como
+    # "sobrecomprado"/"sobrevendido" são chaves estáveis e NÃO são copy (contêm o radical,
+    # mas não a palavra imperativa). O firewall barra a forma imperativa/recomendatória.
+    proibidos = ("compre", "venda", "comprar", "vender", "entre", "recomend", "sugiro", "indico")
+    for checklist in (s.checklist, on):
+        for sig in checklist.sinais:
+            texto = f"{sig.nome} {sig.detalhe}".lower()
+            for termo in proibidos:
+                assert re.search(rf"\b{termo}", texto) is None, (
+                    f"copy imperativo '{termo}' em '{texto}'"
+                )
