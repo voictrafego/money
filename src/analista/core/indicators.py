@@ -547,6 +547,49 @@ def _dow(pivos: "Pivos", ohlc: pd.DataFrame, cfg: dict) -> str:
 _COLUNAS_OHLC = ("Open", "High", "Low", "Close")
 
 
+def _contexto(ohlc: pd.DataFrame, cfg: dict) -> ContextoTendencia:
+    """Contexto de tendência: Dow no diário + alinhamento semanal→diário (TREND-01/02).
+
+    `dow_diario` = `_dow` sobre o frame recebido. O SEMANAL é derivado por resample W-FRI do
+    PRÓPRIO frame (D-04: sem nova chamada de rede, sem buscar o timeframe semanal do Yahoo) — idioma idêntico
+    ao de `report.py`, guardado por `DatetimeIndex` + colunas OHLC; sem isso o alinhamento
+    degrada para "indisponivel" sem exceção (mitiga T-13-04). Sobre o semanal recomputa
+    `_pivos`+`_dow` e rotula o alinhamento: ambos "alta" → "alinhado_alta"; ambos "baixa" →
+    "alinhado_baixa"; qualquer divergência (inclusive um lado "lateral") → "conflito"; lado
+    sem dado → "indisponivel".
+
+    D-06: o conflito é APENAS um rótulo aditivo — NUNCA zera, NUNCA levanta, NUNCA altera os
+    demais campos de SinaisTecnicos. Ele MODULA (penaliza) o score na Fase 15, jamais bloqueia
+    o setup aqui (mitiga T-13-05).
+    """
+    dow_diario = _dow(_pivos(ohlc, cfg), ohlc, cfg)
+
+    pode_semanal = (
+        ohlc is not None
+        and len(ohlc) > 0
+        and isinstance(ohlc.index, pd.DatetimeIndex)
+        and set(_COLUNAS_OHLC).issubset(ohlc.columns)
+    )
+    if pode_semanal:
+        semanal = ohlc.resample("W-FRI").agg(
+            {"Open": "first", "High": "max", "Low": "min", "Close": "last"}
+        ).dropna()
+        dow_semanal = _dow(_pivos(semanal, cfg), semanal, cfg)
+    else:
+        dow_semanal = "indisponivel"
+
+    if dow_diario == "indisponivel" or dow_semanal == "indisponivel":
+        alinhamento = "indisponivel"
+    elif dow_diario == "alta" and dow_semanal == "alta":
+        alinhamento = "alinhado_alta"
+    elif dow_diario == "baixa" and dow_semanal == "baixa":
+        alinhamento = "alinhado_baixa"
+    else:
+        alinhamento = "conflito"
+
+    return ContextoTendencia(dow_diario=dow_diario, alinhamento_mtf=alinhamento)
+
+
 def calcular(ohlc: "pd.DataFrame", cfg: dict) -> SinaisTecnicos:
     """Ponto de entrada único: devolve um `SinaisTecnicos` completo (4 famílias).
 
@@ -567,4 +610,5 @@ def calcular(ohlc: "pd.DataFrame", cfg: dict) -> SinaisTecnicos:
         momentum=_momentum(close, cfg),
         close=close,   # read-only: a MESMA close split-adjusted já usada (não recalcula)
         pivos=_pivos(ohlc, cfg),
+        contexto=_contexto(ohlc, cfg),
     )
