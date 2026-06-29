@@ -99,7 +99,8 @@ st.caption("Método do livro *O Investidor em Ações de Dividendos* (Orleans Ma
 
 modo = st.sidebar.radio(
     "O que você quer fazer?",
-    ["🔎 Analisar uma ação", "⛏️ Garimpar carteira (BSD)", "📊 Ranking por múltiplos"],
+    ["🔎 Analisar uma ação", "⛏️ Garimpar carteira (BSD)", "📊 Ranking por múltiplos",
+     "📈 Swing trade (análise técnica)"],
     help=h("menu"),
 )
 st.sidebar.markdown("---")
@@ -475,7 +476,7 @@ elif modo.startswith("⛏️"):
 # =========================================================================== #
 # 3) RANKING POR MÚLTIPLOS
 # =========================================================================== #
-else:
+elif modo.startswith("📊"):
     st.subheader("Ranking por múltiplos + preço-alvo (Cap. 11-12)", help=h("ranking"))
     st.caption("Padroniza os múltiplos em nota 0–100 e estima o preço justo por regressão "
                "P/L ~ f(payout, ROE). Upside positivo = candidata a estar barata.")
@@ -575,3 +576,73 @@ else:
                 )
             else:
                 st.info("Poucas empresas para a regressão (precisa de ≥4). Os preços-alvo ficam indisponíveis.")
+
+
+# =========================================================================== #
+# 4) SWING TRADE (ANÁLISE TÉCNICA) — MVP visual: candlestick intraday/diário
+# =========================================================================== #
+elif modo.startswith("📈"):
+    st.subheader("Swing trade — leitura técnica do candlestick (intraday/diário)")
+    st.caption(
+        "Visão de candlestick de tickers da B3 via Yahoo (grátis, best-effort com atraso ~15min). "
+        "Apenas exibe o gráfico — **não é recomendação de compra ou venda**."
+    )
+
+    col1, col2, col3 = st.columns([3, 2, 1])
+    ticker = col1.text_input("Ticker da B3", value="TAEE11",
+                             placeholder="ex.: PETR4, VALE3, TAEE11").strip().upper()
+    # Rótulos pt-BR → chaves da engine (timeframes válidos de _PERIODO_POR_TF)
+    _TF_MAP = {"Diário": "diario", "1h": "1h", "30m": "30m", "5m": "5m"}
+    tf_label = col2.selectbox("Timeframe", list(_TF_MAP.keys()), index=0)
+    tf_key = _TF_MAP[tf_label]
+
+    # Invalidação targetada por nonce (NUNCA clear global): o botão Atualizar só incrementa
+    # o nonce do par (ticker, timeframe) — cria uma nova entrada de cache p/ esse par e a
+    # antiga expira pelo TTL, sem tocar o cache da aba Analisar (D-08).
+    k = _nonce_key(ticker, tf_key)
+    st.session_state.setdefault(k, 0)
+    if col3.button("Atualizar", use_container_width=True):
+        st.session_state[k] += 1
+
+    # Gateia pelo ticker preenchido (não pelo retorno efêmero do botão): o gráfico persiste
+    # entre reruns ao trocar de timeframe sem exigir novo clique.
+    if ticker:
+        with st.spinner(f"Coletando candles de {ticker} ({tf_label})..."):
+            f = frame_intraday(ticker, tf_key, st.session_state[k])
+
+        if f.disponivel is False:
+            # D-07: a copy amigável mora na UI, não na engine. fallback genérico p/ motivo desconhecido.
+            _MSG_MOTIVO = {
+                "timeframe_invalido": "Timeframe inválido.",
+                "sem_dados": "Sem candles para esse ticker/timeframe — a Yahoo não retornou dados. "
+                             "Confira o ticker.",
+                "fetch_falhou": "Falha ao buscar os dados (instabilidade na fonte). "
+                                "Tente o botão Atualizar.",
+            }
+            st.error(_MSG_MOTIVO.get(f.motivo, "Não foi possível carregar os candles agora. "
+                                               "Tente o botão Atualizar."))
+        else:
+            # D-02: o gráfico usa o OHLC NOMINAL (f.ohlc), não o ajustado por split.
+            fig = go.Figure(data=[go.Candlestick(
+                x=f.ohlc.index,
+                open=f.ohlc["Open"], high=f.ohlc["High"],
+                low=f.ohlc["Low"], close=f.ohlc["Close"],
+                name=ticker,
+            )])
+            fig.update_layout(
+                height=520, margin=dict(l=10, r=10, t=30, b=10),
+                xaxis_rangeslider_visible=False,
+            )
+            # D-04: a última barra pode estar em formação (viva) — sinaliza e mostra o atraso.
+            if f.barra_viva and f.ultima_barra_ts is not None:
+                fig.add_vline(x=f.ultima_barra_ts, line_width=1, line_dash="dot",
+                              line_color="#888888")
+            st.plotly_chart(fig, width="stretch")
+
+            if f.barra_viva:
+                atraso_txt = f" · atraso ~{f.atraso_min:.0f} min" if f.atraso_min is not None else ""
+                st.caption(f"⏱️ Última barra possivelmente em formação (não fechada){atraso_txt}.")
+
+            # Histórico insuficiente: <2 barras ⇒ sem barra fechada p/ leitura técnica (Fases 13+).
+            if f.idx_ultima_fechada is None:
+                st.warning("Histórico insuficiente — menos de duas barras fechadas neste timeframe.")
