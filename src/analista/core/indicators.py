@@ -868,6 +868,108 @@ def _niveis_stop_rr(
 
 
 # --------------------------------------------------------------------------- #
+# Padrões gráficos — duplo topo / duplo fundo sobre pivôs no-repaint (PAT-01)
+# --------------------------------------------------------------------------- #
+def _padroes(
+    pivos: "Pivos",
+    nominal: pd.DataFrame,
+    volume: "Volume",
+    cfg: dict,
+) -> Padroes:
+    """Detecta DUPLO TOPO e DUPLO FUNDO sobre pivôs CONFIRMADOS (PAT-01, regras de Murphy).
+
+    Geometria 100% determinística sobre os pivôs no-repaint da Fase 13 (`pivot_high`/`pivot_low`,
+    já confirmados via `.dropna()`) no frame NOMINAL (família de PREÇO, D-02). A neckline do duplo
+    é HORIZONTAL: o vale (duplo topo) / pico (duplo fundo) intermediário entre os dois extremos.
+
+    Estado (máquina de 2 estágios): a geometria casando → "em_formacao"; o rompimento da neckline
+    LIDO NA BARRA FECHADA (`Close.iloc[-2]`, D-04 — NUNCA a barra viva `iloc[-1]`) somado à
+    confirmação por volume (`volume.volume_acima_mm`, bidirecional da Fase 14-01, exigida quando
+    `padroes.exigir_volume_confirma`) → "confirmado". O alvo é o measured-move: a altura da neckline
+    projetada para BAIXO no duplo topo (`neckline - altura`) e para CIMA no duplo fundo
+    (`neckline + altura`).
+
+    No-repaint: todos os pivôs usados já são confirmados (imutáveis); a confirmação lê só a barra
+    fechada. Logo o rótulo de um padrão âncora em barras ≤ t não se reescreve quando chega t+1 — a
+    transição em_formacao→confirmado ao avançar uma barra é NOVA informação, não repaint.
+
+    Degradação graciosa (mitiga T-14-03/04/05): `pivos` None, frame curto (`len(nominal) < 2`),
+    sem coluna Close, ou nenhuma geometria casando → `Padroes(lista=[])`, NUNCA levanta. Razões
+    (simetria/altura) são protegidas com `np.errstate` + checagem `np.isfinite` (neckline ~0 não
+    explode). Limiares vêm do bloco `padroes:` do config (config-driven, pinados nos goldens).
+    """
+    cfg_pad = cfg["padroes"]
+    if pivos is None or nominal is None or len(nominal) < 2 or "Close" not in nominal.columns:
+        return Padroes(lista=[])
+
+    tol = cfg_pad["price_tolerance_pct"]
+    min_h = cfg_pad["min_pattern_height_pct"]
+    exigir_vol = cfg_pad["exigir_volume_confirma"]
+    vol_ok = bool(volume.volume_acima_mm) if volume is not None else False
+    close_f = float(nominal["Close"].iloc[-2])      # barra FECHADA (D-04), NUNCA iloc[-1]
+
+    lista: list = []
+
+    # --- Duplo topo: 2 topos confirmados ~simétricos + vale entre eles (neckline) ---
+    topos = pivos.pivot_high.dropna()
+    if len(topos) >= 2:
+        t1, t2 = float(topos.iloc[-2]), float(topos.iloc[-1])
+        ts1, ts2 = topos.index[-2], topos.index[-1]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            simetria = abs(t1 - t2) / ((t1 + t2) / 2.0)
+        vale = pivos.pivot_low[
+            (pivos.pivot_low.index > ts1) & (pivos.pivot_low.index < ts2)
+        ].dropna()
+        if np.isfinite(simetria) and simetria <= tol and len(vale):
+            neckline = float(vale.min())
+            ts_vale = vale.idxmin()
+            altura = (t1 + t2) / 2.0 - neckline
+            with np.errstate(divide="ignore", invalid="ignore"):
+                altura_pct = altura / neckline
+            if np.isfinite(altura_pct) and altura_pct >= min_h:
+                rompeu = close_f < neckline                  # rompimento p/ BAIXO
+                confirmado = rompeu and (vol_ok if exigir_vol else True)
+                lista.append(PadraoGrafico(
+                    tipo="duplo_topo",
+                    estado="confirmado" if confirmado else "em_formacao",
+                    neckline=neckline,
+                    alvo=neckline - altura,                  # measured-move p/ BAIXO
+                    altura=altura,
+                    pivos_envolvidos={ts1: t1, ts2: t2, ts_vale: neckline},
+                ))
+
+    # --- Duplo fundo (espelho): 2 fundos confirmados ~simétricos + pico entre eles ---
+    fundos = pivos.pivot_low.dropna()
+    if len(fundos) >= 2:
+        f1, f2 = float(fundos.iloc[-2]), float(fundos.iloc[-1])
+        ts1, ts2 = fundos.index[-2], fundos.index[-1]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            simetria = abs(f1 - f2) / ((f1 + f2) / 2.0)
+        pico = pivos.pivot_high[
+            (pivos.pivot_high.index > ts1) & (pivos.pivot_high.index < ts2)
+        ].dropna()
+        if np.isfinite(simetria) and simetria <= tol and len(pico):
+            neckline = float(pico.max())
+            ts_pico = pico.idxmax()
+            altura = neckline - (f1 + f2) / 2.0
+            with np.errstate(divide="ignore", invalid="ignore"):
+                altura_pct = altura / neckline
+            if np.isfinite(altura_pct) and altura_pct >= min_h:
+                rompeu = close_f > neckline                  # rompimento p/ CIMA
+                confirmado = rompeu and (vol_ok if exigir_vol else True)
+                lista.append(PadraoGrafico(
+                    tipo="duplo_fundo",
+                    estado="confirmado" if confirmado else "em_formacao",
+                    neckline=neckline,
+                    alvo=neckline + altura,                  # measured-move p/ CIMA
+                    altura=altura,
+                    pivos_envolvidos={ts1: f1, ts2: f2, ts_pico: neckline},
+                ))
+
+    return Padroes(lista=lista)
+
+
+# --------------------------------------------------------------------------- #
 # Família Volume — MM de volume + flag rompimento com volume (VOL-01, D-11)
 # --------------------------------------------------------------------------- #
 def _volume(ohlc: pd.DataFrame, cfg: dict) -> Volume:
