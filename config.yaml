@@ -110,6 +110,7 @@ indicadores:
   pivo_n: 2                  # fractal de Williams: N barras fechadas de cada lado (swing diário, D-02; calibração empírica deferida)
   stop_atr_m: 1.5            # multiplicador do ATR no stop técnico (mais conservador entre swing e ATR×m — D-08; consumido na Fase 13 plano 04)
   cluster_k: 1.0             # largura da zona S/R = k×ATR — adapta à volatilidade do papel (D-10); Donchian 20/55 já entra como faixa externa
+  volume_janela: 20          # janela da MM de volume p/ confirmar rompimentos (VOL-01)
   base_temporal: "diario"    # "diario" | "semanal" (resample W-FRI). AUD-IND-01: default DIÁRIO —
                              # os params acima (RSI14/MACD12-26-9/SMA200/squeeze126/regressão90) são
                              # calibrados p/ barra diária; rodá-los no frame semanal (W-FRI, ~260 barras

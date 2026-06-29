@@ -664,6 +664,44 @@ def _niveis_sr(
 
 
 # --------------------------------------------------------------------------- #
+# Família Volume — MM de volume + flag rompimento com volume (VOL-01, D-11)
+# --------------------------------------------------------------------------- #
+def _volume(ohlc: pd.DataFrame, cfg: dict) -> Volume:
+    """MM de volume + flag booleana "rompimento da Donchian superior COM volume" (VOL-01).
+
+    `volume_mm` = média móvel do volume com `min_periods == volume_janela` (NaN com histórico
+    curto, NUNCA valor parcial — alimenta a degradação). A flag é avaliada na barra FECHADA
+    (`iloc[-2]`, D-04 herdado, sem repaint da barra viva): True só quando o close fechado rompe
+    a banda Donchian superior CAUSAL (`.shift(1)`, mesmo idioma de `_canais`) E o volume da barra
+    fechada está acima da `volume_mm` da barra fechada.
+
+    Degradação graciosa (mitiga T-13-07/08): frame SEM coluna `Volume` → `Volume()` default
+    (volume_mm None, flag False) antes de qualquer cálculo; frame curto → volume_mm todo-NaN e
+    flag False (protegida contra NaN). 100% aditiva — nenhum campo existente de SinaisTecnicos muda.
+    """
+    ind = cfg["indicadores"]
+    if "Volume" not in ohlc.columns or len(ohlc) == 0:
+        return Volume()
+
+    vol = ohlc["Volume"]
+    janela = ind["volume_janela"]
+    volume_mm = vol.rolling(janela, min_periods=janela).mean()
+
+    flag = False
+    if len(ohlc) >= 2:
+        j_curto = ind["donchian"][0]
+        donchian_sup = ohlc["High"].rolling(j_curto, min_periods=j_curto).max().shift(1)
+        dsup_f = donchian_sup.iloc[-2]        # canal causal na barra fechada
+        vmm_f = volume_mm.iloc[-2]
+        vol_f = vol.iloc[-2]
+        close_f = ohlc["Close"].iloc[-2]
+        if not (pd.isna(dsup_f) or pd.isna(vmm_f) or pd.isna(vol_f)):
+            flag = bool(close_f > dsup_f and vol_f > vmm_f)
+
+    return Volume(volume_mm=volume_mm, rompimento_com_volume=flag)
+
+
+# --------------------------------------------------------------------------- #
 # Entry-point — agrega as 4 famílias sobre o OHLC split-adjusted (CR-01)
 # --------------------------------------------------------------------------- #
 _COLUNAS_OHLC = ("Open", "High", "Low", "Close")
@@ -756,4 +794,5 @@ def calcular(
         niveis=_niveis_sr(
             pivos, nominal, forca.atr, canais.donchian_inf_55, canais.donchian_sup_55, cfg
         ),
+        volume=_volume(ohlc, cfg),
     )
