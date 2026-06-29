@@ -53,7 +53,9 @@ nem na regra `app.py` read-only.
   3. A última barra (viva/não fechada) é identificável e os cálculos podem operar sobre a barra fechada anterior; timeframes sem histórico suficiente para um indicador (ex.: MM200 em frame curto) reportam "indisponível" sem quebrar.
   4. Re-buscar os dados de um `(ticker, timeframe)` invalida só aquele cache (TTL curto 300s / nonce), nunca o `.clear()` global que apagaria o cache da aba Analisar.
   5. Os 191 testes golden seguem verdes e novos testes cobrem as edges (barra viva, matriz period×interval, timezone, barras ilíquidas).
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 12-01-PLAN.md — Engine de ingestão intraday (`ingest/intraday.py`: `coletar_intraday` + `FrameOHLC` + `_PERIODO_POR_TF` + tz/barra-viva clock-free) + testes golden offline (DATA-01, DATA-02)
+- [ ] 12-02-PLAN.md — Cache targetado em `app.py` (`frame_intraday` wrapper `@st.cache_data(ttl=300)` + `_nonce_key`, sem `.clear()` global) (DATA-03)
 
 ### Phase 13: Pivôs, Contexto de Tendência e Níveis
 **Goal**: A engine deriva, a partir de pivôs determinísticos e sem lookahead, o contexto de tendência (Dow + multi-TF) e todos os níveis geométricos de preço (S/R em zonas, entrada, stop, alvo Fibonacci), com R:R e confirmação por volume.
@@ -112,7 +114,7 @@ nem na regra `app.py` read-only.
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 12. Ingestão Intraday + Timeframe | v1.4 | 0/TBD | Not started | - |
+| 12. Ingestão Intraday + Timeframe | v1.4 | 0/2 | Planned | - |
 | 13. Pivôs, Contexto e Níveis | v1.4 | 0/TBD | Not started | - |
 | 14. Padrões Gráficos + Checklist | v1.4 | 0/TBD | Not started | - |
 | 15. Montagem do Setup + Score | v1.4 | 0/TBD | Not started | - |
