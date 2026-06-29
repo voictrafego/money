@@ -69,7 +69,7 @@ nem na regra `app.py` read-only.
   5. A família Volume (MM de volume + flag "rompimento com volume acima da média") é adicionada de forma aditiva ao contrato `SinaisTecnicos`; 191 goldens verdes + novos goldens da fase.
 **Plans**: 4 plans
 - [x] 13-01-PLAN.md — Pivôs fractal de Williams (no-repaint) + ATR exposto do TR do ADX (PIVOT-01)
-- [ ] 13-02-PLAN.md — Contexto de tendência: Dow diário + alinhamento semanal→diário (W-FRI) (TREND-01, TREND-02)
+- [x] 13-02-PLAN.md — Contexto de tendência: Dow diário + alinhamento semanal→diário (W-FRI) (TREND-01, TREND-02)
 - [ ] 13-03-PLAN.md — Zonas S/R (cluster k×ATR + Donchian) + família Volume (LEVEL-01, VOL-01)
 - [ ] 13-04-PLAN.md — Fibonacci entrada/alvo + stop conservador + R:R (LEVEL-02/03/04, RR-01)
 **Research**: dispensado por decisão D-02 (CONTEXT) — defaults derivados do método; params em `config.yaml` (calibração empírica deferida).
@@ -119,7 +119,7 @@ nem na regra `app.py` read-only.
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 12. Ingestão Intraday + Timeframe | v1.4 | 2/2 | Complete   | 2026-06-29 |
-| 13. Pivôs, Contexto e Níveis | v1.4 | 1/4 | In Progress|  |
+| 13. Pivôs, Contexto e Níveis | v1.4 | 2/4 | In Progress|  |
 | 14. Padrões Gráficos + Checklist | v1.4 | 0/TBD | Not started | - |
 | 15. Montagem do Setup + Score | v1.4 | 0/TBD | Not started | - |
 | 16. Página Streamlit + Gráfico | v1.4 | 0/TBD | Not started | - |

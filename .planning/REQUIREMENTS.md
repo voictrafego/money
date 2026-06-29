@@ -23,8 +23,8 @@
 
 ### Contexto de Tendência (TREND)
 
-- [ ] **TREND-01**: A página exibe o **contexto de tendência** do ticker no diário (sequência de Dow via pivôs + MMs/ADX reusados de `indicators.py`), rotulado **alta / baixa / lateral**.
-- [ ] **TREND-02**: A página exibe o **alinhamento multi-timeframe** semanal→diário (alinhado_alta / alinhado_baixa / **conflito**), e o conflito **modula (penaliza) o score** sem bloquear o setup.
+- [x] **TREND-01**: A página exibe o **contexto de tendência** do ticker no diário (sequência de Dow via pivôs + MMs/ADX reusados de `indicators.py`), rotulado **alta / baixa / lateral**.
+- [x] **TREND-02**: A página exibe o **alinhamento multi-timeframe** semanal→diário (alinhado_alta / alinhado_baixa / **conflito**), e o conflito **modula (penaliza) o score** sem bloquear o setup.
 
 ### Pivôs & Níveis de Preço (PIVOT / LEVEL)
 
@@ -79,8 +79,8 @@
 | DATA-02 | Phase 12 | Complete |
 | DATA-03 | Phase 12 | Complete |
 | PIVOT-01 | Phase 13 | Complete |
-| TREND-01 | Phase 13 | Pending |
-| TREND-02 | Phase 13 | Pending |
+| TREND-01 | Phase 13 | Complete |
+| TREND-02 | Phase 13 | Complete |
 | LEVEL-01 | Phase 13 | Pending |
 | LEVEL-02 | Phase 13 | Pending |
 | LEVEL-03 | Phase 13 | Pending |
