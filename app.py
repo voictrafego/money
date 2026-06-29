@@ -50,6 +50,25 @@ def rf_capm(fallback, anos):
     return macro.selic_ciclo_para_capm(fallback, anos)
 
 
+@st.cache_data(show_spinner=False, ttl=300)
+def frame_intraday(ticker: str, timeframe: str, nonce: int):
+    """Wrapper de cache do OHLCV intraday — TTL curto (300s), invalidação por nonce.
+
+    `nonce` entra SÓ na chave de cache (não é repassado à engine): incrementá-lo no
+    botão Atualizar (Fase 16) cria uma nova entrada só para aquele (ticker, timeframe)
+    e a antiga expira pelo TTL — nunca um clear global, que apagaria o cache de
+    montar/selic_atual/rf_capm da aba Analisar (D-08)."""
+    from analista.ingest import intraday  # import tardio: isola o módulo intraday
+
+    return intraday.coletar_intraday(ticker, timeframe)
+
+
+def _nonce_key(ticker: str, timeframe: str) -> str:
+    """Chave de st.session_state do nonce por par (ticker, timeframe) — o botão
+    Atualizar (Fase 16) faz setdefault(k, 0) e incrementa só este par."""
+    return f"nonce_intraday::{ticker}::{timeframe}"
+
+
 CFG = carregar_config()
 ANO_BASE = CFG["universo"]["ano_base"]
 N_ANOS = CFG["universo"]["anos_historico"]
