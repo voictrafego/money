@@ -1307,3 +1307,141 @@ def test_padroes_no_repaint_truncacao_duplo():
     # monotonicidade: uma vez "confirmado", permanece (sem flip de volta = sem repaint):
     primeiro_conf = next(i for i, e in enumerate(estados) if e == "confirmado")
     assert all(e == "confirmado" for e in estados[primeiro_conf:])
+
+
+# --------------------------------------------------------------------------- #
+# OCO / OCO invertido (PAT-01, plano 14-03) — neckline INCLINADA por posição
+# --------------------------------------------------------------------------- #
+def _frame_oco() -> pd.DataFrame:
+    """OHLCV sintético determinístico com UM OCO claro (5 pivôs via fractal de Williams N=2).
+
+    sobe→LS(~100)→f1(~90, neckline)→cabeça(~110)→f2(~90)→RS(~100)→rompe a neckline p/ baixo (~80).
+    Volume alto (5×) só no trecho de rompimento → confirma a quebra de BAIXA pela MM de volume.
+    """
+    sobe_ls = np.linspace(80, 100, 5)          # LS = 100
+    desce_f1 = np.linspace(100, 90, 4)[1:]     # fundo1 = 90 (neckline)
+    sobe_head = np.linspace(90, 110, 5)[1:]    # cabeça = 110 (proeminente)
+    desce_f2 = np.linspace(110, 90, 5)[1:]     # fundo2 = 90
+    sobe_rs = np.linspace(90, 100, 4)[1:]      # RS = 100 (~simétrico ao LS)
+    rompe = np.linspace(100, 80, 6)[1:]        # quebra a neckline p/ baixo (80 < 90)
+    close = np.concatenate([sobe_ls, desce_f1, sobe_head, desce_f2, sobe_rs, rompe])
+    vol = np.full(len(close), 1000.0)
+    vol[-len(rompe):] = 5000.0                 # volume alto no rompimento
+    return _frame_ohlcv(close, volume=vol)
+
+
+def test_padroes_oco_geometria():
+    # 3 topos (LS/cabeça/RS) + 2 fundos intercalados; Close[-2] ACIMA da neckline → "em_formacao".
+    # neckline (flat) = 90; altura = cabeça - neckline = 20; alvo = neckline - altura (p/ BAIXO).
+    cfg = _cfg_ind()
+    pad = cfg["padroes"]
+    pivos = _pivos_ts(topos={1: 100.0, 4: 110.0, 8: 100.0}, fundos={2: 90.0, 6: 90.0})
+    nominal = _frame_ohlcv(np.full(10, 95.0))           # Close[-2]=95 > neckline 90
+    oco = _padrao(indicators._padroes(pivos, nominal, indicators.Volume(), cfg), "oco")
+    assert oco is not None
+    assert oco.estado == "em_formacao"
+    assert oco.neckline == pytest.approx(90.0)
+    assert oco.altura == pytest.approx(110.0 - 90.0)
+    assert oco.alvo == pytest.approx(oco.neckline - oco.altura)   # = 70.0 (p/ BAIXO)
+    # cabeça proeminente sobre AMBOS os ombros e ombros simétricos (config-driven):
+    assert (110.0 - 100.0) / 110.0 >= pad["head_min_prominence_pct"]
+    assert abs(100.0 - 100.0) / 100.0 <= pad["shoulder_symmetry_pct"]
+    # os 5 pivôs âncora ficam registrados em pivos_envolvidos (auditabilidade):
+    assert len(oco.pivos_envolvidos) == 5
+
+
+def test_padroes_oco_confirmado():
+    # Mesma geometria, mas Close[-2] ABAIXO da neckline + volume na barra fechada → "confirmado".
+    cfg = _cfg_ind()
+    pivos = _pivos_ts(topos={1: 100.0, 4: 110.0, 8: 100.0}, fundos={2: 90.0, 6: 90.0})
+    nominal = _frame_ohlcv(np.full(10, 85.0))           # Close[-2]=85 < neckline 90 → rompeu
+    oco = _padrao(
+        indicators._padroes(pivos, nominal, indicators.Volume(volume_acima_mm=True), cfg), "oco"
+    )
+    assert oco is not None and oco.estado == "confirmado"
+    # exigir_volume_confirma (config): mesmo rompimento SEM volume fica "em_formacao".
+    if cfg["padroes"]["exigir_volume_confirma"]:
+        sem_vol = _padrao(
+            indicators._padroes(pivos, nominal, indicators.Volume(volume_acima_mm=False), cfg), "oco"
+        )
+        assert sem_vol.estado == "em_formacao"
+
+
+def test_padroes_oco_invertido():
+    # Espelho: cabeça é o fundo mais BAIXO; neckline pelos 2 topos; rompe p/ CIMA; alvo = neck + altura.
+    cfg = _cfg_ind()
+    pivos = _pivos_ts(topos={2: 110.0, 6: 110.0}, fundos={1: 100.0, 4: 90.0, 8: 100.0})
+    nominal = _frame_ohlcv(np.full(10, 115.0))          # Close[-2]=115 > neckline 110 → rompeu p/ cima
+    oco = _padrao(
+        indicators._padroes(pivos, nominal, indicators.Volume(volume_acima_mm=True), cfg),
+        "oco_invertido",
+    )
+    assert oco is not None and oco.estado == "confirmado"
+    assert oco.neckline == pytest.approx(110.0)
+    assert oco.altura == pytest.approx(110.0 - 90.0)
+    assert oco.alvo == pytest.approx(oco.neckline + oco.altura)   # = 130.0 (p/ CIMA)
+    assert len(oco.pivos_envolvidos) == 5
+
+
+def test_padroes_oco_ombros_assimetricos_nao_casa():
+    # Ombros com diferença de PREÇO acima de shoulder_symmetry_pct → sem OCO (anti-falso-positivo).
+    cfg = _cfg_ind()
+    sym = cfg["padroes"]["shoulder_symmetry_pct"]
+    # cabeça proeminente sobre AMBOS (isola a falha em simetria), mas ombros 100 vs 108:
+    pivos = _pivos_ts(topos={1: 100.0, 4: 120.0, 8: 108.0}, fundos={2: 90.0, 6: 90.0})
+    assert abs(100.0 - 108.0) / ((100.0 + 108.0) / 2.0) > sym     # claramente fora da tolerância
+    nominal = _frame_ohlcv(np.full(10, 95.0))
+    p = indicators._padroes(pivos, nominal, indicators.Volume(), cfg)
+    assert _padrao(p, "oco") is None
+
+
+def test_padroes_oco_neckline_inclinada_usa_posicao():
+    # Dois fundos em NÍVEIS DIFERENTES (neckline com inclinação não-nula): a reta é computada por
+    # POSIÇÃO inteira da barra (Pitfall 3), NÃO por timestamp em ns. Alvo finito/plausível.
+    cfg = _cfg_ind()
+    pivos = _pivos_ts(topos={1: 100.0, 4: 115.0, 8: 100.0}, fundos={2: 88.0, 6: 94.0})
+    nominal = _frame_ohlcv(np.full(10, 100.0))          # Close[-2]=100 > neckline → em_formacao
+    oco = _padrao(indicators._padroes(pivos, nominal, indicators.Volume(), cfg), "oco")
+    assert oco is not None
+    # neckline extrapolada na barra fechada (iloc[-2] = posição 8) pela reta dos 2 fundos por POSIÇÃO:
+    m_pos = (94.0 - 88.0) / (6 - 2)                       # inclinação por índice posicional
+    neck_esperada = 88.0 + m_pos * (8 - 2)               # = 97.0 (extrapola além de ambos os fundos)
+    assert oco.neckline == pytest.approx(neck_esperada)
+    # prova POSICIONAL: a neckline extrapola ALÉM dos dois fundos (não colapsa em ~f1, como o eixo-ns):
+    assert oco.neckline > 94.0
+    # alvo FINITO e plausível (Pitfall 3 mitigado — nunca explosivo/negativo absurdo):
+    assert np.isfinite(oco.alvo) and 0.0 < oco.alvo < 115.0
+
+
+def test_padroes_no_repaint_truncacao_oco():
+    # GATE OBRIGATÓRIO: a GEOMETRIA (neckline/alvo/altura) do OCO deriva só de pivôs CONFIRMADOS →
+    # imutável ao truncar a série; o ESTADO só AVANÇA em_formacao→confirmado, NUNCA repinta p/ trás.
+    cfg = _cfg_ind()
+    df = _frame_oco()
+
+    def detect(k):
+        sub = df.iloc[:k]
+        return indicators._padroes(
+            indicators._pivos(sub, cfg), sub, indicators._volume(sub, cfg), cfg
+        )
+
+    oco_full = _padrao(detect(len(df)), "oco")
+    assert oco_full is not None and oco_full.estado == "confirmado"
+
+    ks = (22, 23, len(df))           # 22 = OCO recém-confirmável (RS fechado), ainda em_formacao
+    estados = []
+    for k in ks:
+        oco = _padrao(detect(k), "oco")
+        assert oco is not None, f"padrão âncora deve persistir em k={k}"
+        # geometria IDÊNTICA entre o truncado e o full (no-repaint da âncora confirmada):
+        assert oco.neckline == pytest.approx(oco_full.neckline)
+        assert oco.alvo == pytest.approx(oco_full.alvo)
+        assert oco.altura == pytest.approx(oco_full.altura)
+        estados.append(oco.estado)
+
+    # barra fechada ANTES do rompimento ainda não confirmou; o full (depois) confirmou:
+    assert estados[0] == "em_formacao"
+    assert estados[-1] == "confirmado"
+    # monotonicidade: uma vez "confirmado", permanece (sem flip de volta = sem repaint):
+    primeiro_conf = next(i for i, e in enumerate(estados) if e == "confirmado")
+    assert all(e == "confirmado" for e in estados[primeiro_conf:])
