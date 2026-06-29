@@ -576,11 +576,15 @@ def _dow(pivos: "Pivos", ohlc: pd.DataFrame, cfg: dict, periodos_ano: float = 25
     slope, _r2 = regressao_trailing(
         ohlc["Close"], ind["regressao_janela"], periodos_ano=periodos_ano
     )
-    if len(adx.dropna()) == 0 or pd.isna(adx.iloc[-1]) or pd.isna(slope.iloc[-1]):
+    # WR-03: ler a barra FECHADA (penúltimo válido, iloc[-2]) — a última barra é VIVA pela
+    # invariante da fase (D-04), coerente com _volume/_niveis_sr. Guarda de comprimento ≥ 2.
+    adx_v = adx.dropna()
+    slope_v = slope.dropna()
+    if len(adx_v) < 2 or len(slope_v) < 2:
         return "indisponivel"
 
-    tem_tendencia = adx.iloc[-1] >= _DOW_ADX_MIN
-    sl = slope.iloc[-1]
+    tem_tendencia = adx_v.iloc[-2] >= _DOW_ADX_MIN
+    sl = slope_v.iloc[-2]
     if tem_tendencia and sl > _DOW_SLOPE_BAND:
         return "alta"
     if tem_tendencia and sl < -_DOW_SLOPE_BAND:
