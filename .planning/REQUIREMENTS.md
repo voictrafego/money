@@ -17,8 +17,8 @@
 
 ### Dados & Timeframe (DATA)
 
-- [ ] **DATA-01**: Usuário obtém OHLCV **intraday** (1h/30m/5m) por timeframe via ingestão parametrizada **isolada do pipeline diário** (`auto_adjust=False` + split-adjust reusados; timezone America/Sao_Paulo; sem perturbar o fetch diário 5y nem o cache da aba Analisar).
-- [ ] **DATA-02**: Usuário escolhe o **timeframe** (diário padrão + 1h/30m/5m) e a página **avisa do atraso (~15min)** e do limite de histórico, degradando indicadores inviáveis (ex.: MM200 em frame curto) para **"indisponível"** sem quebrar.
+- [x] **DATA-01**: Usuário obtém OHLCV **intraday** (1h/30m/5m) por timeframe via ingestão parametrizada **isolada do pipeline diário** (`auto_adjust=False` + split-adjust reusados; timezone America/Sao_Paulo; sem perturbar o fetch diário 5y nem o cache da aba Analisar).
+- [x] **DATA-02**: Usuário escolhe o **timeframe** (diário padrão + 1h/30m/5m) e a página **avisa do atraso (~15min)** e do limite de histórico, degradando indicadores inviáveis (ex.: MM200 em frame curto) para **"indisponível"** sem quebrar.
 - [ ] **DATA-03**: Usuário clica **"Atualizar"** e a página re-busca os dados mais recentes do ticker/timeframe (cache TTL curto, invalidação **targetada** — não o `.clear()` global que apagaria o cache da aba Analisar).
 
 ### Contexto de Tendência (TREND)
@@ -75,8 +75,8 @@
 
 | REQ-ID | Fase | Status |
 |--------|------|--------|
-| DATA-01 | Phase 12 | Pending |
-| DATA-02 | Phase 12 | Pending |
+| DATA-01 | Phase 12 | Complete |
+| DATA-02 | Phase 12 | Complete |
 | DATA-03 | Phase 12 | Pending |
 | PIVOT-01 | Phase 13 | Pending |
 | TREND-01 | Phase 13 | Pending |
