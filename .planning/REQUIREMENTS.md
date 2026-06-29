@@ -28,7 +28,7 @@
 
 ### Pivôs & Níveis de Preço (PIVOT / LEVEL)
 
-- [ ] **PIVOT-01**: A engine detecta **pivôs (swing highs/lows)** de forma determinística e **sem lookahead** (no-repaint: série truncada em t == em t+1 para barras fechadas).
+- [x] **PIVOT-01**: A engine detecta **pivôs (swing highs/lows)** de forma determinística e **sem lookahead** (no-repaint: série truncada em t == em t+1 para barras fechadas).
 - [ ] **LEVEL-01**: A página exibe **suporte/resistência** (pivôs em cluster + Donchian) como **faixas/zonas** rotuladas ("Suporte ~R$ X" / "Resistência ~R$ Y"), nunca pontos exatos.
 - [ ] **LEVEL-02**: A página exibe uma **zona de entrada** sugerida como nível (pullback / retração de Fibonacci), apresentada como referência de estudo.
 - [ ] **LEVEL-03**: A página exibe o **stop técnico** ancorado em estrutura — **swing-low/high** e/ou **ATR×m** (ATR exposto a partir do TR já calculado no ADX) — como nível.
@@ -78,7 +78,7 @@
 | DATA-01 | Phase 12 | Complete |
 | DATA-02 | Phase 12 | Complete |
 | DATA-03 | Phase 12 | Complete |
-| PIVOT-01 | Phase 13 | Pending |
+| PIVOT-01 | Phase 13 | Complete |
 | TREND-01 | Phase 13 | Pending |
 | TREND-02 | Phase 13 | Pending |
 | LEVEL-01 | Phase 13 | Pending |
