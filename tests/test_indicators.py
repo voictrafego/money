@@ -584,6 +584,85 @@ def test_dow_deterministico():
 
 
 # --------------------------------------------------------------------------- #
+# Alinhamento semanal→diário via resample W-FRI (TREND-02, D-04/D-06)
+# --------------------------------------------------------------------------- #
+def test_alinhamento_alinhado_alta():
+    # Diário "alta" + semanal "alta" (resample W-FRI) → "alinhado_alta".
+    cfg = _cfg_ind()
+    t = np.arange(400)
+    df = _frame_trend(50.0 + 8.0 * np.sin(t / 6.0) + 0.10 * t)
+    ctx = indicators._contexto(df, cfg)
+    assert ctx.dow_diario == "alta"
+    assert ctx.alinhamento_mtf == "alinhado_alta"
+
+
+def test_alinhamento_alinhado_baixa():
+    # Diário "baixa" + semanal "baixa" → "alinhado_baixa".
+    cfg = _cfg_ind()
+    t = np.arange(400)
+    df = _frame_trend(50.0 + 8.0 * np.sin(t / 6.0) - 0.10 * t)
+    ctx = indicators._contexto(df, cfg)
+    assert ctx.dow_diario == "baixa"
+    assert ctx.alinhamento_mtf == "alinhado_baixa"
+
+
+def test_alinhamento_conflito_nao_bloqueia():
+    # Macro de baixa (semanal=baixa) + perna recente de alta (diário=alta) → "conflito".
+    # D-06: conflito é só rótulo — os demais campos de SinaisTecnicos seguem preenchidos.
+    cfg = _cfg_ind()
+    close = np.concatenate([np.linspace(100.0, 40.0, 800), np.linspace(40.0, 55.0, 40)])
+    df = _frame_trend(close)
+    sinais = indicators.calcular(df, cfg)
+    assert sinais.contexto is not None
+    assert sinais.contexto.dow_diario == "alta"
+    assert sinais.contexto.alinhamento_mtf == "conflito"
+    # D-06: NÃO zera/altera as demais famílias — o setup não é bloqueado.
+    assert sinais.tendencia.posicao_mm200 != "indisponivel"
+    assert sinais.forca.forca_adx != "indisponivel"
+    assert sinais.canais.rompimento_donchian != "indisponivel"
+
+
+def test_alinhamento_frame_nao_datetime_indisponivel():
+    # Índice não-DatetimeIndex → resample inviável → alinhamento "indisponivel" (sem exceção).
+    cfg = _cfg_ind()
+    t = np.arange(400)
+    close = 50.0 + 8.0 * np.sin(t / 6.0) + 0.10 * t
+    df = pd.DataFrame(
+        {"Open": close, "High": close + 0.5, "Low": close - 0.5, "Close": close}
+    )  # RangeIndex (não-datetime)
+    ctx = indicators._contexto(df, cfg)
+    assert ctx.alinhamento_mtf == "indisponivel"
+
+
+def test_calcular_popula_contexto():
+    # calcular popula SinaisTecnicos.contexto de forma aditiva, com rótulos do vocabulário.
+    cfg = _cfg_ind()
+    sinais = indicators.calcular(_frame_ohlc_longo(), cfg)
+    assert sinais.contexto is not None
+    assert sinais.contexto.dow_diario in {"alta", "baixa", "lateral", "indisponivel"}
+    assert sinais.contexto.alinhamento_mtf in {
+        "alinhado_alta", "alinhado_baixa", "conflito", "indisponivel"
+    }
+
+
+def test_calcular_contexto_degrada():
+    # None → calcular não levanta e o contexto degrada para "indisponivel".
+    cfg = _cfg_ind()
+    nulo = indicators.calcular(None, cfg)
+    assert nulo.contexto is not None
+    assert nulo.contexto.dow_diario == "indisponivel"
+    assert nulo.contexto.alinhamento_mtf == "indisponivel"
+
+
+def test_sem_fetch_semanal_1wk():
+    # D-04: o semanal vem de resample W-FRI, NUNCA de um fetch "1wk" separado do Yahoo.
+    raiz = Path(__file__).resolve().parents[1]
+    fonte = (raiz / "src" / "analista" / "core" / "indicators.py").read_text(encoding="utf-8")
+    assert "1wk" not in fonte
+    assert "W-FRI" in fonte
+
+
+# --------------------------------------------------------------------------- #
 # ATR exposto a partir do TR da cadeia do ADX (D-08) — insumo de LEVEL-01/03
 # --------------------------------------------------------------------------- #
 def test_config_stop_atr_m():
