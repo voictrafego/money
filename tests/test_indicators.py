@@ -510,3 +510,61 @@ def test_calcular_pivos():
     assert sinais.pivos is not None
     assert sinais.pivos.pivot_high.notna().any()
     assert sinais.pivos.pivot_low.notna().any()
+
+
+# --------------------------------------------------------------------------- #
+# ATR exposto a partir do TR da cadeia do ADX (D-08) — insumo de LEVEL-01/03
+# --------------------------------------------------------------------------- #
+def test_config_stop_atr_m():
+    # O config.yaml shipado expõe o multiplicador do ATR no stop técnico (D-08, default 1.5).
+    cfg = _cfg_ind()
+    assert cfg["indicadores"]["stop_atr_m"] == 1.5
+
+
+def test_atr_wilder_consistente_com_adx():
+    # ATR exposto == 1ª suavização de Wilder do TR (start=1) — o MESMO `atr` interno do ADX.
+    cfg = _cfg_ind()
+    length = cfg["indicadores"]["adx_janela"]
+    df = _ohlc_adx_ref()
+    atr = indicators.atr_wilder(df, length)
+
+    high, low, close = df["High"], df["Low"], df["Close"]
+    prev_close = close.shift(1)
+    tr = pd.concat(
+        [(high - low), (high - prev_close).abs(), (low - prev_close).abs()], axis=1
+    ).max(axis=1)
+    esperado = indicators._wilder_rma_from(tr.to_numpy(float), length, start=1)
+
+    np.testing.assert_allclose(atr.to_numpy(float), esperado, equal_nan=True, atol=1e-9)
+    assert atr.index.equals(df.index)
+    assert atr.reset_index(drop=True).first_valid_index() == length   # 1º válido no índice 14
+
+
+def test_atr_wilder_historico_curto():
+    # Frame com < length+1 barras → ATR todo-NaN, sem exceção (degradação graciosa).
+    cfg = _cfg_ind()
+    length = cfg["indicadores"]["adx_janela"]
+    df = _frame_ohlc(np.linspace(10.0, 12.0, length))   # length barras (< length+1)
+    atr = indicators.atr_wilder(df, length)
+    assert atr.isna().all()
+
+
+def test_atr_exposto_em_forca_adx_intacto():
+    # adx_wilder PRESERVA a assinatura (adx, pdi, ndi); Forca.atr é exposto aditivamente
+    # e bate atr_wilder(df, adx_janela). None via calcular não levanta exceção.
+    cfg = _cfg_ind()
+    df = _frame_ohlc_longo()
+    adx, pdi, ndi = indicators.adx_wilder(df, cfg["indicadores"]["adx_janela"])
+    assert adx is not None and pdi is not None and ndi is not None
+
+    sinais = indicators.calcular(df, cfg)
+    assert sinais.forca.atr is not None
+    assert sinais.forca.atr.notna().any()
+    esperado = indicators.atr_wilder(df, cfg["indicadores"]["adx_janela"])
+    np.testing.assert_allclose(
+        sinais.forca.atr.to_numpy(float), esperado.to_numpy(float),
+        equal_nan=True, atol=1e-9,
+    )
+
+    nulo = indicators.calcular(None, cfg)
+    assert isinstance(nulo.forca.atr, pd.Series)
