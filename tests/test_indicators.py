@@ -1178,3 +1178,132 @@ def test_rr_usa_errstate():
     fonte = (raiz / "src" / "analista" / "core" / "indicators.py").read_text(encoding="utf-8")
     bloco = fonte[fonte.index("def _niveis_stop_rr"):]
     assert "errstate" in bloco
+
+
+# --------------------------------------------------------------------------- #
+# Padrões gráficos — duplo topo / duplo fundo sobre pivôs no-repaint (PAT-01)
+# --------------------------------------------------------------------------- #
+def _padrao(padroes: "indicators.Padroes", tipo: str):
+    """Retorna o primeiro PadraoGrafico do tipo pedido na lista (ou None)."""
+    for p in padroes.lista:
+        if p.tipo == tipo:
+            return p
+    return None
+
+
+def _frame_duplo_topo() -> pd.DataFrame:
+    """OHLCV sintético determinístico com UM duplo topo claro (RESEARCH §Code Examples).
+
+    sobe→topo1(~70)→vale(~60, neckline)→sobe→topo2(~70)→rompe a neckline p/ baixo (~55).
+    Volume alto (5×) só no trecho de rompimento → confirma a quebra de BAIXA pela MM de volume.
+    """
+    sobe1 = np.linspace(50, 70, 12)
+    desce = np.linspace(70, 60, 8)[1:]     # vale (neckline ~60)
+    sobe2 = np.linspace(60, 70, 8)[1:]     # 2º topo ~igual ao 1º (simetria)
+    rompe = np.linspace(70, 55, 8)[1:]     # quebra a neckline p/ baixo (55 < 60)
+    close = np.concatenate([sobe1, desce, sobe2, rompe])
+    vol = np.full(len(close), 1000.0)
+    vol[-len(rompe):] = 5000.0             # volume alto no rompimento
+    return _frame_ohlcv(close, volume=vol)
+
+
+def test_padroes_duplo_topo_geometria():
+    # 2 topos ~iguais + vale entre eles; Close[-2] ACIMA da neckline → "em_formacao".
+    # neckline = vale; altura = topo - vale; alvo = neckline - altura (measured-move p/ BAIXO).
+    cfg = _cfg_ind()
+    pad = cfg["padroes"]
+    pivos = _pivos_ts(topos={2: 70.0, 6: 70.0}, fundos={4: 60.0})
+    nominal = _frame_ohlcv(np.full(10, 65.0))            # Close[-2]=65 > neckline 60
+    dt = _padrao(indicators._padroes(pivos, nominal, indicators.Volume(), cfg), "duplo_topo")
+    assert dt is not None
+    assert dt.estado == "em_formacao"
+    assert dt.neckline == pytest.approx(60.0)
+    assert dt.altura == pytest.approx(70.0 - 60.0)
+    assert dt.alvo == pytest.approx(dt.neckline - dt.altura)     # = 50.0 (p/ BAIXO)
+    # simetria dos topos dentro da tolerância CONFIG-DRIVEN (sem constante hardcoded):
+    assert abs(70.0 - 70.0) / 70.0 <= pad["price_tolerance_pct"]
+    # altura relevante acima do piso anti-ruído do config:
+    assert dt.altura / dt.neckline >= pad["min_pattern_height_pct"]
+
+
+def test_padroes_duplo_topo_confirmado():
+    # Mesma geometria, mas Close[-2] ABAIXO da neckline + volume na barra fechada → "confirmado".
+    cfg = _cfg_ind()
+    pivos = _pivos_ts(topos={2: 70.0, 6: 70.0}, fundos={4: 60.0})
+    nominal = _frame_ohlcv(np.full(10, 55.0))            # Close[-2]=55 < neckline 60 → rompeu
+    dt = _padrao(
+        indicators._padroes(pivos, nominal, indicators.Volume(volume_acima_mm=True), cfg),
+        "duplo_topo",
+    )
+    assert dt is not None
+    assert dt.estado == "confirmado"
+    # exigir_volume_confirma (config): mesmo rompimento SEM volume fica "em_formacao".
+    if cfg["padroes"]["exigir_volume_confirma"]:
+        sem_vol = _padrao(
+            indicators._padroes(pivos, nominal, indicators.Volume(volume_acima_mm=False), cfg),
+            "duplo_topo",
+        )
+        assert sem_vol.estado == "em_formacao"
+
+
+def test_padroes_duplo_fundo():
+    # Espelho: 2 fundos ~iguais + pico entre eles; Close[-2] ACIMA da neckline + volume →
+    # "confirmado"; alvo = neckline + altura (measured-move p/ CIMA).
+    cfg = _cfg_ind()
+    pivos = _pivos_ts(topos={4: 70.0}, fundos={2: 60.0, 6: 60.0})
+    nominal = _frame_ohlcv(np.full(10, 75.0))            # Close[-2]=75 > neckline 70 → rompeu p/ cima
+    df_ = _padrao(
+        indicators._padroes(pivos, nominal, indicators.Volume(volume_acima_mm=True), cfg),
+        "duplo_fundo",
+    )
+    assert df_ is not None
+    assert df_.estado == "confirmado"
+    assert df_.neckline == pytest.approx(70.0)
+    assert df_.altura == pytest.approx(70.0 - 60.0)
+    assert df_.alvo == pytest.approx(df_.neckline + df_.altura)  # = 80.0 (p/ CIMA)
+
+
+def test_padroes_simetria_frouxa_nao_casa():
+    # 2 topos com diferença de PREÇO acima de price_tolerance_pct → sem falso positivo (lista vazia).
+    cfg = _cfg_ind()
+    tol = cfg["padroes"]["price_tolerance_pct"]
+    pivos = _pivos_ts(topos={2: 70.0, 6: 90.0}, fundos={4: 60.0})
+    assert abs(70.0 - 90.0) / ((70.0 + 90.0) / 2.0) > tol        # claramente fora da tolerância
+    nominal = _frame_ohlcv(np.full(10, 65.0))
+    p = indicators._padroes(pivos, nominal, indicators.Volume(), cfg)
+    assert p.lista == []
+
+
+def test_padroes_no_repaint_truncacao_duplo():
+    # GATE OBRIGATÓRIO (espelha test_pivos_no_repaint_truncacao): a GEOMETRIA (neckline/alvo/altura)
+    # de um duplo topo deriva só de pivôs CONFIRMADOS → imutável ao truncar a série; o ESTADO só
+    # AVANÇA em_formacao→confirmado (nova barra fechada), NUNCA repinta para trás.
+    cfg = _cfg_ind()
+    df = _frame_duplo_topo()
+
+    def detect(k):
+        sub = df.iloc[:k]
+        return indicators._padroes(
+            indicators._pivos(sub, cfg), sub, indicators._volume(sub, cfg), cfg
+        )
+
+    dt_full = _padrao(detect(len(df)), "duplo_topo")
+    assert dt_full is not None and dt_full.estado == "confirmado"
+
+    ks = (29, 31, 32, len(df))
+    estados = []
+    for k in ks:
+        dt = _padrao(detect(k), "duplo_topo")
+        assert dt is not None, f"padrão âncora deve persistir em k={k}"
+        # geometria IDÊNTICA entre o truncado e o full (no-repaint da âncora confirmada):
+        assert dt.neckline == pytest.approx(dt_full.neckline)
+        assert dt.alvo == pytest.approx(dt_full.alvo)
+        assert dt.altura == pytest.approx(dt_full.altura)
+        estados.append(dt.estado)
+
+    # barra fechada ANTES do rompimento ainda não confirmou; o full (depois) confirmou:
+    assert estados[0] == "em_formacao"
+    assert estados[-1] == "confirmado"
+    # monotonicidade: uma vez "confirmado", permanece (sem flip de volta = sem repaint):
+    primeiro_conf = next(i for i, e in enumerate(estados) if e == "confirmado")
+    assert all(e == "confirmado" for e in estados[primeiro_conf:])
