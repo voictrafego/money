@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Comercialização (produto cobrável)
+milestone: v1.4
+milestone_name: Ferramenta de Swing Trade (setups de análise técnica)
 status: planning
-last_updated: "2026-06-28T23:36:02.995Z"
-last_activity: 2026-06-28
+last_updated: "2026-06-29T13:19:27.525Z"
+last_activity: 2026-06-29
 progress:
   total_phases: 0
   completed_phases: 0
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 Phase: Not started (defining requirements)
 Plan: —
 Status: Defining requirements
-Last activity: 2026-06-28 — Milestone v2.0 started
+Last activity: 2026-06-29 — Milestone v1.4 started
 
 ## Performance Metrics
 

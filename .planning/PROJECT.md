@@ -31,19 +31,38 @@ Selic spot** → agora Selic through-the-cycle (média 10a); (4) **empresas sing
 Mais disclaimer legal (software educacional, não recomendação). Continuação natural do tema v1.3
 (fidelidade do valuation para qualquer ticker).
 
-**Próximo marco: v2.0 — Comercialização (produto cobrável).** Decisões: assinatura paga (trial
-7d → mensal, Asaas); começar produtizando (auth → planos/gate → billing recorrente →
-multiusuário); posicionamento como software educacional (sem recomendação).
+**Marco v2.0 — Comercialização (produto cobrável): DEFINIDO e ADIADO.** Requisitos
+(AUTH/BILL/ACCT/LEGAL/OPS) e arquitetura de gateway híbrido já escritos e preservados em
+`.planning/milestones/v2.0-REQUIREMENTS.md`. Decisão (2026-06-29): **construir o v1.4 antes** —
+agregar valor de produto à ferramenta antes de cobrar. A v2.0 retoma depois.
 
-## Current Milestone: v2.0 — Comercialização (produto cobrável)
+## Current Milestone: v1.4 — Ferramenta de Swing Trade (setups de análise técnica)
 
-**Goal:** Transformar o protótipo de usuário único num produto que cobra: autenticação, trial de
-7 dias → assinatura mensal (Asaas), gate de acesso e multiusuário — posicionado como software
-educacional (sem recomendação). Decisão de arquitetura-chave a resolver no discuss/requirements:
-como colar auth+billing num app Streamlit (provável híbrido: front/checkout no stack
-React+Vite+n8n+Asaas na frente do Streamlit). Requisitos detalhados via `/gsd-new-milestone`.
+**Goal:** Adicionar um **menu/página novo e separado** ao app que monta *setups* de **análise
+técnica** (método de John Murphy — *Análise Técnica dos Mercados Financeiros*) para preparar
+**swing trades** de um ticker escolhido, exibindo sinais claros e **nunca recomendação**. Não
+toca no método fundamentalista validado (v1.0–v1.3) nem na aba "Analisar".
 
-_(v1.3 e marcos anteriores arquivados em `.planning/milestones/`.)_
+**Target features:**
+- Página dedicada que monta o setup de um ticker: **contexto de tendência** (Dow + MMs),
+  **níveis de preço** (S/R, zona de entrada, stop técnico, projeção/alvo por padrão ou Fibonacci),
+  **checklist de sinais** disparados (liga/desliga) e **score de qualidade + relação Risco:Retorno**.
+- **Gráfico interativo "do momento"** com overlays (S/R, padrões, Fibonacci, indicadores) e
+  **botão Atualizar** para re-buscar os dados mais recentes.
+- Escopo Murphy: tendência + S/R + linhas · padrões gráficos (OCO, topos/fundos duplos,
+  triângulos, bandeiras) · indicadores/osciladores (reusa `core/indicators.py`) · volume + Fibonacci.
+- **Timeframe diário** (padrão, swing clássico) + opções **1h / 30m / 5m** (intraday best-effort).
+
+**Key context:**
+- **Dados custo-zero mantido:** diário/semanal robustos via Yahoo; intraday 1h/30m/5m best-effort
+  com **aviso de atraso (~15min)** e histórico limitado (5m≈60d, 1m≈7d). Tempo real puro (streaming)
+  exige feed pago → **fora de escopo** no v1.4. Sem feed pago.
+- **Página nova dedicada** que reaproveita `core/indicators.py`, sem alterar a aba Analisar nem o
+  veredito fundamentalista. Sem scanner de universo (só ticker escolhido) neste marco.
+- Numeração de fases continua a partir da 11 → v1.4 começa na **Fase 12**.
+
+_(v1.3 e marcos anteriores arquivados em `.planning/milestones/`. v2.0 Comercialização definida e
+adiada em `.planning/milestones/v2.0-REQUIREMENTS.md`.)_
 
 ## Requirements
 
@@ -78,12 +97,18 @@ _(v1.3 e marcos anteriores arquivados em `.planning/milestones/`.)_
 
 ### Active
 
-<!-- Marco v1.3 — saneamento residual do valuation (generalização). REQ-IDs em REQUIREMENTS.md. -->
+<!-- Marco v1.4 — Ferramenta de Swing Trade (setups de análise técnica). REQ-IDs em REQUIREMENTS.md. -->
 
-- [ ] DY recorrente sustentável (lucro normalizado × payout sustentável) e formatado como % na UI
-- [ ] Payout sustentável que expurga não-recorrentes por regra geral (não a média 3a que encosta em 100%)
-- [ ] g histórico robusto + screening (BSD/Ranking) sem CAGR sobre lucro/dividendo cru
-- [ ] Hierarquia do header com DY recorrente em destaque; payout "último ano" cru exibido
+- [ ] Menu/página nova e separada para montar setups de swing trade de um ticker (não toca na aba Analisar)
+- [ ] Contexto de tendência (Dow + MMs) com alinhamento de timeframes para o ticker
+- [ ] Níveis de preço: suporte/resistência, zona de entrada, stop técnico e projeção/alvo (padrão ou Fibonacci)
+- [ ] Checklist de sinais técnicos disparados (rompimento, cruzamento de MM, RSI/MACD, padrão, volume)
+- [ ] Score de qualidade do setup + relação Risco:Retorno calculada de entrada/stop/alvo
+- [ ] Detecção de padrões gráficos (OCO, topos/fundos duplos, triângulos, bandeiras) com projeção de alvo
+- [ ] Gráfico interativo "do momento" com overlays técnicos e botão Atualizar
+- [ ] Seleção de timeframe (diário padrão + 1h/30m/5m best-effort) com aviso de atraso/limite de histórico
+
+_(v2.0 Comercialização — AUTH/BILL/ACCT/LEGAL/OPS — definida e adiada; ver `milestones/v2.0-REQUIREMENTS.md`.)_
 
 ### Out of Scope
 
@@ -131,6 +156,10 @@ _(v1.3 e marcos anteriores arquivados em `.planning/milestones/`.)_
 | Análise técnica (v1.2) é **consultiva**, nunca altera o veredito fundamentalista | O projeto é fundamentalista por princípio (método do livro); indicadores ajudam o timing/alerta, não o "barato/caro" | — Pending |
 | Sinal de venda = rompimento técnico **dispara reverificação** dos fundamentos (não vende sozinho) | O livro vende por perda de fundamento; o técnico serve de gatilho antecipado para o investidor reolhar os números | — Pending |
 | Indicadores ligáveis/desligáveis e selecionáveis na aba Analisar | Evita poluir o gráfico; o investidor escolhe o que quer ver sem virar um terminal de trade | — Pending |
+| Construir v1.4 (ferramenta de swing) antes da v2.0 Comercialização | Agregar valor de produto antes de cobrar; v2.0 já está definida e esperando | — Pending (2026-06-29) |
+| Swing trade = menu/produto NOVO e separado, não mexe na aba Analisar nem no veredito fundamentalista | Mantém o método do livro de dividendos intacto e validado; análise técnica é outro "produto" dentro do app | — Pending |
+| Setup técnico EXIBE sinais, nunca recomenda (sem "compre/venda") | Coerente com o posicionamento de software educacional; o investidor decide | — Pending |
+| Tempo real puro fora de escopo no v1.4 (custo-zero); intraday via Yahoo é best-effort com aviso de atraso (~15min) | Feed real-time da B3 é pago e quebraria o princípio de custo zero | — Pending |
 
 ## Evolution
 
@@ -150,4 +179,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-27 — Marco v1.3 iniciado (saneamento residual do valuation); v1.2 concluído (Fase 7, 150 testes verdes)*
+*Last updated: 2026-06-29 — Marco v1.4 iniciado (ferramenta de swing trade / setups de análise técnica); v2.0 Comercialização definida e adiada*
