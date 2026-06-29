@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 Phase: 12 — COMPLETE
 Plan: 2 of 2
 Status: Phase 12 complete
-Last activity: 2026-06-29 -- Phase 12 marked complete
+Last activity: 2026-06-29 -- Completed quick task 260629-ig6: Aba Swing trade (MVP)
 
 ## Performance Metrics
 
@@ -96,6 +96,12 @@ None yet.
 - **Fronteira "exibe, nunca recomenda":** score alto + entrada/stop/alvo é indistinguível de recomendação se a linguagem for imperativa — copy review é gate (Fases 15 e 16).
 - **Calibração de `prominence`/`distance` (pivôs B3):** sem valor canônico — tratar como params em `config.yaml` desde o início; calibrar empiricamente na Fase 13 com múltiplos tickers (candidata a `/gsd-research-phase`).
 - **Limites yfinance intraday (MEDIUM):** confirmar period×interval empiricamente na Fase 12 antes de cravar.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Status | Directory |
+|---|-------------|------|--------|--------|-----------|
+| 260629-ig6 | Aba Swing trade (MVP): candlestick intraday + timeframes + botão Atualizar (reusa engine Fase 12) | 2026-06-29 | 3c4eb15 | Verified | [260629-ig6-aba-swing-trade-mvp-candlestick-intraday](./quick/260629-ig6-aba-swing-trade-mvp-candlestick-intraday/) |
 
 ## Deferred Items
 
