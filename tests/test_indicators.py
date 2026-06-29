@@ -934,6 +934,43 @@ def test_calcular_popula_volume():
     assert sinais.volume.volume_mm is not None
 
 
+def test_volume_acima_mm_bidirecional():
+    # Flag AGNÓSTICA de direção (Open Q2): rompimento de BAIXA com volume alto na barra fechada
+    # → volume_acima_mm True, mas rompimento_com_volume (só-alta, Donchian sup) False.
+    cfg = _cfg_ind()
+    n = 40
+    close = np.full(n, 100.0)
+    close[-2] = 70.0            # barra FECHADA cai (quebra p/ baixo) — não é rompimento de alta
+    close[-1] = 69.0            # barra viva — ignorada (D-04)
+    vol = np.full(n, 1000.0)
+    vol[-2] = 5000.0           # volume alto na barra fechada (acima da MM)
+    df = _frame_ohlcv(close, high=close + 0.5, volume=vol)
+    v = indicators._volume(df, cfg)
+    assert v.volume_acima_mm is True            # confirmação serve ao lado de BAIXA dos padrões
+    assert v.rompimento_com_volume is False     # não houve rompimento da Donchian superior
+
+
+def test_volume_acima_mm_volume_baixo():
+    # Volume da barra fechada NÃO acima da MM → ambas as flags False.
+    cfg = _cfg_ind()
+    n = 40
+    close = np.full(n, 100.0)
+    close[-2] = 70.0
+    df = _frame_ohlcv(close, high=close + 0.5)   # volume constante (= MM) → não confirma
+    v = indicators._volume(df, cfg)
+    assert v.volume_acima_mm is False
+    assert v.rompimento_com_volume is False
+
+
+def test_volume_acima_mm_degrada():
+    # Frame curto (volume_mm todo-NaN) e frame sem coluna Volume → volume_acima_mm False, sem exceção.
+    cfg = _cfg_ind()
+    curto = indicators._volume(_frame_ohlcv(np.full(10, 100.0)), cfg)
+    assert curto.volume_acima_mm is False
+    sem_col = indicators._volume(_frame_ohlc(np.full(40, 100.0)).assign(Open=100.0), cfg)
+    assert sem_col.volume_acima_mm is False
+
+
 def test_calcular_volume_degrada_sem_coluna():
     # Frame OHLC sem Volume (os 191 goldens) → volume.volume_mm None, sem exceção.
     cfg = _cfg_ind()
