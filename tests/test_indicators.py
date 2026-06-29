@@ -405,3 +405,108 @@ def test_sinais_close_frame_vazio():
         sinais = indicators.calcular(entrada, cfg)
         assert isinstance(sinais.close, pd.Series)
         assert len(sinais.close) == 0
+
+
+# --------------------------------------------------------------------------- #
+# Pivôs fractal de Williams (PIVOT-01) — no-repaint causal (D-01/D-03)
+# --------------------------------------------------------------------------- #
+def _frame_pivos(n: int = 80) -> pd.DataFrame:
+    """OHLC com swings claros (seno suave determinístico) para os goldens de pivô.
+
+    Período ~2π·6 ≈ 38 barras → ~2 ciclos em 80 barras: vários topos/fundos confirmados,
+    longe da borda. Sem ruído de propósito (posições de pivô determinísticas).
+    """
+    t = np.arange(n)
+    close = 50.0 + 8.0 * np.sin(t / 6.0)
+    high = close + 0.5
+    low = close - 0.5
+    idx = pd.date_range("2021-01-01", periods=n, freq="B")
+    return pd.DataFrame({"High": high, "Low": low, "Close": close}, index=idx)
+
+
+def test_config_pivo_n():
+    # O config.yaml shipado expõe o N do fractal de Williams (D-02, default 2 — swing diário).
+    cfg = _cfg_ind()
+    assert cfg["indicadores"]["pivo_n"] == 2
+
+
+def test_pivos_no_repaint_truncacao():
+    # GATE D-03 (obrigatório da fase): _pivos(df[:k]) == _pivos(df) nas barras já fechadas.
+    # Um pivô confirmado em t é IMUTÁVEL quando chegam barras à direita (no-repaint trivial
+    # do fractal de Williams — ao contrário de find_peaks, cuja prominence repaint na borda).
+    cfg = _cfg_ind()
+    df = _frame_pivos()
+    N = cfg["indicadores"]["pivo_n"]
+    full = indicators._pivos(df, cfg)
+    for k in (40, 60):
+        pk = indicators._pivos(df.iloc[:k], cfg)
+        # barras fechadas no truncado: índices 0..k-1-N (têm N barras à direita no slice).
+        lim = k - N
+        np.testing.assert_allclose(
+            pk.pivot_high.iloc[:lim].to_numpy(float),
+            full.pivot_high.iloc[:lim].to_numpy(float),
+            equal_nan=True,
+        )
+        np.testing.assert_allclose(
+            pk.pivot_low.iloc[:lim].to_numpy(float),
+            full.pivot_low.iloc[:lim].to_numpy(float),
+            equal_nan=True,
+        )
+
+
+def test_pivos_lag_confirmacao():
+    # As N barras mais recentes NUNCA são pivô confirmado (faltam N barras à direita) — D-03.
+    cfg = _cfg_ind()
+    df = _frame_pivos()
+    N = cfg["indicadores"]["pivo_n"]
+    p = indicators._pivos(df, cfg)
+    assert p.pivot_high.iloc[-N:].isna().all()
+    assert p.pivot_low.iloc[-N:].isna().all()
+    assert p.n == N
+
+
+def test_pivos_teeth():
+    # Anti-falso-positivo: série monotônica crescente NÃO tem topo interno confirmado;
+    # um V tem EXATAMENTE um fundo confirmado na ponta (com N barras de cada lado).
+    cfg = _cfg_ind()
+    subida = np.linspace(10.0, 30.0, 40)
+    p_up = indicators._pivos(_frame_ohlc(subida), cfg)
+    assert p_up.pivot_high.isna().all()
+    assert p_up.pivot_low.isna().all()
+    assert p_up.ultimo_topo is None
+
+    desce = np.linspace(30.0, 10.0, 21)
+    sobe = np.linspace(10.0, 30.0, 21)[1:]
+    v = np.concatenate([desce, sobe])              # ponta do V no índice 20
+    p_v = indicators._pivos(_frame_ohlc(v), cfg)
+    fundos = p_v.pivot_low.dropna()
+    assert len(fundos) == 1
+    assert p_v.pivot_low.notna().to_numpy().nonzero()[0][0] == 20
+    assert p_v.pivot_high.isna().all()
+    assert p_v.ultimo_fundo == pytest.approx(v[20] - 0.5, abs=1e-9)
+
+
+def test_pivos_historico_curto():
+    # Frame < 2N+1 barras → séries todo-NaN e ultimo_topo/ultimo_fundo None, sem exceção.
+    cfg = _cfg_ind()
+    N = cfg["indicadores"]["pivo_n"]
+    close = np.linspace(10.0, 12.0, 2 * N)         # 2N barras (< 2N+1)
+    p = indicators._pivos(_frame_ohlc(close), cfg)
+    assert p.pivot_high.isna().all()
+    assert p.pivot_low.isna().all()
+    assert p.ultimo_topo is None and p.ultimo_fundo is None
+    assert p.n == N
+
+    # None via calcular não levanta exceção e popula um Pivos degradado.
+    s = indicators.calcular(None, cfg)
+    assert s.pivos is not None
+    assert s.pivos.ultimo_topo is None and s.pivos.ultimo_fundo is None
+
+
+def test_calcular_pivos():
+    # calcular popula SinaisTecnicos.pivos de forma aditiva (topos e fundos confirmados).
+    cfg = _cfg_ind()
+    sinais = indicators.calcular(_frame_pivos(), cfg)
+    assert sinais.pivos is not None
+    assert sinais.pivos.pivot_high.notna().any()
+    assert sinais.pivos.pivot_low.notna().any()
