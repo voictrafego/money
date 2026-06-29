@@ -382,13 +382,16 @@ def adx_wilder(ohlc: pd.DataFrame, length: int = 14):
     )
 
 
-def regressao_trailing(close: pd.Series, win: int = 90):
+def regressao_trailing(close: pd.Series, win: int = 90, periodos_ano: float = 252.0):
     """Regressão linear trailing (causal) → (slope_ann %/ano, r2) como Series (D-04).
 
     Para cada barra i ≥ win−1, ajusta uma reta OLS sobre a janela TRAILING de `win` barras
-    via `scipy.stats.linregress`. slope_ann = slope·252/média(seg)·100 (inclinação anualizada
-    em %/ano, normalizada pelo nível de preço — robusta a escala, comparável entre tickers);
-    r2 = rvalue². Janela só do passado → no-repaint por construção.
+    via `scipy.stats.linregress`. slope_ann = slope·`periodos_ano`/média(seg)·100 (inclinação
+    anualizada em %/ano, normalizada pelo nível de preço — robusta a escala, comparável entre
+    tickers); r2 = rvalue². Janela só do passado → no-repaint por construção.
+
+    `periodos_ano` é o nº de barras por ano da SÉRIE: ~252 no diário (default, mantém o golden
+    diário intacto) e ~52 no semanal. Sem isso o slope semanal sairia ~4,85× inflado (WR-01).
     """
     y = close.to_numpy(float)
     n = len(y)
@@ -400,7 +403,7 @@ def regressao_trailing(close: pd.Series, win: int = 90):
         media = seg.mean()
         res = stats.linregress(x, seg)
         with np.errstate(divide="ignore", invalid="ignore"):
-            slope_ann[i] = res.slope * 252.0 / media * 100.0 if media != 0 else np.nan
+            slope_ann[i] = res.slope * periodos_ano / media * 100.0 if media != 0 else np.nan
         r2[i] = res.rvalue ** 2
     return pd.Series(slope_ann, index=close.index), pd.Series(r2, index=close.index)
 
@@ -539,7 +542,7 @@ _DOW_SLOPE_BAND = 5.0    # %/ano: zona morta p/ o slope ser "claramente" direcio
                          # dela a inclinação é flat e o desempate cai para "lateral".
 
 
-def _dow(pivos: "Pivos", ohlc: pd.DataFrame, cfg: dict) -> str:
+def _dow(pivos: "Pivos", ohlc: pd.DataFrame, cfg: dict, periodos_ano: float = 252.0) -> str:
     """Rótulo de Dow no diário a partir dos pivôs CONFIRMADOS (TREND-01, D-05).
 
     Regra de Dow: comparando os DOIS últimos topos e os DOIS últimos fundos confirmados —
@@ -570,7 +573,9 @@ def _dow(pivos: "Pivos", ohlc: pd.DataFrame, cfg: dict) -> str:
 
     # Sequência ambígua → desempate por inclinação/ADX já existentes (D-05).
     adx, _pdi, _ndi = adx_wilder(ohlc, ind["adx_janela"])
-    slope, _r2 = regressao_trailing(ohlc["Close"], ind["regressao_janela"])
+    slope, _r2 = regressao_trailing(
+        ohlc["Close"], ind["regressao_janela"], periodos_ano=periodos_ano
+    )
     if len(adx.dropna()) == 0 or pd.isna(adx.iloc[-1]) or pd.isna(slope.iloc[-1]):
         return "indisponivel"
 
@@ -885,7 +890,9 @@ def _contexto(ohlc: pd.DataFrame, cfg: dict) -> ContextoTendencia:
         semanal = ohlc.resample("W-FRI").agg(
             {"Open": "first", "High": "max", "Low": "min", "Close": "last"}
         ).dropna()
-        dow_semanal = _dow(_pivos(semanal, cfg), semanal, cfg)
+        # WR-01: o slope é anualizado por ~52 barras/ano no semanal (não 252 do diário),
+        # senão sairia ~4,85× inflado e quase toda inclinação viraria "direcional".
+        dow_semanal = _dow(_pivos(semanal, cfg), semanal, cfg, periodos_ano=52.0)
     else:
         dow_semanal = "indisponivel"
 
