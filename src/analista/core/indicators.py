@@ -102,6 +102,13 @@ class Niveis:
     resistencias: list = field(default_factory=list)    # [(low, high), ...] acima do close
     donchian_externo_inf: Number = None                 # ponta de donchian_inf_55
     donchian_externo_sup: Number = None                 # ponta de donchian_sup_55
+    # Níveis geométricos de Fibonacci ANCORADOS no último impulso CONFIRMADO (LEVEL-02/04, D-07).
+    # Aditivos (default None): faixa de entrada (retração 61,8↔38,2%), os 3 níveis nomeados, o
+    # alvo (extensão 161,8%) e os DOIS pivôs âncora (timestamps+preços) p/ auditabilidade.
+    entrada_zona: tuple = None                          # (low, high) = (nível 61,8%, nível 38,2%)
+    fib_retracoes: dict = None                          # {"382","500","618"} → preço
+    alvo: Number = None                                 # extensão de Fibonacci 161,8%
+    pivos_ancora: dict = None                           # {fundo_ts,fundo_preco,topo_ts,topo_preco}
 
 
 @dataclass
@@ -664,6 +671,83 @@ def _niveis_sr(
 
 
 # --------------------------------------------------------------------------- #
+# Níveis de Fibonacci ancorados no último impulso confirmado (LEVEL-02/04, D-07)
+# --------------------------------------------------------------------------- #
+# Retração de ENTRADA (clássica) e extensão de ALVO.
+_FIB_RETRACOES = (("382", 0.382), ("500", 0.5), ("618", 0.618))
+_FIB_EXTENSAO = 1.618
+
+
+def _niveis_fib(
+    niveis: Niveis, pivos: "Pivos", contexto: "ContextoTendencia",
+    ohlc_nominal: pd.DataFrame, cfg: dict,
+) -> None:
+    """Níveis de Fibonacci ANCORADOS no último impulso CONFIRMADO (LEVEL-02/04, D-07).
+
+    A âncora é o par de pivôs mais recente COERENTE com a tendência diária (`contexto.dow_diario`):
+    em "alta" o impulso é fundo→topo (o último TOPO confirmado e o último FUNDO confirmado ANTES
+    dele); em "baixa" é topo→fundo (o último FUNDO e o último TOPO antes dele). Como os dois pivôs
+    são CONFIRMADOS (fractal de Williams — imutáveis, gate do plano 01), os níveis NUNCA repaint
+    (mitiga T-13-10); os dois pivôs âncora ficam documentados em `pivos_ancora` (timestamps+preços)
+    para auditabilidade (D-07).
+
+    Sobre o range (topo−fundo): retração de ENTRADA em 38,2/50/61,8% (`fib_retracoes` + a faixa
+    `entrada_zona` 61,8↔38,2%) e extensão de ALVO em 161,8%. Em "alta" a retração desce do topo e
+    o alvo projeta ACIMA do topo; em "baixa" espelha (retração medida do fundo para cima, alvo
+    projetado ABAIXO do fundo). Os PREÇOS são os dos pivôs — que `calcular` já computa sobre o
+    frame NOMINAL (D-02), logo são preços nominais.
+
+    Degradação graciosa (mitiga T-13-11): tendência "lateral"/"indisponivel" ou sem par de pivôs
+    confirmado coerente → `entrada_zona`/`alvo`/`pivos_ancora`/`fib_retracoes` permanecem None
+    (níveis direcionais não fazem sentido sem tendência), sem levantar exceção. Muta `niveis`.
+    """
+    dow = contexto.dow_diario if contexto is not None else "indisponivel"
+    if dow not in ("alta", "baixa") or pivos is None:
+        return
+
+    topos = pivos.pivot_high.dropna()
+    fundos = pivos.pivot_low.dropna()
+
+    if dow == "alta":
+        if not len(topos):
+            return
+        topo_ts, topo_preco = topos.index[-1], float(topos.iloc[-1])
+        fundos_antes = fundos[fundos.index < topo_ts]
+        if not len(fundos_antes):
+            return
+        fundo_ts, fundo_preco = fundos_antes.index[-1], float(fundos_antes.iloc[-1])
+    else:  # baixa
+        if not len(fundos):
+            return
+        fundo_ts, fundo_preco = fundos.index[-1], float(fundos.iloc[-1])
+        topos_antes = topos[topos.index < fundo_ts]
+        if not len(topos_antes):
+            return
+        topo_ts, topo_preco = topos_antes.index[-1], float(topos_antes.iloc[-1])
+
+    rng = topo_preco - fundo_preco
+    if rng <= 0:                                  # par incoerente (topo ≤ fundo) → não ancora
+        return
+
+    if dow == "alta":
+        fib = {nome: topo_preco - rng * f for nome, f in _FIB_RETRACOES}
+        entrada_zona = (topo_preco - rng * 0.618, topo_preco - rng * 0.382)
+        alvo = fundo_preco + rng * _FIB_EXTENSAO
+    else:
+        fib = {nome: fundo_preco + rng * f for nome, f in _FIB_RETRACOES}
+        entrada_zona = (fundo_preco + rng * 0.382, fundo_preco + rng * 0.618)
+        alvo = topo_preco - rng * _FIB_EXTENSAO
+
+    niveis.entrada_zona = entrada_zona
+    niveis.fib_retracoes = fib
+    niveis.alvo = alvo
+    niveis.pivos_ancora = {
+        "fundo_ts": fundo_ts, "fundo_preco": fundo_preco,
+        "topo_ts": topo_ts, "topo_preco": topo_preco,
+    }
+
+
+# --------------------------------------------------------------------------- #
 # Família Volume — MM de volume + flag rompimento com volume (VOL-01, D-11)
 # --------------------------------------------------------------------------- #
 def _volume(ohlc: pd.DataFrame, cfg: dict) -> Volume:
@@ -783,6 +867,12 @@ def calcular(
     canais = _canais(ohlc, cfg)
     forca = _forca(ohlc, cfg)
     pivos = _pivos(nominal, cfg)   # família de PREÇO → frame nominal (D-02)
+    contexto = _contexto(ohlc, cfg)
+    niveis = _niveis_sr(
+        pivos, nominal, forca.atr, canais.donchian_inf_55, canais.donchian_sup_55, cfg
+    )
+    # Fibonacci ancorado no último impulso confirmado (LEVEL-02/04, D-07) — mescla no Niveis.
+    _niveis_fib(niveis, pivos, contexto, nominal, cfg)
     return SinaisTecnicos(
         tendencia=_tendencia(close, cfg),
         canais=canais,
@@ -790,9 +880,7 @@ def calcular(
         momentum=_momentum(close, cfg),
         close=close,   # read-only: a MESMA close split-adjusted já usada (não recalcula)
         pivos=pivos,
-        contexto=_contexto(ohlc, cfg),
-        niveis=_niveis_sr(
-            pivos, nominal, forca.atr, canais.donchian_inf_55, canais.donchian_sup_55, cfg
-        ),
+        contexto=contexto,
+        niveis=niveis,
         volume=_volume(ohlc, cfg),
     )
