@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: executing
+status: verifying
 stopped_at: Completed 14-03-PLAN.md (detector OCO/OCO invertido + neckline inclinada por posição + gate no-repaint; 266 testes verdes)
-last_updated: "2026-06-29T23:16:09.339Z"
+last_updated: "2026-06-29T23:22:13.838Z"
 last_activity: 2026-06-29
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 11
-  completed_plans: 10
-  percent: 91
+  completed_plans: 11
+  percent: 100
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 
 Phase: 14 (Padrões Gráficos + Checklist de Sinais) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-06-29
 
 ## Performance Metrics
@@ -68,6 +68,7 @@ Last activity: 2026-06-29
 | Phase 14 P02 | ~10min | 2 tasks | 2 files |
 | Phase 14 P03 | ~12min | 2 tasks | 2 files |
 | Phase 14 P04 | ~8min | 2 tasks | 2 files |
+| Phase 14 P05 | ~6min | 2 tasks | 0 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - [Phase 14]: _padroes detecta duplo topo/fundo sobre pivôs confirmados (.dropna()) com neckline horizontal (vale.min/pico.max), estado em_formacao/confirmado (rompimento na barra fechada iloc[-2] + volume_acima_mm config-driven) e measured-move (altura projetada além da neckline); no-repaint provado por truncação; wiring em calcular deferido ao checklist (14-04)
 - [Phase ?]: Neckline da OCO por POSIÇÃO inteira da barra (get_loc), nunca timestamp em ns (Pitfall 3 / T-14-06); guard de reta degenerada (pos_f2==pos_f1)
 - [Phase 14]: _checklist agrega 6 sinais liga/desliga READ-ONLY (lê rótulos já computados, zero recálculo); calcular() popula padroes/checklist em SinaisTecnicos ponta-a-ponta; firewall de copy D-01 e degradação graciosa verdes (271 testes)
+- [Phase ?]: [Phase 14]: limiares geométricos do bloco padroes: (A1–A7, ASSUMED) APROVADOS SEM AJUSTE após validação multi-ticker (6 tickers B3 reais, ~5a diário): 3 padrões no total, 1 único confirmado, 4/6 em zero — anti-pareidolia (Pitfall 1/11) satisfeito; config.yaml intocado, goldens preservados
 
 ### Pending Todos
 
@@ -133,7 +135,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-29T23:15:46.003Z
+Last session: 2026-06-29T23:22:07.549Z
 Stopped at: Completed 14-03-PLAN.md (detector OCO/OCO invertido + neckline inclinada por posição + gate no-repaint; 266 testes verdes)
 Resume file: None
 
