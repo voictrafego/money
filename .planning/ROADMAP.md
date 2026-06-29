@@ -35,7 +35,7 @@ nem na regra `app.py` read-only.
 - Integer phases (12, 13…): trabalho planejado. Decimal phases (12.1…): inserções urgentes.
 - Dependência rígida entre camadas: **ingest → core math → report/dataclass → UI**. A ordem não é negociável.
 
-- [ ] **Phase 12: Ingestão Intraday + Timeframe** — Camada de dados OHLCV multi-timeframe isolada do pipeline diário (DATA-01/02/03)
+- [x] **Phase 12: Ingestão Intraday + Timeframe** — Camada de dados OHLCV multi-timeframe isolada do pipeline diário (DATA-01/02/03) (completed 2026-06-29)
 - [ ] **Phase 13: Pivôs, Contexto de Tendência e Níveis** — Pivôs no-repaint → Dow/multi-TF, S/R, stop, Fibonacci, R:R, volume (PIVOT/TREND/LEVEL/RR/VOL)
 - [ ] **Phase 14: Padrões Gráficos + Checklist de Sinais** — Duplo topo/fundo + OCO sobre pivôs e checklist liga/desliga (PAT-01, SIG-01)
 - [ ] **Phase 15: Montagem do Setup (SetupSwing) + Score** — Dataclass read-only firewall + score ponderado explicável com R:R como gate (SCORE-01)
@@ -55,7 +55,7 @@ nem na regra `app.py` read-only.
   5. Os 191 testes golden seguem verdes e novos testes cobrem as edges (barra viva, matriz period×interval, timezone, barras ilíquidas).
 **Plans**: 2 plans
 - [x] 12-01-PLAN.md — Engine de ingestão intraday (`ingest/intraday.py`: `coletar_intraday` + `FrameOHLC` + `_PERIODO_POR_TF` + tz/barra-viva clock-free) + testes golden offline (DATA-01, DATA-02)
-- [ ] 12-02-PLAN.md — Cache targetado em `app.py` (`frame_intraday` wrapper `@st.cache_data(ttl=300)` + `_nonce_key`, sem `.clear()` global) (DATA-03)
+- [x] 12-02-PLAN.md — Cache targetado em `app.py` (`frame_intraday` wrapper `@st.cache_data(ttl=300)` + `_nonce_key`, sem `.clear()` global) (DATA-03)
 
 ### Phase 13: Pivôs, Contexto de Tendência e Níveis
 **Goal**: A engine deriva, a partir de pivôs determinísticos e sem lookahead, o contexto de tendência (Dow + multi-TF) e todos os níveis geométricos de preço (S/R em zonas, entrada, stop, alvo Fibonacci), com R:R e confirmação por volume.
@@ -114,7 +114,7 @@ nem na regra `app.py` read-only.
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 12. Ingestão Intraday + Timeframe | v1.4 | 1/2 | In Progress|  |
+| 12. Ingestão Intraday + Timeframe | v1.4 | 2/2 | Complete   | 2026-06-29 |
 | 13. Pivôs, Contexto e Níveis | v1.4 | 0/TBD | Not started | - |
 | 14. Padrões Gráficos + Checklist | v1.4 | 0/TBD | Not started | - |
 | 15. Montagem do Setup + Score | v1.4 | 0/TBD | Not started | - |

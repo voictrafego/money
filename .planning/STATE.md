@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: Ferramenta de Swing Trade (setups de análise técnica)
-status: executing
-stopped_at: Completed 12-01-PLAN.md (engine intraday + 11 testes; 202 verdes)
-last_updated: "2026-06-29T15:23:18.559Z"
-last_activity: 2026-06-29 -- 12-01 concluído (ingestão intraday)
+status: verifying
+stopped_at: Completed 12-02-PLAN.md (cache intraday em app.py; 202 verdes)
+last_updated: "2026-06-29T15:27:38.264Z"
+last_activity: 2026-06-29 -- 12-02 concluído (wrapper de cache frame_intraday + _nonce_key)
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 50
+  completed_plans: 2
+  percent: 100
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 
 Phase: 12 (ingest-o-intraday-timeframe) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-06-29
 
 ## Performance Metrics
@@ -60,6 +60,7 @@ Last activity: 2026-06-29
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 12 P02 | ~4 min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - **Cache intraday isolado**: TTL curto 300s + nonce no botão Atualizar; nunca `st.cache_data.clear()` global (apagaria o cache da aba Analisar).
 - **Firewall `report/setup.py` × `report/report.py`**: nunca se importam mutuamente — garante os 191 goldens e o veredito fundamentalista intactos.
 - **MVP de padrões honesto** (Phase 14): só duplo topo/fundo + OCO; triângulos/bandeiras ficam fora do v1.4.
+- [Phase 12]: Cache intraday em app.py: frame_intraday(ticker,timeframe,nonce) TTL 300s; nonce so na chave (invalidacao targetada por par), zero clear global (D-08)
 
 ### Pending Todos
 
@@ -111,7 +113,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-29T15:23:18.556Z
+Last session: 2026-06-29T15:26:46.678Z
 Stopped at: Phase 12 context gathered
 Resume file: None
 
