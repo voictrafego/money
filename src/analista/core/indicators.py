@@ -68,6 +68,9 @@ class Forca:
     regressao_slope_ann: pd.Series
     regressao_r2: pd.Series
     forca_adx: str              # "sem_tendencia" | "forte" | "neutro" | "indisponivel"
+    # ATR (1ª suavização de Wilder do TR da cadeia do ADX) — insumo do stop ATR×m (LEVEL-03)
+    # e das zonas S/R (LEVEL-01). Aditiva (default None) p/ não quebrar o contrato travado.
+    atr: pd.Series = None
 
 
 @dataclass
@@ -267,6 +270,26 @@ def _canais(ohlc: pd.DataFrame, cfg: dict) -> Canais:
 # --------------------------------------------------------------------------- #
 # Forca (FORCE-01..02) — ADX(14) dupla-Wilder + regressão linear trailing (%/ano, R²)
 # --------------------------------------------------------------------------- #
+def atr_wilder(ohlc: pd.DataFrame, length: int = 14) -> pd.Series:
+    """ATR de Wilder: 1ª suavização do True Range (start=1), 1º válido no índice `length`.
+
+    É EXATAMENTE o `atr` interno de `adx_wilder` (D-08 manda EXPOR, não recalcular): o TR
+    por barra é max(high-low, |high-prev_close|, |low-prev_close|) e a suavização é a RMA de
+    Wilder SMA-seeded em `arr[1:1+length]` — `start=1` porque a barra 0 (prev_close=NaN) é o
+    diff indefinido. Frame com < length+1 barras → série todo-NaN (degradação graciosa, sem
+    exceção). Insumo do stop ATR×m (LEVEL-03) e das zonas S/R por proximidade<k×ATR (LEVEL-01).
+    """
+    high, low, close = ohlc["High"], ohlc["Low"], ohlc["Close"]
+    prev_close = close.shift(1)
+    tr = pd.concat([
+        (high - low),
+        (high - prev_close).abs(),
+        (low - prev_close).abs(),
+    ], axis=1).max(axis=1)
+    atr = _wilder_rma_from(tr.to_numpy(float), length, start=1)
+    return pd.Series(atr, index=ohlc.index)
+
+
 def adx_wilder(ohlc: pd.DataFrame, length: int = 14):
     """ADX(14) pela cadeia completa de Wilder com DUPLA suavização → (adx, pdi, ndi).
 
@@ -276,25 +299,20 @@ def adx_wilder(ohlc: pd.DataFrame, length: int = 14):
     (`start=length`). Seedar a 2ª suavização em 0 faria a SMA-seed mediar `length` NaNs →
     ADX todo-NaN (RESEARCH Pitfall 2); por isso `start=length` e o 1º ADX válido cai no
     índice 2·length−1 (= 27 para length 14). Divisões protegidas com `np.errstate`
-    (ATR==0 ou +DI+−DI==0 → NaN, nunca inf; mitiga T-05-06).
+    (ATR==0 ou +DI+−DI==0 → NaN, nunca inf; mitiga T-05-06). O ATR vem de `atr_wilder`
+    (mesmo TR/suavização) — exposto aditivamente sem alterar esta assinatura (D-08).
     """
-    high, low, close = ohlc["High"], ohlc["Low"], ohlc["Close"]
+    high, low = ohlc["High"], ohlc["Low"]
 
     up = high.diff()
     dn = -low.diff()
     plus_dm = np.where((up > dn) & (up > 0), up, 0.0)
     minus_dm = np.where((dn > up) & (dn > 0), dn, 0.0)
 
-    prev_close = close.shift(1)
-    tr = pd.concat([
-        (high - low),
-        (high - prev_close).abs(),
-        (low - prev_close).abs(),
-    ], axis=1).max(axis=1)
-
     # 1ª suavização de Wilder — start=1 porque a barra 0 é o diff indefinido (up/dn = NaN);
     # seedar a SMA em arr[1:1+length] coloca o 1º +DI/-DI/ATR válido no índice `length`.
-    atr = _wilder_rma_from(tr.to_numpy(float), length, start=1)
+    # O ATR reusa exatamente o helper público (mesma cadeia de TR) — D-08.
+    atr = atr_wilder(ohlc, length).to_numpy(float)
     sm_pdm = _wilder_rma_from(np.asarray(plus_dm, dtype=float), length, start=1)
     sm_ndm = _wilder_rma_from(np.asarray(minus_dm, dtype=float), length, start=1)
 
@@ -347,6 +365,7 @@ def _forca(ohlc: pd.DataFrame, cfg: dict) -> Forca:
     """
     ind = cfg["indicadores"]
     adx, pdi, ndi = adx_wilder(ohlc, ind["adx_janela"])
+    atr = atr_wilder(ohlc, ind["adx_janela"])
     slope, r2 = regressao_trailing(ohlc["Close"], ind["regressao_janela"])
 
     if len(adx.dropna()) == 0 or pd.isna(adx.iloc[-1]):
@@ -361,7 +380,7 @@ def _forca(ohlc: pd.DataFrame, cfg: dict) -> Forca:
     return Forca(
         adx=adx, pdi=pdi, ndi=ndi,
         regressao_slope_ann=slope, regressao_r2=r2,
-        forca_adx=forca_adx,
+        forca_adx=forca_adx, atr=atr,
     )
 
 
