@@ -93,6 +93,26 @@ class Pivos:
 
 
 @dataclass
+class Niveis:
+    # Zonas de Suporte/Resistência (LEVEL-01, D-10): FAIXAS (low, high), NUNCA pontos.
+    # Clustering de pivôs por proximidade < cluster_k×ATR (largura adapta à volatilidade do
+    # papel). Donchian 20/55 entra como faixa EXTERNA de referência (ponta de donchian_*_55).
+    # Aditiva (default vazio/None) p/ manter o contrato travado 100% retrocompatível.
+    suportes: list = field(default_factory=list)        # [(low, high), ...] abaixo do close
+    resistencias: list = field(default_factory=list)    # [(low, high), ...] acima do close
+    donchian_externo_inf: Number = None                 # ponta de donchian_inf_55
+    donchian_externo_sup: Number = None                 # ponta de donchian_sup_55
+
+
+@dataclass
+class Volume:
+    # Família Volume (VOL-01, D-11): MM de volume + flag booleana de rompimento confirmado.
+    # Aditiva (default None/False) — nenhum campo existente de SinaisTecnicos muda.
+    volume_mm: pd.Series = None                         # MM de volume (None se sem coluna Volume)
+    rompimento_com_volume: bool = False                 # rompimento Donchian sup + volume > MM
+
+
+@dataclass
 class ContextoTendencia:
     # Rótulo de Dow no diário e alinhamento multi-timeframe (semanal→diário).
     # Strings estáveis/neutras (NUNCA copy natural — D-01): a renderização é da Fase 16.
@@ -115,6 +135,12 @@ class SinaisTecnicos:
     # Contexto de tendência: Dow no diário + alinhamento semanal→diário (Fase 13 plano 02).
     # Aditiva (default None) p/ manter o contrato travado 100% retrocompatível.
     contexto: "ContextoTendencia" = None
+    # Níveis geométricos: zonas de S/R por cluster de pivôs + Donchian externo (Fase 13 plano 03).
+    # Aditiva (default None) p/ manter o contrato travado 100% retrocompatível.
+    niveis: "Niveis" = None
+    # Família Volume: MM de volume + flag de rompimento com volume (Fase 13 plano 03).
+    # Aditiva (default None) p/ manter o contrato travado 100% retrocompatível.
+    volume: "Volume" = None
 
 
 # --------------------------------------------------------------------------- #
@@ -542,6 +568,102 @@ def _dow(pivos: "Pivos", ohlc: pd.DataFrame, cfg: dict) -> str:
 
 
 # --------------------------------------------------------------------------- #
+# Zonas de Suporte/Resistência por cluster de pivôs (LEVEL-01, D-10)
+# --------------------------------------------------------------------------- #
+# Largura MÍNIMA de uma zona como fração do limiar de cluster (k×ATR). Garante que TODA zona
+# seja uma FAIXA, nunca um ponto (D-10) — mesmo um cluster de um único pivô vira banda.
+_SR_BANDA_MIN_FRAC = 0.5
+
+
+def _clusterizar_pivos(precos_ord: list, limiar: float) -> list:
+    """Funde preços ORDENADOS em zonas (low, high) por single-linkage: gap < limiar agrupa.
+
+    Cada grupo vira uma faixa (min, max). Se o grupo for estreito demais (ou um único pivô),
+    a faixa é alargada simetricamente para a largura mínima `_SR_BANDA_MIN_FRAC×limiar` —
+    assim a zona é SEMPRE uma banda (low<high), nunca um ponto (D-10).
+    """
+    if not precos_ord or limiar <= 0:
+        return []
+    min_w = _SR_BANDA_MIN_FRAC * limiar
+    zonas = []
+    grupo = [precos_ord[0]]
+    for p in precos_ord[1:]:
+        if p - grupo[-1] < limiar:
+            grupo.append(p)
+        else:
+            zonas.append(_zona_banda(grupo, min_w))
+            grupo = [p]
+    zonas.append(_zona_banda(grupo, min_w))
+    return zonas
+
+
+def _zona_banda(grupo: list, min_w: float) -> tuple:
+    """Faixa (low, high) do grupo, alargada para a largura mínima quando degenerada."""
+    low, high = min(grupo), max(grupo)
+    if high - low < min_w:
+        centro = (low + high) / 2.0
+        low, high = centro - min_w / 2.0, centro + min_w / 2.0
+    return (low, high)
+
+
+def _niveis_sr(
+    pivos: "Pivos",
+    ohlc: pd.DataFrame,
+    atr: pd.Series,
+    donchian_inf_55: pd.Series,
+    donchian_sup_55: pd.Series,
+    cfg: dict,
+) -> Niveis:
+    """Zonas de S/R por cluster de pivôs (proximidade < cluster_k×ATR) + Donchian externo.
+
+    S/R são FAIXAS, nunca pontos (D-10): os preços de pivôs CONFIRMADOS (pivot_high+pivot_low)
+    são fundidos em zonas (low,high) cuja largura adapta à volatilidade do papel (k×ATR — mais
+    robusto entre tickers B3 que um % fixo). A classificação é vs o close da barra FECHADA
+    (`iloc[-2]`, D-04 herdado): zonas abaixo → suportes (mais próximo primeiro); acima →
+    resistências. O Donchian 20/55 (ponta de donchian_*_55, já causal `.shift(1)`) entra como
+    faixa EXTERNA de referência. Os PREÇOS vêm do frame recebido (nominal quando `ohlc_nominal`
+    é dado a `calcular` — D-02); o ATR é o insumo de volatilidade da cadeia do ADX.
+
+    Degradação graciosa: sem pivôs / ATR todo-NaN / frame < 2 barras → zonas vazias e
+    referências None, sem levantar exceção (mitiga T-13-06; sem div-zero — só agrupa com ATR>0).
+    """
+    ind = cfg["indicadores"]
+    k = ind["cluster_k"]
+
+    di = donchian_inf_55.dropna() if donchian_inf_55 is not None else pd.Series([], dtype=float)
+    ds = donchian_sup_55.dropna() if donchian_sup_55 is not None else pd.Series([], dtype=float)
+    don_inf = float(di.iloc[-1]) if len(di) else None
+    don_sup = float(ds.iloc[-1]) if len(ds) else None
+
+    suportes: list = []
+    resistencias: list = []
+
+    close = ohlc["Close"] if "Close" in ohlc.columns else pd.Series([], dtype=float)
+    atr_validos = atr.dropna() if atr is not None else pd.Series([], dtype=float)
+
+    if pivos is not None and len(atr_validos) and len(close) >= 2:
+        precos = pd.concat([pivos.pivot_high.dropna(), pivos.pivot_low.dropna()])
+        atr_val = float(atr_validos.iloc[-1])
+        if len(precos) and atr_val > 0:
+            ref = float(close.iloc[-2])                      # barra FECHADA (D-04)
+            limiar = k * atr_val
+            zonas = _clusterizar_pivos(sorted(precos.to_numpy(float)), limiar)
+            for low, high in zonas:
+                if (low + high) / 2.0 <= ref:
+                    suportes.append((low, high))
+                else:
+                    resistencias.append((low, high))
+            # ordena por proximidade ao close (mais próximo primeiro)
+            suportes.sort(key=lambda z: ref - (z[0] + z[1]) / 2.0)
+            resistencias.sort(key=lambda z: (z[0] + z[1]) / 2.0 - ref)
+
+    return Niveis(
+        suportes=suportes, resistencias=resistencias,
+        donchian_externo_inf=don_inf, donchian_externo_sup=don_sup,
+    )
+
+
+# --------------------------------------------------------------------------- #
 # Entry-point — agrega as 4 famílias sobre o OHLC split-adjusted (CR-01)
 # --------------------------------------------------------------------------- #
 _COLUNAS_OHLC = ("Open", "High", "Low", "Close")
@@ -590,7 +712,9 @@ def _contexto(ohlc: pd.DataFrame, cfg: dict) -> ContextoTendencia:
     return ContextoTendencia(dow_diario=dow_diario, alinhamento_mtf=alinhamento)
 
 
-def calcular(ohlc: "pd.DataFrame", cfg: dict) -> SinaisTecnicos:
+def calcular(
+    ohlc: "pd.DataFrame", cfg: dict, ohlc_nominal: "pd.DataFrame | None" = None
+) -> SinaisTecnicos:
     """Ponto de entrada único: devolve um `SinaisTecnicos` completo (4 famílias).
 
     Guard na borda (espelha `ddm.ddm_dois_estagios`, mitiga T-05-05): se `ohlc` é None,
@@ -598,17 +722,38 @@ def calcular(ohlc: "pd.DataFrame", cfg: dict) -> SinaisTecnicos:
     de família — a degradação para "indisponivel" fica em um lugar só. Nunca levanta exceção
     na aba do Streamlit. Consome SEMPRE o frame split-adjusted (CR-01) e é agnóstico de
     timeframe (recebe o frame que lhe derem; o resample semanal é da Phase 6).
+
+    D-02 (herdado da Fase 12): níveis de PREÇO (pivôs + zonas S/R) usam o frame NOMINAL quando
+    `ohlc_nominal` é fornecido; os indicadores/contexto continuam sobre o split-adjusted (`ohlc`).
+    O parâmetro é OPCIONAL e ADITIVO — chamadas existentes (sem `ohlc_nominal`) usam o próprio
+    `ohlc` e ficam idênticas (os 191 goldens fundamentalistas e os técnicos seguem inalterados).
     """
     if ohlc is None or len(ohlc) == 0 or not set(_COLUNAS_OHLC).issubset(ohlc.columns):
         ohlc = pd.DataFrame({c: pd.Series(dtype=float) for c in _COLUNAS_OHLC})
 
+    # Frame das famílias de PREÇO (D-02): nominal quando fornecido e válido; senão o próprio ohlc.
+    if (
+        ohlc_nominal is not None
+        and len(ohlc_nominal) > 0
+        and set(_COLUNAS_OHLC).issubset(ohlc_nominal.columns)
+    ):
+        nominal = ohlc_nominal
+    else:
+        nominal = ohlc
+
     close = ohlc["Close"]
+    canais = _canais(ohlc, cfg)
+    forca = _forca(ohlc, cfg)
+    pivos = _pivos(nominal, cfg)   # família de PREÇO → frame nominal (D-02)
     return SinaisTecnicos(
         tendencia=_tendencia(close, cfg),
-        canais=_canais(ohlc, cfg),
-        forca=_forca(ohlc, cfg),
+        canais=canais,
+        forca=forca,
         momentum=_momentum(close, cfg),
         close=close,   # read-only: a MESMA close split-adjusted já usada (não recalcula)
-        pivos=_pivos(ohlc, cfg),
+        pivos=pivos,
         contexto=_contexto(ohlc, cfg),
+        niveis=_niveis_sr(
+            pivos, nominal, forca.atr, canais.donchian_inf_55, canais.donchian_sup_55, cfg
+        ),
     )
