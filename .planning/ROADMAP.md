@@ -127,7 +127,7 @@ nem na regra `app.py` read-only.
 | 12. Ingestão Intraday + Timeframe | v1.4 | 2/2 | Complete   | 2026-06-29 |
 | 13. Pivôs, Contexto e Níveis | v1.4 | 3/4 | In Progress|  |
 | 14. Padrões Gráficos + Checklist | v1.4 | 5/5 | Complete    | 2026-06-29 |
-| 15. Montagem do Setup + Score | v1.4 | 1/1 | Complete   | 2026-06-30 |
+| 15. Montagem do Setup + Score | v1.4 | 1/1 | Complete    | 2026-06-30 |
 | 16. Página Streamlit + Gráfico | v1.4 | 0/TBD | Not started | - |
 
 ## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.4

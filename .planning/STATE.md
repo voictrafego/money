@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: verifying
+status: ready_to_plan
 stopped_at: Completed 15-01-PLAN.md
 last_updated: "2026-06-30T08:32:21.275Z"
 last_activity: 2026-06-30
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 12
   completed_plans: 12
   percent: 100
@@ -25,16 +25,16 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 
 ## Current Position
 
-Phase: 15 (montagem-do-setup-setupswing-score) — EXECUTING
-Plan: 1 of 1
-Status: Phase complete — ready for verification
+Phase: 16
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-06-30
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 33 (v1.0 + v1.1 + v1.2) + v1.3 (Fases 9–11)
+- Total plans completed: 34 (v1.0 + v1.1 + v1.2) + v1.3 (Fases 9–11)
 - Average duration: — min
 - Total execution time: — hours
 
@@ -54,6 +54,7 @@ Last activity: 2026-06-30
 | 10 | 3 | - | - |
 | 11 | 2 | - | - |
 | 14 | 5 | - | - |
+| 15 | 1 | - | - |
 
 **Recent Trend:**
 
