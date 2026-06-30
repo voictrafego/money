@@ -466,11 +466,11 @@ if ticker and f.disponivel:
 | A3 | `marcadores_eventos` (golden/death cross + Donchian) ficam OFF no candlestick swing (clutter); D-02 não os lista | Q1 | Se o usuário quiser esses marcadores, é toggle extra trivial |
 | A4 | Defaults de `tec_estado_swing` (MMs+S/R+níveis+Fib ON; Bollinger/Donchian/padrões OFF; RSI/MACD/ADX ON) refletem D-02 | Q1 | Ajuste de toggle inicial, baixo risco |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Badge de tendência/MTF no card?** `sinais.contexto.dow_diario`/`alinhamento_mtf` existem e seriam um badge útil ("Tendência: alta · MTF: conflito"). CONTEXT não pede explicitamente, mas reforça explicabilidade (D-04). Recomendação: incluir como linha discreta no card (neutro, sem recomendação).
-2. **Reta inclinada da OCO** — deferir p/ pós-MVP (A2). Recomendação: horizontal agora.
-3. **Marcadores de pivôs visíveis?** `sinais.pivos.pivot_high/low` permitem marcar swings no candle. Útil para "ver por quê", mas pode poluir. Recomendação: toggle opcional OFF por padrão.
+1. **Badge de tendência/MTF no card?** `sinais.contexto.dow_diario`/`alinhamento_mtf` existem e seriam um badge útil ("Tendência: alta · MTF: conflito"). CONTEXT não pede explicitamente, mas reforça explicabilidade (D-04). Recomendação: incluir como linha discreta no card (neutro, sem recomendação). — **RESOLVED:** implementado em 16-02 Task 2 como linha discreta neutra no card.
+2. **Reta inclinada da OCO** — deferir p/ pós-MVP (A2). Recomendação: horizontal agora. — **RESOLVED:** deferido; neckline horizontal no MVP (16-02 Task 1), inclinada fica para pós-Phase 16.
+3. **Marcadores de pivôs visíveis?** `sinais.pivos.pivot_high/low` permitem marcar swings no candle. Útil para "ver por quê", mas pode poluir. Recomendação: toggle opcional OFF por padrão. — **RESOLVED:** deferido para pós-Phase 16 — não é requisito de CHART-01 nem decisão travada em CONTEXT; fora do escopo desta fase.
 
 ## Environment Availability
 
