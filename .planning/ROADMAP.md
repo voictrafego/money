@@ -101,7 +101,7 @@ nem na regra `app.py` read-only.
   2. O score é ponderado e explicável (decomposição visível peso a peso, tendência domina) com grade qualitativa; o R:R atua como gate/modulador e o conflito multi-TF penaliza sem bloquear o setup.
   3. Os pesos e limiares do score são parametrizados no `config.yaml` (sem hardcode na montagem).
   4. Os guards de borda estão aplicados (R:R sem divisão por zero via `np.errstate`, stop/alvo coerentes, gate de liquidez) e toda a linguagem do veredito é condicional/de estudo — copy review é gate de aceite.
-  5. 191 goldens verdes + `test_setup_report.py`; a engine fundamentalista e a aba Analisar permanecem intactas.
+  5. Todos os goldens existentes verdes (271 na coleta atual após as Fases 12–14) + `test_setup_report.py`; a engine fundamentalista e a aba Analisar permanecem intactas.
 **Plans**: 1 plan
 - [ ] 15-01-PLAN.md — bloco `score:` no config + engine `setup.py` (SetupSwing/montar_setup, gate R:R, firewall) + goldens `test_setup_report.py` (grades, gate, decomposição, anti-copy) (SCORE-01)
 
@@ -114,7 +114,7 @@ nem na regra `app.py` read-only.
   2. Usuário vê um candlestick interativo "do momento" com overlays liga/desliga (S/R, Fibonacci, padrões anotados, MMs/Donchian/Bollinger) e subpainéis RSI/MACD/ADX, com a barra viva em formação marcada.
   3. Usuário escolhe o timeframe e usa o botão Atualizar para re-buscar os dados; um selo "~15min atraso" + timestamp da última barra fica sempre visível.
   4. A página exibe disclaimer contextual "exibe sinais, nunca recomenda" e usa linguagem condicional para todos os níveis (entrada/stop/alvo como referências de estudo, jamais ordens).
-  5. 191 goldens verdes; verificação humana no navegador aprova o 4º menu sem regressão nas 3 abas existentes.
+  5. Todos os goldens existentes verdes (271+ após as Fases 12–15); verificação humana no navegador aprova o 4º menu sem regressão nas 3 abas existentes.
 **Plans**: TBD
 **UI hint**: yes
 

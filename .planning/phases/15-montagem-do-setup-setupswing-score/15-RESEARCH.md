@@ -337,19 +337,21 @@ Não aplicável — sem bibliotecas externas/versões em jogo. O "estado da arte
 
 > Todos os valores numéricos (A1–A5) são **config-driven e calibráveis** — entram no `config.yaml`, não no código. A discuss-phase já travou as decisões estruturais (D-01..D-07); estes são os *valores iniciais sensatos* que o research ancora.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **"Sem setup" tem floor de score além do gate de R:R? (A5)**
+> Resolvidas no planejamento da Fase 15 (plano 15-01). Cada recomendação abaixo foi adotada com valor concreto no PLAN.
+
+1. **RESOLVED — floor configurável `cortes_grade.fraco`.** "Sem setup" tem floor de score além do gate de R:R? (A5)
    - What we know: D-05 diz "'Sem setup' é TAMBÉM o resultado do gate de R:R" — "também" sugere uma 2ª origem (score muito baixo).
    - What's unclear: se um setup com R:R válido mas confluência mínima deve ser "Fraco" ou "Sem setup".
    - Recommendation: implementar floor configurável (`cortes_grade.fraco`); abaixo dele → "Sem setup". Expor `gate_rr_ok`+`rr_valor` para a UI distinguir as duas origens. Confirmar no plan/discuss.
 
-2. **Gate de liquidez (volume mínimo) entra no MVP? (CONTEXT discrição)**
+2. **RESOLVED — NÃO no MVP (volume já pesa 10%).** Gate de liquidez (volume mínimo) entra no MVP? (CONTEXT discrição)
    - What we know: a família Volume já tem peso 10%; o screening fundamentalista usa `volume_min_diario` R$15M, mas é outro contexto.
    - What's unclear: se vale um gate duro de liquidez no swing.
    - Recommendation: **NÃO no MVP** — o peso de volume já penaliza; um gate duro de liquidez sobre intraday best-effort arrisca over-bloquear. Deixar como deferido/backlog.
 
-3. **Direção do setup quando dow="alta" mas padrão confirmado é de baixa (duplo_topo)?**
+3. **RESOLVED — padrão incoerente pontua ~0 (não negativo); refinamento pós-MVP.** Direção do setup quando dow="alta" mas padrão confirmado é de baixa (duplo_topo)?
    - What we know: famílias podem discordar (tendência alta + padrão de reversão de baixa).
    - What's unclear: o score deve somar a "força" do padrão (que aponta contra) ou tratar como conflito interno.
    - Recommendation: o padrão coerente com a direção do dow pontua; o incoerente pontua ~0 (não negativo, para não criar score negativo). Documentar; é refinamento, não bloqueio do MVP.
