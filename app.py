@@ -15,11 +15,12 @@ from plotly.subplots import make_subplots
 
 from analista import grafico
 from analista.core import comparables as cmp
+from analista.core import indicators
 from analista.core import multiples as mult
 from analista.core import screening as sc
 from analista.glossario import h
 from analista.ingest import build, macro
-from analista.report import presentation, report
+from analista.report import presentation, report, setup
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 import yaml
@@ -622,22 +623,92 @@ elif modo.startswith("📈"):
             st.error(_MSG_MOTIVO.get(f.motivo, "Não foi possível carregar os candles agora. "
                                                "Tente o botão Atualizar."))
         else:
-            # D-02: o gráfico usa o OHLC NOMINAL (f.ohlc), não o ajustado por split.
-            fig = go.Figure(data=[go.Candlestick(
-                x=f.ohlc.index,
-                open=f.ohlc["Open"], high=f.ohlc["High"],
-                low=f.ohlc["Low"], close=f.ohlc["Close"],
-                name=ticker,
-            )])
-            fig.update_layout(
-                height=520, margin=dict(l=10, r=10, t=30, b=10),
-                xaxis_rangeslider_visible=False,
-            )
-            # D-04: a última barra pode estar em formação (viva) — sinaliza e mostra o atraso.
-            if f.barra_viva and f.ultima_barra_ts is not None:
-                fig.add_vline(x=f.ultima_barra_ts, line_width=1, line_dash="dot",
-                              line_color="#888888")
-            st.plotly_chart(fig, width="stretch")
+            # Cadeia de engine read-only (zero recálculo na UI): SinaisTecnicos + SetupSwing.
+            # ohlc_nominal=f.ohlc mantém pivôs/S-R/Fibonacci em escala NOMINAL, coerentes com o
+            # candlestick nominal (Pitfall 6); os indicadores rodam sobre o frame ajustado por split.
+            sinais = indicators.calcular(f.ohlc_ajustado, CFG, ohlc_nominal=f.ohlc)
+            sw = setup.montar_setup(sinais, CFG)
+
+            # Estado dos overlays ISOLADO da aba Analisar (D-03 / SWING-01): chave e defaults
+            # próprios — NUNCA grafico.estado_padrao() (tudo OFF) nem a chave "tec_estado".
+            # D-02: MMs/ADX/RSI/MACD/S-R/Fibonacci/níveis do setup LIGADOS; Donchian/Bollinger/
+            # padrões DESLIGADOS. As 4 primeiras chaves casam com o schema de overlays_preco/
+            # subpaineis_ativos; sr_on/fib_on/niveis_setup_on/padroes_on são extras lidos só aqui.
+            st.session_state.setdefault("tec_estado_swing", {
+                "tendencia": {"on": True, "tipo": "sma", "janelas": [20, 50, 200]},
+                "canais": {"donchian_on": False, "donchian_janela": 20, "bollinger_on": False},
+                "forca": {"on": True},
+                "momentum": {"rsi_on": True, "macd_on": True},
+                "sr_on": True, "fib_on": True, "niveis_setup_on": True, "padroes_on": False,
+            })
+            est = st.session_state["tec_estado_swing"]
+
+            # Slot do gráfico reservado ANTES do expander para o render ler o `est` já
+            # atualizado pelos toggles no MESMO rerun (sem lag de um clique) — padrão Analisar.
+            grafico_box = st.container()
+
+            with st.expander("⚙️ Overlays", expanded=False):
+                ct, cc, cf, cm = st.columns(4)
+                with ct:
+                    st.markdown("**Tendência**", help=h("tec_mm"))
+                    est["tendencia"]["on"] = st.toggle(
+                        "Médias móveis", value=est["tendencia"]["on"], help=h("tec_mm"))
+                    est["tendencia"]["tipo"] = st.radio(
+                        "Tipo", ["sma", "ema"],
+                        index=0 if est["tendencia"]["tipo"] == "sma" else 1,
+                        format_func=str.upper, horizontal=True, help=h("tec_mm"))
+                    est["tendencia"]["janelas"] = st.multiselect(
+                        "Janelas", [20, 50, 200], default=est["tendencia"]["janelas"],
+                        help=h("tec_cross"))
+                with cc:
+                    st.markdown("**Canais**", help=h("tec_donchian"))
+                    est["canais"]["donchian_on"] = st.toggle(
+                        "Donchian", value=est["canais"]["donchian_on"], help=h("tec_donchian"))
+                    est["canais"]["bollinger_on"] = st.toggle(
+                        "Bollinger", value=est["canais"]["bollinger_on"], help=h("tec_bollinger"))
+                with cf:
+                    st.markdown("**Força**", help=h("tec_adx"))
+                    est["forca"]["on"] = st.toggle(
+                        "ADX", value=est["forca"]["on"], help=h("tec_adx"))
+                with cm:
+                    st.markdown("**Momentum**", help=h("tec_rsi"))
+                    est["momentum"]["rsi_on"] = st.toggle(
+                        "RSI", value=est["momentum"]["rsi_on"], help=h("tec_rsi"))
+                    est["momentum"]["macd_on"] = st.toggle(
+                        "MACD", value=est["momentum"]["macd_on"], help=h("tec_macd"))
+                # Overlays extras (lidos só pelo render do app.py — grafico.py os ignora).
+                cs, cfi, cn, cp = st.columns(4)
+                with cs:
+                    st.markdown("**Suporte/Resistência**", help=h("tec_donchian"))
+                    est["sr_on"] = st.toggle("Zonas S/R", value=est["sr_on"])
+                with cfi:
+                    st.markdown("**Fibonacci**")
+                    est["fib_on"] = st.toggle("Retrações", value=est["fib_on"])
+                with cn:
+                    st.markdown("**Níveis do setup**")
+                    est["niveis_setup_on"] = st.toggle(
+                        "Entrada/stop/alvo", value=est["niveis_setup_on"])
+                with cp:
+                    st.markdown("**Padrões**")
+                    est["padroes_on"] = st.toggle("Anotar padrões", value=est["padroes_on"])
+
+            with grafico_box:
+                # D-02: o gráfico usa o OHLC NOMINAL (f.ohlc), não o ajustado por split.
+                fig = go.Figure(data=[go.Candlestick(
+                    x=f.ohlc.index,
+                    open=f.ohlc["Open"], high=f.ohlc["High"],
+                    low=f.ohlc["Low"], close=f.ohlc["Close"],
+                    name=ticker,
+                )])
+                fig.update_layout(
+                    height=520, margin=dict(l=10, r=10, t=30, b=10),
+                    xaxis_rangeslider_visible=False,
+                )
+                # D-04: a última barra pode estar em formação (viva) — sinaliza e mostra o atraso.
+                if f.barra_viva and f.ultima_barra_ts is not None:
+                    fig.add_vline(x=f.ultima_barra_ts, line_width=1, line_dash="dot",
+                                  line_color="#888888")
+                st.plotly_chart(fig, width="stretch")
 
             if f.barra_viva:
                 atraso_txt = f" · atraso ~{f.atraso_min:.0f} min" if f.atraso_min is not None else ""
