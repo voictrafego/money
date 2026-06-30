@@ -605,275 +605,303 @@ elif modo.startswith("📈"):
     if col3.button("Atualizar", use_container_width=True):
         st.session_state[k] += 1
 
+    # Auto-refresh OPCIONAL via st.fragment(run_every=...) — nativo no Streamlit, zero dependência.
+    # toggle/intervalo são o "tick visual"; o porteiro dos dados segue sendo o TTL=300s de
+    # frame_intraday, por isso o auto-refresh NÃO incrementa o nonce (anti rate-limit do Yahoo).
+    # Ficam FORA do fragment de propósito: mexer neles dispara um rerun que re-decora o fragment.
+    _INTERVALOS = {"30 segundos": 30, "1 minuto": 60, "5 minutos": 300}
+    cauto1, cauto2 = st.columns([2, 2])
+    auto_on = cauto1.toggle(
+        "Atualização automática", value=False, disabled=(tf_key == "diario"),
+        help="Re-roda só o gráfico de swing no intervalo escolhido, sem recarregar a página. "
+             "Reusa o cache — a Yahoo é consultada no máximo uma vez a cada 5min por par.",
+    )
+    auto_intervalo = cauto2.selectbox(
+        "Intervalo", list(_INTERVALOS),
+        disabled=(not auto_on or tf_key == "diario"),
+    )
+    if tf_key == "diario":
+        st.caption("ℹ️ A atualização automática só faz sentido em timeframes intraday "
+                   "(1h/30m/5m); no Diário ela é desnecessária.")
+    run_every = _INTERVALOS[auto_intervalo] if (auto_on and tf_key != "diario") else None
+
     # Gateia pelo ticker preenchido (não pelo retorno efêmero do botão): o gráfico persiste
     # entre reruns ao trocar de timeframe sem exigir novo clique.
     if ticker:
-        with st.spinner(f"Coletando candles de {ticker} ({tf_label})..."):
-            f = frame_intraday(ticker, tf_key, st.session_state[k])
+        # Render do bloco swing isolado num fragment: com run_every!=None ele re-roda
+        # sozinho no intervalo escolhido, sem recarregar a página nem re-renderizar as
+        # outras abas. Engloba fetch + figura + selo de atraso + card de veredito p/ manter
+        # candle, selo e veredito coerentes num mesmo snapshot. Captura ticker/tf_key/tf_label/
+        # k/CFG/run_every por closure; LÊ st.session_state[k] (nonce) sem incrementar.
+        @st.fragment(run_every=run_every)
+        def _render_swing():
+            with st.spinner(f"Coletando candles de {ticker} ({tf_label})..."):
+                f = frame_intraday(ticker, tf_key, st.session_state[k])
 
-        if f.disponivel is False:
-            # D-07: a copy amigável mora na UI, não na engine. fallback genérico p/ motivo desconhecido.
-            _MSG_MOTIVO = {
-                "timeframe_invalido": "Timeframe inválido.",
-                "sem_dados": "Sem candles para esse ticker/timeframe — a Yahoo não retornou dados. "
-                             "Confira o ticker.",
-                "fetch_falhou": "Falha ao buscar os dados (instabilidade na fonte). "
-                                "Tente o botão Atualizar.",
-            }
-            st.error(_MSG_MOTIVO.get(f.motivo, "Não foi possível carregar os candles agora. "
-                                               "Tente o botão Atualizar."))
-        else:
-            # Cadeia de engine read-only (zero recálculo na UI): SinaisTecnicos + SetupSwing.
-            # ohlc_nominal=f.ohlc mantém pivôs/S-R/Fibonacci em escala NOMINAL, coerentes com o
-            # candlestick nominal (Pitfall 6); os indicadores rodam sobre o frame ajustado por split.
-            sinais = indicators.calcular(f.ohlc_ajustado, CFG, ohlc_nominal=f.ohlc)
-            sw = setup.montar_setup(sinais, CFG)
+            if f.disponivel is False:
+                # D-07: a copy amigável mora na UI, não na engine. fallback genérico p/ motivo desconhecido.
+                _MSG_MOTIVO = {
+                    "timeframe_invalido": "Timeframe inválido.",
+                    "sem_dados": "Sem candles para esse ticker/timeframe — a Yahoo não retornou dados. "
+                                 "Confira o ticker.",
+                    "fetch_falhou": "Falha ao buscar os dados (instabilidade na fonte). "
+                                    "Tente o botão Atualizar.",
+                }
+                st.error(_MSG_MOTIVO.get(f.motivo, "Não foi possível carregar os candles agora. "
+                                                   "Tente o botão Atualizar."))
+            else:
+                # Cadeia de engine read-only (zero recálculo na UI): SinaisTecnicos + SetupSwing.
+                # ohlc_nominal=f.ohlc mantém pivôs/S-R/Fibonacci em escala NOMINAL, coerentes com o
+                # candlestick nominal (Pitfall 6); os indicadores rodam sobre o frame ajustado por split.
+                sinais = indicators.calcular(f.ohlc_ajustado, CFG, ohlc_nominal=f.ohlc)
+                sw = setup.montar_setup(sinais, CFG)
 
-            # Estado dos overlays ISOLADO da aba Analisar (D-03 / SWING-01): chave e defaults
-            # próprios — NUNCA grafico.estado_padrao() (tudo OFF) nem a chave "tec_estado".
-            # D-02: MMs/ADX/RSI/MACD/S-R/Fibonacci/níveis do setup LIGADOS; Donchian/Bollinger/
-            # padrões DESLIGADOS. As 4 primeiras chaves casam com o schema de overlays_preco/
-            # subpaineis_ativos; sr_on/fib_on/niveis_setup_on/padroes_on são extras lidos só aqui.
-            st.session_state.setdefault("tec_estado_swing", {
-                "tendencia": {"on": True, "tipo": "sma", "janelas": [20, 50, 200]},
-                "canais": {"donchian_on": False, "donchian_janela": 20, "bollinger_on": False},
-                "forca": {"on": True},
-                "momentum": {"rsi_on": True, "macd_on": True},
-                "sr_on": True, "fib_on": True, "niveis_setup_on": True, "padroes_on": False,
-            })
-            est = st.session_state["tec_estado_swing"]
+                # Estado dos overlays ISOLADO da aba Analisar (D-03 / SWING-01): chave e defaults
+                # próprios — NUNCA grafico.estado_padrao() (tudo OFF) nem a chave "tec_estado".
+                # D-02: MMs/ADX/RSI/MACD/S-R/Fibonacci/níveis do setup LIGADOS; Donchian/Bollinger/
+                # padrões DESLIGADOS. As 4 primeiras chaves casam com o schema de overlays_preco/
+                # subpaineis_ativos; sr_on/fib_on/niveis_setup_on/padroes_on são extras lidos só aqui.
+                st.session_state.setdefault("tec_estado_swing", {
+                    "tendencia": {"on": True, "tipo": "sma", "janelas": [20, 50, 200]},
+                    "canais": {"donchian_on": False, "donchian_janela": 20, "bollinger_on": False},
+                    "forca": {"on": True},
+                    "momentum": {"rsi_on": True, "macd_on": True},
+                    "sr_on": True, "fib_on": True, "niveis_setup_on": True, "padroes_on": False,
+                })
+                est = st.session_state["tec_estado_swing"]
 
-            # Slot do gráfico reservado ANTES do expander para o render ler o `est` já
-            # atualizado pelos toggles no MESMO rerun (sem lag de um clique) — padrão Analisar.
-            grafico_box = st.container()
+                # Slot do gráfico reservado ANTES do expander para o render ler o `est` já
+                # atualizado pelos toggles no MESMO rerun (sem lag de um clique) — padrão Analisar.
+                grafico_box = st.container()
 
-            with st.expander("⚙️ Overlays", expanded=False):
-                ct, cc, cf, cm = st.columns(4)
-                with ct:
-                    st.markdown("**Tendência**", help=h("tec_mm"))
-                    est["tendencia"]["on"] = st.toggle(
-                        "Médias móveis", value=est["tendencia"]["on"], help=h("tec_mm"))
-                    est["tendencia"]["tipo"] = st.radio(
-                        "Tipo", ["sma", "ema"],
-                        index=0 if est["tendencia"]["tipo"] == "sma" else 1,
-                        format_func=str.upper, horizontal=True, help=h("tec_mm"))
-                    est["tendencia"]["janelas"] = st.multiselect(
-                        "Janelas", [20, 50, 200], default=est["tendencia"]["janelas"],
-                        help=h("tec_cross"))
-                with cc:
-                    st.markdown("**Canais**", help=h("tec_donchian"))
-                    est["canais"]["donchian_on"] = st.toggle(
-                        "Donchian", value=est["canais"]["donchian_on"], help=h("tec_donchian"))
-                    est["canais"]["bollinger_on"] = st.toggle(
-                        "Bollinger", value=est["canais"]["bollinger_on"], help=h("tec_bollinger"))
-                with cf:
-                    st.markdown("**Força**", help=h("tec_adx"))
-                    est["forca"]["on"] = st.toggle(
-                        "ADX", value=est["forca"]["on"], help=h("tec_adx"))
-                with cm:
-                    st.markdown("**Momentum**", help=h("tec_rsi"))
-                    est["momentum"]["rsi_on"] = st.toggle(
-                        "RSI", value=est["momentum"]["rsi_on"], help=h("tec_rsi"))
-                    est["momentum"]["macd_on"] = st.toggle(
-                        "MACD", value=est["momentum"]["macd_on"], help=h("tec_macd"))
-                # Overlays extras (lidos só pelo render do app.py — grafico.py os ignora).
-                cs, cfi, cn, cp = st.columns(4)
-                with cs:
-                    st.markdown("**Suporte/Resistência**", help=h("tec_donchian"))
-                    est["sr_on"] = st.toggle("Zonas S/R", value=est["sr_on"])
-                with cfi:
-                    st.markdown("**Fibonacci**")
-                    est["fib_on"] = st.toggle("Retrações", value=est["fib_on"])
-                with cn:
-                    st.markdown("**Níveis do setup**")
-                    est["niveis_setup_on"] = st.toggle(
-                        "Entrada/stop/alvo", value=est["niveis_setup_on"])
-                with cp:
-                    st.markdown("**Padrões**")
-                    est["padroes_on"] = st.toggle("Anotar padrões", value=est["padroes_on"])
+                with st.expander("⚙️ Overlays", expanded=False):
+                    ct, cc, cf, cm = st.columns(4)
+                    with ct:
+                        st.markdown("**Tendência**", help=h("tec_mm"))
+                        est["tendencia"]["on"] = st.toggle(
+                            "Médias móveis", value=est["tendencia"]["on"], help=h("tec_mm"))
+                        est["tendencia"]["tipo"] = st.radio(
+                            "Tipo", ["sma", "ema"],
+                            index=0 if est["tendencia"]["tipo"] == "sma" else 1,
+                            format_func=str.upper, horizontal=True, help=h("tec_mm"))
+                        est["tendencia"]["janelas"] = st.multiselect(
+                            "Janelas", [20, 50, 200], default=est["tendencia"]["janelas"],
+                            help=h("tec_cross"))
+                    with cc:
+                        st.markdown("**Canais**", help=h("tec_donchian"))
+                        est["canais"]["donchian_on"] = st.toggle(
+                            "Donchian", value=est["canais"]["donchian_on"], help=h("tec_donchian"))
+                        est["canais"]["bollinger_on"] = st.toggle(
+                            "Bollinger", value=est["canais"]["bollinger_on"], help=h("tec_bollinger"))
+                    with cf:
+                        st.markdown("**Força**", help=h("tec_adx"))
+                        est["forca"]["on"] = st.toggle(
+                            "ADX", value=est["forca"]["on"], help=h("tec_adx"))
+                    with cm:
+                        st.markdown("**Momentum**", help=h("tec_rsi"))
+                        est["momentum"]["rsi_on"] = st.toggle(
+                            "RSI", value=est["momentum"]["rsi_on"], help=h("tec_rsi"))
+                        est["momentum"]["macd_on"] = st.toggle(
+                            "MACD", value=est["momentum"]["macd_on"], help=h("tec_macd"))
+                    # Overlays extras (lidos só pelo render do app.py — grafico.py os ignora).
+                    cs, cfi, cn, cp = st.columns(4)
+                    with cs:
+                        st.markdown("**Suporte/Resistência**", help=h("tec_donchian"))
+                        est["sr_on"] = st.toggle("Zonas S/R", value=est["sr_on"])
+                    with cfi:
+                        st.markdown("**Fibonacci**")
+                        est["fib_on"] = st.toggle("Retrações", value=est["fib_on"])
+                    with cn:
+                        st.markdown("**Níveis do setup**")
+                        est["niveis_setup_on"] = st.toggle(
+                            "Entrada/stop/alvo", value=est["niveis_setup_on"])
+                    with cp:
+                        st.markdown("**Padrões**")
+                        est["padroes_on"] = st.toggle("Anotar padrões", value=est["padroes_on"])
 
-            with grafico_box:
-                # Figura multi-painel: candlestick (row 1) + overlays MM + subpainéis RSI/MACD/ADX.
-                # Reuso direto das funções puras de grafico.py (golden-pinned) com o `est` isolado;
-                # a diferença LINHA→CANDLESTICK vive só no trace de preço, não nos specs.
-                specs = grafico.subpaineis_ativos(est, sinais)
-                layout = grafico.layout_subplots(len(specs))
-                fig = make_subplots(
-                    rows=layout["rows"], cols=1, shared_xaxes=True,
-                    row_heights=layout["row_heights"], vertical_spacing=0.03,
-                )
-                # Row 1 — candlestick NOMINAL (D-02); rangeslider OFF (Pitfall 4: rouba altura das rows).
-                fig.add_trace(go.Candlestick(
-                    x=f.ohlc.index,
-                    open=f.ohlc["Open"], high=f.ohlc["High"],
-                    low=f.ohlc["Low"], close=f.ohlc["Close"],
-                    name=ticker,
-                ), row=1, col=1)
-                fig.update_xaxes(rangeslider_visible=False, row=1, col=1)
-                # Overlays MM/Donchian/Bollinger no eixo de preço (mesmo loop da aba Analisar).
-                for ov in grafico.overlays_preco(est, sinais):
-                    fig.add_trace(go.Scatter(
-                        x=ov.serie.index, y=ov.serie.values, mode="lines", name=ov.nome,
-                        line=dict(ov.estilo),
-                    ), row=1, col=1)
-
-                # --- Overlays de NÍVEL (read-only de sinais.niveis / sw) -------------------
-                # Toda a copy é NEUTRA ("estudo"/"projeção de estudo") — gate SWING-02 / Pitfall 5.
-                # Cada bloco é gateado pelo seu toggle em `est` e degrada sem quebrar quando os
-                # campos da engine são None / listas vazias (LEVEL-01: zonas como BANDAS, nunca pontos).
-                if est["sr_on"] and sinais.niveis is not None:
-                    for (lo, hi) in sinais.niveis.suportes:
-                        fig.add_hrect(y0=lo, y1=hi, line_width=0, fillcolor="green",
-                                      opacity=0.08, row=1, col=1)
-                    for (lo, hi) in sinais.niveis.resistencias:
-                        fig.add_hrect(y0=lo, y1=hi, line_width=0, fillcolor="red",
-                                      opacity=0.08, row=1, col=1)
-                if est["niveis_setup_on"] and sw.entrada_zona:
-                    lo, hi = sw.entrada_zona
-                    fig.add_hrect(y0=lo, y1=hi, line_width=0, fillcolor="blue", opacity=0.10,
-                                  annotation_text="zona de entrada (estudo)", row=1, col=1)
-                    if sw.stop is not None:
-                        fig.add_hline(y=sw.stop, line_dash="dash", line_color="#d62728",
-                                      annotation_text="stop (estudo)", row=1, col=1)
-                    if sw.alvo is not None:
-                        fig.add_hline(y=sw.alvo, line_dash="dash", line_color="#2ca02c",
-                                      annotation_text="alvo (estudo)", row=1, col=1)
-                if est["fib_on"] and sinais.niveis is not None and sinais.niveis.fib_retracoes:
-                    for nome, preco in sinais.niveis.fib_retracoes.items():
-                        fig.add_hline(y=preco, line_dash="dot", line_color="#9467bd",
-                                      annotation_text=f"Fib {nome}", row=1, col=1)
-                # Anotação de padrões (OFF por padrão, D-02): neckline horizontal (simplificação
-                # honesta do MVP — reta inclinada da OCO deferida), rótulo "em formação"/"confirmado"
-                # e alvo measured-move. Cor por direção (espelha setup._PADROES_ALTA/_BAIXA).
-                if est["padroes_on"] and sinais.padroes is not None:
-                    _COR_PAD = {"duplo_fundo": "#2ca02c", "oco_invertido": "#2ca02c",
-                                "duplo_topo": "#d62728", "oco": "#d62728"}
-                    for p in sinais.padroes.lista:
-                        ts = sorted(p.pivos_envolvidos)
-                        if not ts:
-                            continue
-                        cor = _COR_PAD.get(p.tipo, "#888888")
-                        dash = "solid" if p.estado == "confirmado" else "dot"
-                        rotulo = "confirmado" if p.estado == "confirmado" else "em formação"
-                        fig.add_shape(type="line", x0=ts[0], x1=ts[-1],
-                                      y0=p.neckline, y1=p.neckline,
-                                      line=dict(color=cor, width=1.5, dash=dash), row=1, col=1)
-                        fig.add_annotation(x=ts[-1], y=p.neckline,
-                                           text=f"{p.tipo.replace('_', ' ')} · {rotulo}",
-                                           showarrow=False, yshift=12,
-                                           font=dict(color=cor, size=10), row=1, col=1)
-                        fig.add_hline(y=p.alvo, line_width=1, line_dash="dot", line_color=cor,
-                                      annotation_text="alvo (projeção de estudo)",
-                                      annotation_position="right", row=1, col=1)
-                        fig.add_trace(go.Scatter(
-                            x=list(p.pivos_envolvidos), y=list(p.pivos_envolvidos.values()),
-                            mode="markers", marker=dict(symbol="circle-open", color=cor, size=9),
-                            showlegend=False, hoverinfo="skip",
-                        ), row=1, col=1)
-                # D-04: a última barra pode estar em formação (viva) — marca sem derivar nível dela.
-                if f.barra_viva and f.ultima_barra_ts is not None:
-                    fig.add_vline(x=f.ultima_barra_ts, line_width=1, line_dash="dot",
-                                  line_color="#888888", row=1, col=1)
-                # Subpainéis dos osciladores ativos — série(s) + linhas de referência do SubpainelSpec.
-                for i, spec in enumerate(specs):
-                    r = i + 2
-                    for rotulo, s in spec.series:
-                        # O histograma do MACD é (MACD − Sinal) e deve ser BARRAS (verde ≥0 /
-                        # vermelho <0), não uma linha — como na aba Analisar.
-                        if rotulo == "Histograma":
-                            fig.add_trace(go.Bar(
-                                x=s.index, y=s.values, name=rotulo,
-                                marker_color=["#2ca02c" if (v is not None and v >= 0) else "#d62728"
-                                              for v in s.values],
-                            ), row=r, col=1)
-                            continue
-                        fig.add_trace(go.Scatter(
-                            x=s.index, y=s.values, mode="lines", name=rotulo,
-                        ), row=r, col=1)
-                    for ref in spec.referencias:
-                        fig.add_hline(y=ref, line_width=1, line_dash="dot",
-                                      line_color="#aaaaaa", row=r, col=1)
-                    fig.update_yaxes(title_text=spec.nome.upper(), row=r, col=1)
-                fig.update_layout(
-                    height=400 + 140 * len(specs), margin=dict(l=10, r=10, t=40, b=10),
-                    showlegend=True, legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
-                )
-                st.plotly_chart(fig, width="stretch")
-
-            # Selo de atraso SEMPRE visível (D-08): honestidade sobre o best-effort intraday.
-            atraso = f" · última barra {f.ultima_barra_ts:%H:%M}" if f.ultima_barra_ts is not None else ""
-            st.caption(f"⏱️ ~15min de atraso (best-effort){atraso}.")
-
-            # Histórico insuficiente: <2 barras ⇒ sem barra fechada p/ leitura técnica (Fases 13+).
-            if f.idx_ultima_fechada is None:
-                st.warning("Histórico insuficiente — menos de duas barras fechadas neste timeframe.")
-
-            # --- Card de veredito read-only (D-01/D-04/D-05) ---------------------------
-            # Tudo LIDO de `sw` + `sinais` (zero recálculo). NUNCA st.metric p/ níveis (Pitfall 5):
-            # entrada/stop/alvo vão numa TABELA "Referências de estudo (não são ordens)". Copy
-            # estritamente NÃO-imperativa (gate SWING-02) — mesmo firewall do test_setup_report.
-            st.divider()
-            st.markdown(f"### Veredito de estudo · **{sw.grade}**")
-            st.caption(f"Pontuação de confluência técnica: **{sw.score:.0f}** / 100")
-            if sinais.contexto is not None:
-                st.caption(
-                    f"Tendência: {sinais.contexto.dow_diario} · "
-                    f"MTF: {sinais.contexto.alinhamento_mtf}"
-                )
-
-            # Decomposição peso-a-peso (D-04). "Sem setup"/decomposição vazia → mensagem neutra
-            # (Pitfall 3) — o checklist abaixo vem independente do gate.
-            _FAM_LABEL = {
-                "tendencia": "Tendência", "risco_retorno": "Risco/retorno",
-                "padroes": "Padrões", "momentum": "Momentum", "volume": "Volume",
-            }
-            if sw.decomposicao:
-                st.markdown("**Decomposição do score (por família)**")
-                linhas = ["| Família | Contribuição | Peso | Leitura |", "|---|---|---|---|"]
-                for c in sw.decomposicao:
-                    fam = _FAM_LABEL.get(c.familia, c.familia)
-                    linhas.append(
-                        f"| {fam} | {c.contribuicao:.1f} pts | {c.peso} | "
-                        f"{esc_md(c.detalhe)} |"
+                with grafico_box:
+                    # Figura multi-painel: candlestick (row 1) + overlays MM + subpainéis RSI/MACD/ADX.
+                    # Reuso direto das funções puras de grafico.py (golden-pinned) com o `est` isolado;
+                    # a diferença LINHA→CANDLESTICK vive só no trace de preço, não nos specs.
+                    specs = grafico.subpaineis_ativos(est, sinais)
+                    layout = grafico.layout_subplots(len(specs))
+                    fig = make_subplots(
+                        rows=layout["rows"], cols=1, shared_xaxes=True,
+                        row_heights=layout["row_heights"], vertical_spacing=0.03,
                     )
-                st.markdown("\n".join(linhas))
-            else:
-                st.info("Sem confluência suficiente para um setup de estudo.")
+                    # Row 1 — candlestick NOMINAL (D-02); rangeslider OFF (Pitfall 4: rouba altura das rows).
+                    fig.add_trace(go.Candlestick(
+                        x=f.ohlc.index,
+                        open=f.ohlc["Open"], high=f.ohlc["High"],
+                        low=f.ohlc["Low"], close=f.ohlc["Close"],
+                        name=ticker,
+                    ), row=1, col=1)
+                    fig.update_xaxes(rangeslider_visible=False, row=1, col=1)
+                    # Overlays MM/Donchian/Bollinger no eixo de preço (mesmo loop da aba Analisar).
+                    for ov in grafico.overlays_preco(est, sinais):
+                        fig.add_trace(go.Scatter(
+                            x=ov.serie.index, y=ov.serie.values, mode="lines", name=ov.nome,
+                            line=dict(ov.estilo),
+                        ), row=1, col=1)
 
-            # Checklist (D-05): ✓ quando o sinal está ativo, ✗ quando inativo. Independe do gate.
-            if sinais.checklist is not None and sinais.checklist.sinais:
-                st.markdown("**Checklist técnico**")
-                chk = []
-                for s in sinais.checklist.sinais:
-                    marca = "✓" if s.ativo else "✗"
-                    chk.append(f"- {marca} **{s.nome}** — {esc_md(s.detalhe)}")
-                st.markdown("\n".join(chk))
+                    # --- Overlays de NÍVEL (read-only de sinais.niveis / sw) -------------------
+                    # Toda a copy é NEUTRA ("estudo"/"projeção de estudo") — gate SWING-02 / Pitfall 5.
+                    # Cada bloco é gateado pelo seu toggle em `est` e degrada sem quebrar quando os
+                    # campos da engine são None / listas vazias (LEVEL-01: zonas como BANDAS, nunca pontos).
+                    if est["sr_on"] and sinais.niveis is not None:
+                        for (lo, hi) in sinais.niveis.suportes:
+                            fig.add_hrect(y0=lo, y1=hi, line_width=0, fillcolor="green",
+                                          opacity=0.08, row=1, col=1)
+                        for (lo, hi) in sinais.niveis.resistencias:
+                            fig.add_hrect(y0=lo, y1=hi, line_width=0, fillcolor="red",
+                                          opacity=0.08, row=1, col=1)
+                    if est["niveis_setup_on"] and sw.entrada_zona:
+                        lo, hi = sw.entrada_zona
+                        fig.add_hrect(y0=lo, y1=hi, line_width=0, fillcolor="blue", opacity=0.10,
+                                      annotation_text="zona de entrada (estudo)", row=1, col=1)
+                        if sw.stop is not None:
+                            fig.add_hline(y=sw.stop, line_dash="dash", line_color="#d62728",
+                                          annotation_text="stop (estudo)", row=1, col=1)
+                        if sw.alvo is not None:
+                            fig.add_hline(y=sw.alvo, line_dash="dash", line_color="#2ca02c",
+                                          annotation_text="alvo (estudo)", row=1, col=1)
+                    if est["fib_on"] and sinais.niveis is not None and sinais.niveis.fib_retracoes:
+                        for nome, preco in sinais.niveis.fib_retracoes.items():
+                            fig.add_hline(y=preco, line_dash="dot", line_color="#9467bd",
+                                          annotation_text=f"Fib {nome}", row=1, col=1)
+                    # Anotação de padrões (OFF por padrão, D-02): neckline horizontal (simplificação
+                    # honesta do MVP — reta inclinada da OCO deferida), rótulo "em formação"/"confirmado"
+                    # e alvo measured-move. Cor por direção (espelha setup._PADROES_ALTA/_BAIXA).
+                    if est["padroes_on"] and sinais.padroes is not None:
+                        _COR_PAD = {"duplo_fundo": "#2ca02c", "oco_invertido": "#2ca02c",
+                                    "duplo_topo": "#d62728", "oco": "#d62728"}
+                        for p in sinais.padroes.lista:
+                            ts = sorted(p.pivos_envolvidos)
+                            if not ts:
+                                continue
+                            cor = _COR_PAD.get(p.tipo, "#888888")
+                            dash = "solid" if p.estado == "confirmado" else "dot"
+                            rotulo = "confirmado" if p.estado == "confirmado" else "em formação"
+                            fig.add_shape(type="line", x0=ts[0], x1=ts[-1],
+                                          y0=p.neckline, y1=p.neckline,
+                                          line=dict(color=cor, width=1.5, dash=dash), row=1, col=1)
+                            fig.add_annotation(x=ts[-1], y=p.neckline,
+                                               text=f"{p.tipo.replace('_', ' ')} · {rotulo}",
+                                               showarrow=False, yshift=12,
+                                               font=dict(color=cor, size=10), row=1, col=1)
+                            fig.add_hline(y=p.alvo, line_width=1, line_dash="dot", line_color=cor,
+                                          annotation_text="alvo (projeção de estudo)",
+                                          annotation_position="right", row=1, col=1)
+                            fig.add_trace(go.Scatter(
+                                x=list(p.pivos_envolvidos), y=list(p.pivos_envolvidos.values()),
+                                mode="markers", marker=dict(symbol="circle-open", color=cor, size=9),
+                                showlegend=False, hoverinfo="skip",
+                            ), row=1, col=1)
+                    # D-04: a última barra pode estar em formação (viva) — marca sem derivar nível dela.
+                    if f.barra_viva and f.ultima_barra_ts is not None:
+                        fig.add_vline(x=f.ultima_barra_ts, line_width=1, line_dash="dot",
+                                      line_color="#888888", row=1, col=1)
+                    # Subpainéis dos osciladores ativos — série(s) + linhas de referência do SubpainelSpec.
+                    for i, spec in enumerate(specs):
+                        r = i + 2
+                        for rotulo, s in spec.series:
+                            # O histograma do MACD é (MACD − Sinal) e deve ser BARRAS (verde ≥0 /
+                            # vermelho <0), não uma linha — como na aba Analisar.
+                            if rotulo == "Histograma":
+                                fig.add_trace(go.Bar(
+                                    x=s.index, y=s.values, name=rotulo,
+                                    marker_color=["#2ca02c" if (v is not None and v >= 0) else "#d62728"
+                                                  for v in s.values],
+                                ), row=r, col=1)
+                                continue
+                            fig.add_trace(go.Scatter(
+                                x=s.index, y=s.values, mode="lines", name=rotulo,
+                            ), row=r, col=1)
+                        for ref in spec.referencias:
+                            fig.add_hline(y=ref, line_width=1, line_dash="dot",
+                                          line_color="#aaaaaa", row=r, col=1)
+                        fig.update_yaxes(title_text=spec.nome.upper(), row=r, col=1)
+                    fig.update_layout(
+                        height=400 + 140 * len(specs), margin=dict(l=10, r=10, t=40, b=10),
+                        showlegend=True, legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
+                    )
+                    st.plotly_chart(fig, width="stretch")
 
-            # Tabela de níveis — rótulo EXATO D-05. fmt_rs trata None→"—"; esc_md escapa o "$".
-            st.markdown("**Referências de estudo (não são ordens)**")
-            if sw.entrada_zona is not None:
-                _lo, _hi = sw.entrada_zona
-                _entrada = f"{fmt_rs(_lo)} – {fmt_rs(_hi)}"
-            else:
-                _entrada = "—"
-            _rr = sinais.niveis.risco_retorno if sinais.niveis is not None else "indisponivel"
-            niveis_linhas = [
-                "| Referência | Valor |", "|---|---|",
-                f"| Zona de entrada (estudo) | {esc_md(_entrada)} |",
-                f"| Stop (estudo) | {esc_md(fmt_rs(sw.stop))} |",
-                f"| Alvo (estudo) | {esc_md(fmt_rs(sw.alvo))} |",
-                f"| Risco : retorno | {esc_md(_rr)} |",
-            ]
-            st.markdown("\n".join(niveis_linhas))
+                # Selo de atraso SEMPRE visível (D-08): honestidade sobre o best-effort intraday.
+                atraso = f" · última barra {f.ultima_barra_ts:%H:%M}" if f.ultima_barra_ts is not None else ""
+                st.caption(f"⏱️ ~15min de atraso (best-effort){atraso}.")
 
-            # Disclaimer condicional inline (SWING-02): ajusta o tom quando não há setup.
-            if sw.grade == "Sem setup":
-                st.caption(
-                    "Esta página exibe sinais técnicos de estudo e não recomenda compra ou venda. "
-                    "No momento não há confluência suficiente para uma referência de setup."
-                )
-            else:
-                st.caption(
-                    "Esta página exibe sinais técnicos de estudo e não recomenda compra ou venda. "
-                    "Os níveis acima são referências de estudo, jamais ordens."
-                )
+                # Histórico insuficiente: <2 barras ⇒ sem barra fechada p/ leitura técnica (Fases 13+).
+                if f.idx_ultima_fechada is None:
+                    st.warning("Histórico insuficiente — menos de duas barras fechadas neste timeframe.")
+
+                # --- Card de veredito read-only (D-01/D-04/D-05) ---------------------------
+                # Tudo LIDO de `sw` + `sinais` (zero recálculo). NUNCA st.metric p/ níveis (Pitfall 5):
+                # entrada/stop/alvo vão numa TABELA "Referências de estudo (não são ordens)". Copy
+                # estritamente NÃO-imperativa (gate SWING-02) — mesmo firewall do test_setup_report.
+                st.divider()
+                st.markdown(f"### Veredito de estudo · **{sw.grade}**")
+                st.caption(f"Pontuação de confluência técnica: **{sw.score:.0f}** / 100")
+                if sinais.contexto is not None:
+                    st.caption(
+                        f"Tendência: {sinais.contexto.dow_diario} · "
+                        f"MTF: {sinais.contexto.alinhamento_mtf}"
+                    )
+
+                # Decomposição peso-a-peso (D-04). "Sem setup"/decomposição vazia → mensagem neutra
+                # (Pitfall 3) — o checklist abaixo vem independente do gate.
+                _FAM_LABEL = {
+                    "tendencia": "Tendência", "risco_retorno": "Risco/retorno",
+                    "padroes": "Padrões", "momentum": "Momentum", "volume": "Volume",
+                }
+                if sw.decomposicao:
+                    st.markdown("**Decomposição do score (por família)**")
+                    linhas = ["| Família | Contribuição | Peso | Leitura |", "|---|---|---|---|"]
+                    for c in sw.decomposicao:
+                        fam = _FAM_LABEL.get(c.familia, c.familia)
+                        linhas.append(
+                            f"| {fam} | {c.contribuicao:.1f} pts | {c.peso} | "
+                            f"{esc_md(c.detalhe)} |"
+                        )
+                    st.markdown("\n".join(linhas))
+                else:
+                    st.info("Sem confluência suficiente para um setup de estudo.")
+
+                # Checklist (D-05): ✓ quando o sinal está ativo, ✗ quando inativo. Independe do gate.
+                if sinais.checklist is not None and sinais.checklist.sinais:
+                    st.markdown("**Checklist técnico**")
+                    chk = []
+                    for s in sinais.checklist.sinais:
+                        marca = "✓" if s.ativo else "✗"
+                        chk.append(f"- {marca} **{s.nome}** — {esc_md(s.detalhe)}")
+                    st.markdown("\n".join(chk))
+
+                # Tabela de níveis — rótulo EXATO D-05. fmt_rs trata None→"—"; esc_md escapa o "$".
+                st.markdown("**Referências de estudo (não são ordens)**")
+                if sw.entrada_zona is not None:
+                    _lo, _hi = sw.entrada_zona
+                    _entrada = f"{fmt_rs(_lo)} – {fmt_rs(_hi)}"
+                else:
+                    _entrada = "—"
+                _rr = sinais.niveis.risco_retorno if sinais.niveis is not None else "indisponivel"
+                niveis_linhas = [
+                    "| Referência | Valor |", "|---|---|",
+                    f"| Zona de entrada (estudo) | {esc_md(_entrada)} |",
+                    f"| Stop (estudo) | {esc_md(fmt_rs(sw.stop))} |",
+                    f"| Alvo (estudo) | {esc_md(fmt_rs(sw.alvo))} |",
+                    f"| Risco : retorno | {esc_md(_rr)} |",
+                ]
+                st.markdown("\n".join(niveis_linhas))
+
+                # Disclaimer condicional inline (SWING-02): ajusta o tom quando não há setup.
+                if sw.grade == "Sem setup":
+                    st.caption(
+                        "Esta página exibe sinais técnicos de estudo e não recomenda compra ou venda. "
+                        "No momento não há confluência suficiente para uma referência de setup."
+                    )
+                else:
+                    st.caption(
+                        "Esta página exibe sinais técnicos de estudo e não recomenda compra ou venda. "
+                        "Os níveis acima são referências de estudo, jamais ordens."
+                    )
+        _render_swing()
