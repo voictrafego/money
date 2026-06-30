@@ -12,7 +12,7 @@
 
 ### Página & Fronteira (SWING)
 
-- [ ] **SWING-01**: Usuário acessa um **menu/página novo e separado** de swing setups, isolado — não altera a aba Analisar, o veredito fundamentalista nem recalcula método na view (lógica na engine, UI read-only).
+- [x] **SWING-01**: Usuário acessa um **menu/página novo e separado** de swing setups, isolado — não altera a aba Analisar, o veredito fundamentalista nem recalcula método na view (lógica na engine, UI read-only).
 - [ ] **SWING-02**: A página exibe **disclaimer "exibe sinais, nunca recomenda"** e usa linguagem condicional/de estudo para todos os níveis (entrada/stop/alvo como referências, jamais ordens).
 
 ### Dados & Timeframe (DATA)
@@ -47,7 +47,7 @@
 
 ### Gráfico (CHART)
 
-- [ ] **CHART-01**: A página renderiza um **gráfico candlestick interativo "do momento"** com overlays liga/desliga (S/R, Fibonacci, padrões anotados, MMs/Donchian/Bollinger) e subpainéis RSI/MACD/ADX (reuso de `grafico.py`), com a barra viva em formação marcada.
+- [x] **CHART-01**: A página renderiza um **gráfico candlestick interativo "do momento"** com overlays liga/desliga (S/R, Fibonacci, padrões anotados, MMs/Donchian/Bollinger) e subpainéis RSI/MACD/ADX (reuso de `grafico.py`), com a barra viva em formação marcada.
 
 ## Future Requirements (pós-v1.4)
 
@@ -90,6 +90,6 @@
 | PAT-01 | Phase 14 | Complete |
 | SIG-01 | Phase 14 | Complete |
 | SCORE-01 | Phase 15 | Complete |
-| SWING-01 | Phase 16 | Pending |
+| SWING-01 | Phase 16 | Complete |
 | SWING-02 | Phase 16 | Pending |
-| CHART-01 | Phase 16 | Pending |
+| CHART-01 | Phase 16 | Complete |

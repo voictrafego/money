@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: planning
+status: executing
 stopped_at: Phase 16 context gathered
-last_updated: "2026-06-30T11:50:31.875Z"
+last_updated: "2026-06-30T13:17:40.241Z"
 last_activity: 2026-06-30
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
-  percent: 100
+  total_plans: 15
+  completed_plans: 13
+  percent: 87
 ---
 
 # Project State
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-29)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação. No v1.4, a página de swing **EXIBE** sinais técnicos fiéis a Murphy e **NUNCA recomenda**.
-**Current focus:** Phase 15 — montagem-do-setup-setupswing-score
+**Current focus:** Phase 16 — p-gina-streamlit-gr-fico-do-momento
 
 ## Current Position
 
-Phase: 16
-Plan: Not started
-Status: Ready to plan
+Phase: 16 (p-gina-streamlit-gr-fico-do-momento) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-06-30
 
 ## Performance Metrics
@@ -72,6 +72,7 @@ Last activity: 2026-06-30
 | Phase 14 P04 | ~8min | 2 tasks | 2 files |
 | Phase 14 P05 | ~6min | 2 tasks | 0 files |
 | Phase 15 P01 | 15 | 2 tasks | 3 files |
+| Phase 16 P01 | ~10min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - [Phase 14]: _checklist agrega 6 sinais liga/desliga READ-ONLY (lê rótulos já computados, zero recálculo); calcular() popula padroes/checklist em SinaisTecnicos ponta-a-ponta; firewall de copy D-01 e degradação graciosa verdes (271 testes)
 - [Phase ?]: [Phase 14]: limiares geométricos do bloco padroes: (A1–A7, ASSUMED) APROVADOS SEM AJUSTE após validação multi-ticker (6 tickers B3 reais, ~5a diário): 3 padrões no total, 1 único confirmado, 4/6 em zero — anti-pareidolia (Pitfall 1/11) satisfeito; config.yaml intocado, goldens preservados
 - [Phase ?]: [Phase 15]: SetupSwing (report/setup.py) — score ponderado explicável (decomposição peso-a-peso, tendência 35), R:R gate duro sob np.errstate, grade PT-BR + floor (<fraco→Sem setup), conflito multi-TF penaliza×0.80 sem bloquear; firewall vs report.py; config-driven; copy neutra anti-imperativa; 283 verdes
+- [Phase ?]: [Phase 16]: 4º menu monta read-only SinaisTecnicos+SetupSwing (ohlc_nominal=f.ohlc, Pitfall 6); estado de toggles ISOLADO tec_estado_swing (defaults D-02), nunca grafico.estado_padrao() nem tec_estado da Analisar (D-03/SWING-01); figura make_subplots candlestick nominal + overlays MM + subpainéis RSI/MACD/ADX (reuso golden de grafico.py), rangeslider OFF (Pitfall 4), selo de atraso sempre visível (D-08); S/R/Fib/padrões/card de veredito deferidos p/ 16-02
 
 ### Pending Todos
 
@@ -139,9 +141,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-30T11:50:31.870Z
+Last session: 2026-06-30T13:17:14.298Z
 Stopped at: Phase 16 context gathered
-Resume file: .planning/phases/16-p-gina-streamlit-gr-fico-do-momento/16-CONTEXT.md
+Resume file: None
 
 ## Operator Next Steps
 
