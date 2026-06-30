@@ -39,7 +39,7 @@ nem na regra `app.py` read-only.
 - [x] **Phase 13: Pivôs, Contexto de Tendência e Níveis** — Pivôs no-repaint → Dow/multi-TF, S/R, stop, Fibonacci, R:R, volume (PIVOT/TREND/LEVEL/RR/VOL)
 - [x] **Phase 14: Padrões Gráficos + Checklist de Sinais** — Duplo topo/fundo + OCO sobre pivôs e checklist liga/desliga (PAT-01, SIG-01) (completed 2026-06-29)
 - [x] **Phase 15: Montagem do Setup (SetupSwing) + Score** — Dataclass read-only firewall + score ponderado explicável com R:R como gate (SCORE-01) (completed 2026-06-30)
-- [ ] **Phase 16: Página Streamlit + Gráfico do Momento** — 4º menu read-only, candlestick com overlays, botão Atualizar e disclaimer (SWING-01/02, CHART-01)
+- [x] **Phase 16: Página Streamlit + Gráfico do Momento** — 4º menu read-only, candlestick com overlays, botão Atualizar e disclaimer (SWING-01/02, CHART-01) (completed 2026-06-30)
 
 ## Phase Details
 
@@ -118,7 +118,7 @@ nem na regra `app.py` read-only.
 **Plans**: 3 plans
 - [x] 16-01-PLAN.md — Wire da cadeia de engine (calcular→montar_setup, ohlc_nominal) + estado isolado `tec_estado_swing` + figura make_subplots candlestick + overlays MM + subpainéis RSI/MACD/ADX + barra viva (SWING-01, CHART-01)
 - [x] 16-02-PLAN.md — Zonas S/R (add_hrect) + níveis do setup/Fibonacci + anotação de padrões + card de veredito (grade/score/decomposição/checklist/níveis) + disclaimer não-imperativo (CHART-01, SWING-02)
-- [ ] 16-03-PLAN.md — Goldens 283 verdes + verificação humana no navegador do 4º menu sem regressão nas 3 abas (SWING-01, SWING-02, CHART-01)
+- [x] 16-03-PLAN.md — Goldens 283 verdes + verificação no navegador (via Claude-in-Chrome) do 4º menu sem regressão nas 3 abas (SWING-01, SWING-02, CHART-01)
 **UI hint**: yes
 
 ## Progress
@@ -131,7 +131,7 @@ nem na regra `app.py` read-only.
 | 13. Pivôs, Contexto e Níveis | v1.4 | 3/4 | In Progress|  |
 | 14. Padrões Gráficos + Checklist | v1.4 | 5/5 | Complete    | 2026-06-29 |
 | 15. Montagem do Setup + Score | v1.4 | 1/1 | Complete    | 2026-06-30 |
-| 16. Página Streamlit + Gráfico | v1.4 | 2/3 | In Progress|  |
+| 16. Página Streamlit + Gráfico | v1.4 | 3/3 | Complete   | 2026-06-30 |
 
 ## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.4
 

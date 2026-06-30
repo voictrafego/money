@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: verifying
-stopped_at: Phase 16 context gathered
+status: complete
+stopped_at: Phase 16 complete — v1.4 entregue
 last_updated: "2026-06-30T13:23:01.802Z"
 last_activity: 2026-06-30
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 15
-  completed_plans: 14
-  percent: 93
+  completed_plans: 15
+  percent: 100
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 
 ## Current Position
 
-Phase: 16 (p-gina-streamlit-gr-fico-do-momento) — EXECUTING
-Plan: 3 of 3
-Status: 16-02 complete (CHART-01 + SWING-02) — 16-03 (verificação/goldens + browser) pendente
+Phase: 16 (p-gina-streamlit-gr-fico-do-momento) — COMPLETE
+Plan: 3 of 3 (todos completos)
+Status: 16-03 aprovado (283 goldens verdes + verificação no navegador via Claude-in-Chrome, sem regressão) — milestone v1.4 entregue
 Last activity: 2026-06-30
 
 ## Performance Metrics
