@@ -693,26 +693,62 @@ elif modo.startswith("📈"):
                     est["padroes_on"] = st.toggle("Anotar padrões", value=est["padroes_on"])
 
             with grafico_box:
-                # D-02: o gráfico usa o OHLC NOMINAL (f.ohlc), não o ajustado por split.
-                fig = go.Figure(data=[go.Candlestick(
+                # Figura multi-painel: candlestick (row 1) + overlays MM + subpainéis RSI/MACD/ADX.
+                # Reuso direto das funções puras de grafico.py (golden-pinned) com o `est` isolado;
+                # a diferença LINHA→CANDLESTICK vive só no trace de preço, não nos specs.
+                specs = grafico.subpaineis_ativos(est, sinais)
+                layout = grafico.layout_subplots(len(specs))
+                fig = make_subplots(
+                    rows=layout["rows"], cols=1, shared_xaxes=True,
+                    row_heights=layout["row_heights"], vertical_spacing=0.03,
+                )
+                # Row 1 — candlestick NOMINAL (D-02); rangeslider OFF (Pitfall 4: rouba altura das rows).
+                fig.add_trace(go.Candlestick(
                     x=f.ohlc.index,
                     open=f.ohlc["Open"], high=f.ohlc["High"],
                     low=f.ohlc["Low"], close=f.ohlc["Close"],
                     name=ticker,
-                )])
-                fig.update_layout(
-                    height=520, margin=dict(l=10, r=10, t=30, b=10),
-                    xaxis_rangeslider_visible=False,
-                )
-                # D-04: a última barra pode estar em formação (viva) — sinaliza e mostra o atraso.
+                ), row=1, col=1)
+                fig.update_xaxes(rangeslider_visible=False, row=1, col=1)
+                # Overlays MM/Donchian/Bollinger no eixo de preço (mesmo loop da aba Analisar).
+                for ov in grafico.overlays_preco(est, sinais):
+                    fig.add_trace(go.Scatter(
+                        x=ov.serie.index, y=ov.serie.values, mode="lines", name=ov.nome,
+                        line=dict(ov.estilo),
+                    ), row=1, col=1)
+                # D-04: a última barra pode estar em formação (viva) — marca sem derivar nível dela.
                 if f.barra_viva and f.ultima_barra_ts is not None:
                     fig.add_vline(x=f.ultima_barra_ts, line_width=1, line_dash="dot",
-                                  line_color="#888888")
+                                  line_color="#888888", row=1, col=1)
+                # Subpainéis dos osciladores ativos — série(s) + linhas de referência do SubpainelSpec.
+                for i, spec in enumerate(specs):
+                    r = i + 2
+                    for rotulo, s in spec.series:
+                        # O histograma do MACD é (MACD − Sinal) e deve ser BARRAS (verde ≥0 /
+                        # vermelho <0), não uma linha — como na aba Analisar.
+                        if rotulo == "Histograma":
+                            fig.add_trace(go.Bar(
+                                x=s.index, y=s.values, name=rotulo,
+                                marker_color=["#2ca02c" if (v is not None and v >= 0) else "#d62728"
+                                              for v in s.values],
+                            ), row=r, col=1)
+                            continue
+                        fig.add_trace(go.Scatter(
+                            x=s.index, y=s.values, mode="lines", name=rotulo,
+                        ), row=r, col=1)
+                    for ref in spec.referencias:
+                        fig.add_hline(y=ref, line_width=1, line_dash="dot",
+                                      line_color="#aaaaaa", row=r, col=1)
+                    fig.update_yaxes(title_text=spec.nome.upper(), row=r, col=1)
+                fig.update_layout(
+                    height=400 + 140 * len(specs), margin=dict(l=10, r=10, t=40, b=10),
+                    showlegend=True, legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
+                )
                 st.plotly_chart(fig, width="stretch")
 
-            if f.barra_viva:
-                atraso_txt = f" · atraso ~{f.atraso_min:.0f} min" if f.atraso_min is not None else ""
-                st.caption(f"⏱️ Última barra possivelmente em formação (não fechada){atraso_txt}.")
+            # Selo de atraso SEMPRE visível (D-08): honestidade sobre o best-effort intraday.
+            atraso = f" · última barra {f.ultima_barra_ts:%H:%M}" if f.ultima_barra_ts is not None else ""
+            st.caption(f"⏱️ ~15min de atraso (best-effort){atraso}.")
 
             # Histórico insuficiente: <2 barras ⇒ sem barra fechada p/ leitura técnica (Fases 13+).
             if f.idx_ultima_fechada is None:
