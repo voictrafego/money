@@ -135,3 +135,24 @@ padroes:
                                  # anti-ruído p/ não casar micro-zigue-zagues sem alvo relevante
   exigir_volume_confirma: true   # confirmação exige rompimento da neckline COM volume>MM na barra
                                  # fechada; sem volume o padrão fica "em_formacao" (nunca "confirmado")
+
+# --- v1.4 Fase 15: score de confluência técnica (SCORE-01) ---
+# Bloco NOVO, irmão de `indicadores:`/`padroes:`. Nenhuma linha existente é tocada
+# (anti-rebaseline, Pitfall 4 — os 271 goldens das Fases 12–14 não podem flutuar).
+# Toda a montagem do setup (report/setup.py) lê DAQUI: zero hardcode de pesos/cortes (D-01).
+# Valores numéricos são ASSUMED/calibráveis (15-RESEARCH A1–A5) — ajuste sem deploy; os
+# goldens os pinam via _cfg_ind(). Os PESOS estão travados em CONTEXT D-01 (tendência domina).
+score:
+  pesos:                          # somam 100 (D-01: tendência domina forte — operar a favor de Murphy)
+    tendencia: 35                 # contexto.dow_diario + forca.forca_adx + posicao_mm200 (família dominante)
+    risco_retorno: 20             # razão retorno/risco recomputada dos níveis (também é GATE DURO abaixo)
+    padroes: 20                   # padrão coerente com a direção do dow (confirmado/em_formacao)
+    momentum: 15                  # MACD/RSI direção-aware (confirma a favor da tendência, Pitfall 5)
+    volume: 10                    # rompimento_com_volume (confirmação) / volume_acima_mm (meio-termo)
+  rr_minimo: 1.5                  # GATE DURO (D-03/D-04): rr < isto OU indisponível → "Sem setup". Calibrável.
+  rr_alvo: 3.0                    # teto de normalização do sub-score de R:R (clamp em [rr_minimo, rr_alvo]) (A3)
+  penalidade_conflito_mtf: 0.20   # alinhamento_mtf=="conflito" → score ×(1−0.20); penaliza, nunca bloqueia (D-07)
+  cortes_grade:                   # sobre o score 0-100 (D-05). Calibráveis.
+    forte: 70                     # score >= 70 → "Forte"
+    moderado: 50                  # score >= 50 → "Moderado"
+    fraco: 25                     # score >= 25 → "Fraco"; abaixo (com gate ok) → ainda "Sem setup" (floor, Open Q1)
