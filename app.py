@@ -716,6 +716,60 @@ elif modo.startswith("📈"):
                         x=ov.serie.index, y=ov.serie.values, mode="lines", name=ov.nome,
                         line=dict(ov.estilo),
                     ), row=1, col=1)
+
+                # --- Overlays de NÍVEL (read-only de sinais.niveis / sw) -------------------
+                # Toda a copy é NEUTRA ("estudo"/"projeção de estudo") — gate SWING-02 / Pitfall 5.
+                # Cada bloco é gateado pelo seu toggle em `est` e degrada sem quebrar quando os
+                # campos da engine são None / listas vazias (LEVEL-01: zonas como BANDAS, nunca pontos).
+                if est["sr_on"] and sinais.niveis is not None:
+                    for (lo, hi) in sinais.niveis.suportes:
+                        fig.add_hrect(y0=lo, y1=hi, line_width=0, fillcolor="green",
+                                      opacity=0.08, row=1, col=1)
+                    for (lo, hi) in sinais.niveis.resistencias:
+                        fig.add_hrect(y0=lo, y1=hi, line_width=0, fillcolor="red",
+                                      opacity=0.08, row=1, col=1)
+                if est["niveis_setup_on"] and sw.entrada_zona:
+                    lo, hi = sw.entrada_zona
+                    fig.add_hrect(y0=lo, y1=hi, line_width=0, fillcolor="blue", opacity=0.10,
+                                  annotation_text="zona de entrada (estudo)", row=1, col=1)
+                    if sw.stop is not None:
+                        fig.add_hline(y=sw.stop, line_dash="dash", line_color="#d62728",
+                                      annotation_text="stop (estudo)", row=1, col=1)
+                    if sw.alvo is not None:
+                        fig.add_hline(y=sw.alvo, line_dash="dash", line_color="#2ca02c",
+                                      annotation_text="alvo (estudo)", row=1, col=1)
+                if est["fib_on"] and sinais.niveis is not None and sinais.niveis.fib_retracoes:
+                    for nome, preco in sinais.niveis.fib_retracoes.items():
+                        fig.add_hline(y=preco, line_dash="dot", line_color="#9467bd",
+                                      annotation_text=f"Fib {nome}", row=1, col=1)
+                # Anotação de padrões (OFF por padrão, D-02): neckline horizontal (simplificação
+                # honesta do MVP — reta inclinada da OCO deferida), rótulo "em formação"/"confirmado"
+                # e alvo measured-move. Cor por direção (espelha setup._PADROES_ALTA/_BAIXA).
+                if est["padroes_on"] and sinais.padroes is not None:
+                    _COR_PAD = {"duplo_fundo": "#2ca02c", "oco_invertido": "#2ca02c",
+                                "duplo_topo": "#d62728", "oco": "#d62728"}
+                    for p in sinais.padroes.lista:
+                        ts = sorted(p.pivos_envolvidos)
+                        if not ts:
+                            continue
+                        cor = _COR_PAD.get(p.tipo, "#888888")
+                        dash = "solid" if p.estado == "confirmado" else "dot"
+                        rotulo = "confirmado" if p.estado == "confirmado" else "em formação"
+                        fig.add_shape(type="line", x0=ts[0], x1=ts[-1],
+                                      y0=p.neckline, y1=p.neckline,
+                                      line=dict(color=cor, width=1.5, dash=dash), row=1, col=1)
+                        fig.add_annotation(x=ts[-1], y=p.neckline,
+                                           text=f"{p.tipo.replace('_', ' ')} · {rotulo}",
+                                           showarrow=False, yshift=12,
+                                           font=dict(color=cor, size=10), row=1, col=1)
+                        fig.add_hline(y=p.alvo, line_width=1, line_dash="dot", line_color=cor,
+                                      annotation_text="alvo (projeção de estudo)",
+                                      annotation_position="right", row=1, col=1)
+                        fig.add_trace(go.Scatter(
+                            x=list(p.pivos_envolvidos), y=list(p.pivos_envolvidos.values()),
+                            mode="markers", marker=dict(symbol="circle-open", color=cor, size=9),
+                            showlegend=False, hoverinfo="skip",
+                        ), row=1, col=1)
                 # D-04: a última barra pode estar em formação (viva) — marca sem derivar nível dela.
                 if f.barra_viva and f.ultima_barra_ts is not None:
                     fig.add_vline(x=f.ultima_barra_ts, line_width=1, line_dash="dot",
