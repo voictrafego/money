@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: ready_to_plan
-stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-06-30T08:32:21.275Z"
+status: planning
+stopped_at: Phase 16 context gathered
+last_updated: "2026-06-30T11:50:31.875Z"
 last_activity: 2026-06-30
 progress:
   total_phases: 5
-  completed_phases: 5
+  completed_phases: 4
   total_plans: 12
   completed_plans: 12
   percent: 100
@@ -139,9 +139,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-30T08:32:21.270Z
-Stopped at: Completed 15-01-PLAN.md
-Resume file: None
+Last session: 2026-06-30T11:50:31.870Z
+Stopped at: Phase 16 context gathered
+Resume file: .planning/phases/16-p-gina-streamlit-gr-fico-do-momento/16-CONTEXT.md
 
 ## Operator Next Steps
 
