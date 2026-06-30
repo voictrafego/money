@@ -117,7 +117,7 @@ nem na regra `app.py` read-only.
   5. Todos os goldens existentes verdes (271+ após as Fases 12–15); verificação humana no navegador aprova o 4º menu sem regressão nas 3 abas existentes.
 **Plans**: 3 plans
 - [x] 16-01-PLAN.md — Wire da cadeia de engine (calcular→montar_setup, ohlc_nominal) + estado isolado `tec_estado_swing` + figura make_subplots candlestick + overlays MM + subpainéis RSI/MACD/ADX + barra viva (SWING-01, CHART-01)
-- [ ] 16-02-PLAN.md — Zonas S/R (add_hrect) + níveis do setup/Fibonacci + anotação de padrões + card de veredito (grade/score/decomposição/checklist/níveis) + disclaimer não-imperativo (CHART-01, SWING-02)
+- [x] 16-02-PLAN.md — Zonas S/R (add_hrect) + níveis do setup/Fibonacci + anotação de padrões + card de veredito (grade/score/decomposição/checklist/níveis) + disclaimer não-imperativo (CHART-01, SWING-02)
 - [ ] 16-03-PLAN.md — Goldens 283 verdes + verificação humana no navegador do 4º menu sem regressão nas 3 abas (SWING-01, SWING-02, CHART-01)
 **UI hint**: yes
 
@@ -131,7 +131,7 @@ nem na regra `app.py` read-only.
 | 13. Pivôs, Contexto e Níveis | v1.4 | 3/4 | In Progress|  |
 | 14. Padrões Gráficos + Checklist | v1.4 | 5/5 | Complete    | 2026-06-29 |
 | 15. Montagem do Setup + Score | v1.4 | 1/1 | Complete    | 2026-06-30 |
-| 16. Página Streamlit + Gráfico | v1.4 | 1/3 | In Progress|  |
+| 16. Página Streamlit + Gráfico | v1.4 | 2/3 | In Progress|  |
 
 ## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.4
 

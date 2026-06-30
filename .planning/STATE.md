@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: executing
+status: verifying
 stopped_at: Phase 16 context gathered
-last_updated: "2026-06-30T13:17:40.241Z"
+last_updated: "2026-06-30T13:23:01.802Z"
 last_activity: 2026-06-30
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 15
-  completed_plans: 13
-  percent: 87
+  completed_plans: 14
+  percent: 93
 ---
 
 # Project State
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 ## Current Position
 
 Phase: 16 (p-gina-streamlit-gr-fico-do-momento) — EXECUTING
-Plan: 2 of 3
-Status: Ready to execute
+Plan: 3 of 3
+Status: 16-02 complete (CHART-01 + SWING-02) — 16-03 (verificação/goldens + browser) pendente
 Last activity: 2026-06-30
 
 ## Performance Metrics
@@ -73,6 +73,7 @@ Last activity: 2026-06-30
 | Phase 14 P05 | ~6min | 2 tasks | 0 files |
 | Phase 15 P01 | 15 | 2 tasks | 3 files |
 | Phase 16 P01 | ~10min | 2 tasks | 1 files |
+| Phase 16 P02 | ~8min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - [Phase ?]: [Phase 14]: limiares geométricos do bloco padroes: (A1–A7, ASSUMED) APROVADOS SEM AJUSTE após validação multi-ticker (6 tickers B3 reais, ~5a diário): 3 padrões no total, 1 único confirmado, 4/6 em zero — anti-pareidolia (Pitfall 1/11) satisfeito; config.yaml intocado, goldens preservados
 - [Phase ?]: [Phase 15]: SetupSwing (report/setup.py) — score ponderado explicável (decomposição peso-a-peso, tendência 35), R:R gate duro sob np.errstate, grade PT-BR + floor (<fraco→Sem setup), conflito multi-TF penaliza×0.80 sem bloquear; firewall vs report.py; config-driven; copy neutra anti-imperativa; 283 verdes
 - [Phase ?]: [Phase 16]: 4º menu monta read-only SinaisTecnicos+SetupSwing (ohlc_nominal=f.ohlc, Pitfall 6); estado de toggles ISOLADO tec_estado_swing (defaults D-02), nunca grafico.estado_padrao() nem tec_estado da Analisar (D-03/SWING-01); figura make_subplots candlestick nominal + overlays MM + subpainéis RSI/MACD/ADX (reuso golden de grafico.py), rangeslider OFF (Pitfall 4), selo de atraso sempre visível (D-08); S/R/Fib/padrões/card de veredito deferidos p/ 16-02
+- [Phase 16]: overlays de nível na figura swing — S/R via add_hrect (bandas verde/vermelho, LEVEL-01), zona de entrada add_hrect + stop/alvo add_hline (gate niveis_setup_on), Fibonacci add_hline (gate fib_on), padrões via add_shape neckline horizontal + add_annotation rótulo em formação/confirmado + add_hline alvo (gate padroes_on, OFF default); card de veredito read-only abaixo do gráfico (grade+score "confluência técnica", decomposição peso-a-peso, checklist ✓/✗, tabela "Referências de estudo (não são ordens)" via fmt_rs/esc_md — nunca st.metric, Pitfall 5), disclaimer condicional inline; copy 100% não-imperativa (SWING-02); 283 goldens verdes
 
 ### Pending Todos
 
@@ -141,8 +143,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-30T13:17:14.298Z
-Stopped at: Phase 16 context gathered
+Last session: 2026-06-30T13:25:00.000Z
+Stopped at: Completed 16-02-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
