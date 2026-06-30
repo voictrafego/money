@@ -38,7 +38,7 @@ nem na regra `app.py` read-only.
 - [x] **Phase 12: Ingestão Intraday + Timeframe** — Camada de dados OHLCV multi-timeframe isolada do pipeline diário (DATA-01/02/03) (completed 2026-06-29)
 - [x] **Phase 13: Pivôs, Contexto de Tendência e Níveis** — Pivôs no-repaint → Dow/multi-TF, S/R, stop, Fibonacci, R:R, volume (PIVOT/TREND/LEVEL/RR/VOL)
 - [x] **Phase 14: Padrões Gráficos + Checklist de Sinais** — Duplo topo/fundo + OCO sobre pivôs e checklist liga/desliga (PAT-01, SIG-01) (completed 2026-06-29)
-- [ ] **Phase 15: Montagem do Setup (SetupSwing) + Score** — Dataclass read-only firewall + score ponderado explicável com R:R como gate (SCORE-01)
+- [x] **Phase 15: Montagem do Setup (SetupSwing) + Score** — Dataclass read-only firewall + score ponderado explicável com R:R como gate (SCORE-01) (completed 2026-06-30)
 - [ ] **Phase 16: Página Streamlit + Gráfico do Momento** — 4º menu read-only, candlestick com overlays, botão Atualizar e disclaimer (SWING-01/02, CHART-01)
 
 ## Phase Details
@@ -103,7 +103,7 @@ nem na regra `app.py` read-only.
   4. Os guards de borda estão aplicados (R:R sem divisão por zero via `np.errstate`, stop/alvo coerentes, gate de liquidez) e toda a linguagem do veredito é condicional/de estudo — copy review é gate de aceite.
   5. Todos os goldens existentes verdes (271 na coleta atual após as Fases 12–14) + `test_setup_report.py`; a engine fundamentalista e a aba Analisar permanecem intactas.
 **Plans**: 1 plan
-- [ ] 15-01-PLAN.md — bloco `score:` no config + engine `setup.py` (SetupSwing/montar_setup, gate R:R, firewall) + goldens `test_setup_report.py` (grades, gate, decomposição, anti-copy) (SCORE-01)
+- [x] 15-01-PLAN.md — bloco `score:` no config + engine `setup.py` (SetupSwing/montar_setup, gate R:R, firewall) + goldens `test_setup_report.py` (grades, gate, decomposição, anti-copy) (SCORE-01)
 
 ### Phase 16: Página Streamlit + Gráfico do Momento
 **Goal**: Um 4º menu read-only renderiza o `SetupSwing` — gráfico candlestick "do momento" com overlays liga/desliga, seletor de timeframe, botão Atualizar, selo de atraso e disclaimer contextual.
@@ -127,7 +127,7 @@ nem na regra `app.py` read-only.
 | 12. Ingestão Intraday + Timeframe | v1.4 | 2/2 | Complete   | 2026-06-29 |
 | 13. Pivôs, Contexto e Níveis | v1.4 | 3/4 | In Progress|  |
 | 14. Padrões Gráficos + Checklist | v1.4 | 5/5 | Complete    | 2026-06-29 |
-| 15. Montagem do Setup + Score | v1.4 | 0/1 | Not started | - |
+| 15. Montagem do Setup + Score | v1.4 | 1/1 | Complete   | 2026-06-30 |
 | 16. Página Streamlit + Gráfico | v1.4 | 0/TBD | Not started | - |
 
 ## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.4

@@ -43,7 +43,7 @@
 ### Padrões & Score (PAT / SCORE)
 
 - [x] **PAT-01**: A engine detecta **duplo topo/fundo + OCO (ombro-cabeça-ombro)** sobre pivôs, com rótulo **"em formação" vs "confirmado"** (exige rompimento + volume) e **alvo measured-move** — escopo MVP honesto (triângulos/bandeiras ficam fora do v1.4).
-- [ ] **SCORE-01**: A página exibe um **score ponderado explicável** (decomposição visível peso a peso: tendência domina) + **grade qualitativa**, com **R:R como gate/modulador**; pesos parametrizados no `config.yaml`.
+- [x] **SCORE-01**: A página exibe um **score ponderado explicável** (decomposição visível peso a peso: tendência domina) + **grade qualitativa**, com **R:R como gate/modulador**; pesos parametrizados no `config.yaml`.
 
 ### Gráfico (CHART)
 
@@ -89,7 +89,7 @@
 | VOL-01 | Phase 13 | Complete |
 | PAT-01 | Phase 14 | Complete |
 | SIG-01 | Phase 14 | Complete |
-| SCORE-01 | Phase 15 | Pending |
+| SCORE-01 | Phase 15 | Complete |
 | SWING-01 | Phase 16 | Pending |
 | SWING-02 | Phase 16 | Pending |
 | CHART-01 | Phase 16 | Pending |

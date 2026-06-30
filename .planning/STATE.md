@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: executing
-stopped_at: Phase 15 context gathered
-last_updated: "2026-06-30T00:45:58.046Z"
-last_activity: 2026-06-30 -- Phase 15 planning complete
+status: verifying
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-06-30T08:32:21.275Z"
+last_activity: 2026-06-30
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 11
-  percent: 92
+  completed_plans: 12
+  percent: 100
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-29)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação. No v1.4, a página de swing **EXIBE** sinais técnicos fiéis a Murphy e **NUNCA recomenda**.
-**Current focus:** Phase 14 — Padrões Gráficos + Checklist de Sinais
+**Current focus:** Phase 15 — montagem-do-setup-setupswing-score
 
 ## Current Position
 
-Phase: 15
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-06-30 -- Phase 15 planning complete
+Phase: 15 (montagem-do-setup-setupswing-score) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
+Last activity: 2026-06-30
 
 ## Performance Metrics
 
@@ -70,6 +70,7 @@ Last activity: 2026-06-30 -- Phase 15 planning complete
 | Phase 14 P03 | ~12min | 2 tasks | 2 files |
 | Phase 14 P04 | ~8min | 2 tasks | 2 files |
 | Phase 14 P05 | ~6min | 2 tasks | 0 files |
+| Phase 15 P01 | 15 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - [Phase ?]: Neckline da OCO por POSIÇÃO inteira da barra (get_loc), nunca timestamp em ns (Pitfall 3 / T-14-06); guard de reta degenerada (pos_f2==pos_f1)
 - [Phase 14]: _checklist agrega 6 sinais liga/desliga READ-ONLY (lê rótulos já computados, zero recálculo); calcular() popula padroes/checklist em SinaisTecnicos ponta-a-ponta; firewall de copy D-01 e degradação graciosa verdes (271 testes)
 - [Phase ?]: [Phase 14]: limiares geométricos do bloco padroes: (A1–A7, ASSUMED) APROVADOS SEM AJUSTE após validação multi-ticker (6 tickers B3 reais, ~5a diário): 3 padrões no total, 1 único confirmado, 4/6 em zero — anti-pareidolia (Pitfall 1/11) satisfeito; config.yaml intocado, goldens preservados
+- [Phase ?]: [Phase 15]: SetupSwing (report/setup.py) — score ponderado explicável (decomposição peso-a-peso, tendência 35), R:R gate duro sob np.errstate, grade PT-BR + floor (<fraco→Sem setup), conflito multi-TF penaliza×0.80 sem bloquear; firewall vs report.py; config-driven; copy neutra anti-imperativa; 283 verdes
 
 ### Pending Todos
 
@@ -136,9 +138,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-30T00:20:23.720Z
-Stopped at: Phase 15 context gathered
-Resume file: .planning/phases/15-montagem-do-setup-setupswing-score/15-CONTEXT.md
+Last session: 2026-06-30T08:32:21.270Z
+Stopped at: Completed 15-01-PLAN.md
+Resume file: None
 
 ## Operator Next Steps
 
