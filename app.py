@@ -807,3 +807,73 @@ elif modo.startswith("📈"):
             # Histórico insuficiente: <2 barras ⇒ sem barra fechada p/ leitura técnica (Fases 13+).
             if f.idx_ultima_fechada is None:
                 st.warning("Histórico insuficiente — menos de duas barras fechadas neste timeframe.")
+
+            # --- Card de veredito read-only (D-01/D-04/D-05) ---------------------------
+            # Tudo LIDO de `sw` + `sinais` (zero recálculo). NUNCA st.metric p/ níveis (Pitfall 5):
+            # entrada/stop/alvo vão numa TABELA "Referências de estudo (não são ordens)". Copy
+            # estritamente NÃO-imperativa (gate SWING-02) — mesmo firewall do test_setup_report.
+            st.divider()
+            st.markdown(f"### Veredito de estudo · **{sw.grade}**")
+            st.caption(f"Pontuação de confluência técnica: **{sw.score:.0f}** / 100")
+            if sinais.contexto is not None:
+                st.caption(
+                    f"Tendência: {sinais.contexto.dow_diario} · "
+                    f"MTF: {sinais.contexto.alinhamento_mtf}"
+                )
+
+            # Decomposição peso-a-peso (D-04). "Sem setup"/decomposição vazia → mensagem neutra
+            # (Pitfall 3) — o checklist abaixo vem independente do gate.
+            _FAM_LABEL = {
+                "tendencia": "Tendência", "risco_retorno": "Risco/retorno",
+                "padroes": "Padrões", "momentum": "Momentum", "volume": "Volume",
+            }
+            if sw.decomposicao:
+                st.markdown("**Decomposição do score (por família)**")
+                linhas = ["| Família | Contribuição | Peso | Leitura |", "|---|---|---|---|"]
+                for c in sw.decomposicao:
+                    fam = _FAM_LABEL.get(c.familia, c.familia)
+                    linhas.append(
+                        f"| {fam} | {c.contribuicao:.1f} pts | {c.peso} | "
+                        f"{esc_md(c.detalhe)} |"
+                    )
+                st.markdown("\n".join(linhas))
+            else:
+                st.info("Sem confluência suficiente para um setup de estudo.")
+
+            # Checklist (D-05): ✓ quando o sinal está ativo, ✗ quando inativo. Independe do gate.
+            if sinais.checklist is not None and sinais.checklist.sinais:
+                st.markdown("**Checklist técnico**")
+                chk = []
+                for s in sinais.checklist.sinais:
+                    marca = "✓" if s.ativo else "✗"
+                    chk.append(f"- {marca} **{s.nome}** — {esc_md(s.detalhe)}")
+                st.markdown("\n".join(chk))
+
+            # Tabela de níveis — rótulo EXATO D-05. fmt_rs trata None→"—"; esc_md escapa o "$".
+            st.markdown("**Referências de estudo (não são ordens)**")
+            if sw.entrada_zona is not None:
+                _lo, _hi = sw.entrada_zona
+                _entrada = f"{fmt_rs(_lo)} – {fmt_rs(_hi)}"
+            else:
+                _entrada = "—"
+            _rr = sinais.niveis.risco_retorno if sinais.niveis is not None else "indisponivel"
+            niveis_linhas = [
+                "| Referência | Valor |", "|---|---|",
+                f"| Zona de entrada (estudo) | {esc_md(_entrada)} |",
+                f"| Stop (estudo) | {esc_md(fmt_rs(sw.stop))} |",
+                f"| Alvo (estudo) | {esc_md(fmt_rs(sw.alvo))} |",
+                f"| Risco : retorno | {esc_md(_rr)} |",
+            ]
+            st.markdown("\n".join(niveis_linhas))
+
+            # Disclaimer condicional inline (SWING-02): ajusta o tom quando não há setup.
+            if sw.grade == "Sem setup":
+                st.caption(
+                    "Esta página exibe sinais técnicos de estudo e não recomenda compra ou venda. "
+                    "No momento não há confluência suficiente para uma referência de setup."
+                )
+            else:
+                st.caption(
+                    "Esta página exibe sinais técnicos de estudo e não recomenda compra ou venda. "
+                    "Os níveis acima são referências de estudo, jamais ordens."
+                )
