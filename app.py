@@ -398,18 +398,137 @@ st.sidebar.caption(
 # =========================================================================== #
 # 0) INÍCIO (Home — landing default: watchlist + notícias)
 # =========================================================================== #
+_WATCHLIST_KEY = "watchlist_v18"  # namespace próprio no localStorage (Pitfall 7: não colidir c/ LWC-03)
+
+
+@st.cache_data(show_spinner=False, ttl=45)
+def _cotacoes(tickers: tuple):
+    """Wrapper de cache PROCESS-GLOBAL do fetch de cotações (D-05) — TTL 45s.
+
+    Garante 1 chamada externa por conjunto de tickers por TTL, independente do nº de
+    usuários e dos reruns do fragment (run_every≈TTL). A chave DEVE ser hashável →
+    sempre chamado com `tuple(sorted(...))`, NUNCA list. Nunca `st.cache_data.clear()`
+    global (apagaria o cache de montar/selic_atual/rf_capm da aba Analisar — D-08)."""
+    from analista.core import home_feed  # import tardio: isola o módulo
+    return home_feed.cotacoes(tickers)
+
+
+def _watchlist_ls():
+    """Instância do bridge streamlit-local-storage (A2, plano 01) ou None se indisponível.
+
+    Bloqueia só no 1º load da sessão (handshake getAll do browser); depois lê do
+    session_state interno. CADA acesso a jusante vai em try/except INDEPENDENTE — a
+    página SEMPRE renderiza mesmo com SecurityError (iframe sandbox/anônima — Pitfall 4/
+    LWC-03); o fallback é o session_state semeado pelos defaults."""
+    try:
+        from streamlit_local_storage import LocalStorage
+        return LocalStorage()
+    except Exception:
+        return None
+
+
+def _seed_watchlist(ls):
+    """Semeia st.session_state['watchlist'] no 1º load: localStorage se houver, senão defaults."""
+    from analista.core import home_feed
+    if "watchlist" in st.session_state:
+        return
+    seed = list(home_feed.DEFAULT_WATCHLIST)
+    if ls is not None:
+        try:
+            import json
+            salvo = ls.getItem(_WATCHLIST_KEY)
+            if isinstance(salvo, str) and salvo.strip():
+                validos = [home_feed.validar_ticker(t) for t in json.loads(salvo)]
+                validos = [t for t in validos if t]
+                if validos:
+                    seed = validos[: home_feed.MAX_WATCHLIST]
+        except Exception:
+            pass  # storage indisponível/corrompido → cai nos defaults
+    st.session_state["watchlist"] = seed
+
+
+def _persistir_watchlist(ls):
+    """Escreve a watchlist atual no localStorage (best-effort; nunca quebra o render)."""
+    if ls is None:
+        return
+    try:
+        import json
+        ls.setItem(_WATCHLIST_KEY, json.dumps(st.session_state["watchlist"]), key="wl_set")
+    except Exception:
+        pass
+
+
 def render_home():
     """Landing default (HOME-01). Camada fina, read-only, sem recálculo de método.
 
-    Esqueleto da Fase 18: dois blocos independentes cujos corpos entram nos planos
-    02 (watchlist de cotações) e 03 (feed de notícias). O contrato de dados vive em
-    `analista.core.home_feed` (never-raise, firewall D-06)."""
+    Plano 02: watchlist real (cotação + variação do dia auto-atualizável via cache
+    compartilhado + editor persistido em localStorage). O bloco de notícias segue
+    placeholder até o plano 03. O contrato de dados vive em `analista.core.home_feed`
+    (never-raise, firewall D-06)."""
+    from analista.core import home_feed
+
     st.subheader("🏠 Início — seu painel de acompanhamento")
     st.caption("Cotações da sua watchlist e notícias do mercado, num só lugar. "
                "Os 4 menus ao lado continuam disponíveis.")
 
     st.markdown("### Minha watchlist")
-    st.info("⏳ Carregando a watchlist… (em construção nesta fase)")
+
+    ls = _watchlist_ls()
+    _seed_watchlist(ls)
+    wl = st.session_state["watchlist"]
+
+    # --- Editor: add (valida + teto) e remove — FORA do fragment (Pitfall 5: mexer num
+    #     widget fora dispara rerun full e re-decora o fragment). Sem st.rerun() explícito:
+    #     o clique já dispara o rerun natural e o componente de setItem renderiza no caminho.
+    with st.expander("✏️ Editar watchlist", expanded=False):
+        ca, cb = st.columns([3, 1])
+        novo = ca.text_input("Adicionar ticker", key="wl_novo", placeholder="ex.: PETR4",
+                             label_visibility="collapsed")
+        if cb.button("Adicionar", use_container_width=True):
+            t = home_feed.validar_ticker(novo)
+            if t is None:
+                st.warning("Ticker inválido. Use 4–6 letras/números (ex.: BBSE3).")
+            elif t in wl:
+                st.info(f"{t} já está na watchlist.")
+            elif len(wl) >= home_feed.MAX_WATCHLIST:
+                st.warning(f"Watchlist cheia (máximo {home_feed.MAX_WATCHLIST}). Remova um ticker antes.")
+            else:
+                wl.append(t)
+                st.session_state["watchlist"] = wl
+                _persistir_watchlist(ls)
+
+        if wl:
+            st.caption("Remover:")
+            cols_rm = st.columns(len(wl))
+            for i, t in enumerate(wl):
+                if cols_rm[i].button(f"✕ {t}", key=f"wl_rm_{t}", use_container_width=True):
+                    st.session_state["watchlist"] = [x for x in wl if x != t]
+                    _persistir_watchlist(ls)
+        st.caption(f"Até {home_feed.MAX_WATCHLIST} tickers. Persiste no navegador (best-effort).")
+
+    # --- Fragment de auto-refresh (~45s): re-roda SÓ este bloco; o TTL=45s do wrapper
+    #     cacheado é o porteiro real do Yahoo (1 chamada por conjunto por intervalo — D-05).
+    @st.fragment(run_every=45)
+    def _render_watchlist():
+        tickers = tuple(sorted(st.session_state["watchlist"]))
+        dados = _cotacoes(tickers)
+        if not dados:
+            st.info("Sua watchlist está vazia. Use **✏️ Editar watchlist** para adicionar tickers.")
+        else:
+            cols = st.columns(len(dados))
+            for col, item in zip(cols, dados):
+                if item["ok"]:
+                    col.metric(
+                        label=item["ticker"],
+                        value=esc_md(fmt_rs(item["preco"])),
+                        delta=f"{item['pct'] * 100:+.2f}%",  # delta_color normal: + verde / − vermelho
+                    )
+                else:
+                    col.metric(label=item["ticker"], value="—")
+        # Selo de atraso SEMPRE visível: honestidade sobre o best-effort (D-04).
+        st.caption("⏱️ Cotações Yahoo com ~15min de atraso (best-effort) · variação do dia.")
+
+    _render_watchlist()
 
     st.markdown("### Notícias do mercado")
     st.info("⏳ Carregando as notícias… (em construção nesta fase)")
