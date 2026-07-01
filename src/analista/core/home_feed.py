@@ -50,9 +50,45 @@ def cotacoes(tickers):
     por item (``ok=False``) quando o Yahoo falha, sem derrubar a lista.
     Fetch em UMA chamada em lote via `prices.yahoo_symbol`/`_yf` (import tardio).
 
-    Esqueleto: retorna lista vazia até o plano 02 preencher o fetch.
+    Implementação (plano 02): uma única `yf.download` em lote (nunca um loop por
+    ticker — anti-429), `period` FIXO "5d" (nunca derivado do input, senão exceder o
+    teto retorna frame vazio). Variação do dia = ``close[-1]/close[-2]-1`` sobre barras
+    diárias (robusto a fim de semana/pré-abertura, Pitfall 2). Cada ticker em try/except
+    próprio → item degrada para ``ok=False`` sem derrubar a lista. Nunca levanta.
     """
-    return []
+    tickers = tuple(tickers)
+    if not tickers:
+        return []
+
+    from ..ingest import prices  # import tardio: isola o yfinance pesado (firewall D-06)
+
+    syms = [prices.yahoo_symbol(t) for t in tickers]
+
+    try:
+        yf = prices._yf()
+        df = yf.download(
+            " ".join(syms),
+            period="5d",
+            interval="1d",
+            group_by="ticker",
+            auto_adjust=False,
+            progress=False,
+            threads=True,
+        )
+    except Exception:
+        df = None
+
+    out = []
+    for t, sym in zip(tickers, syms):
+        try:
+            close = df[sym]["Close"].dropna()  # KeyError/AttributeError se ausente/df=None
+            preco = float(close.iloc[-1])
+            prev = float(close.iloc[-2])
+            pct = preco / prev - 1.0
+            out.append({"ticker": t, "preco": preco, "pct": pct, "ok": True})
+        except Exception:
+            out.append({"ticker": t, "preco": None, "pct": None, "ok": False})
+    return out
 
 
 def noticias():
