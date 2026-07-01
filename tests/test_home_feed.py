@@ -128,3 +128,140 @@ def test_cotacoes_vazio(monkeypatch):
     _patch_download(monkeypatch, pd.DataFrame(), contador)
     assert home_feed.cotacoes(()) == []
     assert contador == [], "watchlist vazia não deve chamar o Yahoo"
+
+
+# ---------------------------------------------------------------------------
+# noticias() — feed RSS multi-fonte (plano 03), never-raise, via monkeypatch de
+# feedparser.parse (sem rede). Trava: contrato, dedupe, sort desc, TZ B3,
+# try/except por feed, links só https, resumo como texto (sem HTML).
+# ---------------------------------------------------------------------------
+
+from datetime import datetime  # noqa: E402
+
+
+class _FakeFP:
+    """Espelha o objeto retornado por feedparser.parse (só o que noticias() usa)."""
+
+    def __init__(self, entries, bozo=0):
+        self.entries = entries
+        self.bozo = bozo
+
+
+def _entry(title, summary, link, dt_utc=None):
+    """Entry estilo FeedParserDict (dict com .get); published_parsed = struct_time UTC."""
+    e = {"title": title, "summary": summary, "link": link}
+    if dt_utc is not None:
+        e["published_parsed"] = dt_utc.timetuple()  # (ano, mês, dia, h, m, s, ...)
+    return e
+
+
+def _patch_feedparser(monkeypatch, fake_parse):
+    import feedparser
+    monkeypatch.setattr(feedparser, "parse", fake_parse)
+
+
+def test_noticias_contrato_ordenacao_tz(monkeypatch):
+    """list[dict] com chaves fixas; ordenado por data desc; quando em America/Sao_Paulo."""
+    older = datetime(2026, 7, 1, 12, 0, 0)  # UTC
+    newer = datetime(2026, 7, 1, 18, 0, 0)  # UTC
+
+    def fake_parse(url, agent=None):
+        if "infomoney" in url:
+            return _FakeFP([_entry("Ibovespa sobe 1%", "resumo bom", "https://infomoney.com.br/a", older)])
+        return _FakeFP([_entry("Dolar recua", "outro", "https://news.google.com/x", newer)])
+
+    _patch_feedparser(monkeypatch, fake_parse)
+    r = home_feed.noticias()
+
+    assert isinstance(r, list) and len(r) == 2
+    for it in r:
+        assert set(it.keys()) == {"fonte", "titulo", "resumo", "link", "quando"}
+    # mais recente primeiro
+    assert r[0]["titulo"] == "Dolar recua"
+    # TZ America/Sao_Paulo = UTC-3 → 18h UTC vira 15h BRT
+    assert r[0]["quando"].tzinfo is not None
+    assert r[0]["quando"].hour == 15
+    assert "Sao_Paulo" in str(r[0]["quando"].tzinfo)
+
+
+def test_noticias_dedupe_por_titulo(monkeypatch):
+    """Títulos iguais (strip+lower) aparecem uma única vez."""
+    def fake_parse(url, agent=None):
+        if "infomoney" in url:
+            return _FakeFP([_entry("Mesma Noticia", "r1", "https://a.com/1", datetime(2026, 7, 1, 10))])
+        return _FakeFP([_entry("  mesma noticia  ", "r2", "https://b.com/2", datetime(2026, 7, 1, 9))])
+
+    _patch_feedparser(monkeypatch, fake_parse)
+    r = home_feed.noticias()
+    assert len(r) == 1
+
+
+def test_noticias_feed_que_cai_nao_derruba(monkeypatch):
+    """Uma fonte levantando não derruba as demais (try/except por feed)."""
+    def fake_parse(url, agent=None):
+        if "infomoney" in url:
+            raise RuntimeError("timeout do feed")
+        return _FakeFP([_entry("Google ok", "r", "https://g.com/1", datetime(2026, 7, 1, 10))])
+
+    _patch_feedparser(monkeypatch, fake_parse)
+    r = home_feed.noticias()
+    assert len(r) == 1 and r[0]["titulo"] == "Google ok"
+
+
+def test_noticias_todos_falham_lista_vazia(monkeypatch):
+    """Todas as fontes fora do ar → lista vazia, nunca exceção (never-raise)."""
+    def fake_parse(url, agent=None):
+        raise RuntimeError("offline")
+
+    _patch_feedparser(monkeypatch, fake_parse)
+    assert home_feed.noticias() == []
+
+
+def test_noticias_link_so_https(monkeypatch):
+    """Só links https:// entram; http/javascript viram string vazia (V5/T-18-07)."""
+    def fake_parse(url, agent=None):
+        if "infomoney" in url:
+            return _FakeFP([
+                _entry("Com http", "r", "http://inseguro.com/1", datetime(2026, 7, 1, 11)),
+                _entry("Com javascript", "r", "javascript:alert(1)", datetime(2026, 7, 1, 10)),
+                _entry("Com https", "r", "https://seguro.com/1", datetime(2026, 7, 1, 9)),
+            ])
+        return _FakeFP([])
+
+    _patch_feedparser(monkeypatch, fake_parse)
+    r = home_feed.noticias()
+    by = {it["titulo"]: it["link"] for it in r}
+    assert by["Com http"] == ""
+    assert by["Com javascript"] == ""
+    assert by["Com https"] == "https://seguro.com/1"
+
+
+def test_noticias_sem_data_vai_pro_fim(monkeypatch):
+    """Itens sem published_parsed (quando=None) vão para o fim da lista."""
+    def fake_parse(url, agent=None):
+        if "infomoney" in url:
+            return _FakeFP([
+                _entry("Sem data", "r", "https://a.com/1", None),
+                _entry("Com data", "r", "https://a.com/2", datetime(2026, 7, 1, 10)),
+            ])
+        return _FakeFP([])
+
+    _patch_feedparser(monkeypatch, fake_parse)
+    r = home_feed.noticias()
+    assert r[0]["titulo"] == "Com data"
+    assert r[-1]["titulo"] == "Sem data"
+    assert r[-1]["quando"] is None
+
+
+def test_noticias_resumo_texto_sem_html(monkeypatch):
+    """Resumo (submanchete) volta como texto limpo, sem tags HTML (T-18-06 defesa em profundidade)."""
+    def fake_parse(url, agent=None):
+        if "infomoney" in url:
+            return _FakeFP([_entry("Titulo", '<a href="x">Submanchete</a> com <b>tag</b>',
+                                   "https://a.com/1", datetime(2026, 7, 1, 10))])
+        return _FakeFP([])
+
+    _patch_feedparser(monkeypatch, fake_parse)
+    r = home_feed.noticias()
+    assert "<" not in r[0]["resumo"] and ">" not in r[0]["resumo"]
+    assert "Submanchete" in r[0]["resumo"]
