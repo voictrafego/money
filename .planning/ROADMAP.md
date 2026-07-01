@@ -44,7 +44,7 @@ nem na regra `app.py` read-only.
 
 ### v1.5 — Modo Trading (UX de gráfico estilo TradingView)
 
-- [ ] **Phase 17: Modo Trading — Candlestick TradingView (Lightweight Charts)** — Vista "Modo Trading" na aba de swing com candlestick estilo TradingView (Lightweight Charts v5 via CDN) e overlays da engine portados (LWC-01/02/03)
+- [x] **Phase 17: Modo Trading — Candlestick TradingView (Lightweight Charts)** — Vista "Modo Trading" na aba de swing com candlestick estilo TradingView (Lightweight Charts v5 via CDN) e overlays da engine portados (LWC-01/02/03) (completed 2026-07-01)
 
 ## Phase Details
 
@@ -139,7 +139,7 @@ nem na regra `app.py` read-only.
 **Plans**: 3 plans
 - [x] 17-01-PLAN.md — Toggle "Modo Trading" + `_render_lwc` (candlestick LWC v5 via CDN pinado/SRI) + persistência do range visível entre reruns (LWC-01, LWC-03)
 - [x] 17-02-PLAN.md — Overlays da engine portados: BandPrimitive (zona/S-R) + createPriceLine (stop/alvo/Fib) + createSeriesMarkers (pivôs/padrões), read-only de SetupSwing (LWC-02)
-- [ ] 17-03-PLAN.md — Verificação: 283+ goldens verdes + grafico.py intacto + smoke no navegador (Claude-in-Chrome) sem regressão (LWC-01/02/03)
+- [x] 17-03-PLAN.md — Verificação: 283+ goldens verdes + grafico.py intacto + smoke no navegador (Claude-in-Chrome) sem regressão (LWC-01/02/03)
 **UI hint**: yes
 **Spikes**: `.planning/spikes/001-tv-feel-candlestick/` (✅ VALIDATED) + `.planning/spikes/002-overlays-da-engine/` (✅ VALIDATED) + `.planning/spikes/CONVENTIONS.md`
 
@@ -154,7 +154,7 @@ nem na regra `app.py` read-only.
 | 14. Padrões Gráficos + Checklist | v1.4 | 5/5 | Complete    | 2026-06-29 |
 | 15. Montagem do Setup + Score | v1.4 | 1/1 | Complete    | 2026-06-30 |
 | 16. Página Streamlit + Gráfico | v1.4 | 3/3 | Complete   | 2026-06-30 |
-| 17. Modo Trading (Lightweight Charts) | v1.5 | 2/3 | In Progress|  |
+| 17. Modo Trading (Lightweight Charts) | v1.5 | 3/3 | Complete   | 2026-07-01 |
 
 ## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.5
 
