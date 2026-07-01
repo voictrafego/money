@@ -8,7 +8,8 @@
 - ✅ **v1.3 — Saneamento residual do valuation** — Phases 9–11 + auditoria/correção de dados (shipped 2026-06-28)
 - 🚧 **v1.4 — Ferramenta de Swing Trade (setups de análise técnica)** — Phases 12–16
 - 🚧 **v1.5 — Modo Trading (UX de gráfico estilo TradingView)** — Phase 17
-- 📋 **v2.0 — Comercialização (produto cobrável)** — planejada após v1.5 (fases renumeradas a partir da 18)
+- 🚧 **v1.6 — Central de Acompanhamento (Home)** — Phase 18
+- 📋 **v2.0 — Comercialização (produto cobrável)** — planejada após v1.6 (fases renumeradas a partir da 19)
 
 > Detalhes completos das fases concluídas (v1.0–v1.3) no snapshot `.planning/milestones/v1.3-ROADMAP.md` e requisitos em `.planning/milestones/v1.3-REQUIREMENTS.md`.
 > Requisitos e arquitetura da v2.0 preservados em `.planning/milestones/v2.0-REQUIREMENTS.md`.
@@ -45,6 +46,10 @@ nem na regra `app.py` read-only.
 ### v1.5 — Modo Trading (UX de gráfico estilo TradingView)
 
 - [x] **Phase 17: Modo Trading — Candlestick TradingView (Lightweight Charts)** — Vista "Modo Trading" na aba de swing com candlestick estilo TradingView (Lightweight Charts v5 via CDN) e overlays da engine portados (LWC-01/02/03) (completed 2026-07-01)
+
+### v1.6 — Central de Acompanhamento (Home)
+
+- [ ] **Phase 18: Home — Watchlist + Notícias** — Página inicial (landing default) com watchlist de ~5 ações auto-atualizável (efeito alta/baixa, aviso de atraso ~15min) + feed de notícias do mercado (manchete/submanchete + link pra fonte), tudo custo-zero via RSS + Yahoo com cache compartilhado (HOME-01, WATCH-01/02, NEWS-01/02)
 
 ## Phase Details
 
@@ -143,6 +148,19 @@ nem na regra `app.py` read-only.
 **UI hint**: yes
 **Spikes**: `.planning/spikes/001-tv-feel-candlestick/` (✅ VALIDATED) + `.planning/spikes/002-overlays-da-engine/` (✅ VALIDATED) + `.planning/spikes/CONVENTIONS.md`
 
+### Phase 18: Home — Watchlist + Notícias
+**Goal**: O app ganha uma **página inicial (landing default)** que, ao abrir, mostra (1) uma **watchlist** de até ~5 tickers escolhidos pelo usuário — cotação **auto-atualizável** (~30–60s) com **efeito visual de alta/baixa no dia** e **aviso de atraso (~15min)** — e (2) um **feed de notícias** do mercado financeiro exibindo **só manchete + submanchete + fonte + horário**, onde o clique abre o **site original** da fonte. Tudo **custo-zero** (RSS + Yahoo/brapi grátis, **sem API paga, sem tempo-real tick-a-tick, sem IA de sentimento**) e com **cache compartilhado no servidor** para não multiplicar chamadas externas por usuário. Não toca nas engines fundamentalista/técnica nem nos **283 goldens**; os menus atuais (Analisar/Garimpar/Ranking/Swing) continuam acessíveis.
+**Depends on**: Nada de bloqueante — reusa o fetch Yahoo já usado no swing (`ingest`) e o padrão `st.fragment` de auto-refresh da Fase 16/17. É camada de UI + um módulo novo, leve e read-only, de agregação (ex.: `core/home_feed.py`).
+**Requirements**: HOME-01, WATCH-01, WATCH-02, NEWS-01, NEWS-02
+**Success Criteria** (what must be TRUE):
+  1. Ao abrir o app, a **Home é a primeira tela** (landing default); os 4 menus atuais continuam acessíveis no lateral e nenhum deles muda de comportamento.
+  2. A **watchlist** parte de uma lista default (~5 tickers de dividendos), é **editável** pelo usuário e a escolha **persiste entre sessões** via `localStorage` (sem backend); cada item mostra preço e **variação do dia colorida (verde/vermelho)**.
+  3. As cotações **atualizam sozinhas** (~30–60s) com **efeito visual** na mudança e **aviso claro de atraso (~15min)**; o fetch usa **cache compartilhado no servidor** (`st.cache_data` TTL), fazendo **1 chamada por ticker por intervalo** independentemente do nº de usuários (anti rate-limit do Yahoo), e degrada sem quebrar se um ticker falhar.
+  4. O **feed de notícias** lista **manchete + submanchete + fonte + horário** de fontes com RSS aberto (**InfoMoney + Google News RSS de mercado BR + outras validadas**); clicar abre o **site original da fonte** em nova aba (**nunca** reproduz o texto completo — só manchete/trecho + link, zona segura de copyright).
+  5. O feed **auto-atualiza** (~5–15min) com **cache compartilhado**, degrada sem quebrar se uma fonte cair, e **zero dependência paga**; os **283 goldens** seguem verdes e as engines existentes ficam intactas.
+**Plans**: TBD (via /gsd-plan-phase)
+**UI hint**: yes
+
 ## Progress
 
 **Execution Order:** Phases execute in numeric order: 12 → 13 → 14 → 15 → 16
@@ -155,6 +173,7 @@ nem na regra `app.py` read-only.
 | 15. Montagem do Setup + Score | v1.4 | 1/1 | Complete    | 2026-06-30 |
 | 16. Página Streamlit + Gráfico | v1.4 | 3/3 | Complete   | 2026-06-30 |
 | 17. Modo Trading (Lightweight Charts) | v1.5 | 3/3 | Complete    | 2026-07-01 |
+| 18. Home — Watchlist + Notícias | v1.6 | 0/? | Not Started |  |
 
 ## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.5
 

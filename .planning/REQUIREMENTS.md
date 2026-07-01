@@ -96,6 +96,11 @@
 | LWC-01 | Phase 17 | Complete |
 | LWC-02 | Phase 17 | Complete |
 | LWC-03 | Phase 17 | Complete |
+| HOME-01 | Phase 18 | Planned |
+| WATCH-01 | Phase 18 | Planned |
+| WATCH-02 | Phase 18 | Planned |
+| NEWS-01 | Phase 18 | Planned |
+| NEWS-02 | Phase 18 | Planned |
 
 ## v1.5 Requirements — Modo Trading (UX de gráfico estilo TradingView)
 
@@ -108,3 +113,21 @@
 - [x] **LWC-01**: Usuário liga uma vista **"Modo Trading"** na aba de swing que renderiza o candlestick puro do ticker/timeframe via **Lightweight Charts v5** (`components.html` + CDN pinado, **zero dep Python nova**), com **scroll-zoom, pan, crosshair com rótulos nos eixos, Y-autoscale e linha de último preço**; o Plotly continua sendo a vista default.
 - [x] **LWC-02**: As **sobreposições da engine** são portadas para o chart LWC lendo campos de `SetupSwing` **sem recálculo**: zona de entrada e S/R como **bandas** (`BandPrimitive`), stop/alvo/Fibonacci como **linhas rotuladas** (`createPriceLine`), pivôs/padrões como **markers**; copy neutra de estudo mantida.
 - [x] **LWC-03**: O **range visível** do chart **persiste entre reruns** do Streamlit (`session_state` + `timeScale().setVisibleRange()`); `grafico.py` e os **283+ goldens** ficam intactos e `app.py` permanece **thin renderer** (read-only da engine).
+
+## v1.6 Requirements — Central de Acompanhamento (Home)
+
+**Defined:** 2026-07-01
+**Core Value:** Uma **página inicial** que dá ao investidor um "pulso do dia" — acompanhar poucas ações favoritas com o preço se atualizando e ler as manchetes do mercado — **sem custo operacional** e **sem sair da stack** (Streamlit puro). Reforça o app como hábito diário antes da comercialização (v2.0). Fronteira educacional preservada: **exibe preço/notícia, nunca recomenda**.
+**Arquitetura (decidida com o usuário):** camada de UI (nova landing default no `app.py`) + um **módulo novo, leve e read-only** de agregação (ex.: `core/home_feed.py`) — **custo-zero**: cotações via **Yahoo/brapi grátis** (reusa o fetch já usado no swing) e notícias via **RSS** (`feedparser` — única possível dependência nova, a validar). **Cache compartilhado no servidor** (`st.cache_data` com TTL) faz **1 chamada por ticker/feed por intervalo** independentemente do nº de usuários (anti rate-limit). Auto-refresh via `st.fragment` (padrão já usado nas Fases 16/17). Persistência da watchlist via **`localStorage`** (sem backend). **Sem tempo-real tick-a-tick, sem API paga, sem camada de IA de sentimento** nesta versão. **283 goldens** e engines existentes **intactos**.
+**Dados & Legalidade:** cotação **atrasada ~15min** (aviso explícito na UI); notícias exibem **só manchete + submanchete + fonte + horário**, com clique abrindo o **site original** — nunca o texto completo (zona segura de copyright / modelo agregador).
+
+### Home & Watchlist (HOME / WATCH)
+
+- [ ] **HOME-01**: Ao abrir o app, o usuário cai numa **página inicial (landing default)** de acompanhamento; os 4 menus atuais (Analisar/Garimpar/Ranking/Swing) continuam acessíveis no lateral e **nenhum muda de comportamento** (a Home é aditiva, não recalcula método).
+- [ ] **WATCH-01**: O usuário mantém uma **watchlist de até ~5 tickers** que parte de uma **lista default editável** e **persiste entre sessões via `localStorage`** (sem backend/login); tickers inválidos degradam sem quebrar a página.
+- [ ] **WATCH-02**: Cada ticker da watchlist mostra **preço e variação do dia com cor (verde/vermelho)** e **atualiza sozinho (~30–60s)** com **efeito visual** na mudança e **aviso claro de atraso (~15min)**; o fetch usa **cache compartilhado no servidor** (1 chamada por ticker por intervalo, independente do nº de usuários) e degrada sem quebrar se um ticker/feed falhar.
+
+### Notícias (NEWS)
+
+- [ ] **NEWS-01**: A Home exibe um **feed de notícias do mercado financeiro** com **manchete + submanchete + fonte + horário**; clicar abre o **site original da fonte em nova aba** (nunca reproduz o texto completo). Fontes com **RSS aberto** (InfoMoney + Google News RSS de mercado BR + outras validadas feed a feed).
+- [ ] **NEWS-02**: O feed **auto-atualiza (~5–15min)** com **cache compartilhado no servidor**, **degrada sem quebrar** se uma fonte cair, e mantém **custo-zero** (sem API paga).
