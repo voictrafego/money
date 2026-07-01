@@ -140,6 +140,39 @@ def _render_lwc(f, sw, sinais, est, ticker, tf_key):
     # par para outro. json.dumps → string JS segura (escapa aspas/caracteres do ticker).
     range_key_json = json.dumps(f"lwc_range_{ticker}_{tf_key}")
 
+    # --- Overlays da engine (LWC-02): read-only de sw/sinais, gateados por est[...] ---------
+    # Espelha 1:1 o bloco Plotly (app.py: add_hrect/add_hline/add_shape): S/R e zona de entrada
+    # como BANDAS (BandPrimitive), stop/alvo/Fibonacci como priceLines rotuladas, pivôs/padrões
+    # como markers. Cada grupo é condicionado ao MESMO flag est[...] e degrada sem quebrar quando
+    # os campos da engine são None/vazios (o Python filtra; o JS itera só o que chegou). O JSON é
+    # SEMPRE serializado com as mesmas chaves (estrutura estável) — grupos desligados vão vazios.
+    # Copy dos títulos NEUTRA/de estudo (gate SWING-02): "stop (estudo)", "alvo (estudo)".
+    def _ts_to_time(ts):
+        return int(ts.timestamp()) if intraday else ts.strftime("%Y-%m-%d")
+
+    overlays = {"suportes": [], "resistencias": [], "entrada": None,
+                "stop": None, "alvo": None, "fib": [], "padroes": []}
+
+    if est.get("sr_on") and sinais.niveis is not None:
+        overlays["suportes"] = [[round(float(lo), 2), round(float(hi), 2)]
+                                for (lo, hi) in sinais.niveis.suportes]
+        overlays["resistencias"] = [[round(float(lo), 2), round(float(hi), 2)]
+                                    for (lo, hi) in sinais.niveis.resistencias]
+
+    if est.get("niveis_setup_on") and sw.entrada_zona:
+        lo, hi = sw.entrada_zona
+        overlays["entrada"] = [round(float(lo), 2), round(float(hi), 2)]
+        if sw.stop is not None:
+            overlays["stop"] = round(float(sw.stop), 2)
+        if sw.alvo is not None:
+            overlays["alvo"] = round(float(sw.alvo), 2)
+
+    if est.get("fib_on") and sinais.niveis is not None and sinais.niveis.fib_retracoes:
+        overlays["fib"] = [{"nome": str(nome), "preco": round(float(preco), 2)}
+                           for nome, preco in sinais.niveis.fib_retracoes.items()]
+
+    overlays_json = json.dumps(overlays)
+
     html = f"""
 <div id="lwc-chart" style="width:100%;height:560px"></div>
 <script src="{_LWC_CDN_URL}" integrity="sha384-q1KYLSKHgBnW5tWYGGR8+6YV4/iPy31dILoF2I1OD7XiVUvHEp/TaxIQVmB0j3R2" crossorigin="anonymous"></script>
@@ -168,6 +201,54 @@ def _render_lwc(f, sw, sinais, est, ticker, tf_key):
   }});
   vol.priceScale().applyOptions({{ scaleMargins: {{ top: 0.82, bottom: 0 }} }});
   vol.setData({vols_json});
+
+  // LWC-02 — sobreposições da engine (read-only de sw/sinais; espelha o bloco Plotly).
+  const OV = {overlays_json};
+
+  // Series primitive v5: banda de preço horizontal preenchida (equivalente ao add_hrect do Plotly).
+  // zOrder 'bottom' → atrás dos candles; priceToCoordinate + fillRect em useBitmapCoordinateSpace.
+  class BandPrimitive {{
+    constructor(series, low, high, color) {{ this._s = series; this._low = low; this._high = high; this._color = color; this._pv = new BandPaneView(this); }}
+    updateAllViews() {{}}
+    paneViews() {{ return [this._pv]; }}
+  }}
+  class BandPaneView {{
+    constructor(src) {{ this._src = src; }}
+    zOrder() {{ return 'bottom'; }}
+    renderer() {{
+      const src = this._src;
+      return {{ draw(target) {{
+        target.useBitmapCoordinateSpace((scope) => {{
+          const yH = src._s.priceToCoordinate(src._high);
+          const yL = src._s.priceToCoordinate(src._low);
+          if (yH == null || yL == null) return;
+          const ctx = scope.context, vr = scope.verticalPixelRatio;
+          ctx.fillStyle = src._color;
+          ctx.fillRect(0, yH * vr, scope.bitmapSize.width, (yL - yH) * vr);
+        }});
+      }} }};
+    }}
+  }}
+
+  try {{
+    // Zonas S/R (bandas): suporte verde, resistência vermelho — espelha o add_hrect verde/vermelho.
+    (OV.suportes || []).forEach(z => candle.attachPrimitive(new BandPrimitive(candle, z[0], z[1], 'rgba(38,166,154,0.10)')));
+    (OV.resistencias || []).forEach(z => candle.attachPrimitive(new BandPrimitive(candle, z[0], z[1], 'rgba(239,83,80,0.10)')));
+    // Zona de entrada: banda azul preenchida + bordas pontilhadas (createPriceLine azul).
+    if (OV.entrada) {{
+      candle.attachPrimitive(new BandPrimitive(candle, OV.entrada[0], OV.entrada[1], 'rgba(41,98,255,0.18)'));
+      candle.createPriceLine({{ price: OV.entrada[0], color: '#2962ff', lineWidth: 1, lineStyle: 3, axisLabelVisible: false, title: 'entrada' }});
+      candle.createPriceLine({{ price: OV.entrada[1], color: '#2962ff', lineWidth: 1, lineStyle: 3, axisLabelVisible: false, title: '' }});
+    }}
+    // Stop / alvo: linhas rotuladas de estudo (copy neutra, gate SWING-02).
+    if (OV.stop != null) candle.createPriceLine({{ price: OV.stop, color: '#ef5350', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'stop (estudo)' }});
+    if (OV.alvo != null) candle.createPriceLine({{ price: OV.alvo, color: '#26a69a', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'alvo (estudo)' }});
+    // Fibonacci: linhas pontilhadas roxas rotuladas.
+    (OV.fib || []).forEach(fb => candle.createPriceLine({{ price: fb.preco, color: '#9467bd', lineWidth: 1, lineStyle: 3, axisLabelVisible: true, title: 'Fib ' + fb.nome }}));
+    console.log('[lwc] overlays de nível OK');
+  }} catch (e) {{
+    console.error('[lwc] overlay de nível error', e);
+  }}
 
   // LWC-03 — persistência de range entre reruns do Streamlit. `components.html` re-renderiza
   // o iframe a cada rerun (togglar overlay / auto-refresh), o que resetaria o zoom p/ fitContent.
