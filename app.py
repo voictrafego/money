@@ -6,11 +6,13 @@ Abre no navegador. Mesma engine do CLI, método do livro Orleans Martins & Felip
 
 from __future__ import annotations
 
+import json
 import os
 
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as components
 from plotly.subplots import make_subplots
 
 from analista import grafico
@@ -91,6 +93,84 @@ def esc_md(s: str) -> str:
     """Escapa '$' p/ contextos markdown (metric, alertas): dois 'R$' na mesma
     string fariam o Streamlit interpretar o miolo como LaTeX e quebrar o layout."""
     return s.replace("$", r"\$")
+
+
+# --------------------------------------------------------------------------- #
+# "Modo Trading" — candlestick TradingView (Lightweight Charts v5) via CDN.
+# Camada de RENDER alternativa ao Plotly (LWC-01): ZERO dependência Python nova
+# (só st.components.v1.html + CDN pinado). NÃO recalcula a engine — serializa o
+# OHLC nominal (`f.ohlc`) e os campos de setup já montados. `grafico.py` intacto.
+# CDN pinado por versão exata (@5.2.0) + SRI (integrity sha384) + crossorigin
+# mitigam a ameaça T-17-01 (tampering do bundle de terceiros).
+_LWC_CDN_URL = (
+    "https://unpkg.com/lightweight-charts@5.2.0/dist/"
+    "lightweight-charts.standalone.production.js"
+)
+# SRI real do bundle @5.2.0, inline no <script> abaixo
+# (openssl dgst -sha384 -binary | openssl base64 -A): sha384-q1KYLSKHgBnW5tWYGGR8+6YV4/...
+
+
+def _render_lwc(f, sw, sinais, est, ticker, tf_key):
+    """Renderiza o candlestick nominal do ticker via Lightweight Charts v5.
+
+    `tf_key` está na assinatura (module-level, sem closure) porque as waves
+    seguintes dependem dela: a persistência de range (Task 2) compõe a chave do
+    localStorage por (ticker, tf_key) e o plano 02 usa `tf_key` p/ converter ts
+    de pivô em epoch. Serializa `f.ohlc` (nominal, Pitfall 6) — sem recálculo.
+    Time: diário → string "%Y-%m-%d"; intraday → epoch UTC segundos (UTCTimestamp
+    do LWC), p/ crosshair e eixo de tempo corretos nas barras datetime.
+    """
+    df = f.ohlc
+    intraday = tf_key != "diario"
+    candles, vols = [], []
+    for ts, row in df.iterrows():
+        t = int(ts.timestamp()) if intraday else ts.strftime("%Y-%m-%d")
+        o, h, lo, c = (float(row["Open"]), float(row["High"]),
+                       float(row["Low"]), float(row["Close"]))
+        candles.append({"time": t, "open": round(o, 2), "high": round(h, 2),
+                        "low": round(lo, 2), "close": round(c, 2)})
+        up = c >= o
+        vols.append({"time": t, "value": float(row.get("Volume", 0) or 0),
+                     "color": "rgba(38,166,154,0.5)" if up else "rgba(239,83,80,0.5)"})
+
+    candles_json = json.dumps(candles)
+    vols_json = json.dumps(vols)
+    time_visible = "true" if intraday else "false"
+
+    html = f"""
+<div id="lwc-chart" style="width:100%;height:560px"></div>
+<script src="{_LWC_CDN_URL}" integrity="sha384-q1KYLSKHgBnW5tWYGGR8+6YV4/iPy31dILoF2I1OD7XiVUvHEp/TaxIQVmB0j3R2" crossorigin="anonymous"></script>
+<script>
+  const {{ createChart, CandlestickSeries, HistogramSeries, CrosshairMode }} = LightweightCharts;
+  const el = document.getElementById('lwc-chart');
+  const chart = createChart(el, {{
+    layout: {{ background: {{ color: '#0e1117' }}, textColor: '#d1d4dc', fontSize: 12 }},
+    grid: {{ vertLines: {{ color: '#1c2030' }}, horzLines: {{ color: '#1c2030' }} }},
+    crosshair: {{ mode: CrosshairMode.Normal }},
+    rightPriceScale: {{ borderColor: '#2a2e39', autoScale: true }},
+    timeScale: {{ borderColor: '#2a2e39', rightOffset: 6, timeVisible: {time_visible} }},
+    handleScroll: true, handleScale: true,
+  }});
+
+  const candle = chart.addSeries(CandlestickSeries, {{
+    upColor: '#26a69a', downColor: '#ef5350',
+    wickUpColor: '#26a69a', wickDownColor: '#ef5350',
+    borderVisible: false, priceLineVisible: true, lastValueVisible: true,
+  }});
+  candle.setData({candles_json});
+
+  const vol = chart.addSeries(HistogramSeries, {{
+    priceFormat: {{ type: 'volume' }}, priceScaleId: '',
+    lastValueVisible: false, priceLineVisible: false,
+  }});
+  vol.priceScale().applyOptions({{ scaleMargins: {{ top: 0.82, bottom: 0 }} }});
+  vol.setData({vols_json});
+
+  chart.timeScale().fitContent();
+  new ResizeObserver(() => chart.applyOptions({{ width: el.clientWidth }})).observe(el);
+</script>
+"""
+    components.html(html, height=580)
 
 
 # --------------------------------------------------------------------------- #
@@ -670,6 +750,21 @@ elif modo.startswith("📈"):
                 })
                 est = st.session_state["tec_estado_swing"]
 
+                # Controle de vista (LWC-01): Plotly é o DEFAULT; "Modo Trading" troca só a
+                # camada de render sobre os MESMOS dados (f.ohlc/sw/sinais já montados) — não
+                # refaz fetch nem recálculo. Estado isolado em chave própria "swing_vista"
+                # (NUNCA a chave da aba Analisar). Selo de atraso, card de veredito e Overlays
+                # continuam iguais nas duas vistas.
+                st.session_state.setdefault("swing_vista", "Plotly")
+                vista = st.radio(
+                    "Vista", ["Plotly", "Modo Trading"],
+                    index=0 if st.session_state["swing_vista"] == "Plotly" else 1,
+                    horizontal=True, key="swing_vista",
+                    help="Plotly (multi-painel com subpainéis) é a vista padrão. "
+                         "Modo Trading é o candlestick TradingView (scroll-zoom, pan, "
+                         "crosshair com rótulos nos eixos, Y-autoscale e último preço).",
+                )
+
                 # Slot do gráfico reservado ANTES do expander para o render ler o `est` já
                 # atualizado pelos toggles no MESMO rerun (sem lag de um clique) — padrão Analisar.
                 grafico_box = st.container()
@@ -720,6 +815,11 @@ elif modo.startswith("📈"):
                         est["padroes_on"] = st.toggle("Anotar padrões", value=est["padroes_on"])
 
                 with grafico_box:
+                  if vista == "Modo Trading":
+                    # LWC-01: candlestick TradingView sobre os MESMOS dados (sem novo fetch nem
+                    # recálculo da engine). Overlays da engine entram no plano 02.
+                    _render_lwc(f, sw, sinais, est, ticker, tf_key)
+                  else:
                     # Figura multi-painel: candlestick (row 1) + overlays MM + subpainéis RSI/MACD/ADX.
                     # Reuso direto das funções puras de grafico.py (golden-pinned) com o `est` isolado;
                     # a diferença LINHA→CANDLESTICK vive só no trace de preço, não nos specs.
