@@ -7,7 +7,8 @@
 - ✅ **v1.2 — Indicadores de tendência (timing)** — Phases 4–8 (shipped 2026-06-27)
 - ✅ **v1.3 — Saneamento residual do valuation** — Phases 9–11 + auditoria/correção de dados (shipped 2026-06-28)
 - 🚧 **v1.4 — Ferramenta de Swing Trade (setups de análise técnica)** — Phases 12–16
-- 📋 **v2.0 — Comercialização (produto cobrável)** — planejada após v1.4 (fases renumeradas a partir da 17)
+- 🚧 **v1.5 — Modo Trading (UX de gráfico estilo TradingView)** — Phase 17
+- 📋 **v2.0 — Comercialização (produto cobrável)** — planejada após v1.5 (fases renumeradas a partir da 18)
 
 > Detalhes completos das fases concluídas (v1.0–v1.3) no snapshot `.planning/milestones/v1.3-ROADMAP.md` e requisitos em `.planning/milestones/v1.3-REQUIREMENTS.md`.
 > Requisitos e arquitetura da v2.0 preservados em `.planning/milestones/v2.0-REQUIREMENTS.md`.
@@ -40,6 +41,10 @@ nem na regra `app.py` read-only.
 - [x] **Phase 14: Padrões Gráficos + Checklist de Sinais** — Duplo topo/fundo + OCO sobre pivôs e checklist liga/desliga (PAT-01, SIG-01) (completed 2026-06-29)
 - [x] **Phase 15: Montagem do Setup (SetupSwing) + Score** — Dataclass read-only firewall + score ponderado explicável com R:R como gate (SCORE-01) (completed 2026-06-30)
 - [x] **Phase 16: Página Streamlit + Gráfico do Momento** — 4º menu read-only, candlestick com overlays, botão Atualizar e disclaimer (SWING-01/02, CHART-01) (completed 2026-06-30)
+
+### v1.5 — Modo Trading (UX de gráfico estilo TradingView)
+
+- [ ] **Phase 17: Modo Trading — Candlestick TradingView (Lightweight Charts)** — Vista "Modo Trading" na aba de swing com candlestick estilo TradingView (Lightweight Charts v5 via CDN) e overlays da engine portados (LWC-01/02/03)
 
 ## Phase Details
 
@@ -121,6 +126,23 @@ nem na regra `app.py` read-only.
 - [x] 16-03-PLAN.md — Goldens 283 verdes + verificação no navegador (via Claude-in-Chrome) do 4º menu sem regressão nas 3 abas (SWING-01, SWING-02, CHART-01)
 **UI hint**: yes
 
+### Phase 17: Modo Trading — Candlestick TradingView (Lightweight Charts)
+**Goal**: A aba de swing ganha uma vista **"Modo Trading"** (toggle) que renderiza o candlestick puro via **TradingView Lightweight Charts v5** (carregada por `st.components.v1.html` + CDN unpkg pinado, **zero dependência Python nova**), entregando a UX que o Plotly não dá (scroll-zoom, pan, crosshair com rótulos nos eixos, **Y-autoscale**, linha de último preço); as **sobreposições da engine** (zona de entrada, stop, alvo, S/R, Fibonacci, padrões/pivôs) são portadas para `createPriceLine` / um helper `BandPrimitive` / `createSeriesMarkers`, lendo campos de `SetupSwing` **sem recálculo**. O **Plotly permanece** na análise densa; `grafico.py`, os 283+ goldens e a regra `app.py` read-only ficam intactos.
+**Depends on**: Phase 16 (consome `SetupSwing` + fetch/cache intraday já existentes; reusa `sw.entrada_zona/stop/alvo`, `sinais.niveis`, `sinais.padroes`)
+**Requirements**: LWC-01, LWC-02, LWC-03
+**Success Criteria** (what must be TRUE):
+  1. Usuário liga o **"Modo Trading"** na aba de swing e vê um candlestick estilo TradingView (scroll = zoom, arrastar = pan, crosshair com rótulos nos eixos, **Y reescala sozinho**, linha de último preço) sobre os **mesmos dados OHLC nominais** do setup; o gráfico Plotly continua disponível (default).
+  2. As **sobreposições da engine** aparecem no chart LWC: zona de entrada como **banda** (`BandPrimitive`), stop/alvo/Fibonacci como **linhas rotuladas** (`createPriceLine`), S/R como bandas, padrões/pivôs como **markers** — todas lendo campos de `SetupSwing`, **sem recalcular** o método; copy neutra de estudo mantida.
+  3. **Zero dependência Python nova**: Lightweight Charts **v5.x pinada por versão** via `st.components.v1.html` + CDN; `grafico.py` intacto; `app.py` permanece **thin renderer** (só lê a engine).
+  4. O **range visível** do chart **persiste entre reruns** do Streamlit (`session_state` + `timeScale().setVisibleRange()`); disclaimer/linguagem de estudo preservados.
+  5. Os **283+ testes golden** seguem verdes; verificação humana no navegador aprova o "Modo Trading" **sem regressão** nas abas existentes.
+**Plans**: 3 plans
+- [ ] 17-01-PLAN.md — Toggle "Modo Trading" + `_render_lwc` (candlestick LWC v5 via CDN pinado/SRI) + persistência do range visível entre reruns (LWC-01, LWC-03)
+- [ ] 17-02-PLAN.md — Overlays da engine portados: BandPrimitive (zona/S-R) + createPriceLine (stop/alvo/Fib) + createSeriesMarkers (pivôs/padrões), read-only de SetupSwing (LWC-02)
+- [ ] 17-03-PLAN.md — Verificação: 283+ goldens verdes + grafico.py intacto + smoke no navegador (Claude-in-Chrome) sem regressão (LWC-01/02/03)
+**UI hint**: yes
+**Spikes**: `.planning/spikes/001-tv-feel-candlestick/` (✅ VALIDATED) + `.planning/spikes/002-overlays-da-engine/` (✅ VALIDATED) + `.planning/spikes/CONVENTIONS.md`
+
 ## Progress
 
 **Execution Order:** Phases execute in numeric order: 12 → 13 → 14 → 15 → 16
@@ -132,8 +154,9 @@ nem na regra `app.py` read-only.
 | 14. Padrões Gráficos + Checklist | v1.4 | 5/5 | Complete    | 2026-06-29 |
 | 15. Montagem do Setup + Score | v1.4 | 1/1 | Complete    | 2026-06-30 |
 | 16. Página Streamlit + Gráfico | v1.4 | 3/3 | Complete   | 2026-06-30 |
+| 17. Modo Trading (Lightweight Charts) | v1.5 | 0/3 | Planned |  |
 
-## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.4
+## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.5
 
 **Goal:** Transformar o protótipo de usuário único num produto que cobra — auth, trial 7d →
 assinatura mensal (Asaas), gate de acesso e multiusuário — posicionado como software educacional
@@ -141,8 +164,8 @@ assinatura mensal (Asaas), gate de acesso e multiusuário — posicionado como s
 auth/billing/front no stack React+Vite+n8n+Asaas).
 
 > Requisitos (AUTH/BILL/ACCT/LEGAL/OPS) e decisões preservados em `.planning/milestones/v2.0-REQUIREMENTS.md`.
-> Fases serão renumeradas a partir da **17** quando o marco for (re)aberto via `/gsd-new-milestone`,
-> após o fechamento da v1.4.
+> Fases serão renumeradas a partir da **18** quando o marco for (re)aberto via `/gsd-new-milestone`,
+> após o fechamento da v1.5.
 
 ## Backlog
 
