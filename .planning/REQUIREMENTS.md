@@ -106,5 +106,5 @@
 ### Modo Trading (LWC)
 
 - [x] **LWC-01**: Usuário liga uma vista **"Modo Trading"** na aba de swing que renderiza o candlestick puro do ticker/timeframe via **Lightweight Charts v5** (`components.html` + CDN pinado, **zero dep Python nova**), com **scroll-zoom, pan, crosshair com rótulos nos eixos, Y-autoscale e linha de último preço**; o Plotly continua sendo a vista default.
-- [ ] **LWC-02**: As **sobreposições da engine** são portadas para o chart LWC lendo campos de `SetupSwing` **sem recálculo**: zona de entrada e S/R como **bandas** (`BandPrimitive`), stop/alvo/Fibonacci como **linhas rotuladas** (`createPriceLine`), pivôs/padrões como **markers**; copy neutra de estudo mantida.
+- [x] **LWC-02**: As **sobreposições da engine** são portadas para o chart LWC lendo campos de `SetupSwing` **sem recálculo**: zona de entrada e S/R como **bandas** (`BandPrimitive`), stop/alvo/Fibonacci como **linhas rotuladas** (`createPriceLine`), pivôs/padrões como **markers**; copy neutra de estudo mantida.
 - [x] **LWC-03**: O **range visível** do chart **persiste entre reruns** do Streamlit (`session_state` + `timeScale().setVisibleRange()`); `grafico.py` e os **283+ goldens** ficam intactos e `app.py` permanece **thin renderer** (read-only da engine).
