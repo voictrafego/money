@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: milestone_complete
+status: executing
 stopped_at: Completed 17-03-PLAN.md
-last_updated: "2026-07-01T14:30:00.000Z"
+last_updated: "2026-07-01T18:03:53.942Z"
 last_activity: 2026-07-01
 progress:
-  total_phases: 6
-  completed_phases: 7
-  total_plans: 18
-  completed_plans: 18
-  percent: 117
+  total_phases: 7
+  completed_phases: 6
+  total_plans: 22
+  completed_plans: 19
+  percent: 86
 ---
 
 # Project State
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-29)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação. No v1.4, a página de swing **EXIBE** sinais técnicos fiéis a Murphy e **NUNCA recomenda**.
-**Current focus:** Phase 17 — modo-trading-candlestick-tradingview-lightweight-charts
+**Current focus:** Phase 18 — home-watchlist-noticias
 
 ## Current Position
 
-Phase: 17
-Plan: Not started
-Status: Milestone complete
+Phase: 18 (home-watchlist-noticias) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
 Last activity: 2026-07-01
 
 ## Performance Metrics
@@ -78,6 +78,7 @@ Last activity: 2026-07-01
 | Phase 17 P01 | 10min | 2 tasks | 1 files |
 | Phase 17 P02 | ~9min | 2 tasks | 1 files |
 | Phase 17 P03 | ~6min | 2 tasks | 0 files |
+| Phase 18 P01 | ~8min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - [Phase ?]: [Phase 17]: persistência de range LWC-03 CLIENT-SIDE via localStorage por par (lwc_range_ticker_tfkey) — components.html unidirecional (sem round-trip JS→Python); getItem/setItem em try/catch independentes, catch da leitura cai p/ fitContent (SecurityError de iframe sandbox nunca impede o candle de renderizar)
 - [Phase ?]: [Phase 17]: overlays da engine no Modo Trading LWC — BandPrimitive (zona/S-R), createPriceLine (stop/alvo/Fib), createSeriesMarkers+LineSeries (pivos/neckline); read-only de sw/sinais, gateado por est[...], degrada em None/vazio; copy de estudo; 283 goldens verdes
 - [Phase 17]: aceite da fase é DUPLO — automatizado (283 goldens + grafico.py intacto por diff contra .phase-base-sha, nunca HEAD~N + _render_lwc thin renderer por grep) + humano (smoke Claude-in-Chrome do Modo Trading sem regressão); ambos aprovados. T-17-05 mitigado (chart LWC v5 renderiza ao vivo; SRI não bloqueou; console limpo). Scroll-zoom não exercitável por máquina (wheel sobre iframe rola página-pai) — pan+crosshair confirmados ao vivo, scroll-zoom é default do LWC v5; aceito como limitação conhecida
+- [Phase ?]: [Phase 18]: Home vira landing default via 1o item do radio (stateless); render_home() thin + core/home_feed.py read-only never-raise (firewall D-06); A2 validada -> streamlit-local-storage==0.0.25 + feedparser==6.0.12 pinados; .phase-base-sha 5ae5190 gravado; 283 goldens verdes
 
 ### Pending Todos
 
@@ -152,7 +154,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-01T14:30:00.000Z
+Last session: 2026-07-01T18:03:45.830Z
 Stopped at: Completed 17-03-PLAN.md
 Resume file: None
 

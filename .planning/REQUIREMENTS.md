@@ -123,7 +123,7 @@
 
 ### Home & Watchlist (HOME / WATCH)
 
-- [ ] **HOME-01**: Ao abrir o app, o usuário cai numa **página inicial (landing default)** de acompanhamento; os 4 menus atuais (Analisar/Garimpar/Ranking/Swing) continuam acessíveis no lateral e **nenhum muda de comportamento** (a Home é aditiva, não recalcula método).
+- [x] **HOME-01**: Ao abrir o app, o usuário cai numa **página inicial (landing default)** de acompanhamento; os 4 menus atuais (Analisar/Garimpar/Ranking/Swing) continuam acessíveis no lateral e **nenhum muda de comportamento** (a Home é aditiva, não recalcula método).
 - [ ] **WATCH-01**: O usuário mantém uma **watchlist de até ~5 tickers** que parte de uma **lista default editável** e **persiste entre sessões via `localStorage`** (sem backend/login); tickers inválidos degradam sem quebrar a página.
 - [ ] **WATCH-02**: Cada ticker da watchlist mostra **preço e variação do dia com cor (verde/vermelho)** e **atualiza sozinho (~30–60s)** com **efeito visual** na mudança e **aviso claro de atraso (~15min)**; o fetch usa **cache compartilhado no servidor** (1 chamada por ticker por intervalo, independente do nº de usuários) e degrada sem quebrar se um ticker/feed falhar.
 
