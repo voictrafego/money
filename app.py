@@ -171,13 +171,35 @@ def _render_lwc(f, sw, sinais, est, ticker, tf_key):
         overlays["fib"] = [{"nome": str(nome), "preco": round(float(preco), 2)}
                            for nome, preco in sinais.niveis.fib_retracoes.items()]
 
+    # Padrões (OFF por padrão, D-02): pivôs → markers, neckline → LineSeries de 2 pontos, alvo →
+    # priceLine "projeção de estudo". Cor por direção (espelha _COR_PAD do Plotly): alta verde,
+    # baixa vermelho. `ts` convertido p/ o MESMO formato de time do candle via _ts_to_time (string
+    # diário / epoch intraday). Markers ordenados por ts (createSeriesMarkers exige ordem crescente).
+    if est.get("padroes_on") and sinais.padroes is not None:
+        _ALTA = {"duplo_fundo", "oco_invertido"}
+        for p in sinais.padroes.lista:
+            if not p.pivos_envolvidos:
+                continue
+            piv = sorted(p.pivos_envolvidos.items(), key=lambda kv: kv[0])
+            pivos = [{"time": _ts_to_time(ts), "price": round(float(pr), 2)} for ts, pr in piv]
+            overlays["padroes"].append({
+                "cor": "#2ca02c" if p.tipo in _ALTA else "#d62728",
+                "alta": p.tipo in _ALTA,
+                "confirmado": p.estado == "confirmado",
+                "estado": "confirmado" if p.estado == "confirmado" else "em formação",
+                "tipo": p.tipo.replace("_", " "),
+                "neckline": round(float(p.neckline), 2) if p.neckline is not None else None,
+                "alvo": round(float(p.alvo), 2) if p.alvo is not None else None,
+                "pivos": pivos,
+            })
+
     overlays_json = json.dumps(overlays)
 
     html = f"""
 <div id="lwc-chart" style="width:100%;height:560px"></div>
 <script src="{_LWC_CDN_URL}" integrity="sha384-q1KYLSKHgBnW5tWYGGR8+6YV4/iPy31dILoF2I1OD7XiVUvHEp/TaxIQVmB0j3R2" crossorigin="anonymous"></script>
 <script>
-  const {{ createChart, CandlestickSeries, HistogramSeries, CrosshairMode }} = LightweightCharts;
+  const {{ createChart, CandlestickSeries, HistogramSeries, LineSeries, CrosshairMode, createSeriesMarkers }} = LightweightCharts;
   const el = document.getElementById('lwc-chart');
   const chart = createChart(el, {{
     layout: {{ background: {{ color: '#0e1117' }}, textColor: '#d1d4dc', fontSize: 12 }},
@@ -248,6 +270,37 @@ def _render_lwc(f, sw, sinais, est, ticker, tf_key):
     console.log('[lwc] overlays de nível OK');
   }} catch (e) {{
     console.error('[lwc] overlay de nível error', e);
+  }}
+
+  try {{
+    // Padrões: 1 marker por pivô (cor por direção), neckline como LineSeries de 2 pontos
+    // (simplificação honesta do MVP — reta inclinada da OCO fica deferida), alvo como priceLine
+    // "projeção de estudo". Copy NEUTRA (gate SWING-02); markers ordenados por time (crescente).
+    const allMarkers = [];
+    (OV.padroes || []).forEach(pd => {{
+      (pd.pivos || []).forEach(pv => allMarkers.push({{
+        time: pv.time, position: pd.alta ? 'belowBar' : 'aboveBar',
+        color: pd.cor, shape: 'circle', text: 'pivô · ' + pd.estado,
+      }}));
+      if (pd.neckline != null && pd.pivos && pd.pivos.length >= 2) {{
+        const t0 = pd.pivos[0].time, t1 = pd.pivos[pd.pivos.length - 1].time;
+        if (t0 !== t1) {{
+          const nl = chart.addSeries(LineSeries, {{
+            color: pd.cor, lineWidth: 1, lineStyle: pd.confirmado ? 0 : 2,
+            lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false,
+          }});
+          nl.setData([{{ time: t0, value: pd.neckline }}, {{ time: t1, value: pd.neckline }}]);
+        }}
+      }}
+      if (pd.alvo != null) candle.createPriceLine({{ price: pd.alvo, color: pd.cor, lineWidth: 1, lineStyle: 3, axisLabelVisible: true, title: 'alvo (projeção de estudo)' }});
+    }});
+    if (allMarkers.length && createSeriesMarkers) {{
+      allMarkers.sort((a, b) => (a.time > b.time ? 1 : a.time < b.time ? -1 : 0));
+      createSeriesMarkers(candle, allMarkers);
+    }}
+    console.log('[lwc] markers de padrão OK');
+  }} catch (e) {{
+    console.error('[lwc] markers de padrão error', e);
   }}
 
   // LWC-03 — persistência de range entre reruns do Streamlit. `components.html` re-renderiza
