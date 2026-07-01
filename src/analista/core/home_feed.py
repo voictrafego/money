@@ -27,6 +27,36 @@ MAX_WATCHLIST = 5  # teto fixo: limita as chamadas ao Yahoo (D-02)
 # Defesa V5 (input do usuário → símbolo Yahoo): 4 a 6 chars A-Z0-9.
 _TICKER_RE = re.compile(r"^[A-Z0-9]{4,6}$")
 
+# --- Notícias (plano 03) -------------------------------------------------- #
+# Índice de notícias em horário de Brasília (Pitfall 6: pubDate vem em UTC/GMT).
+_TZ_B3 = "America/Sao_Paulo"
+
+# User-Agent de browser: InfoMoney (WordPress/Cloudflare) throttla requisições
+# "de robô" e devolve feed truncado/bozo (Pitfall 3). Sem isto o feed cai.
+_UA = "Mozilla/5.0 (compatible; AnalistaDividendos/1.0)"
+
+# Fontes RSS abertas (D-03), validadas ao vivo (18-RESEARCH Q6). InfoMoney é a
+# fonte primária de submanchete; Google News BR complementa a cobertura.
+_FEEDS = {
+    "InfoMoney": "https://www.infomoney.com.br/mercados/feed/",
+    "Google News": ("https://news.google.com/rss/search?"
+                    "q=mercado+financeiro+bolsa+dividendos+when:1d"
+                    "&hl=pt-BR&gl=BR&ceid=BR:pt-419"),
+}
+
+# Remove tags de markup do resumo (submanchete). O Google News entrega HTML pobre
+# (âncoras) no summary — vira texto limpo; defesa em profundidade sobre o feedparser.
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+_WS_RE = re.compile(r"\s+")
+
+
+def _texto_limpo(s):
+    """Tira tags HTML e colapsa espaços do resumo RSS (untrusted → texto puro)."""
+    try:
+        return _WS_RE.sub(" ", _HTML_TAG_RE.sub("", str(s or ""))).strip()
+    except Exception:
+        return ""
+
 
 def validar_ticker(t):
     """Normaliza e valida um ticker (defesa V5). Nunca levanta.
@@ -100,6 +130,55 @@ def noticias():
     via `feedparser` (import tardio), com try/except por feed, dedupe por
     título e ordenação por data desc. Feed fora do ar é pulado.
 
-    Esqueleto: retorna lista vazia até o plano 03 preencher o parse RSS.
+    Implementação (plano 03): para cada feed em `_FEEDS`, `feedparser.parse(url,
+    agent=_UA)` em try/except próprio (fonte que cai é pulada, não derruba as demais).
+    Cada entry (até 20/feed) vira dict fonte/titulo/resumo/link/quando: título/resumo
+    como TEXTO untrusted (resumo com tags HTML removidas), link só se começar com
+    `https://` (senão string vazia — V5/T-18-07), e `published_parsed` (UTC struct_time)
+    convertido para America/Sao_Paulo (Pitfall 6; None se o feed não trouxe data).
+    Ao final: sort por data desc (itens sem data ao fim) + dedupe por título
+    normalizado (strip+lower). NUNCA levanta — se tudo falhar, retorna [].
     """
-    return []
+    from datetime import datetime, timezone  # import tardio: leve, mas mantém o topo limpo
+
+    try:
+        import feedparser  # import tardio (firewall D-06: nenhuma engine); fallback → []
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo(_TZ_B3)
+    except Exception:
+        return []
+
+    itens = []
+    for fonte, url in _FEEDS.items():
+        try:
+            fp = feedparser.parse(url, agent=_UA)  # nunca deveria levantar, mas blindamos
+            entries = list(fp.entries)[:20]
+        except Exception:
+            continue  # feed fora do ar / throttle → pula, não derruba os demais
+        for e in entries:
+            try:
+                titulo = str(e.get("title", "") or "").strip()
+                resumo = _texto_limpo(e.get("summary", ""))
+                link = str(e.get("link", "") or "").strip()
+                if not link.startswith("https://"):  # esquema seguro apenas (T-18-07)
+                    link = ""
+                ts = e.get("published_parsed")  # struct_time UTC (ou None)
+                quando = (datetime(*ts[:6], tzinfo=timezone.utc).astimezone(tz)
+                          if ts else None)
+                itens.append({"fonte": fonte, "titulo": titulo,
+                              "resumo": resumo, "link": link, "quando": quando})
+            except Exception:
+                continue  # entry malformada → pula item, feed segue
+
+    # sort por data desc (sem data vai para o fim) — chave tz-aware homogênea
+    _sem_data = datetime.min.replace(tzinfo=timezone.utc)
+    itens.sort(key=lambda x: x["quando"] or _sem_data, reverse=True)
+
+    # dedupe por título normalizado, preservando a ordem (mais recente vence)
+    vistos, dedup = set(), []
+    for it in itens:
+        k = it["titulo"].strip().lower()
+        if k and k not in vistos:
+            vistos.add(k)
+            dedup.append(it)
+    return dedup
