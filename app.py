@@ -473,9 +473,9 @@ def _persistir_watchlist(ls):
 def render_home():
     """Landing default (HOME-01). Camada fina, read-only, sem recálculo de método.
 
-    Plano 02: watchlist real (cotação + variação do dia auto-atualizável via cache
-    compartilhado + editor persistido em localStorage). O bloco de notícias segue
-    placeholder até o plano 03. O contrato de dados vive em `analista.core.home_feed`
+    Watchlist real (cotação + variação do dia auto-atualizável via cache compartilhado
+    + editor persistido em localStorage) e feed de notícias real (RSS InfoMoney +
+    Google News com render seguro). O contrato de dados vive em `analista.core.home_feed`
     (never-raise, firewall D-06)."""
     from analista.core import home_feed
 
