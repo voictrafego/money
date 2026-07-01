@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
 status: executing
-stopped_at: Completed 17-03-PLAN.md
-last_updated: "2026-07-01T18:03:53.942Z"
+stopped_at: Completed 18-02-PLAN.md
+last_updated: "2026-07-01T18:14:27.527Z"
 last_activity: 2026-07-01
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 22
-  completed_plans: 19
-  percent: 86
+  completed_plans: 20
+  percent: 91
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 ## Current Position
 
 Phase: 18 (home-watchlist-noticias) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-07-01
 
@@ -79,6 +79,7 @@ Last activity: 2026-07-01
 | Phase 17 P02 | ~9min | 2 tasks | 1 files |
 | Phase 17 P03 | ~6min | 2 tasks | 0 files |
 | Phase 18 P01 | ~8min | 2 tasks | 4 files |
+| Phase 18 P02 | 12min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - [Phase ?]: [Phase 17]: overlays da engine no Modo Trading LWC — BandPrimitive (zona/S-R), createPriceLine (stop/alvo/Fib), createSeriesMarkers+LineSeries (pivos/neckline); read-only de sw/sinais, gateado por est[...], degrada em None/vazio; copy de estudo; 283 goldens verdes
 - [Phase 17]: aceite da fase é DUPLO — automatizado (283 goldens + grafico.py intacto por diff contra .phase-base-sha, nunca HEAD~N + _render_lwc thin renderer por grep) + humano (smoke Claude-in-Chrome do Modo Trading sem regressão); ambos aprovados. T-17-05 mitigado (chart LWC v5 renderiza ao vivo; SRI não bloqueou; console limpo). Scroll-zoom não exercitável por máquina (wheel sobre iframe rola página-pai) — pan+crosshair confirmados ao vivo, scroll-zoom é default do LWC v5; aceito como limitação conhecida
 - [Phase ?]: [Phase 18]: Home vira landing default via 1o item do radio (stateless); render_home() thin + core/home_feed.py read-only never-raise (firewall D-06); A2 validada -> streamlit-local-storage==0.0.25 + feedparser==6.0.12 pinados; .phase-base-sha 5ae5190 gravado; 283 goldens verdes
+- [Phase ?]: [Phase 18]: watchlist real — cotacoes() UMA yf.download em lote (5d) + variacao do dia close[-1]/close[-2]-1 (A1 mantida vs fast_info.previous_close, ~0.22pp; batch preserva D-05); _cotacoes cache ttl=45 + _render_watchlist fragment run_every=45 metric colorido + selo ~15min; editor validado teto 5 FORA do fragment; persistencia watchlist_v18 streamlit-local-storage + fallback session_state; 289 verdes
 
 ### Pending Todos
 
@@ -154,8 +156,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-01T18:03:45.830Z
-Stopped at: Completed 17-03-PLAN.md
+Last session: 2026-07-01T18:14:27.524Z
+Stopped at: Completed 18-02-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
