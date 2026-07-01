@@ -29,7 +29,168 @@ from analista.report import presentation, report, setup
 ROOT = os.path.dirname(os.path.abspath(__file__))
 import yaml
 
-st.set_page_config(page_title="Analista de Dividendos", page_icon="💰", layout="wide")
+st.set_page_config(page_title="Analista de Dividendos", layout="wide")
+
+# --------------------------------------------------------------------------- #
+# Design system (visual only — não altera dados nem fluxo). Mescla de 3 refs:
+# Financial SaaS Metrics (base dark institucional + verde #00E55F), Analytics
+# Remixed (azul #3A83FF + esmeralda, hover-lift, entrada escalonada) e Aura
+# (degradês/glow de fundo, cantos arredondados, pills). Fontes Inter + JetBrains
+# Mono. Injetado uma vez, no boot; sem custo por rerun.
+# --------------------------------------------------------------------------- #
+_DESIGN_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg:#09090B; --surface:#161618; --surface-2:#1C1C20; --border:#27272A;
+  --text:#FAFAFA; --muted:#A1A1AA;
+  --green:#00E55F; --green-deep:#008A39; --emerald:#34D399;
+  --blue:#3A83FF; --lime:#A3E635; --red:#FB5E7E;
+  --r-card:16px; --r-ctl:10px;
+}
+
+/* Base ------------------------------------------------------------------ */
+html, body, .stApp, [data-testid="stAppViewContainer"],
+[data-testid="stSidebar"], .stMarkdown, p, span, div, label, input, button{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+.stApp{
+  background:
+    radial-gradient(1200px 620px at 10% -10%, rgba(0,229,95,0.10), transparent 58%),
+    radial-gradient(1000px 520px at 92% -14%, rgba(58,131,255,0.11), transparent 55%),
+    radial-gradient(900px 500px at 50% 120%, rgba(163,230,53,0.05), transparent 60%),
+    var(--bg);
+  color:var(--text);
+}
+/* faixa fina em degradê no topo da página */
+[data-testid="stAppViewContainer"]::before{
+  content:""; position:fixed; top:0; left:0; right:0; height:2px; z-index:1000;
+  background:linear-gradient(90deg, var(--green), var(--blue) 55%, var(--lime));
+  opacity:.9;
+}
+[data-testid="stMain"] .block-container{ animation:hf-fade .55s ease both; padding-top:3.2rem; }
+@keyframes hf-fade{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+
+/* Tipografia ------------------------------------------------------------ */
+h1{
+  font-weight:800!important; letter-spacing:-.025em; font-size:2.55rem!important; line-height:1.05!important;
+  background:linear-gradient(92deg,#FFFFFF 0%, #EAFFEC 28%, var(--green) 66%, var(--blue) 108%);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
+h2,h3{ font-weight:700!important; letter-spacing:-.012em; color:var(--text); }
+h3{ font-size:1.16rem!important; }
+[data-testid="stMarkdownContainer"] h3{ position:relative; padding-left:15px; margin-top:.4rem; }
+[data-testid="stMarkdownContainer"] h3::before{
+  content:""; position:absolute; left:0; top:.18em; bottom:.18em; width:4px; border-radius:9999px;
+  background:linear-gradient(180deg,var(--green),var(--blue));
+}
+
+/* Sidebar --------------------------------------------------------------- */
+[data-testid="stSidebar"]{
+  background:linear-gradient(180deg,#0D0D11 0%, var(--bg) 100%);
+  border-right:1px solid var(--border);
+}
+[data-testid="stSidebar"] .stRadio [role="radiogroup"] > label{
+  padding:.5rem .7rem; margin:.12rem 0; border-radius:var(--r-ctl);
+  border:1px solid transparent; transition:background .18s ease, border-color .18s ease, transform .18s ease;
+}
+[data-testid="stSidebar"] .stRadio [role="radiogroup"] > label:hover{
+  background:rgba(255,255,255,0.045); border-color:var(--border); transform:translateX(2px);
+}
+
+/* Cards de métrica (watchlist) ------------------------------------------ */
+[data-testid="stMetric"]{
+  background:linear-gradient(160deg, var(--surface-2), var(--surface));
+  border:1px solid var(--border); border-radius:var(--r-card); padding:1rem 1.05rem;
+  box-shadow:0 1px 0 rgba(255,255,255,0.03) inset, 0 10px 26px -20px rgba(0,0,0,.95);
+  transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  animation:hf-rise .5s cubic-bezier(.2,.7,.2,1) both;
+}
+[data-testid="stMetric"]:hover{
+  transform:translateY(-3px); border-color:rgba(0,229,95,0.38);
+  box-shadow:0 20px 44px -24px rgba(0,229,95,0.4);
+}
+[data-testid="stMetricValue"]{
+  font-family:'JetBrains Mono',monospace!important; font-weight:600; letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums; font-size:1.55rem!important;
+}
+[data-testid="stMetricValue"] > *{ overflow:visible!important; text-overflow:clip!important; white-space:nowrap!important; }
+[data-testid="stMetricLabel"] p{
+  font-family:'JetBrains Mono',monospace!important; text-transform:uppercase; letter-spacing:.09em;
+  font-size:.72rem!important; color:var(--muted)!important; font-weight:600;
+}
+[data-testid="stMetricDelta"]{ font-family:'JetBrains Mono',monospace!important; font-weight:600; }
+@keyframes hf-rise{ from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:none;} }
+[data-testid="stHorizontalBlock"] > div:nth-child(1) [data-testid="stMetric"]{ animation-delay:.03s; }
+[data-testid="stHorizontalBlock"] > div:nth-child(2) [data-testid="stMetric"]{ animation-delay:.09s; }
+[data-testid="stHorizontalBlock"] > div:nth-child(3) [data-testid="stMetric"]{ animation-delay:.15s; }
+[data-testid="stHorizontalBlock"] > div:nth-child(4) [data-testid="stMetric"]{ animation-delay:.21s; }
+[data-testid="stHorizontalBlock"] > div:nth-child(5) [data-testid="stMetric"]{ animation-delay:.27s; }
+
+/* Sidebar metric (Selic) ------------------------------------------------ */
+[data-testid="stSidebar"] [data-testid="stMetric"]{ animation:none; }
+
+/* Botões ---------------------------------------------------------------- */
+.stButton > button{
+  border-radius:var(--r-ctl)!important; border:1px solid var(--border)!important;
+  background:var(--surface-2)!important; color:var(--text)!important; font-weight:600!important;
+  transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease, color .18s ease;
+}
+.stButton > button:hover{
+  border-color:var(--green)!important; color:#fff!important; transform:translateY(-1px);
+  box-shadow:0 12px 26px -18px rgba(0,229,95,.65);
+}
+.stButton > button[kind="primary"], [data-testid="stBaseButton-primary"]{
+  background:linear-gradient(92deg,var(--green),var(--emerald))!important; color:#04140A!important;
+  border:none!important; box-shadow:0 10px 26px -16px rgba(0,229,95,.7)!important;
+}
+.stButton > button[kind="primary"]:hover, [data-testid="stBaseButton-primary"]:hover{
+  filter:brightness(1.06); transform:translateY(-1px);
+}
+
+/* Link button (Abrir no site) ------------------------------------------- */
+[data-testid="stLinkButton"] a{
+  border-radius:9999px!important; border:1px solid var(--border)!important; background:transparent!important;
+  color:var(--text)!important; font-weight:600!important;
+  transition:border-color .18s ease, color .18s ease, transform .18s ease;
+}
+[data-testid="stLinkButton"] a:hover{ border-color:var(--blue)!important; color:#fff!important; transform:translateY(-1px); }
+
+/* Expander -------------------------------------------------------------- */
+[data-testid="stExpander"]{
+  border:1px solid var(--border)!important; border-radius:var(--r-card)!important;
+  background:var(--surface)!important; overflow:hidden;
+}
+[data-testid="stExpander"] summary:hover{ color:var(--green)!important; }
+
+/* Inputs ---------------------------------------------------------------- */
+.stTextInput input, [data-baseweb="input"]{
+  background:var(--surface-2)!important; border-radius:var(--r-ctl)!important;
+  border:1px solid var(--border)!important; color:var(--text)!important;
+}
+.stTextInput input:focus{ border-color:var(--green)!important; box-shadow:0 0 0 3px rgba(0,229,95,.16)!important; }
+
+/* Abas ------------------------------------------------------------------ */
+.stTabs [data-baseweb="tab-list"]{ gap:4px; border-bottom:1px solid var(--border); }
+.stTabs [data-baseweb="tab"]{ font-weight:600!important; }
+.stTabs [aria-selected="true"]{ color:var(--green)!important; }
+.stTabs [data-baseweb="tab-highlight"]{ background:var(--green)!important; }
+
+/* Alertas --------------------------------------------------------------- */
+[data-testid="stAlert"]{ border-radius:var(--r-ctl)!important; }
+
+/* Captions / divisores -------------------------------------------------- */
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p{ color:var(--muted)!important; }
+hr, [data-testid="stDivider"] hr{ border-color:var(--border)!important; }
+
+/* DataFrame / tabelas --------------------------------------------------- */
+[data-testid="stDataFrame"], [data-testid="stTable"]{
+  border:1px solid var(--border); border-radius:var(--r-card); overflow:hidden;
+}
+</style>
+"""
+st.markdown(_DESIGN_CSS, unsafe_allow_html=True)
 
 
 @st.cache_data(show_spinner=False)
@@ -370,15 +531,15 @@ def _render_lwc(f, sw, sinais, est, ticker, tf_key):
 
 
 # --------------------------------------------------------------------------- #
-st.title("💰 Analista de Ações de Dividendos")
+st.title("Analista de Ações de Dividendos")
 st.caption("Método do livro *O Investidor em Ações de Dividendos* (Orleans Martins & Felipe Pontes) · "
            "dados grátis: CVM + Yahoo + Banco Central")
 
 modo = st.sidebar.radio(
     "O que você quer fazer?",
-    ["🏠 Início",  # 1º item → vira o default (radio stateless, sem key=/index=)
-     "🔎 Analisar uma ação", "⛏️ Garimpar carteira (BSD)", "📊 Ranking por múltiplos",
-     "📈 Swing trade (análise técnica)"],
+    ["Início",  # 1º item → vira o default (radio stateless, sem key=/index=)
+     "Analisar uma ação", "Garimpar carteira (BSD)", "Ranking por múltiplos",
+     "Swing trade (análise técnica)"],
     help=h("menu"),
 )
 st.sidebar.markdown("---")
@@ -387,7 +548,7 @@ st.sidebar.caption(f"Janela: {N_ANOS} anos · até {ANO_BASE} (quando já divulg
 
 st.sidebar.markdown("---")
 st.sidebar.caption(
-    "⚠️ **Aviso.** Ferramenta de apoio à análise, de caráter educacional. "
+    "**Aviso.** Ferramenta de apoio à análise, de caráter educacional. "
     "**Não é recomendação de compra ou venda** nem consultoria/análise de valores "
     "mobiliários (CVM Res. 19/20). Os números podem conter erros ou dados desatualizados; "
     "rentabilidade passada não garante resultados futuros. Toda decisão de investimento é "
@@ -479,7 +640,7 @@ def render_home():
     (never-raise, firewall D-06)."""
     from analista.core import home_feed
 
-    st.subheader("🏠 Início — seu painel de acompanhamento")
+    st.subheader("Início — seu painel de acompanhamento")
     st.caption("Cotações da sua watchlist e notícias do mercado, num só lugar. "
                "Os 4 menus ao lado continuam disponíveis.")
 
@@ -492,7 +653,7 @@ def render_home():
     # --- Editor: add (valida + teto) e remove — FORA do fragment (Pitfall 5: mexer num
     #     widget fora dispara rerun full e re-decora o fragment). Sem st.rerun() explícito:
     #     o clique já dispara o rerun natural e o componente de setItem renderiza no caminho.
-    with st.expander("✏️ Editar watchlist", expanded=False):
+    with st.expander("Editar watchlist", expanded=False):
         ca, cb = st.columns([3, 1])
         novo = ca.text_input("Adicionar ticker", key="wl_novo", placeholder="ex.: PETR4",
                              label_visibility="collapsed")
@@ -525,7 +686,7 @@ def render_home():
         tickers = tuple(sorted(st.session_state["watchlist"]))
         dados = _cotacoes(tickers)
         if not dados:
-            st.info("Sua watchlist está vazia. Use **✏️ Editar watchlist** para adicionar tickers.")
+            st.info("Sua watchlist está vazia. Use **Editar watchlist** para adicionar tickers.")
         else:
             cols = st.columns(len(dados))
             for col, item in zip(cols, dados):
@@ -538,7 +699,7 @@ def render_home():
                 else:
                     col.metric(label=item["ticker"], value="—")
         # Selo de atraso SEMPRE visível: honestidade sobre o best-effort (D-04).
-        st.caption("⏱️ Cotações Yahoo com ~15min de atraso (best-effort) · variação do dia.")
+        st.caption("Cotações Yahoo com ~15min de atraso (best-effort) · variação do dia.")
 
     _render_watchlist()
 
@@ -572,20 +733,20 @@ def render_home():
             if it["link"].startswith("https://"):
                 st.link_button("Abrir no site ↗", it["link"])
             st.divider()
-        st.caption("📰 Manchetes de fontes públicas (RSS) · atualiza a cada ~10min · "
+        st.caption("Manchetes de fontes públicas (RSS) · atualiza a cada ~10min · "
                    "o clique abre o site original da fonte.")
 
     _render_noticias()
 
 
-if modo.startswith("🏠"):
+if modo.startswith("Início"):
     render_home()
 
 
 # =========================================================================== #
 # 1) ANALISAR UMA AÇÃO
 # =========================================================================== #
-if modo.startswith("🔎"):
+if modo.startswith("Analisar"):
     st.subheader("Analisar uma ação a fundo")
     col1, col2 = st.columns([3, 1])
     ticker = col1.text_input("Ticker da B3", value="TAEE11", placeholder="ex.: ITUB4, EGIE3, TAEE11",
@@ -623,11 +784,11 @@ if modo.startswith("🔎"):
             # Veredito colorido
             v = a.veredito or "Indeterminado"
             if v.startswith("SUBAVALIADA"):
-                st.success(f"✅ {esc_md(v)}")
+                st.success(esc_md(v))
             elif v.startswith("SOBREAVALIADA"):
-                st.error(f"🔺 {esc_md(v)}")
+                st.error(esc_md(v))
             else:
-                st.warning(f"➖ {esc_md(v)}")
+                st.warning(esc_md(v))
 
             # Métricas principais — intervalo intrínseco vem do cálculo único do veredito (WR-07)
             intervalo = f"{fmt_rs(a.vmin)} – {fmt_rs(a.vmax)}" if a.vmin is not None and a.vmax is not None else "—"
@@ -642,14 +803,14 @@ if modo.startswith("🔎"):
 
             if a.preco_atual is None:
                 st.warning(
-                    "⚠️ Preço atual indisponível agora (fonte Yahoo instável). Os fundamentos e o "
+                    "Preço atual indisponível agora (fonte Yahoo instável). Os fundamentos e o "
                     "valor intrínseco (DDM, dados CVM) abaixo seguem válidos — só a comparação de "
                     "preço/veredito fica suspensa até o preço voltar."
                 )
 
             if a.alertas:
                 for al in a.alertas:
-                    st.warning(f"⚠️ {esc_md(al)}")
+                    st.warning(esc_md(al))
 
             # Gráfico de preço 5a + banda do valor intrínseco (DDM) — topo da aba, antes dos sub-tabs (D-03).
             # Reservamos o slot do gráfico AQUI (topo) com st.container() e só o PREENCHEMOS depois que os
@@ -662,7 +823,7 @@ if modo.startswith("🔎"):
             # acima consome esse estado para desenhar overlays/subpainéis. app.py segue read-only.
             st.session_state.setdefault("tec_estado", grafico.estado_padrao())
             est = st.session_state["tec_estado"]
-            with st.expander("⚙️ Indicadores técnicos (consultivo)", expanded=False):
+            with st.expander("Indicadores técnicos (consultivo)", expanded=False):
                 st.caption(
                     "Consultivo — auxilia o *timing*. O veredito do método (acima) continua o decisório.",
                     help=h("tec_indicadores"),
@@ -711,7 +872,7 @@ if modo.startswith("🔎"):
                 if serie is None or len(serie) == 0:
                     # D-05/GRAF-03: série indisponível → aviso sem quebrar a aba (espelha o aviso de preço atual)
                     st.info(
-                        "📉 Gráfico de preço indisponível agora (fonte Yahoo instável). Os fundamentos e o "
+                        "Gráfico de preço indisponível agora (fonte Yahoo instável). Os fundamentos e o "
                         "valor intrínseco (DDM, dados CVM) abaixo seguem válidos."
                     )
                 else:
@@ -817,12 +978,12 @@ if modo.startswith("🔎"):
                 if a.matriz_leitura:                       # fundamento-primeiro (D-04)
                     st.markdown(esc_md(a.matriz_leitura))
                 if a.alerta_reverificacao:                 # voz de reverificação, nunca venda
-                    st.info(f"🔎 {esc_md(a.alerta_reverificacao)}")
+                    st.info(esc_md(a.alerta_reverificacao))
             else:
                 # Degradação holística (Plan 01): timing_resumo vazio ⇒ sem leitura, sem quebrar a aba.
                 st.caption("Leitura técnica indisponível — histórico insuficiente para os indicadores")
 
-            tab1, tab2, tab3 = st.tabs(["📈 Múltiplos & Crescimento", "💵 Valuation (DDM)", "📋 Fundamentos (10 anos)"])
+            tab1, tab2, tab3 = st.tabs(["Múltiplos & Crescimento", "Valuation (DDM)", "Fundamentos (10 anos)"])
 
             with tab1:
                 cma, cmb = st.columns(2)
@@ -886,7 +1047,7 @@ if modo.startswith("🔎"):
 # =========================================================================== #
 # 2) GARIMPAR CARTEIRA (BSD)
 # =========================================================================== #
-elif modo.startswith("⛏️"):
+elif modo.startswith("Garimpar"):
     st.subheader("Garimpar uma carteira — ranking Big, Safe Dividend (Cap. 8)", help=h("bsd"))
     st.caption("Cole vários tickers (separados por vírgula ou espaço). "
                "BSD > 80 = 'dividendo grande e seguro' (Carlson).")
@@ -920,8 +1081,8 @@ elif modo.startswith("⛏️"):
                     "_passou": bool(rc.passou),
                     "Ano-base": c.ultimo_ano(),
                     "BSD": round(b.get("bsd") or 0, 1),
-                    "BSD > 80": "✅" if b.get("acima_de_80") else "",
-                    "Passa filtros": "✅" if rc.passou else "",
+                    "BSD > 80": "Sim" if b.get("acima_de_80") else "",
+                    "Passa filtros": "Sim" if rc.passou else "",
                     "Fatores faltando": b.get("n_fatores_faltantes") or 0,
                     "Setor": c.setor,
                 })
@@ -931,7 +1092,7 @@ elif modo.startswith("⛏️"):
             df = df.drop(columns=["_passou"])
             st.dataframe(df, hide_index=True, use_container_width=True,
                          column_config={"Ano-base": st.column_config.Column("Ano-base", help=h("ano_base"))})
-            st.warning("⚠️ **BSD > 80 sem 'Passa filtros' NÃO é recomendação.** O BSD é uma nota "
+            st.warning("**BSD > 80 sem 'Passa filtros' NÃO é recomendação.** O BSD é uma nota "
                        "de estabilidade do dividendo; o corte por Selic (DY > Selic) e os demais "
                        "filtros vivem na coluna 'Passa filtros'. Comece pelas que passam nos filtros.")
             st.bar_chart(df.set_index("Ticker")["BSD"])
@@ -941,7 +1102,7 @@ elif modo.startswith("⛏️"):
 # =========================================================================== #
 # 3) RANKING POR MÚLTIPLOS
 # =========================================================================== #
-elif modo.startswith("📊"):
+elif modo.startswith("Ranking"):
     st.subheader("Ranking por múltiplos + preço-alvo (Cap. 11-12)", help=h("ranking"))
     st.caption("Padroniza os múltiplos em nota 0–100 e estima o preço justo por regressão "
                "P/L ~ f(payout, ROE). Upside positivo = candidata a estar barata.")
@@ -992,9 +1153,9 @@ elif modo.startswith("📊"):
                 else:
                     preco_alvo_txt = fmt_rs(pa.preco_alvo)
                     upside_txt = fmt_pct(pa.upside) if pa.upside is not None else "—"
-                    veredito = "Subavaliada ✅" if pa.subavaliada else "Cara 🔺"
+                    veredito = "Subavaliada" if pa.subavaliada else "Cara"
                     if pa.payout_fora_faixa:  # espelha o alerta ">100%" do Analisar
-                        veredito += " ⚠️ payout ajustado"
+                        veredito += " (payout ajustado)"
                 rows.append({
                     "Ticker": r["empresa"],
                     "Nota (0–100)": round(r["nota"], 1) if r["nota"] is not None else None,
@@ -1012,7 +1173,7 @@ elif modo.startswith("📊"):
                 # RANK-CONF-01: amostra pequena → regressão instável, veredito pouco confiável.
                 if reg.amostra_pequena:
                     st.warning(
-                        f"⚠️ **Amostra pequena (n={reg.n}).** Com poucas empresas, a regressão "
+                        f"**Amostra pequena (n={reg.n}).** Com poucas empresas, a regressão "
                         f"P/L ~ f(payout, ROE) fica instável e o veredito *Subavaliada/Cara* é "
                         f"pouco confiável. Adicione mais comparáveis **do mesmo setor** para "
                         f"firmar o preço-alvo."
@@ -1020,7 +1181,7 @@ elif modo.startswith("📊"):
                 # RANK-CONF-02: ROE com coeficiente negativo contraria Gordon (caso TAEE11).
                 if reg.roe_sinal_invertido:
                     st.warning(
-                        "⚠️ **Coeficiente do ROE saiu negativo** — isso *contraria* a teoria "
+                        "**Coeficiente do ROE saiu negativo** — isso *contraria* a teoria "
                         "(modelo de Gordon: o P/L justo cresce com o ROE). Em geral é sinal de "
                         "overfitting/multicolinearidade e acaba penalizando as empresas mais "
                         "rentáveis. Aqui o preço-alvo da regressão pode discordar do **Analisar "
@@ -1029,14 +1190,14 @@ elif modo.startswith("📊"):
                 # RANK-CONF-04 (AUD-CMP-02): R² baixo → regressão explica pouco do P/L do setor.
                 if reg.r2_baixo:
                     st.warning(
-                        f"⚠️ **R² baixo ({reg.r2:.2f}).** A regressão explica pouco da variação de "
+                        f"**R² baixo ({reg.r2:.2f}).** A regressão explica pouco da variação de "
                         f"P/L entre as comparáveis — o preço-alvo e o veredito *Subavaliada/Cara* "
                         f"são pouco confiáveis. Use comparáveis mais homogêneas (mesmo segmento) ou "
                         f"confie mais no **Analisar a fundo** (DDM)."
                     )
                 # RANK-CONF-03: orientação fixa de mesmo segmento (sempre que há tabela).
                 st.caption(
-                    "ℹ️ Compare empresas do **mesmo segmento** (ex.: geração × transmissão × "
+                    "Compare empresas do **mesmo segmento** (ex.: geração × transmissão × "
                     "distribuição de energia). Misturar segmentos distorce a regressão e o ranking."
                 )
             else:
@@ -1046,7 +1207,7 @@ elif modo.startswith("📊"):
 # =========================================================================== #
 # 4) SWING TRADE (ANÁLISE TÉCNICA) — MVP visual: candlestick intraday/diário
 # =========================================================================== #
-elif modo.startswith("📈"):
+elif modo.startswith("Swing"):
     st.subheader("Swing trade — leitura técnica do candlestick (intraday/diário)")
     st.caption(
         "Visão de candlestick de tickers da B3 via Yahoo (grátis, best-effort com atraso ~15min). "
@@ -1085,7 +1246,7 @@ elif modo.startswith("📈"):
         disabled=(not auto_on or tf_key == "diario"),
     )
     if tf_key == "diario":
-        st.caption("ℹ️ A atualização automática só faz sentido em timeframes intraday "
+        st.caption("A atualização automática só faz sentido em timeframes intraday "
                    "(1h/30m/5m); no Diário ela é desnecessária.")
     run_every = _INTERVALOS[auto_intervalo] if (auto_on and tf_key != "diario") else None
 
@@ -1153,7 +1314,7 @@ elif modo.startswith("📈"):
                 # atualizado pelos toggles no MESMO rerun (sem lag de um clique) — padrão Analisar.
                 grafico_box = st.container()
 
-                with st.expander("⚙️ Overlays", expanded=False):
+                with st.expander("Overlays", expanded=False):
                     ct, cc, cf, cm = st.columns(4)
                     with ct:
                         st.markdown("**Tendência**", help=h("tec_mm"))
@@ -1313,7 +1474,7 @@ elif modo.startswith("📈"):
 
                 # Selo de atraso SEMPRE visível (D-08): honestidade sobre o best-effort intraday.
                 atraso = f" · última barra {f.ultima_barra_ts:%H:%M}" if f.ultima_barra_ts is not None else ""
-                st.caption(f"⏱️ ~15min de atraso (best-effort){atraso}.")
+                st.caption(f"~15min de atraso (best-effort){atraso}.")
 
                 # Histórico insuficiente: <2 barras ⇒ sem barra fechada p/ leitura técnica (Fases 13+).
                 if f.idx_ultima_fechada is None:
