@@ -10,10 +10,28 @@ findings:
   warning: 3
   info: 2
   total: 6
-status: issues_found
+status: resolved
+resolution:
+  fixed: [CR-01, WR-01, WR-02]
+  accepted: [WR-03, IN-01, IN-02]
+  fix_commit: c61ce0e
+  resolved_at: 2026-07-01T00:00:00Z
 ---
 
 # Phase 17: Code Review Report
+
+> **Resolução (2026-07-01, commit `c61ce0e`).**
+> - **CR-01 (blocker) — corrigido:** helper `_js_json` escapa `<`/`>`/`&`/U+2028/29 em todos os
+>   embeds do `<script>` (candles/vols/overlays/range_key) e o ticker é restrito a `[A-Z0-9]`.
+>   Elimina a quebra de render e o vetor de injeção no iframe do componente.
+> - **WR-01 — corrigido:** init do chart em `try/catch` com fallback visível quando o CDN/SRI falha.
+> - **WR-02 — corrigido:** barras com OHLC `NaN` são puladas e volume `NaN` vira `0`.
+> - **WR-03 (time intraday UTC) — aceito:** o Lightweight Charts v5 espera `UTCTimestamp`; manter UTC
+>   é o comportamento correto do widget. Registrado como divergência conhecida vs. o eixo local do Plotly.
+> - **IN-01/IN-02 (cosméticos) — aceitos:** indentação de 2 espaços no bloco do toggle e comentário de
+>   SRI truncado; sem impacto funcional.
+>
+> Re-verificação: 283 goldens verdes + smoke no navegador (BBSE3) com console limpo após o fix.
 
 **Reviewed:** 2026-07-01
 **Depth:** standard

@@ -93,9 +93,9 @@
 | SWING-01 | Phase 16 | Complete |
 | SWING-02 | Phase 16 | Complete |
 | CHART-01 | Phase 16 | Complete |
-| LWC-01 | Phase 17 | Planned |
-| LWC-02 | Phase 17 | Planned |
-| LWC-03 | Phase 17 | Planned |
+| LWC-01 | Phase 17 | Complete |
+| LWC-02 | Phase 17 | Complete |
+| LWC-03 | Phase 17 | Complete |
 
 ## v1.5 Requirements — Modo Trading (UX de gráfico estilo TradingView)
 
