@@ -386,20 +386,16 @@ if item["link"].startswith("https://"):
 | A4 | feedparser 6.0.12 roda em Python ≥3.10 do projeto | Standard Stack | Baixo — requires_python ≥3.6; amplamente usado em 3.10-3.12 |
 | A5 | Lista default BBSE3/TAEE11/EGIE3/ITUB4/BBAS3 resolve no Yahoo `.SA` | D-02 | Baixo — todos são tickers líquidos; teto 5 confirmar no plano |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Lista default exata + teto rígido de 5?**
-   - Sabemos: sugestão BBSE3/TAEE11/EGIE3/ITUB4/BBAS3.
-   - Incerto: teto 5 fixo ou configurável.
-   - Recomendação: 5 defaults, teto 5 (limita chamadas Yahoo), editável.
+   - RESOLVED: 5 tickers default (BBSE3/TAEE11/EGIE3/ITUB4/BBAS3), teto 5 fixo (limita chamadas Yahoo), editável — adotado no plano 18-02.
 2. **streamlit-local-storage vs. bridge dep-free?**
-   - Sabemos: o pacote é bidirecional e pronto; o codebase já tolera deps pequenas.
-   - Incerto: apetite do usuário por +1 dep (além de feedparser).
-   - Recomendação: usar o pacote; se recusar, bridge custom `components.html`+`setComponentValue`.
+   - RESOLVED: usar `streamlit-local-storage` (bidirecional) com fallback `st.session_state`; validado como Assumption A2 no início do plano 18-01, com bridge custom `components.html`+`setComponentValue` como plano B se o pacote falhar contra streamlit 1.58.
 3. **Query do Google News (ruído vs. cobertura)?**
-   - Recomendação: começar com termos de mercado BR + `when:1d`; ajustar após ver o feed real.
+   - RESOLVED: começar com termos de mercado BR + `when:1d`; ajuste fino durante a execução do plano 18-03 após ver o feed real.
 4. **"Flash" na mudança de preço (D-04) entra no v1?**
-   - Recomendação: deferir; a cor do delta do `st.metric` já cumpre o essencial.
+   - RESOLVED: deferido; a cor do delta do `st.metric` já cumpre o essencial (registrado como fora de escopo no plano 18-02).
 
 ## Environment Availability
 
