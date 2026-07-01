@@ -376,7 +376,8 @@ st.caption("Método do livro *O Investidor em Ações de Dividendos* (Orleans Ma
 
 modo = st.sidebar.radio(
     "O que você quer fazer?",
-    ["🔎 Analisar uma ação", "⛏️ Garimpar carteira (BSD)", "📊 Ranking por múltiplos",
+    ["🏠 Início",  # 1º item → vira o default (radio stateless, sem key=/index=)
+     "🔎 Analisar uma ação", "⛏️ Garimpar carteira (BSD)", "📊 Ranking por múltiplos",
      "📈 Swing trade (análise técnica)"],
     help=h("menu"),
 )
@@ -392,6 +393,30 @@ st.sidebar.caption(
     "rentabilidade passada não garante resultados futuros. Toda decisão de investimento é "
     "de responsabilidade exclusiva do usuário — verifique os dados na fonte (CVM/RI) antes de decidir."
 )
+
+
+# =========================================================================== #
+# 0) INÍCIO (Home — landing default: watchlist + notícias)
+# =========================================================================== #
+def render_home():
+    """Landing default (HOME-01). Camada fina, read-only, sem recálculo de método.
+
+    Esqueleto da Fase 18: dois blocos independentes cujos corpos entram nos planos
+    02 (watchlist de cotações) e 03 (feed de notícias). O contrato de dados vive em
+    `analista.core.home_feed` (never-raise, firewall D-06)."""
+    st.subheader("🏠 Início — seu painel de acompanhamento")
+    st.caption("Cotações da sua watchlist e notícias do mercado, num só lugar. "
+               "Os 4 menus ao lado continuam disponíveis.")
+
+    st.markdown("### Minha watchlist")
+    st.info("⏳ Carregando a watchlist… (em construção nesta fase)")
+
+    st.markdown("### Notícias do mercado")
+    st.info("⏳ Carregando as notícias… (em construção nesta fase)")
+
+
+if modo.startswith("🏠"):
+    render_home()
 
 
 # =========================================================================== #
