@@ -136,6 +136,9 @@ def _render_lwc(f, sw, sinais, est, ticker, tf_key):
     candles_json = json.dumps(candles)
     vols_json = json.dumps(vols)
     time_visible = "true" if intraday else "false"
+    # Chave de persistência de range por (ticker, timeframe) — evita "vazar" zoom de um
+    # par para outro. json.dumps → string JS segura (escapa aspas/caracteres do ticker).
+    range_key_json = json.dumps(f"lwc_range_{ticker}_{tf_key}")
 
     html = f"""
 <div id="lwc-chart" style="width:100%;height:560px"></div>
@@ -166,7 +169,32 @@ def _render_lwc(f, sw, sinais, est, ticker, tf_key):
   vol.priceScale().applyOptions({{ scaleMargins: {{ top: 0.82, bottom: 0 }} }});
   vol.setData({vols_json});
 
-  chart.timeScale().fitContent();
+  // LWC-03 — persistência de range entre reruns do Streamlit. `components.html` re-renderiza
+  // o iframe a cada rerun (togglar overlay / auto-refresh), o que resetaria o zoom p/ fitContent.
+  // Como a ponte é unidirecional (Python→JS), a persistência é CLIENT-SIDE via localStorage por
+  // par (ticker, timeframe). Robustez OBRIGATÓRIA: o iframe pode ter origem opaca/sandbox e QUALQUER
+  // acesso a localStorage pode lançar SecurityError — cada acesso vai em try/catch INDEPENDENTE p/
+  // o candle SEMPRE renderizar (best-effort; a renderização nunca depende da persistência).
+  const RANGE_KEY = {range_key_json};
+  try {{
+    const saved = window.localStorage.getItem(RANGE_KEY);
+    if (saved) {{
+      chart.timeScale().setVisibleLogicalRange(JSON.parse(saved));
+    }} else {{
+      chart.timeScale().fitContent();
+    }}
+  }} catch (e) {{
+    chart.timeScale().fitContent();  // fallback: SecurityError não impede o candle de renderizar
+  }}
+  chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {{
+    if (!range) return;
+    try {{
+      window.localStorage.setItem(RANGE_KEY, JSON.stringify(range));
+    }} catch (e) {{
+      console.log('[lwc] localStorage indisponível');
+    }}
+  }});
+
   new ResizeObserver(() => chart.applyOptions({{ width: el.clientWidth }})).observe(el);
 </script>
 """
