@@ -413,6 +413,18 @@ def _cotacoes(tickers: tuple):
     return home_feed.cotacoes(tickers)
 
 
+@st.cache_data(show_spinner=False, ttl=600)
+def _noticias():
+    """Wrapper de cache PROCESS-GLOBAL do feed RSS (D-05) — TTL 600s (~10min).
+
+    Garante ~1 hit por feed por intervalo, independente do nº de usuários e dos
+    reruns do fragment (run_every≈TTL) — o porteiro real das fontes (Pitfall 3:
+    InfoMoney throttla). Sem argumentos → chave de cache única e process-global.
+    NUNCA `st.cache_data.clear()` global (apagaria montar/selic da aba Analisar — D-08)."""
+    from analista.core import home_feed  # import tardio: isola feedparser (firewall D-06)
+    return home_feed.noticias()
+
+
 def _watchlist_ls():
     """Instância do bridge streamlit-local-storage (A2, plano 01) ou None se indisponível.
 
@@ -531,7 +543,39 @@ def render_home():
     _render_watchlist()
 
     st.markdown("### Notícias do mercado")
-    st.info("⏳ Carregando as notícias… (em construção nesta fase)")
+
+    # --- Fragment de auto-refresh (~10min): re-roda SÓ este bloco; o TTL=600s do
+    #     wrapper cacheado é o porteiro real das fontes RSS (D-05 / Pitfall 3).
+    @st.fragment(run_every=600)
+    def _render_noticias():
+        itens = _noticias()
+        if not itens:
+            # Estado vazio (todas as fontes caíram): avisa sem quebrar (never-raise a jusante).
+            st.info("Sem notícias no momento. As fontes públicas podem estar indisponíveis — "
+                    "tente novamente em alguns minutos.")
+            return
+        # Render SEGURO (V7 / T-18-06, RSS untrusted): título como TEXTO via st.markdown
+        # (sem unsafe_allow_html; nunca components.html com conteúdo do feed). Só manchete
+        # + trecho + link — NUNCA o texto completo (zona segura de copyright).
+        for it in itens[:15]:
+            st.markdown(f"**{esc_md(it['titulo'])}**")
+            quando = it.get("quando")
+            selo = f"{it['fonte']} · {quando:%d/%m %H:%M}" if quando else it["fonte"]
+            st.caption(selo)
+            # Submanchete só quando acrescenta (Google News ecoa o título → suprime a redundância).
+            resumo = it["resumo"]
+            t_low, r_low = it["titulo"].strip().lower(), resumo.strip().lower()
+            if resumo and r_low != t_low and r_low not in t_low and t_low not in r_low:
+                st.write(esc_md(resumo))
+            # Link só se https:// (T-18-07): st.link_button monta âncora nativa segura
+            # (rel seguro, sem tabnabbing — T-18-08), abre o site original em nova aba.
+            if it["link"].startswith("https://"):
+                st.link_button("Abrir no site ↗", it["link"])
+            st.divider()
+        st.caption("📰 Manchetes de fontes públicas (RSS) · atualiza a cada ~10min · "
+                   "o clique abre o site original da fonte.")
+
+    _render_noticias()
 
 
 if modo.startswith("🏠"):
