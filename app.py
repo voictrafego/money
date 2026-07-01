@@ -7,7 +7,9 @@ Abre no navegador. Mesma engine do CLI, método do livro Orleans Martins & Felip
 from __future__ import annotations
 
 import json
+import math
 import os
+import re
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -110,6 +112,19 @@ _LWC_CDN_URL = (
 # (openssl dgst -sha384 -binary | openssl base64 -A): sha384-q1KYLSKHgBnW5tWYGGR8+6YV4/...
 
 
+def _js_json(obj):
+    """json.dumps seguro p/ embutir dentro de <script>.
+
+    Neutraliza `</script>` e os separadores de linha U+2028/U+2029 escapando
+    `<`, `>`, `&` para `\\uXXXX`. Os escapes continuam sendo JS/JSON válidos e
+    decodificam para os mesmos caracteres, então o dado legítimo não muda — só
+    perde o poder de fechar a tag e injetar markup (CR-01).
+    """
+    return (json.dumps(obj)
+            .replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+            .replace("\u2028", "\\u2028").replace("\u2029", "\\u2029"))
+
+
 def _render_lwc(f, sw, sinais, est, ticker, tf_key):
     """Renderiza o candlestick nominal do ticker via Lightweight Charts v5.
 
@@ -127,18 +142,28 @@ def _render_lwc(f, sw, sinais, est, ticker, tf_key):
         t = int(ts.timestamp()) if intraday else ts.strftime("%Y-%m-%d")
         o, h, lo, c = (float(row["Open"]), float(row["High"]),
                        float(row["Low"]), float(row["Close"]))
+        # WR-02: json.dumps emite `NaN` (token que quebra o setData do LWC). Pula a barra
+        # se qualquer OHLC for NaN — o Plotly tolera buracos; aqui a série precisa ser limpa.
+        if any(math.isnan(v) for v in (o, h, lo, c)):
+            continue
         candles.append({"time": t, "open": round(o, 2), "high": round(h, 2),
                         "low": round(lo, 2), "close": round(c, 2)})
         up = c >= o
-        vols.append({"time": t, "value": float(row.get("Volume", 0) or 0),
+        vol_v = float(row.get("Volume", 0) or 0)
+        if math.isnan(vol_v):
+            vol_v = 0.0
+        vols.append({"time": t, "value": vol_v,
                      "color": "rgba(38,166,154,0.5)" if up else "rgba(239,83,80,0.5)"})
 
-    candles_json = json.dumps(candles)
-    vols_json = json.dumps(vols)
+    # CR-01: os JSON abaixo são embutidos crus dentro de <script>. `_js_json` escapa
+    # `<`/`>`/`&` (e U+2028/29) p/ nenhum valor (ex.: ticker) conseguir fechar a tag e injetar markup.
+    candles_json = _js_json(candles)
+    vols_json = _js_json(vols)
     time_visible = "true" if intraday else "false"
-    # Chave de persistência de range por (ticker, timeframe) — evita "vazar" zoom de um
-    # par para outro. json.dumps → string JS segura (escapa aspas/caracteres do ticker).
-    range_key_json = json.dumps(f"lwc_range_{ticker}_{tf_key}")
+    # Chave de persistência de range por (ticker, timeframe) — evita "vazar" zoom de um par
+    # para outro. Ticker restrito a [A-Z0-9] (defesa em profundidade) + _js_json no contexto <script>.
+    safe_ticker = re.sub(r"[^A-Z0-9]", "", (ticker or "").upper())
+    range_key_json = _js_json(f"lwc_range_{safe_ticker}_{tf_key}")
 
     # --- Overlays da engine (LWC-02): read-only de sw/sinais, gateados por est[...] ---------
     # Espelha 1:1 o bloco Plotly (app.py: add_hrect/add_hline/add_shape): S/R e zona de entrada
@@ -193,14 +218,17 @@ def _render_lwc(f, sw, sinais, est, ticker, tf_key):
                 "pivos": pivos,
             })
 
-    overlays_json = json.dumps(overlays)
+    overlays_json = _js_json(overlays)  # CR-01: idem candles — embutido cru em <script>
 
     html = f"""
 <div id="lwc-chart" style="width:100%;height:560px"></div>
 <script src="{_LWC_CDN_URL}" integrity="sha384-q1KYLSKHgBnW5tWYGGR8+6YV4/iPy31dILoF2I1OD7XiVUvHEp/TaxIQVmB0j3R2" crossorigin="anonymous"></script>
 <script>
-  const {{ createChart, CandlestickSeries, HistogramSeries, LineSeries, CrosshairMode, createSeriesMarkers }} = LightweightCharts;
   const el = document.getElementById('lwc-chart');
+  // WR-01: se o CDN cair ou o SRI não bater, `LightweightCharts` fica undefined e o
+  // destructure lança — sem este try o usuário vê um box preto de 560px sem explicação.
+  try {{
+  const {{ createChart, CandlestickSeries, HistogramSeries, LineSeries, CrosshairMode, createSeriesMarkers }} = LightweightCharts;
   const chart = createChart(el, {{
     layout: {{ background: {{ color: '#0e1117' }}, textColor: '#d1d4dc', fontSize: 12 }},
     grid: {{ vertLines: {{ color: '#1c2030' }}, horzLines: {{ color: '#1c2030' }} }},
@@ -330,6 +358,12 @@ def _render_lwc(f, sw, sinais, est, ticker, tf_key):
   }});
 
   new ResizeObserver(() => chart.applyOptions({{ width: el.clientWidth }})).observe(el);
+  }} catch (e) {{
+    console.error('[lwc] init error', e);
+    el.innerHTML = '<div style="padding:24px;color:#d1d4dc;font:14px system-ui,sans-serif">'
+      + 'Não foi possível carregar o gráfico interativo (Lightweight Charts). '
+      + 'Verifique a conexão de rede/CDN — a vista <b>Plotly</b> continua disponível.</div>';
+  }}
 </script>
 """
     components.html(html, height=580)
