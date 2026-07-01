@@ -93,3 +93,18 @@
 | SWING-01 | Phase 16 | Complete |
 | SWING-02 | Phase 16 | Complete |
 | CHART-01 | Phase 16 | Complete |
+| LWC-01 | Phase 17 | Planned |
+| LWC-02 | Phase 17 | Planned |
+| LWC-03 | Phase 17 | Planned |
+
+## v1.5 Requirements — Modo Trading (UX de gráfico estilo TradingView)
+
+**Defined:** 2026-07-01
+**Core Value:** A aba de swing ganha uma vista **"Modo Trading"** com a fluidez do TradingView (scroll-zoom, pan, crosshair, Y-autoscale, último preço) **sem sair da stack** e **sem tocar no método** — o Plotly permanece na análise densa. Fronteira "exibe, nunca recomenda" preservada.
+**Arquitetura (validada por spike):** TradingView **Lightweight Charts v5** (Apache-2.0) via `st.components.v1.html` + **CDN unpkg pinado** — **zero dependência Python nova**. Overlays da engine portados: `createPriceLine` (stop/alvo/Fib), `BandPrimitive` — series primitive único e reutilizável — (zona/S-R), `createSeriesMarkers` (pivôs/padrões). Detalhes em `.planning/spikes/{001,002}` + `.planning/spikes/CONVENTIONS.md`.
+
+### Modo Trading (LWC)
+
+- [ ] **LWC-01**: Usuário liga uma vista **"Modo Trading"** na aba de swing que renderiza o candlestick puro do ticker/timeframe via **Lightweight Charts v5** (`components.html` + CDN pinado, **zero dep Python nova**), com **scroll-zoom, pan, crosshair com rótulos nos eixos, Y-autoscale e linha de último preço**; o Plotly continua sendo a vista default.
+- [ ] **LWC-02**: As **sobreposições da engine** são portadas para o chart LWC lendo campos de `SetupSwing` **sem recálculo**: zona de entrada e S/R como **bandas** (`BandPrimitive`), stop/alvo/Fibonacci como **linhas rotuladas** (`createPriceLine`), pivôs/padrões como **markers**; copy neutra de estudo mantida.
+- [ ] **LWC-03**: O **range visível** do chart **persiste entre reruns** do Streamlit (`session_state` + `timeScale().setVisibleRange()`); `grafico.py` e os **283+ goldens** ficam intactos e `app.py` permanece **thin renderer** (read-only da engine).

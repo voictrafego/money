@@ -9,3 +9,4 @@ out/
 err.log
 *_err.log
 streamlit_boot.log
+.planning/spikes/**/run.log
