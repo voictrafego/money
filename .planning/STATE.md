@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: complete
-stopped_at: Phase 16 complete — v1.4 entregue
-last_updated: "2026-06-30T13:23:01.802Z"
-last_activity: 2026-06-30
+status: executing
+stopped_at: Completed 17-01-PLAN.md
+last_updated: "2026-07-01T14:07:45.340Z"
+last_activity: 2026-07-01 -- 17-01 executado (Modo Trading LWC v5)
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 5
-  total_plans: 15
-  completed_plans: 15
-  percent: 100
+  total_plans: 18
+  completed_plans: 16
+  percent: 89
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-29)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação. No v1.4, a página de swing **EXIBE** sinais técnicos fiéis a Murphy e **NUNCA recomenda**.
-**Current focus:** Phase 16 — p-gina-streamlit-gr-fico-do-momento
+**Current focus:** Phase 17 — modo-trading-candlestick-tradingview-lightweight-charts
 
 ## Current Position
 
-Phase: 16 (p-gina-streamlit-gr-fico-do-momento) — COMPLETE
-Plan: 3 of 3 (todos completos)
-Status: 16-03 aprovado (283 goldens verdes + verificação no navegador via Claude-in-Chrome, sem regressão) — milestone v1.4 entregue
-Last activity: 2026-06-30
+Phase: 17 (modo-trading-candlestick-tradingview-lightweight-charts) — EXECUTING
+Plan: 2 of 3
+Status: 17-01 concluído (Modo Trading + persistência de range); próximo 17-02 (overlays da engine)
+Last activity: 2026-07-01 -- 17-01 executado (Modo Trading LWC v5)
 
 ## Performance Metrics
 
@@ -74,6 +74,7 @@ Last activity: 2026-06-30
 | Phase 15 P01 | 15 | 2 tasks | 3 files |
 | Phase 16 P01 | ~10min | 2 tasks | 1 files |
 | Phase 16 P02 | ~8min | 2 tasks | 1 files |
+| Phase 17 P01 | 10min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -103,6 +104,8 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - [Phase ?]: [Phase 15]: SetupSwing (report/setup.py) — score ponderado explicável (decomposição peso-a-peso, tendência 35), R:R gate duro sob np.errstate, grade PT-BR + floor (<fraco→Sem setup), conflito multi-TF penaliza×0.80 sem bloquear; firewall vs report.py; config-driven; copy neutra anti-imperativa; 283 verdes
 - [Phase ?]: [Phase 16]: 4º menu monta read-only SinaisTecnicos+SetupSwing (ohlc_nominal=f.ohlc, Pitfall 6); estado de toggles ISOLADO tec_estado_swing (defaults D-02), nunca grafico.estado_padrao() nem tec_estado da Analisar (D-03/SWING-01); figura make_subplots candlestick nominal + overlays MM + subpainéis RSI/MACD/ADX (reuso golden de grafico.py), rangeslider OFF (Pitfall 4), selo de atraso sempre visível (D-08); S/R/Fib/padrões/card de veredito deferidos p/ 16-02
 - [Phase 16]: overlays de nível na figura swing — S/R via add_hrect (bandas verde/vermelho, LEVEL-01), zona de entrada add_hrect + stop/alvo add_hline (gate niveis_setup_on), Fibonacci add_hline (gate fib_on), padrões via add_shape neckline horizontal + add_annotation rótulo em formação/confirmado + add_hline alvo (gate padroes_on, OFF default); card de veredito read-only abaixo do gráfico (grade+score "confluência técnica", decomposição peso-a-peso, checklist ✓/✗, tabela "Referências de estudo (não são ordens)" via fmt_rs/esc_md — nunca st.metric, Pitfall 5), disclaimer condicional inline; copy 100% não-imperativa (SWING-02); 283 goldens verdes
+- [Phase ?]: [Phase 17]: Modo Trading = vista alternativa (radio swing_vista, Plotly default) troca só a camada de render sobre f.ohlc/sw/sinais já montados (zero fetch/recálculo); _render_lwc module-level com tf_key na assinatura; CDN unpkg @5.2.0 pinado + integrity sha384 inline + crossorigin (mitiga T-17-01); time diário=string / intraday=epoch UTC seg
+- [Phase ?]: [Phase 17]: persistência de range LWC-03 CLIENT-SIDE via localStorage por par (lwc_range_ticker_tfkey) — components.html unidirecional (sem round-trip JS→Python); getItem/setItem em try/catch independentes, catch da leitura cai p/ fitContent (SecurityError de iframe sandbox nunca impede o candle de renderizar)
 
 ### Pending Todos
 
@@ -144,7 +147,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-30T13:25:00.000Z
+Last session: 2026-07-01T14:07:09.295Z
 Stopped at: Completed 16-02-PLAN.md
 Resume file: None
 

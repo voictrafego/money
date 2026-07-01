@@ -137,7 +137,7 @@ nem na regra `app.py` read-only.
   4. O **range visível** do chart **persiste entre reruns** do Streamlit (`session_state` + `timeScale().setVisibleRange()`); disclaimer/linguagem de estudo preservados.
   5. Os **283+ testes golden** seguem verdes; verificação humana no navegador aprova o "Modo Trading" **sem regressão** nas abas existentes.
 **Plans**: 3 plans
-- [ ] 17-01-PLAN.md — Toggle "Modo Trading" + `_render_lwc` (candlestick LWC v5 via CDN pinado/SRI) + persistência do range visível entre reruns (LWC-01, LWC-03)
+- [x] 17-01-PLAN.md — Toggle "Modo Trading" + `_render_lwc` (candlestick LWC v5 via CDN pinado/SRI) + persistência do range visível entre reruns (LWC-01, LWC-03)
 - [ ] 17-02-PLAN.md — Overlays da engine portados: BandPrimitive (zona/S-R) + createPriceLine (stop/alvo/Fib) + createSeriesMarkers (pivôs/padrões), read-only de SetupSwing (LWC-02)
 - [ ] 17-03-PLAN.md — Verificação: 283+ goldens verdes + grafico.py intacto + smoke no navegador (Claude-in-Chrome) sem regressão (LWC-01/02/03)
 **UI hint**: yes
@@ -154,7 +154,7 @@ nem na regra `app.py` read-only.
 | 14. Padrões Gráficos + Checklist | v1.4 | 5/5 | Complete    | 2026-06-29 |
 | 15. Montagem do Setup + Score | v1.4 | 1/1 | Complete    | 2026-06-30 |
 | 16. Página Streamlit + Gráfico | v1.4 | 3/3 | Complete   | 2026-06-30 |
-| 17. Modo Trading (Lightweight Charts) | v1.5 | 0/3 | Planned |  |
+| 17. Modo Trading (Lightweight Charts) | v1.5 | 1/3 | In Progress|  |
 
 ## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.5
 
