@@ -154,7 +154,7 @@ nem na regra `app.py` read-only.
 | 14. Padrões Gráficos + Checklist | v1.4 | 5/5 | Complete    | 2026-06-29 |
 | 15. Montagem do Setup + Score | v1.4 | 1/1 | Complete    | 2026-06-30 |
 | 16. Página Streamlit + Gráfico | v1.4 | 3/3 | Complete   | 2026-06-30 |
-| 17. Modo Trading (Lightweight Charts) | v1.5 | 3/3 | Complete   | 2026-07-01 |
+| 17. Modo Trading (Lightweight Charts) | v1.5 | 3/3 | Complete    | 2026-07-01 |
 
 ## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.5
 

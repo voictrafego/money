@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: executing
+status: milestone_complete
 stopped_at: Completed 17-03-PLAN.md
 last_updated: "2026-07-01T14:30:00.000Z"
 last_activity: 2026-07-01
 progress:
   total_phases: 6
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 18
   completed_plans: 18
-  percent: 100
+  percent: 117
 ---
 
 # Project State
@@ -25,16 +25,16 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 
 ## Current Position
 
-Phase: 17 (modo-trading-candlestick-tradingview-lightweight-charts) — COMPLETE
-Plan: 3 of 3 (todos concluídos)
-Status: Verificação de aceite aprovada — pronta para fechar a fase
+Phase: 17
+Plan: Not started
+Status: Milestone complete
 Last activity: 2026-07-01
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 34 (v1.0 + v1.1 + v1.2) + v1.3 (Fases 9–11)
+- Total plans completed: 37 (v1.0 + v1.1 + v1.2) + v1.3 (Fases 9–11)
 - Average duration: — min
 - Total execution time: — hours
 
@@ -55,6 +55,7 @@ Last activity: 2026-07-01
 | 11 | 2 | - | - |
 | 14 | 5 | - | - |
 | 15 | 1 | - | - |
+| 17 | 3 | - | - |
 
 **Recent Trend:**
 
