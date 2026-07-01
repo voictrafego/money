@@ -96,9 +96,9 @@
 | LWC-01 | Phase 17 | Complete |
 | LWC-02 | Phase 17 | Complete |
 | LWC-03 | Phase 17 | Complete |
-| HOME-01 | Phase 18 | Planned |
-| WATCH-01 | Phase 18 | Planned |
-| WATCH-02 | Phase 18 | Planned |
+| HOME-01 | Phase 18 | Complete |
+| WATCH-01 | Phase 18 | Complete |
+| WATCH-02 | Phase 18 | Complete |
 | NEWS-01 | Phase 18 | Complete |
 | NEWS-02 | Phase 18 | Complete |
 

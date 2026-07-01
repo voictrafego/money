@@ -49,7 +49,7 @@ nem na regra `app.py` read-only.
 
 ### v1.6 — Central de Acompanhamento (Home)
 
-- [ ] **Phase 18: Home — Watchlist + Notícias** — Página inicial (landing default) com watchlist de ~5 ações auto-atualizável (efeito alta/baixa, aviso de atraso ~15min) + feed de notícias do mercado (manchete/submanchete + link pra fonte), tudo custo-zero via RSS + Yahoo com cache compartilhado (HOME-01, WATCH-01/02, NEWS-01/02)
+- [x] **Phase 18: Home — Watchlist + Notícias** — Página inicial (landing default) com watchlist de ~5 ações auto-atualizável (efeito alta/baixa, aviso de atraso ~15min) + feed de notícias do mercado (manchete/submanchete + link pra fonte), tudo custo-zero via RSS + Yahoo com cache compartilhado (HOME-01, WATCH-01/02, NEWS-01/02) (completed 2026-07-01)
 
 ## Phase Details
 
@@ -162,7 +162,7 @@ nem na regra `app.py` read-only.
 - [x] 18-01-PLAN.md — Scaffold da Home (landing default no radio) + core/home_feed.py (contrato never-raise) + deps novas (HOME-01)
 - [x] 18-02-PLAN.md — Watchlist: cotacoes em lote + cache compartilhado + auto-refresh + persistencia localStorage + metric colorido (WATCH-01, WATCH-02)
 - [x] 18-03-PLAN.md — Feed de noticias: feedparser InfoMoney + Google News, render seguro + link em nova aba, auto-refresh cacheado (NEWS-01, NEWS-02)
-- [ ] 18-04-PLAN.md — Verificacao: 283 goldens verdes + engines intactas + smoke no navegador (Home default sem regressao) (HOME-01, WATCH-01/02, NEWS-01/02)
+- [x] 18-04-PLAN.md — Verificacao: 283 goldens verdes + engines intactas + smoke no navegador (Home default sem regressao) (HOME-01, WATCH-01/02, NEWS-01/02)
 **UI hint**: yes
 
 ## Progress
@@ -177,7 +177,7 @@ nem na regra `app.py` read-only.
 | 15. Montagem do Setup + Score | v1.4 | 1/1 | Complete    | 2026-06-30 |
 | 16. Página Streamlit + Gráfico | v1.4 | 3/3 | Complete   | 2026-06-30 |
 | 17. Modo Trading (Lightweight Charts) | v1.5 | 3/3 | Complete    | 2026-07-01 |
-| 18. Home — Watchlist + Notícias | v1.6 | 3/4 | In Progress|  |
+| 18. Home — Watchlist + Notícias | v1.6 | 4/4 | Complete   | 2026-07-01 |
 
 ## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.5
 
