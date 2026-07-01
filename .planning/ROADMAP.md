@@ -158,7 +158,11 @@ nem na regra `app.py` read-only.
   3. As cotações **atualizam sozinhas** (~30–60s) com **efeito visual** na mudança e **aviso claro de atraso (~15min)**; o fetch usa **cache compartilhado no servidor** (`st.cache_data` TTL), fazendo **1 chamada por ticker por intervalo** independentemente do nº de usuários (anti rate-limit do Yahoo), e degrada sem quebrar se um ticker falhar.
   4. O **feed de notícias** lista **manchete + submanchete + fonte + horário** de fontes com RSS aberto (**InfoMoney + Google News RSS de mercado BR + outras validadas**); clicar abre o **site original da fonte** em nova aba (**nunca** reproduz o texto completo — só manchete/trecho + link, zona segura de copyright).
   5. O feed **auto-atualiza** (~5–15min) com **cache compartilhado**, degrada sem quebrar se uma fonte cair, e **zero dependência paga**; os **283 goldens** seguem verdes e as engines existentes ficam intactas.
-**Plans**: TBD (via /gsd-plan-phase)
+**Plans**: 4 plans
+- [ ] 18-01-PLAN.md — Scaffold da Home (landing default no radio) + core/home_feed.py (contrato never-raise) + deps novas (HOME-01)
+- [ ] 18-02-PLAN.md — Watchlist: cotacoes em lote + cache compartilhado + auto-refresh + persistencia localStorage + metric colorido (WATCH-01, WATCH-02)
+- [ ] 18-03-PLAN.md — Feed de noticias: feedparser InfoMoney + Google News, render seguro + link em nova aba, auto-refresh cacheado (NEWS-01, NEWS-02)
+- [ ] 18-04-PLAN.md — Verificacao: 283 goldens verdes + engines intactas + smoke no navegador (Home default sem regressao) (HOME-01, WATCH-01/02, NEWS-01/02)
 **UI hint**: yes
 
 ## Progress
@@ -173,7 +177,7 @@ nem na regra `app.py` read-only.
 | 15. Montagem do Setup + Score | v1.4 | 1/1 | Complete    | 2026-06-30 |
 | 16. Página Streamlit + Gráfico | v1.4 | 3/3 | Complete   | 2026-06-30 |
 | 17. Modo Trading (Lightweight Charts) | v1.5 | 3/3 | Complete    | 2026-07-01 |
-| 18. Home — Watchlist + Notícias | v1.6 | 0/? | Not Started |  |
+| 18. Home — Watchlist + Notícias | v1.6 | 0/4 | Not Started |  |
 
 ## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.5
 
