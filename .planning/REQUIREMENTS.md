@@ -99,8 +99,8 @@
 | HOME-01 | Phase 18 | Planned |
 | WATCH-01 | Phase 18 | Planned |
 | WATCH-02 | Phase 18 | Planned |
-| NEWS-01 | Phase 18 | Planned |
-| NEWS-02 | Phase 18 | Planned |
+| NEWS-01 | Phase 18 | Complete |
+| NEWS-02 | Phase 18 | Complete |
 
 ## v1.5 Requirements — Modo Trading (UX de gráfico estilo TradingView)
 
@@ -129,5 +129,5 @@
 
 ### Notícias (NEWS)
 
-- [ ] **NEWS-01**: A Home exibe um **feed de notícias do mercado financeiro** com **manchete + submanchete + fonte + horário**; clicar abre o **site original da fonte em nova aba** (nunca reproduz o texto completo). Fontes com **RSS aberto** (InfoMoney + Google News RSS de mercado BR + outras validadas feed a feed).
-- [ ] **NEWS-02**: O feed **auto-atualiza (~5–15min)** com **cache compartilhado no servidor**, **degrada sem quebrar** se uma fonte cair, e mantém **custo-zero** (sem API paga).
+- [x] **NEWS-01**: A Home exibe um **feed de notícias do mercado financeiro** com **manchete + submanchete + fonte + horário**; clicar abre o **site original da fonte em nova aba** (nunca reproduz o texto completo). Fontes com **RSS aberto** (InfoMoney + Google News RSS de mercado BR + outras validadas feed a feed).
+- [x] **NEWS-02**: O feed **auto-atualiza (~5–15min)** com **cache compartilhado no servidor**, **degrada sem quebrar** se uma fonte cair, e mantém **custo-zero** (sem API paga).

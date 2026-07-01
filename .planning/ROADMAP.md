@@ -161,7 +161,7 @@ nem na regra `app.py` read-only.
 **Plans**: 4 plans
 - [x] 18-01-PLAN.md — Scaffold da Home (landing default no radio) + core/home_feed.py (contrato never-raise) + deps novas (HOME-01)
 - [x] 18-02-PLAN.md — Watchlist: cotacoes em lote + cache compartilhado + auto-refresh + persistencia localStorage + metric colorido (WATCH-01, WATCH-02)
-- [ ] 18-03-PLAN.md — Feed de noticias: feedparser InfoMoney + Google News, render seguro + link em nova aba, auto-refresh cacheado (NEWS-01, NEWS-02)
+- [x] 18-03-PLAN.md — Feed de noticias: feedparser InfoMoney + Google News, render seguro + link em nova aba, auto-refresh cacheado (NEWS-01, NEWS-02)
 - [ ] 18-04-PLAN.md — Verificacao: 283 goldens verdes + engines intactas + smoke no navegador (Home default sem regressao) (HOME-01, WATCH-01/02, NEWS-01/02)
 **UI hint**: yes
 
@@ -177,7 +177,7 @@ nem na regra `app.py` read-only.
 | 15. Montagem do Setup + Score | v1.4 | 1/1 | Complete    | 2026-06-30 |
 | 16. Página Streamlit + Gráfico | v1.4 | 3/3 | Complete   | 2026-06-30 |
 | 17. Modo Trading (Lightweight Charts) | v1.5 | 3/3 | Complete    | 2026-07-01 |
-| 18. Home — Watchlist + Notícias | v1.6 | 2/4 | In Progress|  |
+| 18. Home — Watchlist + Notícias | v1.6 | 3/4 | In Progress|  |
 
 ## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.5
 
