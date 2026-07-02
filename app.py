@@ -20,6 +20,7 @@ from plotly.subplots import make_subplots
 from analista import grafico
 from analista.core import comparables as cmp
 from analista.core import indicators
+from analista.core import lentes
 from analista.core import multiples as mult
 from analista.core import screening as sc
 from analista.glossario import h
@@ -811,6 +812,46 @@ if modo.startswith("Analisar"):
             if a.alertas:
                 for al in a.alertas:
                     st.warning(esc_md(al))
+
+            # ----------------------------------------------------------------- #
+            # Lentes de referência (Fase 19) — camada fina READ-ONLY, além do DDM.
+            # app.py só LÊ a engine (lentes.*); nenhuma fórmula/recálculo na view.
+            # Copy de estudo, jamais recomendação (VAL-01/VAL-02).
+            # ----------------------------------------------------------------- #
+            st.markdown("#### Lentes de referência (além do DDM)")
+            st.caption(
+                "Fórmulas clássicas complementares — o valor intrínseco (DDM) acima segue "
+                "sendo a análise principal. São referências de estudo, não recomendações."
+            )
+            lente_graham, lente_bazin = st.columns(2)
+            with lente_graham:
+                _ult = c.ultimo_ano()
+                _vpa = lentes.vpa(c.patrimonio_liquido.get(_ult), c.num_acoes.get(_ult))
+                graham = lentes.preco_justo_graham(c.lpa_valuation(), _vpa)
+                if graham is not None:
+                    st.metric(
+                        "Preço-Justo (Graham)", esc_md(fmt_rs(graham)),
+                        delta=fmt_pct(lentes.upside(graham, a.preco_atual)) + " vs preço",
+                        delta_color="off",
+                    )
+                    st.caption("Referência clássica de Benjamin Graham (raiz do produto de LPA, VPA e um fator fixo).")
+                else:
+                    st.metric("Preço-Justo (Graham)", "indisponível")
+                    st.caption("A fórmula de Graham não vale para empresa sem lucro/PL positivo.")
+            with lente_bazin:
+                _dpas = [c.dpa(ano) for ano in c.anos_ordenados()]
+                _dpa_med = lentes.dpa_medio(_dpas, n=5)
+                bazin = lentes.preco_teto_bazin(_dpa_med)
+                if bazin is not None:
+                    st.metric(
+                        "Preço-Teto (Bazin)", esc_md(fmt_rs(bazin)),
+                        delta=fmt_pct(lentes.upside(bazin, a.preco_atual)) + " vs preço",
+                        delta_color="off",
+                    )
+                    st.caption("DPA médio de até 5 anos ÷ DY-mínimo de 6%.")
+                else:
+                    st.metric("Preço-Teto (Bazin)", "indisponível")
+                    st.caption("Só vale para boas pagadoras de dividendos (DPA médio positivo).")
 
             # Gráfico de preço 5a + banda do valor intrínseco (DDM) — topo da aba, antes dos sub-tabs (D-03).
             # Reservamos o slot do gráfico AQUI (topo) com st.container() e só o PREENCHEMOS depois que os
