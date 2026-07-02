@@ -9,7 +9,8 @@
 - 🚧 **v1.4 — Ferramenta de Swing Trade (setups de análise técnica)** — Phases 12–16
 - 🚧 **v1.5 — Modo Trading (UX de gráfico estilo TradingView)** — Phase 17
 - 🚧 **v1.6 — Central de Acompanhamento (Home)** — Phase 18
-- 📋 **v2.0 — Comercialização (produto cobrável)** — planejada após v1.6 (fases renumeradas a partir da 19)
+- 🚧 **v1.7 — Lentes de valuation e contexto na aba Analisar** — Phase 19
+- 📋 **v2.0 — Comercialização (produto cobrável)** — planejada após v1.7 (fases renumeradas quando reaberta)
 
 > Detalhes completos das fases concluídas (v1.0–v1.3) no snapshot `.planning/milestones/v1.3-ROADMAP.md` e requisitos em `.planning/milestones/v1.3-REQUIREMENTS.md`.
 > Requisitos e arquitetura da v2.0 preservados em `.planning/milestones/v2.0-REQUIREMENTS.md`.
@@ -178,8 +179,26 @@ nem na regra `app.py` read-only.
 | 16. Página Streamlit + Gráfico | v1.4 | 3/3 | Complete   | 2026-06-30 |
 | 17. Modo Trading (Lightweight Charts) | v1.5 | 3/3 | Complete    | 2026-07-01 |
 | 18. Home — Watchlist + Notícias | v1.6 | 4/4 | Complete   | 2026-07-01 |
+| 19. Lentes de valuation e contexto (Analisar) | v1.7 | 0/? | Planned | — |
 
-## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.5
+## 🚧 v1.7 — Lentes de valuation e contexto na aba Analisar
+
+**Milestone goal:** Enriquecer a aba Analisar com lentes de valuation clássicas e contexto de mercado,
+sem tocar na engine do método (v1.0–v1.3) nem no custo-zero (CVM + Yahoo + BCB) e mantendo os 296 testes
+golden verdes. Motivado pelo estudo do concorrente Investidor10 (features de alto apelo que eles bloqueiam
+no PRO e que nós já temos os dados para entregar de graça).
+
+### Phase 19: Lentes de valuation e contexto na aba Analisar
+
+**Goal:** Adicionar, read-only e sem recalcular o método: (1) Preço-Justo de Graham [√(22,5×LPA×VPA)] e
+Preço-Teto de Bazin [DPA médio 5a ÷ DY-mínimo 6%] como cards ao lado do DDM; (2) "Quanto teria rendido"
+R$ 1.000 com reinvestimento de dividendos (Adj Close 5a já coletado); (3) Comparador de pares do setor
+(tabela P/L, P/VP, ROE, DY, Valor de Mercado) reusando comparables.py/multiples.py.
+**Requirements**: TBD (definir no plan)
+**Depends on:** Phase 18
+**Plans:** 0 plans (rodar /gsd-plan-phase 19)
+
+## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.7
 
 **Goal:** Transformar o protótipo de usuário único num produto que cobra — auth, trial 7d →
 assinatura mensal (Asaas), gate de acesso e multiusuário — posicionado como software educacional
@@ -187,8 +206,8 @@ assinatura mensal (Asaas), gate de acesso e multiusuário — posicionado como s
 auth/billing/front no stack React+Vite+n8n+Asaas).
 
 > Requisitos (AUTH/BILL/ACCT/LEGAL/OPS) e decisões preservados em `.planning/milestones/v2.0-REQUIREMENTS.md`.
-> Fases serão renumeradas a partir da **18** quando o marco for (re)aberto via `/gsd-new-milestone`,
-> após o fechamento da v1.5.
+> Fases serão numeradas em sequência (a partir da **20**) quando o marco for (re)aberto via `/gsd-new-milestone`,
+> após o fechamento da v1.7.
 
 ## Backlog
 

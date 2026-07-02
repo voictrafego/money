@@ -84,6 +84,10 @@ Last activity: 2026-07-01 -- Phase 18 marked complete
 
 ## Accumulated Context
 
+### Roadmap Evolution
+
+- Phase 19 added (v1.7): Lentes de valuation e contexto na aba Analisar — Graham, Bazin, "quanto teria rendido", comparador de pares. Motivada pelo estudo do concorrente Investidor10.
+
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
