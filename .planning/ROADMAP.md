@@ -179,7 +179,7 @@ nem na regra `app.py` read-only.
 | 16. Página Streamlit + Gráfico | v1.4 | 3/3 | Complete   | 2026-06-30 |
 | 17. Modo Trading (Lightweight Charts) | v1.5 | 3/3 | Complete    | 2026-07-01 |
 | 18. Home — Watchlist + Notícias | v1.6 | 4/4 | Complete   | 2026-07-01 |
-| 19. Lentes de valuation e contexto (Analisar) | v1.7 | 4/4 | Complete   | 2026-07-02 |
+| 19. Lentes de valuation e contexto (Analisar) | v1.7 | 4/4 | Complete    | 2026-07-02 |
 
 ## 🚧 v1.7 — Lentes de valuation e contexto na aba Analisar
 
