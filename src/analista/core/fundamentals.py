@@ -46,6 +46,7 @@ class CompanyData:
     serie_precos: Optional["pd.Series"] = None  # close diário 5a (índice = datas) p/ o gráfico
     ohlc: Optional["pd.DataFrame"] = None           # frame OHLCV nominal 5a (Yahoo cru, auto_adjust=False)
     ohlc_ajustado: Optional["pd.DataFrame"] = None  # OHLCV split-only-adjusted p/ indicadores (Phase 5)
+    serie_precos_ajustada: Optional["pd.Series"] = None  # Adj Close 5a p/ RET-01 — retorno total, dividendos reinvestidos
 
     # proventos dos últimos 12 meses reais (datas do Yahoo) para o DY corrente (WR-04)
     dpa_trailing_12m: Optional[float] = None
