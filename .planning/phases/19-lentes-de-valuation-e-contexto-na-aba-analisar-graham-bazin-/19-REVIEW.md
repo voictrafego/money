@@ -15,8 +15,16 @@ findings:
   warning: 2
   info: 4
   total: 6
-status: issues_found
+status: warnings_resolved
+warnings_resolved: [WR-01, WR-02]
+resolved_in: 6d8d34f
 ---
+
+> **Resolução (commit `6d8d34f`):** WR-01 e WR-02 corrigidos e travados por golden.
+> WR-01 — `dpa_medio` aplica a janela dos últimos `n` antes de descartar None (Bazin
+> limitado a 5 anos-calendário). WR-02 — `serie_precos_ajustada` só persiste Adj Close
+> real; sem ele vira `None` para a lente RET-01 degradar (fim do mislabel). Os 4 Info
+> (IN-01…IN-04) ficam como follow-up não-bloqueante. Suíte: 307 verdes.
 
 # Phase 19: Code Review Report
 
