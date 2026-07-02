@@ -58,6 +58,7 @@ class DadosMercado:
     serie_precos: Optional["pd.Series"] = None  # close diário 5a (índice = datas) p/ o gráfico
     ohlc: Optional["pd.DataFrame"] = None           # frame OHLCV nominal 5a (Yahoo cru, auto_adjust=False)
     ohlc_ajustado: Optional["pd.DataFrame"] = None  # OHLCV split-only-adjusted p/ indicadores (Phase 5)
+    serie_precos_ajustada: Optional["pd.Series"] = None  # Adj Close diário 5a — retorno total c/ dividendos reinvestidos; p/ RET-01, mesma origem do beta, sem rede nova
 
 
 def _retornos_mensais(precos) -> list:
@@ -151,6 +152,7 @@ def coletar_mercado(ticker: str, meses_beta: int = 60) -> DadosMercado:
         nominal = hist["Close"].dropna()
         ajustado = hist["Adj Close"] if "Adj Close" in hist else hist["Close"]
         dm.serie_precos = nominal
+        dm.serie_precos_ajustada = ajustado.dropna()  # Adj Close 5a p/ RET-01 (mesma origem do beta, sem rede nova)
         dm.ohlc = hist                               # frame OHLCV nominal completo (D-01: nada descartado)
         dm.ohlc_ajustado = _ajustar_por_split(hist)  # split-only-adjusted derivado de "Stock Splits" (D-03/D-05)
         if dm.preco_atual is None and len(nominal):
