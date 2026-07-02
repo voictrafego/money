@@ -52,6 +52,7 @@ radar de sazonalidade, índice de Basileia, e qualquer feature que emita "compre
 - Tabela com **P/L, P/VP, ROE, DY, Valor de Mercado** dos pares do mesmo setor, **destacando** a ação
   analisada. Reusar `comparables.py`/`multiples.py` (a lógica de pares já existe — o Ranking usa).
 - Degradação: sem pares suficientes → mensagem neutra, sem quebrar. **Não emite recomendação** (só contexto).
+- **Exceção à regra "zero rede nova":** buscar pares NÃO-cacheados dispara fetch (Yahoo/CVM), igual à aba Ranking hoje. É **intencional e aceito** só para PEER-01; as outras 3 lentes (Graham/Bazin/retorno) seguem 100% sem rede nova. A verificação (19-04) NÃO deve tratar isso como violação.
 
 ### Fronteira e testes
 - Fórmulas novas ganham **testes golden** (valores conhecidos) — mantém o padrão de fidelidade do projeto.
