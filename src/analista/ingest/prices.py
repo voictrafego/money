@@ -150,9 +150,17 @@ def coletar_mercado(ticker: str, meses_beta: int = 60) -> DadosMercado:
 
     if hist is not None and not hist.empty:
         nominal = hist["Close"].dropna()
+        # beta/desempenho relativo (abaixo) toleram fallback p/ Close nominal — é só um
+        # proxy de retorno; RET-01 (serie_precos_ajustada) NÃO tolera (ver abaixo).
         ajustado = hist["Adj Close"] if "Adj Close" in hist else hist["Close"]
         dm.serie_precos = nominal
-        dm.serie_precos_ajustada = ajustado.dropna()  # Adj Close 5a p/ RET-01 (mesma origem do beta, sem rede nova)
+        # RET-01: SÓ persiste Adj Close real (retorno total, com proventos). Sem "Adj Close"
+        # deixa None p/ a lente degradar — NUNCA usar Close nominal como se fosse retorno
+        # total reinvestido (WR-02: a UI rotula RET-01 como "com dividendos reinvestidos").
+        if "Adj Close" in hist:
+            dm.serie_precos_ajustada = hist["Adj Close"].dropna()  # Adj Close 5a (mesma origem do beta, sem rede nova)
+        else:
+            dm.serie_precos_ajustada = None
         dm.ohlc = hist                               # frame OHLCV nominal completo (D-01: nada descartado)
         dm.ohlc_ajustado = _ajustar_por_split(hist)  # split-only-adjusted derivado de "Stock Splits" (D-03/D-05)
         if dm.preco_atual is None and len(nominal):

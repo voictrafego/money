@@ -49,6 +49,9 @@ def test_dpa_medio():
     assert lentes.dpa_medio([1.0, None, 3.0]) == 2.0
     # janela: só os últimos n não-None
     assert lentes.dpa_medio([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], n=3) == 5.0
+    # WR-01: a janela é aplicada ANTES de descartar None — anos antigos fora dos últimos n
+    # (aqui um DPA=9,0 há 6 anos, com lacunas no meio) NÃO entram na média de 5 anos.
+    assert lentes.dpa_medio([9.0, None, None, None, None, None, 2.0], n=5) == 2.0
     # vazio / só None -> None
     assert lentes.dpa_medio([]) is None
     assert lentes.dpa_medio([None, None]) is None

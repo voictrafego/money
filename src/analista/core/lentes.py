@@ -57,16 +57,19 @@ def vpa(patrimonio_liquido: float, num_acoes: float) -> Number:
 # VAL-02 — Preço-Teto de Bazin
 # --------------------------------------------------------------------------- #
 def dpa_medio(dpas: Sequence[Optional[float]], n: int = 5) -> Number:
-    """Média aritmética dos ÚLTIMOS `n` valores não-None de `dpas`.
+    """Média aritmética dos valores não-None entre os ÚLTIMOS `n` elementos de `dpas`.
 
-    Se houver menos de `n` anos, usa o período disponível (espelha a nota do concorrente).
-    None se não houver nenhum DPA.
+    A janela é aplicada ANTES de descartar None: com uma sequência de um DPA por
+    ano-calendário, isto limita Bazin aos últimos `n` anos-calendário (WR-01) — anos
+    antigos fora da janela não entram na média mesmo quando há lacunas (None) no meio.
+    Se houver menos de `n` DPAs válidos na janela, usa o período disponível (espelha a
+    nota do concorrente). None se não houver nenhum DPA na janela.
     """
-    validos = [d for d in dpas if d is not None]
+    janela = dpas[-n:] if n > 0 else dpas
+    validos = [d for d in janela if d is not None]
     if not validos:
         return None
-    janela = validos[-n:]
-    return sum(janela) / len(janela)
+    return sum(validos) / len(validos)
 
 
 def preco_teto_bazin(dpa_med: float, dy_minimo: float = BAZIN_DY_MIN) -> Number:
