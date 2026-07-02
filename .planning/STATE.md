@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: completed
+status: executing
 stopped_at: Completed 18-02-PLAN.md
-last_updated: "2026-07-01T18:35:59.446Z"
-last_activity: 2026-07-01 -- Phase 18 marked complete
+last_updated: "2026-07-02T13:03:56.031Z"
+last_activity: 2026-07-02
 progress:
   total_phases: 7
   completed_phases: 7
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-29)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação. No v1.4, a página de swing **EXIBE** sinais técnicos fiéis a Murphy e **NUNCA recomenda**.
-**Current focus:** Phase 18 — home-watchlist-noticias
+**Current focus:** Phase 19 — lentes-de-valuation-e-contexto-na-aba-analisar-graham-bazin-
 
 ## Current Position
 
-Phase: 18 — COMPLETE
-Plan: 4 of 4
-Status: Phase 18 complete
-Last activity: 2026-07-01 -- Phase 18 marked complete
+Phase: 19 (lentes-de-valuation-e-contexto-na-aba-analisar-graham-bazin-) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-07-02
 
 ## Performance Metrics
 
@@ -81,6 +81,7 @@ Last activity: 2026-07-01 -- Phase 18 marked complete
 | Phase 18 P01 | ~8min | 2 tasks | 4 files |
 | Phase 18 P02 | 12min | 2 tasks | 3 files |
 | Phase 18 P03 | 15min | 2 tasks | 3 files |
+| Phase 19 P01 | 10min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -121,6 +122,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - [Phase ?]: [Phase 18]: Home vira landing default via 1o item do radio (stateless); render_home() thin + core/home_feed.py read-only never-raise (firewall D-06); A2 validada -> streamlit-local-storage==0.0.25 + feedparser==6.0.12 pinados; .phase-base-sha 5ae5190 gravado; 283 goldens verdes
 - [Phase ?]: [Phase 18]: watchlist real — cotacoes() UMA yf.download em lote (5d) + variacao do dia close[-1]/close[-2]-1 (A1 mantida vs fast_info.previous_close, ~0.22pp; batch preserva D-05); _cotacoes cache ttl=45 + _render_watchlist fragment run_every=45 metric colorido + selo ~15min; editor validado teto 5 FORA do fragment; persistencia watchlist_v18 streamlit-local-storage + fallback session_state; 289 verdes
 - [Phase ?]: 18-03 A3: noticias multi-feed degrada graciosamente — InfoMoney vazio (throttle) => Home 100% Google News; eco de submanchete suprimido; render seguro (texto + link_button https)
+- [Phase 19]: 4 lentes puras em core/lentes.py (Graham, Bazin, retorno Adj Close, comparador de pares) never-raise; P/L do comparador usa lpa_valuation canonico p/ consistencia entre menus; app.py e modulos de metodo intocados (307 verdes)
 
 ### Pending Todos
 
@@ -162,7 +164,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-01T18:22:15.083Z
+Last session: 2026-07-02T13:02:54.935Z
 Stopped at: Completed 18-02-PLAN.md
 Resume file: None
 

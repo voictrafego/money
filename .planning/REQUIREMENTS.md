@@ -144,7 +144,7 @@
 
 ### Lentes de valuation e contexto (VAL / RET / PEER)
 
-- [ ] **VAL-01**: A aba Analisar exibe o **Preço-Justo de Graham** [√(22,5 × LPA × VPA)] como card ao lado do DDM, com upside vs. preço atual; degrada sem quebrar quando LPA/VPA ausentes ou negativos (não aplica a valor patrimonial negativo) e traz disclaimer de limitação (não serve p/ empresas sem lucro/PL positivo).
-- [ ] **VAL-02**: A aba Analisar exibe o **Preço-Teto de Bazin** [DPA médio dos últimos 5 anos ÷ DY-mínimo de 6%] como card, com upside vs. preço atual; degrada sem quebrar quando não há histórico de dividendos e avisa que a fórmula só vale para boas pagadoras.
-- [ ] **RET-01**: A aba Analisar mostra **"quanto teria rendido"** R$ 1.000 investidos há N anos (com reinvestimento de dividendos, via Adj Close 5a já coletado), em ~1–3 janelas (ex.: 1a/5a), sem nova chamada de rede; degrada sem quebrar quando o histórico é insuficiente.
-- [ ] **PEER-01**: A aba Analisar mostra um **comparador de pares do setor** (tabela com P/L, P/VP, ROE, DY e Valor de Mercado) reusando `comparables.py`/`multiples.py`, destacando a ação analisada; degrada sem quebrar quando não há pares suficientes. Não emite recomendação.
+- [x] **VAL-01**: A aba Analisar exibe o **Preço-Justo de Graham** [√(22,5 × LPA × VPA)] como card ao lado do DDM, com upside vs. preço atual; degrada sem quebrar quando LPA/VPA ausentes ou negativos (não aplica a valor patrimonial negativo) e traz disclaimer de limitação (não serve p/ empresas sem lucro/PL positivo).
+- [x] **VAL-02**: A aba Analisar exibe o **Preço-Teto de Bazin** [DPA médio dos últimos 5 anos ÷ DY-mínimo de 6%] como card, com upside vs. preço atual; degrada sem quebrar quando não há histórico de dividendos e avisa que a fórmula só vale para boas pagadoras.
+- [x] **RET-01**: A aba Analisar mostra **"quanto teria rendido"** R$ 1.000 investidos há N anos (com reinvestimento de dividendos, via Adj Close 5a já coletado), em ~1–3 janelas (ex.: 1a/5a), sem nova chamada de rede; degrada sem quebrar quando o histórico é insuficiente.
+- [x] **PEER-01**: A aba Analisar mostra um **comparador de pares do setor** (tabela com P/L, P/VP, ROE, DY e Valor de Mercado) reusando `comparables.py`/`multiples.py`, destacando a ação analisada; degrada sem quebrar quando não há pares suficientes. Não emite recomendação.
