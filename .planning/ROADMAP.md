@@ -179,7 +179,7 @@ nem na regra `app.py` read-only.
 | 16. Página Streamlit + Gráfico | v1.4 | 3/3 | Complete   | 2026-06-30 |
 | 17. Modo Trading (Lightweight Charts) | v1.5 | 3/3 | Complete    | 2026-07-01 |
 | 18. Home — Watchlist + Notícias | v1.6 | 4/4 | Complete   | 2026-07-01 |
-| 19. Lentes de valuation e contexto (Analisar) | v1.7 | 3/4 | In Progress|  |
+| 19. Lentes de valuation e contexto (Analisar) | v1.7 | 4/4 | Complete   | 2026-07-02 |
 
 ## 🚧 v1.7 — Lentes de valuation e contexto na aba Analisar
 
@@ -196,11 +196,11 @@ R$ 1.000 com reinvestimento de dividendos (Adj Close 5a já coletado); (3) Compa
 (tabela P/L, P/VP, ROE, DY, Valor de Mercado) reusando comparables.py/multiples.py.
 **Requirements**: VAL-01, VAL-02, RET-01, PEER-01
 **Depends on:** Phase 18
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 - [x] 19-01-PLAN.md — Engine `core/lentes.py`: Graham, Bazin, "quanto teria rendido" e comparador de pares (funções puras) + goldens `test_lentes.py` (VAL-01, VAL-02, RET-01, PEER-01)
 - [x] 19-02-PLAN.md — Expor Adj Close 5a já baixado (`serie_precos_ajustada` em prices/CompanyData/build) para o retorno total, sem rede nova (RET-01)
 - [x] 19-03-PLAN.md — Render read-only na aba Analisar: cards Graham/Bazin, retorno 1a/5a, comparador de pares com alvo destacado (VAL-01, VAL-02, RET-01, PEER-01)
-- [ ] 19-04-PLAN.md — Verificação: 296+ goldens verdes, método intocado, zero dep nova + smoke no navegador (VAL-01, VAL-02, RET-01, PEER-01)
+- [x] 19-04-PLAN.md — Verificação: 296+ goldens verdes, método intocado, zero dep nova + smoke no navegador (VAL-01, VAL-02, RET-01, PEER-01)
 
 ## 📋 v2.0 — Comercialização (produto cobrável) — planejada após v1.7
 
