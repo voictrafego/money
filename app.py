@@ -1,7 +1,7 @@
 """Interface web (Streamlit) do Analista de Dividendos.
 
 Rode com:  ./.venv/bin/streamlit run app.py
-Abre no navegador. Mesma engine do CLI, método do livro Orleans Martins & Felipe Pontes.
+Abre no navegador. Mesma engine do CLI. Referências da metodologia: página "Metodologia e referências" (rodapé).
 """
 
 from __future__ import annotations
@@ -533,8 +533,56 @@ def _render_lwc(f, sw, sinais, est, ticker, tf_key):
 
 # --------------------------------------------------------------------------- #
 st.title("Analista de Ações de Dividendos")
-st.caption("Método do livro *O Investidor em Ações de Dividendos* (Orleans Martins & Felipe Pontes) · "
+st.caption("Análise fundamentalista de ações de dividendos da B3 · "
            "dados grátis: CVM + Yahoo + Banco Central")
+
+
+def _render_metodologia() -> None:
+    """Página 'velada' de metodologia e referências — acessada só pelo link do rodapé.
+
+    Concentra toda a atribuição bibliográfica que antes ficava espalhada na interface,
+    em linguagem descritiva/educacional (nunca recomendação — CVM Res. 19/20)."""
+    if st.button("← Voltar ao app"):
+        st.query_params.clear()
+        st.rerun()
+    st.header("Metodologia e referências")
+    st.markdown(
+        "Esta ferramenta descreve, de forma **educacional**, uma metodologia de análise "
+        "fundamentalista de ações pagadoras de dividendos. Ela **não emite recomendação de "
+        "compra ou venda** nem consultoria/análise de valores mobiliários (CVM Res. 19/20): "
+        "apresenta cálculos e critérios para o usuário estudar e decidir por conta própria.\n\n"
+        "### O fluxo da análise\n"
+        "1. **Garimpo (BSD)** — filtra várias empresas por estabilidade e segurança dos dividendos.\n"
+        "2. **Ranking por múltiplos** — ordena candidatas e estima um preço-alvo por regressão.\n"
+        "3. **Análise a fundo** — valuation por Desconto de Dividendos (DDM), múltiplos e fundamentos.\n"
+        "4. **Timing técnico (consultivo)** — indicadores de preço, sempre subordinados ao fundamento.\n\n"
+        "### Fundamentação e referências\n"
+        "A metodologia central segue o livro **_O Investidor em Ações de Dividendos_** "
+        "(Orleans Martins & Felipe Pontes) — do garimpo de empresas ao valuation por desconto de "
+        "dividendos. O mapeamento por tema:\n\n"
+        "- **Múltiplos** (ML, ROE, P/L, EY, Payout, DY) — Cap. 10.\n"
+        "- **Ranking por múltiplos + preço-alvo** (padronização e regressão P/L) — Cap. 11–12.\n"
+        "- **Valuation por Desconto de Dividendos** (Gordon e modelo H, sensibilidade) — Cap. 13–17.\n"
+        "- **Crescimento e custo de capital** (g e Ke pelo CAPM) — Cap. 14/16.\n\n"
+        "Referências clássicas complementares, de domínio público, usadas como lentes de estudo:\n\n"
+        "- **Preço-justo de Benjamin Graham** — raiz do produto de LPA, VPA e um fator fixo.\n"
+        "- **Preço-teto de Décio Bazin** — DPA médio dividido por um dividend yield mínimo.\n"
+        "- **BSD — Big, Safe Dividend** (Charles Carlson) — nota 0–100 de estabilidade dos dividendos; "
+        "corte de referência acima de 80.\n\n"
+        "### Fontes de dados (todas gratuitas e públicas)\n"
+        "- **CVM** — Dados Abertos (DFP): fundamentos de até 10 anos (lucro, patrimônio, caixa, receita, dívida).\n"
+        "- **Yahoo Finance** — preços, dividendos, número de ações e beta.\n"
+        "- **Banco Central** — API SGS: Selic e IPCA.\n\n"
+        "Os números podem conter erros ou dados desatualizados; rentabilidade passada não garante "
+        "resultados futuros. Verifique sempre na fonte primária (CVM/RI) antes de decidir."
+    )
+    st.caption("Uso educacional. Não é recomendação de investimento (CVM Res. 19/20).")
+
+
+# A página de metodologia é acessada apenas pelo link discreto do rodapé (?p=metodologia).
+if st.query_params.get("p") == "metodologia":
+    _render_metodologia()
+    st.stop()
 
 modo = st.sidebar.radio(
     "O que você quer fazer?",
@@ -1087,7 +1135,7 @@ if modo.startswith("Analisar"):
             with tab1:
                 cma, cmb = st.columns(2)
                 with cma:
-                    st.markdown("**Múltiplos (Cap. 10)**", help=h("tab_multiplos"))
+                    st.markdown("**Múltiplos**", help=h("tab_multiplos"))
                     st.caption("Dois payouts: o cru do último ano e o sustentável usado no valuation (DDM).",
                                help=h("payout_dual"))
                     payout_ult = c.payout(c.ultimo_ano())  # CRU do último ano (paridade report.py L156)
@@ -1096,7 +1144,7 @@ if modo.startswith("Analisar"):
                     st.dataframe(pd.DataFrame(rows, columns=["Múltiplo", "Valor"]),
                                  hide_index=True, use_container_width=True)
                 with cmb:
-                    st.markdown("**Crescimento e custo de capital (Cap. 14/16)**", help=h("tab_crescimento"))
+                    st.markdown("**Crescimento e custo de capital**", help=h("tab_crescimento"))
                     st.dataframe(pd.DataFrame([
                         ("g histórico (tendência log-linear)", fmt_pct(a.g_historico)),
                         ("g por fundamentos", fmt_pct(a.g_fundamentos)),
@@ -1108,7 +1156,7 @@ if modo.startswith("Analisar"):
 
             with tab2:
                 if a.ddm_constante and a.ddm_h:
-                    st.markdown("**Valor intrínseco por Desconto de Dividendos (Cap. 13-17)**", help=h("tab_ddm"))
+                    st.markdown("**Valor intrínseco por Desconto de Dividendos**", help=h("tab_ddm"))
                     st.dataframe(pd.DataFrame([
                         ("Otimista (g constante)", fmt_rs(a.ddm_constante.valor_intrinseco),
                          fmt_rs(a.ddm_constante.vp_dividendos), fmt_rs(a.ddm_constante.vp_residual)),
@@ -1147,9 +1195,9 @@ if modo.startswith("Analisar"):
 # 2) GARIMPAR CARTEIRA (BSD)
 # =========================================================================== #
 elif modo.startswith("Garimpar"):
-    st.subheader("Garimpar uma carteira — ranking Big, Safe Dividend (Cap. 8)", help=h("bsd"))
+    st.subheader("Garimpar uma carteira — ranking Big, Safe Dividend (BSD)", help=h("bsd"))
     st.caption("Cole vários tickers (separados por vírgula ou espaço). "
-               "BSD > 80 = 'dividendo grande e seguro' (Carlson).")
+               "BSD > 80 = 'dividendo grande e seguro'.")
     txt = st.text_area("Tickers", value="TAEE11, EGIE3, CMIG4, ALUP11, CPFE3, EQTL3, ITUB4, BBAS3")
     if st.button("Garimpar", type="primary"):
         tickers = [t.strip().upper() for t in txt.replace(",", " ").split() if t.strip()]
@@ -1199,7 +1247,7 @@ elif modo.startswith("Garimpar"):
                 hovertemplate="%{x}<br>BSD %{y:.1f}<extra></extra>",
             ))
             bsd_fig.add_hline(y=80, line_width=1, line_dash="dash", line_color="#2ca02c",
-                              annotation_text="Corte 80 (Carlson)", annotation_position="top left")
+                              annotation_text="Corte 80", annotation_position="top left")
             bsd_fig.update_xaxes(categoryorder="array", categoryarray=list(df["Ticker"]), title_text=None)
             bsd_fig.update_yaxes(range=[0, 100], title_text="BSD")
             bsd_fig.update_layout(height=360, margin=dict(l=10, r=10, t=20, b=10), showlegend=False)
@@ -1211,7 +1259,7 @@ elif modo.startswith("Garimpar"):
 # 3) RANKING POR MÚLTIPLOS
 # =========================================================================== #
 elif modo.startswith("Ranking"):
-    st.subheader("Ranking por múltiplos + preço-alvo (Cap. 11-12)", help=h("ranking"))
+    st.subheader("Ranking por múltiplos + preço-alvo", help=h("ranking"))
     st.caption("Padroniza os múltiplos em nota 0–100 e estima o preço justo por regressão "
                "P/L ~ f(payout, ROE). Upside positivo = candidata a estar barata.")
     txt = st.text_area("Tickers (de preferência do mesmo setor)",
@@ -1658,3 +1706,14 @@ elif modo.startswith("Swing"):
                         "Os níveis acima são referências de estudo, jamais ordens."
                     )
         _render_swing()
+
+
+# --------------------------------------------------------------------------- #
+# Rodapé — link discreto para a página velada de metodologia e referências.
+st.markdown("---")
+st.markdown(
+    "<div style='text-align:center; opacity:0.55; font-size:0.85em'>"
+    "<a href='?p=metodologia' target='_self' style='color:inherit'>Metodologia e referências</a>"
+    "</div>",
+    unsafe_allow_html=True,
+)

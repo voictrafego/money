@@ -1,7 +1,7 @@
 """Glossário dos termos do método, para os tooltips (help=) da interface.
 
-Definições curtas e fiéis ao livro *O Investidor em Ações de Dividendos*
-(Orleans Martins & Felipe Pontes). O número do capítulo segue o próprio livro.
+Definições curtas e descritivas dos termos da metodologia. As referências e
+a fundamentação completa ficam na página "Metodologia e referências" (link no rodapé).
 Texto em markdown (o tooltip do Streamlit renderiza markdown).
 """
 
@@ -25,25 +25,25 @@ G: dict[str, str] = {
     "valor_intrinseco": (
         "**Valor intrínseco (DDM)** — valor 'justo' estimado pelos fundamentos: os proventos "
         "futuros esperados trazidos a valor presente. Mostrado como intervalo entre o cenário "
-        "otimista (g constante) e o conservador (modelo H). Acima do preço = ação barata. (Cap. 13–17)"
+        "otimista (g constante) e o conservador (modelo H). Acima do preço = ação barata."
     ),
     "dy": (
         "**Dividend Yield (DY)** — proventos por ação ÷ preço da ação, em %. Quanto a ação 'rende' "
-        "em dividendos. Compare com a Selic/renda fixa, lembrando que ação tem risco maior. (Cap. 10)"
+        "em dividendos. Compare com a Selic/renda fixa, lembrando que ação tem risco maior."
     ),
     "roe": (
         "**ROE — Retorno sobre o Patrimônio Líquido** — lucro líquido recorrente ÷ patrimônio líquido. "
         "Quanto de lucro a empresa gera para cada R$ 1 de capital próprio. Usa-se o PL médio "
-        "(inicial+final)/2; indisponível no 1º ano sem histórico. (Cap. 10)"
+        "(inicial+final)/2; indisponível no 1º ano sem histórico."
     ),
     "ke": (
         "**Ke — custo do capital próprio** — retorno mínimo que o investidor exige para correr o risco "
         "da ação; é a taxa de desconto do DDM. Pelo CAPM: Ke = juro livre de risco + Beta × prêmio de "
-        "mercado. (Cap. 16)"
+        "mercado."
     ),
     # ---- Aba Múltiplos & Crescimento ----
     "tab_multiplos": (
-        "**Múltiplos (Cap. 10)**\n\n"
+        "**Múltiplos**\n\n"
         "- **ML — Margem Líquida**: lucro líquido ÷ vendas. Quanto da receita vira lucro.\n"
         "- **ROE**: lucro ÷ patrimônio líquido (rentabilidade do capital próprio).\n"
         "- **P/L — Preço/Lucro**: quantas vezes o preço cabe no lucro por ação (≈ anos para recuperar o investido).\n"
@@ -52,7 +52,7 @@ G: dict[str, str] = {
         "- **DY — Dividend Yield**: proventos ÷ preço, em %."
     ),
     "tab_crescimento": (
-        "**Crescimento e custo de capital (Cap. 14/16)**\n\n"
+        "**Crescimento e custo de capital**\n\n"
         "- **g histórico (tendência log-linear)**: ritmo de crescimento do lucro estimado por "
         "regressão log-linear sobre a série de lucro normalizada (mede a tendência, robusta a anos atípicos).\n"
         "- **g por fundamentos**: ROE × (1 − payout), o crescimento que a empresa se autofinancia.\n"
@@ -63,7 +63,7 @@ G: dict[str, str] = {
     ),
     # ---- Aba Valuation ----
     "tab_ddm": (
-        "**Valuation por Desconto de Dividendos (DDM) — Cap. 13–17**\n\n"
+        "**Valuation por Desconto de Dividendos (DDM)**\n\n"
         "Valor justo = proventos futuros trazidos a valor presente.\n\n"
         "- **Otimista (g constante)**: modelo de Gordon, dividendos crescendo a uma taxa fixa.\n"
         "- **Conservador (modelo H)**: o crescimento alto **cai aos poucos** até a taxa estável "
@@ -74,14 +74,14 @@ G: dict[str, str] = {
     "tab_sensibilidade": (
         "**Sensibilidade** — mostra quanto o valor muda ao mexer no custo de capital (Ke, nas linhas) "
         "e no crescimento (g, nas colunas). O DDM é muito sensível a essas duas taxas: o maior valor "
-        "fica com g alto + Ke baixo; o menor, com g baixo + Ke alto. (Cap. 12/17)"
+        "fica com g alto + Ke baixo; o menor, com g baixo + Ke alto."
     ),
     # ---- Modo Garimpar ----
     "bsd": (
-        "**BSD — Big, Safe Dividend** (Charles Carlson, Cap. 8) — nota de 0 a 100 que combina dez "
+        "**BSD — Big, Safe Dividend** — nota de 0 a 100 que combina dez "
         "fatores de estabilidade e crescimento dos dividendos, sendo o **payout** o de maior peso (30%). "
-        "Carlson recomenda focar em empresas com **BSD acima de 80** (no estudo do livro, só 19 de 297 "
-        "empresas brasileiras passaram).\n\n"
+        "O corte de referência é **BSD acima de 80** — nota alta e rara (num estudo de referência com "
+        "297 empresas brasileiras, só 19 passaram).\n\n"
         "- **Nota absoluta**: cada fator é comparado a uma **referência fixa** (não às outras ações "
         "coladas no lote), então a mesma ação tem o mesmo BSD em qualquer execução e o corte 80 vale "
         "de verdade.\n"
@@ -92,7 +92,7 @@ G: dict[str, str] = {
     ),
     # ---- Modo Ranking ----
     "ranking": (
-        "**Ranking por múltiplos + preço-alvo (Cap. 11–12)** — padroniza os múltiplos em nota 0–100 e "
+        "**Ranking por múltiplos + preço-alvo** — padroniza os múltiplos em nota 0–100 e "
         "estima o **preço justo** por regressão (P/L explicado por payout e ROE do setor). "
         "**Upside** = quanto o preço-alvo está acima do preço atual; positivo = candidata a estar barata "
         "(subavaliada). Use de preferência empresas do mesmo setor."
