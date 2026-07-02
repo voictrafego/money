@@ -853,6 +853,64 @@ if modo.startswith("Analisar"):
                     st.metric("Preço-Teto (Bazin)", "indisponível")
                     st.caption("Só vale para boas pagadoras de dividendos (DPA médio positivo).")
 
+            # RET-01 — "Quanto teria rendido" (Adj Close 5a: já embute dividendos reinvestidos).
+            # Read-only: só LÊ lentes.retorno_periodo sobre c.serie_precos_ajustada (Plano 02).
+            # Janela None (histórico insuficiente) é OCULTADA; ambas None → caption neutra.
+            _r1 = lentes.retorno_periodo(c.serie_precos_ajustada, anos=1)
+            _r5 = lentes.retorno_periodo(c.serie_precos_ajustada, anos=5)
+            if _r1 is not None or _r5 is not None:
+                st.markdown("**Quanto R\\$ 1.000 teriam rendido** (com dividendos reinvestidos)")
+                if _r1 is not None:
+                    st.markdown(f"- R\\$ 1.000 há **1 ano** valeriam **{esc_md(fmt_rs(_r1))}** hoje.")
+                if _r5 is not None:
+                    st.markdown(f"- R\\$ 1.000 há **5 anos** valeriam **{esc_md(fmt_rs(_r5))}** hoje.")
+                st.caption("Rentabilidade passada não garante retorno futuro.")
+            else:
+                st.caption("Histórico de preços insuficiente para o cálculo de rentabilidade.")
+
+            # PEER-01 — Comparador de pares (contexto). Reusa o padrão do Ranking: text_input
+            # editável + montar() por ticker (cache). PEER-01 é a única exceção à regra "zero
+            # rede nova" (buscar pares não-cacheados dispara fetch, igual à aba Ranking hoje).
+            # Só CONTEXTO: nunca ordena/recomenda; degrada em st.info neutro. Read-only.
+            with st.expander("Comparador de pares (contexto)", expanded=False):
+                st.caption(
+                    "Compara múltiplos com pares do setor — apenas contexto, sem ranking nem "
+                    "recomendação. Edite a lista (de preferência do mesmo setor)."
+                )
+                _pares_txt = st.text_input(
+                    "Comparáveis", value="TAEE11, EGIE3, CMIG4, ALUP11, CPFE3",
+                    key="pares_comparador",
+                )
+                _pares_tickers = [t.strip().upper() for t in _pares_txt.replace(",", " ").split() if t.strip()]
+                if ticker_ativo not in _pares_tickers:
+                    _pares_tickers.insert(0, ticker_ativo)
+                _companies_pares = []
+                for _t in _pares_tickers:
+                    _cp = montar(_t, ANO_BASE, N_ANOS)
+                    if _cp is not None and _cp.anos:
+                        _companies_pares.append(_cp)
+                _metricas_pares = [lentes.metricas_par(_cp) for _cp in _companies_pares]
+                _tabela_pares = lentes.tabela_pares(_metricas_pares, ticker_ativo)
+                if lentes.pares_suficientes(_tabela_pares):
+                    _rows_pares = []
+                    for p in _tabela_pares:
+                        _vm = (
+                            fmt_rs(p.valor_mercado / 1e9, casas=1) + " B"
+                            if p.valor_mercado is not None else "—"
+                        )
+                        _rows_pares.append({
+                            "Ticker": esc_md(("➤ " if p.alvo else "") + p.ticker),
+                            "P/L": fmt_num(p.pl),
+                            "P/VP": fmt_num(p.pvp),
+                            "ROE": fmt_pct(p.roe),
+                            "DY": fmt_pct(p.dy),
+                            "Valor de Mercado": _vm,
+                        })
+                    st.dataframe(pd.DataFrame(_rows_pares), hide_index=True, use_container_width=True)
+                    st.caption("➤ marca o ticker analisado. Contexto de comparação — não é ranking nem recomendação.")
+                else:
+                    st.info("Pares insuficientes do mesmo setor para comparar.")
+
             # Gráfico de preço 5a + banda do valor intrínseco (DDM) — topo da aba, antes dos sub-tabs (D-03).
             # Reservamos o slot do gráfico AQUI (topo) com st.container() e só o PREENCHEMOS depois que os
             # controles abaixo rodarem: assim o render lê o st.session_state["tec_estado"] já atualizado pelos
