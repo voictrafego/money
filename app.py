@@ -1180,8 +1180,8 @@ elif modo.startswith("Garimpar"):
                     "_passou": bool(rc.passou),
                     "Ano-base": c.ultimo_ano(),
                     "BSD": round(b.get("bsd") or 0, 1),
-                    "BSD > 80": "Sim" if b.get("acima_de_80") else "",
-                    "Passa filtros": "Sim" if rc.passou else "",
+                    "BSD > 80": "Sim" if b.get("acima_de_80") else "Não",
+                    "Passa filtros": "Sim" if rc.passou else "Não",
                     "Fatores faltando": b.get("n_fatores_faltantes") or 0,
                     "Setor": c.setor,
                 })
@@ -1194,7 +1194,16 @@ elif modo.startswith("Garimpar"):
             st.warning("**BSD > 80 sem 'Passa filtros' NÃO é recomendação.** O BSD é uma nota "
                        "de estabilidade do dividendo; o corte por Selic (DY > Selic) e os demais "
                        "filtros vivem na coluna 'Passa filtros'. Comece pelas que passam nos filtros.")
-            st.bar_chart(df.set_index("Ticker")["BSD"])
+            bsd_fig = go.Figure(go.Bar(
+                x=df["Ticker"], y=df["BSD"], marker_color="#7fb3ff",
+                hovertemplate="%{x}<br>BSD %{y:.1f}<extra></extra>",
+            ))
+            bsd_fig.add_hline(y=80, line_width=1, line_dash="dash", line_color="#2ca02c",
+                              annotation_text="Corte 80 (Carlson)", annotation_position="top left")
+            bsd_fig.update_xaxes(categoryorder="array", categoryarray=list(df["Ticker"]), title_text=None)
+            bsd_fig.update_yaxes(range=[0, 100], title_text="BSD")
+            bsd_fig.update_layout(height=360, margin=dict(l=10, r=10, t=20, b=10), showlegend=False)
+            st.plotly_chart(bsd_fig, width="stretch")
             st.caption("Próximo passo: rode o Ranking nas melhores e depois analise as finalistas a fundo.")
 
 
