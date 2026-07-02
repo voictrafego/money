@@ -194,7 +194,7 @@ no PRO e que nós já temos os dados para entregar de graça).
 Preço-Teto de Bazin [DPA médio 5a ÷ DY-mínimo 6%] como cards ao lado do DDM; (2) "Quanto teria rendido"
 R$ 1.000 com reinvestimento de dividendos (Adj Close 5a já coletado); (3) Comparador de pares do setor
 (tabela P/L, P/VP, ROE, DY, Valor de Mercado) reusando comparables.py/multiples.py.
-**Requirements**: TBD (definir no plan)
+**Requirements**: VAL-01, VAL-02, RET-01, PEER-01
 **Depends on:** Phase 18
 **Plans:** 0 plans (rodar /gsd-plan-phase 19)
 

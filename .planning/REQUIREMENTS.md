@@ -101,6 +101,10 @@
 | WATCH-02 | Phase 18 | Complete |
 | NEWS-01 | Phase 18 | Complete |
 | NEWS-02 | Phase 18 | Complete |
+| VAL-01 | Phase 19 | Planned |
+| VAL-02 | Phase 19 | Planned |
+| RET-01 | Phase 19 | Planned |
+| PEER-01 | Phase 19 | Planned |
 
 ## v1.5 Requirements — Modo Trading (UX de gráfico estilo TradingView)
 
@@ -131,3 +135,16 @@
 
 - [x] **NEWS-01**: A Home exibe um **feed de notícias do mercado financeiro** com **manchete + submanchete + fonte + horário**; clicar abre o **site original da fonte em nova aba** (nunca reproduz o texto completo). Fontes com **RSS aberto** (InfoMoney + Google News RSS de mercado BR + outras validadas feed a feed).
 - [x] **NEWS-02**: O feed **auto-atualiza (~5–15min)** com **cache compartilhado no servidor**, **degrada sem quebrar** se uma fonte cair, e mantém **custo-zero** (sem API paga).
+
+## v1.7 Requirements — Lentes de valuation e contexto na aba Analisar
+
+**Defined:** 2026-07-02
+**Core Value:** Enriquecer a aba **Analisar** com lentes de valuation clássicas e contexto de mercado que o investidor de dividendos espera — **sem tocar na engine do método** (v1.0–v1.3), **sem recalcular** o veredito, mantendo **custo-zero** (CVM + Yahoo + BCB) e os **296 goldens** verdes. Motivado pelo estudo do concorrente Investidor10 (features de alto apelo que eles bloqueiam no PRO e que nós já temos os dados para entregar de graça). Fronteira educacional preservada: **exibe, nunca recomenda**.
+**Arquitetura (decidida com o usuário):** tudo **read-only** sobre dados que `montar_empresa()`/engine já produzem (LPA, VPA, DPA, dividendos por ano, preço 5a Adj Close) e módulos existentes (`comparables.py`, `multiples.py`). As fórmulas de referência (Graham/Bazin) ficam na engine (`core/`, testáveis por golden), a UI só lê. `app.py` permanece thin renderer.
+
+### Lentes de valuation e contexto (VAL / RET / PEER)
+
+- [ ] **VAL-01**: A aba Analisar exibe o **Preço-Justo de Graham** [√(22,5 × LPA × VPA)] como card ao lado do DDM, com upside vs. preço atual; degrada sem quebrar quando LPA/VPA ausentes ou negativos (não aplica a valor patrimonial negativo) e traz disclaimer de limitação (não serve p/ empresas sem lucro/PL positivo).
+- [ ] **VAL-02**: A aba Analisar exibe o **Preço-Teto de Bazin** [DPA médio dos últimos 5 anos ÷ DY-mínimo de 6%] como card, com upside vs. preço atual; degrada sem quebrar quando não há histórico de dividendos e avisa que a fórmula só vale para boas pagadoras.
+- [ ] **RET-01**: A aba Analisar mostra **"quanto teria rendido"** R$ 1.000 investidos há N anos (com reinvestimento de dividendos, via Adj Close 5a já coletado), em ~1–3 janelas (ex.: 1a/5a), sem nova chamada de rede; degrada sem quebrar quando o histórico é insuficiente.
+- [ ] **PEER-01**: A aba Analisar mostra um **comparador de pares do setor** (tabela com P/L, P/VP, ROE, DY e Valor de Mercado) reusando `comparables.py`/`multiples.py`, destacando a ação analisada; degrada sem quebrar quando não há pares suficientes. Não emite recomendação.
