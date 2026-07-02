@@ -4,7 +4,7 @@ milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
 status: executing
 stopped_at: Completed 18-02-PLAN.md
-last_updated: "2026-07-02T13:08:49.996Z"
+last_updated: "2026-07-02T13:15:47.734Z"
 last_activity: 2026-07-02
 progress:
   total_phases: 7
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 ## Current Position
 
 Phase: 19 (lentes-de-valuation-e-contexto-na-aba-analisar-graham-bazin-) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-07-02
 
@@ -83,6 +83,7 @@ Last activity: 2026-07-02
 | Phase 18 P03 | 15min | 2 tasks | 3 files |
 | Phase 19 P01 | 10min | 3 tasks | 2 files |
 | Phase 19 P02 | ~2min | 3 tasks | 3 files |
+| Phase 19 P03 | ~8min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - [Phase ?]: 18-03 A3: noticias multi-feed degrada graciosamente — InfoMoney vazio (throttle) => Home 100% Google News; eco de submanchete suprimido; render seguro (texto + link_button https)
 - [Phase 19]: 4 lentes puras em core/lentes.py (Graham, Bazin, retorno Adj Close, comparador de pares) never-raise; P/L do comparador usa lpa_valuation canonico p/ consistencia entre menus; app.py e modulos de metodo intocados (307 verdes)
 - [Phase 19]: serie_precos_ajustada (Adj Close 5a) exposto em DadosMercado->CompanyData reaproveitando o ajustado ja baixado no tk.history do beta (zero rede nova); fonte separada da serie_precos nominal (grafico/DDM), so p/ RET-01; never-raise default None (307 verdes)
+- [Phase ?]: [Phase 19]: 4 lentes renderizadas read-only na aba Analisar (cards Graham+Bazin ao lado do DDM, retorno 1a/5a via Adj Close, comparador de pares em expander com alvo destacado); app.py so LE lentes.*, zero formula na view; degradacao por lente e copy exibe-nunca-recomenda; 307 verdes
 
 ### Pending Todos
 
@@ -166,7 +168,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-02T13:07:41.947Z
+Last session: 2026-07-02T13:15:32.480Z
 Stopped at: Completed 18-02-PLAN.md
 Resume file: None
 
