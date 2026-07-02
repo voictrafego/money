@@ -16,9 +16,12 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import List, Optional, Sequence
+from typing import TYPE_CHECKING, List, Optional, Sequence
 
 from . import multiples as mult
+
+if TYPE_CHECKING:
+    from .fundamentals import CompanyData
 
 Number = Optional[float]
 
@@ -126,3 +129,78 @@ def retorno_periodo(
         return valor_inicial * ultimo / primeiro
     except Exception:
         return None
+
+
+# --------------------------------------------------------------------------- #
+# PEER-01 — Comparador de pares do setor
+# --------------------------------------------------------------------------- #
+@dataclass
+class ParComparavel:
+    ticker: str
+    pl: Number = None
+    pvp: Number = None
+    roe: Number = None
+    dy: Number = None
+    valor_mercado: Number = None
+    alvo: bool = False
+
+
+def metricas_par(c: "CompanyData") -> ParComparavel:
+    """Extrai as 5 métricas de contexto de um par (never-raise).
+
+    P/L usa o MESMO LPA canônico do Analisar (`lpa_valuation`) para consistência entre
+    menus (Core Value). P/VP usa o VPA do ano-base. Campos None quando o insumo falta.
+    """
+    ult = c.ultimo_ano()
+    pl = mult.preco_lucro(c.preco_atual, c.lpa_valuation())
+    pvp = mult._safe_div(
+        c.preco_atual,
+        vpa(c.patrimonio_liquido.get(ult), c.num_acoes.get(ult)),
+    )
+    roe = c.roe_valuation()
+    dy = c.dy_atual()
+    n_acoes = c.num_acoes.get(ult)
+    valor_mercado = (
+        c.preco_atual * n_acoes
+        if c.preco_atual is not None and n_acoes is not None
+        else None
+    )
+    return ParComparavel(
+        ticker=c.ticker,
+        pl=pl,
+        pvp=pvp,
+        roe=roe,
+        dy=dy,
+        valor_mercado=valor_mercado,
+    )
+
+
+def tabela_pares(
+    metricas: Sequence, ticker_alvo: str
+) -> List[ParComparavel]:
+    """Monta a tabela de pares marcando a linha do ticker analisado.
+
+    Aceita uma lista de `ParComparavel` ou de `CompanyData` (chama `metricas_par`
+    internamente). Preserva a ordem de entrada e NÃO ordena nem recomenda (PEER-01: só
+    contexto). Marca `alvo=True` na linha cujo ticker == `ticker_alvo` (case-insensitive).
+    """
+    alvo_norm = (ticker_alvo or "").upper()
+    linhas: List[ParComparavel] = []
+    for m in metricas:
+        par = m if isinstance(m, ParComparavel) else metricas_par(m)
+        par.alvo = par.ticker.upper() == alvo_norm
+        linhas.append(par)
+    return linhas
+
+
+def pares_suficientes(pares: Sequence[ParComparavel]) -> bool:
+    """True se houver ≥ 2 linhas NÃO-alvo com P/L OU DY não-None.
+
+    Recebe a lista JÁ MARCADA por `tabela_pares`. Conta pelo flag `.alvo` (não por string)
+    para remover ambiguidade. Usado pela UI p/ decidir entre tabela e mensagem neutra.
+    """
+    validos = [
+        p for p in pares
+        if not p.alvo and (p.pl is not None or p.dy is not None)
+    ]
+    return len(validos) >= 2
