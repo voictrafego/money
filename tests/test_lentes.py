@@ -163,3 +163,36 @@ def test_pares_insuficientes():
     empresas = [_empresa("ALVO3", 20.0, 200.0, 1000.0, 100.0, 120.0)]
     tabela = lentes.tabela_pares(empresas, "ALVO3")
     assert lentes.pares_suficientes(tabela) is False
+
+
+# --------------------------------------------------------------------------- #
+# COMP-01 — normalizar_tickers (borda de input do comparador; never-raise)
+# --------------------------------------------------------------------------- #
+def test_normalizar_tickers_virgula_e_espaco_separam():
+    # vírgula E espaço separam
+    assert lentes.normalizar_tickers("TAEE11, EGIE3 CMIG4", 6) == ["TAEE11", "EGIE3", "CMIG4"]
+
+
+def test_normalizar_tickers_upper():
+    assert lentes.normalizar_tickers("taee11,egie3", 6) == ["TAEE11", "EGIE3"]
+
+
+def test_normalizar_tickers_dedup_preserva_ordem():
+    # primeira ocorrência vence; ordem preservada
+    assert lentes.normalizar_tickers("TAEE11, taee11, EGIE3", 6) == ["TAEE11", "EGIE3"]
+
+
+def test_normalizar_tickers_cap():
+    txt = "AAAA3, BBBB3, CCCC3, DDDD3, EEEE3, FFFF3, GGGG3, HHHH3"
+    # 8 distintos com cap=6 → só os 6 primeiros (fatiamento após dedup)
+    assert lentes.normalizar_tickers(txt, 6) == [
+        "AAAA3", "BBBB3", "CCCC3", "DDDD3", "EEEE3", "FFFF3",
+    ]
+
+
+def test_normalizar_tickers_degenerado_never_raise():
+    # separadores da casa = vírgula e espaço; só eles → nada resta (never-raise)
+    assert lentes.normalizar_tickers("", 6) == []
+    assert lentes.normalizar_tickers("  ", 6) == []
+    assert lentes.normalizar_tickers(",,  ,", 6) == []
+    assert lentes.normalizar_tickers(None, 6) == []
