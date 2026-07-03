@@ -132,5 +132,10 @@ def test_degradacao_veredito_vazio():
 # Firewall: selo.py não importa report.py
 # --------------------------------------------------------------------------- #
 def test_firewall_selo_nao_importa_report():
+    # Inspeciona só as LINHAS DE IMPORT do módulo (docstring/comentários podem citar "report").
     src = Path(selo.__file__).read_text(encoding="utf-8")
-    assert "report" not in src.replace("report/selo", "")  # nenhum import de report
+    linhas_import = [
+        ln.strip() for ln in src.splitlines()
+        if ln.lstrip().startswith(("import ", "from "))
+    ]
+    assert not any("report" in ln for ln in linhas_import), linhas_import

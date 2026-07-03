@@ -13,9 +13,10 @@ from typing import Dict, List, Optional
 import pandas as pd
 from tabulate import tabulate
 
-from ..core import capm, ddm, growth, indicators, lifecycle
+from ..core import capm, ddm, growth, indicators, lifecycle, screening
 from ..core import multiples as mult
 from ..core.fundamentals import CompanyData
+from . import selo as selo_mod
 
 
 @dataclass
@@ -45,6 +46,8 @@ class AnaliseAcao:
     timing_resumo: str = ""                                # frase PT consultiva (TIMING-01)
     matriz_leitura: str = ""                               # frase curada fundamento×técnico (Plan 02)
     alerta_reverificacao: Optional[str] = None             # None se nada rompeu (Plan 02)
+    # --- Fase 20: Selo de Sustentabilidade × veredito de preço (aditivo, read-only) ---
+    selo: Optional["selo_mod.Selo"] = None                 # cor do BSD × faixa do DDM → quadrante
 
 
 def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
@@ -296,6 +299,16 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     if not a.timing_resumo:
         a.matriz_leitura = ""
     a.alerta_reverificacao = _alerta_reverificacao(a.sinais)
+
+    # --- Selo de Sustentabilidade × veredito de preço (Fase 20, SELO-01/02) ---
+    # Derivação read-only: cruza o BSD desta empresa (bsd_empresa, puro sobre o CompanyData
+    # já carregado — NÃO toca a rede) com o veredito de preço JÁ montado. Never-raise: se
+    # qualquer parte falhar, a.selo fica None e o veredito fundamentalista segue intacto (T-20-02).
+    try:
+        bsd = screening.bsd_empresa(c, cfg)
+        a.selo = selo_mod.montar_selo(bsd, a.veredito, cfg)
+    except Exception:
+        a.selo = None
 
     return a
 
