@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
 status: completed
-stopped_at: Completed 20-02-PLAN.md (Selo UI read-only)
-last_updated: "2026-07-03T01:03:03.814Z"
+stopped_at: Phase 21 context gathered
+last_updated: "2026-07-03T10:18:07.924Z"
 last_activity: 2026-07-03 -- Phase 20 marked complete
 progress:
   total_phases: 7
@@ -177,9 +177,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-03T00:57:14.423Z
-Stopped at: Completed 20-02-PLAN.md (Selo UI read-only)
-Resume file: None
+Last session: 2026-07-03T10:18:07.914Z
+Stopped at: Phase 21 context gathered
+Resume file: .planning/phases/21-comparador-multi-ativo-lado-a-lado-m-ltiplos-selo-por-coluna/21-CONTEXT.md
 
 ## Operator Next Steps
 
