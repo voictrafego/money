@@ -163,3 +163,52 @@ def test_fallback_sem_lucro_header_cai_para_trailing():
     assert h["value"] == presentation.fmt_pct(dy_trailing)
     assert h["delta"] is None
     assert h["delta_color"] == "off"
+
+
+# --------------------------------------------------------------------------- #
+# SELO (Fase 20 / SELO-03) — formatação PURA do selo, render único p/ os 3 sítios
+# (Analisar + Garimpo + Ranking). Trava a copy descritiva (gate "exibe, nunca
+# recomenda") e a convenção do em-dash "—" (GRAF-03) para ausências.
+# --------------------------------------------------------------------------- #
+def test_selo_emoji_mapa_fixo_das_quatro_cores_e_ausencia():
+    # pelo contrato (SELO-03): mapa fixo cor→emoji, idêntico nos três sítios da UI.
+    assert presentation.selo_emoji("verde") == "🟢"
+    assert presentation.selo_emoji("azul") == "🔵"
+    assert presentation.selo_emoji("amarelo") == "🟡"
+    assert presentation.selo_emoji("vermelho") == "🔴"
+    # ausência / cor desconhecida degrada para o sentinela em-dash (GRAF-03).
+    assert presentation.selo_emoji(None) == "—"
+    assert presentation.selo_emoji("roxo") == "—"
+
+
+def test_selo_badge_verde_joia_traz_emoji_e_rotulo():
+    b = presentation.selo_badge("verde", "JOIA", "Alta", False)
+    # começa com o emoji da cor e exibe o rótulo do quadrante (qualidade×preço).
+    assert b.startswith("🟢")
+    assert "JOIA" in b
+
+
+def test_selo_badge_verificar_alerta_e_sem_rotulo_de_preco():
+    v = presentation.selo_badge("verde", None, "Alta", True)
+    # VERIFICAR é overlay (D2): mostra "Verificar dados", nunca um rótulo de preço.
+    assert "Verificar" in v
+    assert "Barato" not in v and "Justo" not in v and "Caro" not in v
+
+
+def test_selo_badge_cor_none_degrada_para_em_dash():
+    assert presentation.selo_badge(None, None, None, False) == "—"
+
+
+def test_selo_badge_nunca_e_imperativo():
+    # gate regulatório: o selo EXIBE, nunca ordena. Nenhuma saída contém verbo de ordem.
+    import re
+    saidas = [
+        presentation.selo_badge("verde", "JOIA", "Alta", False),
+        presentation.selo_badge("azul", "Boa, no preço", "Alta", False),
+        presentation.selo_badge("amarelo", "VALUE TRAP", "Baixa", False),
+        presentation.selo_badge("vermelho", "Evitar", "Baixa", False),
+        presentation.selo_badge("verde", None, "Alta", True),
+        presentation.selo_badge(None, None, None, False),
+    ]
+    for s in saidas:
+        assert not re.search(r"compr[ae]|vend[ae]|recomend", s, re.IGNORECASE)
