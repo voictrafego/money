@@ -25,7 +25,7 @@ from analista.core import multiples as mult
 from analista.core import screening as sc
 from analista.glossario import h
 from analista.ingest import build, macro
-from analista.report import presentation, report, selo, setup
+from analista.report import comparador, presentation, report, selo, setup
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 import yaml
@@ -588,7 +588,7 @@ modo = st.sidebar.radio(
     "O que você quer fazer?",
     ["Início",  # 1º item → vira o default (radio stateless, sem key=/index=)
      "Analisar uma ação", "Garimpar carteira (BSD)", "Ranking por múltiplos",
-     "Swing trade (análise técnica)"],
+     "Comparar ações", "Swing trade (análise técnica)"],
     help=h("menu"),
 )
 st.sidebar.markdown("---")
@@ -1384,6 +1384,37 @@ elif modo.startswith("Ranking"):
                 )
             else:
                 st.info("Poucas empresas para a regressão (precisa de ≥4). Os preços-alvo ficam indisponíveis.")
+
+
+# =========================================================================== #
+# 3b) COMPARAR AÇÕES — comparador lado a lado (COMP-01/02/03). Read-only: só
+#     normaliza a entrada, faz fetch cacheado (montar) e renderiza a tabela
+#     transposta que a engine (comparador.montar_comparativo) monta. Sem sort,
+#     sem ticker-alvo, sem destaque — só triagem lado a lado (D2/D4).
+# =========================================================================== #
+elif modo.startswith("Comparar"):
+    st.subheader("Comparar ações — múltiplos e selo lado a lado")
+    st.caption(
+        "Compare múltiplos e o selo de vários tickers lado a lado — apenas triagem, "
+        "não é ranking nem recomendação. De preferência do mesmo setor."
+    )
+    _cmp_txt = st.text_input("Tickers", value="TAEE11, EGIE3, CMIG4")
+    _cmp_tickers = lentes.normalizar_tickers(_cmp_txt, 6)
+    _cmp_contextos = []
+    if _cmp_tickers:
+        _cmp_prog = st.progress(0.0, text="Coletando dados...")
+        for i, t in enumerate(_cmp_tickers):
+            c = montar(t, ANO_BASE, N_ANOS)
+            if c is not None and c.anos:
+                _cmp_contextos.append(c)
+            _cmp_prog.progress((i + 1) / len(_cmp_tickers), text=f"Coletando {t}...")
+        _cmp_prog.empty()
+    _cmp_tabela = comparador.montar_comparativo(_cmp_contextos, CFG)
+    if _cmp_tabela.suficiente:
+        st.dataframe(_cmp_tabela.df, use_container_width=True)
+        st.caption("Não é ranking nem recomendação — apenas contexto lado a lado.")
+    else:
+        st.info("Informe ao menos 2 tickers com dados para comparar.")
 
 
 # =========================================================================== #
