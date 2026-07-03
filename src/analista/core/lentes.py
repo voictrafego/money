@@ -196,6 +196,18 @@ def tabela_pares(
     return linhas
 
 
+def normalizar_tickers(texto: str, cap: int) -> List[str]:
+    """Normaliza a entrada livre de tickers do comparador (COMP-01) — borda de input.
+
+    Três passos, never-raise: (1) parse idêntico ao idioma da casa (app.py §951) —
+    `t.strip().upper()` sobre `texto.replace(",", " ").split()`, descartando vazios (vírgula
+    E espaço separam); (2) dedup preservando ordem via `dict.fromkeys` (1ª ocorrência vence);
+    (3) fatiar `[:cap]`. NÃO ordena nem recomenda — só normaliza. Entrada None/vazia → [].
+    """
+    brutos = [t.strip().upper() for t in (texto or "").replace(",", " ").split() if t.strip()]
+    return list(dict.fromkeys(brutos))[:cap]
+
+
 def pares_suficientes(pares: Sequence[ParComparavel]) -> bool:
     """True se houver ≥ 2 linhas NÃO-alvo com P/L OU DY não-None.
 
