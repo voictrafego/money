@@ -97,3 +97,42 @@ def linhas_multiplos(
         else:
             linhas.append((k, fmt_num(val)))
     return linhas
+
+
+# --------------------------------------------------------------------------- #
+# Selo de Sustentabilidade (Fase 20 / SELO-03) — render ÚNICO do selo, comum aos
+# três sítios da UI (Analisar em destaque, coluna em Garimpo e em Ranking). Só
+# FORMATA campos que a engine (report/selo.py) já derivou: cor, rótulo do quadrante,
+# qualidade e o overlay VERIFICAR. Zero fórmula/recálculo aqui — a lógica vive na
+# engine (D1/D2). Copy 100% DESCRITIVA (gate "exibe, nunca recomenda").
+# --------------------------------------------------------------------------- #
+_SELO_EMOJI = {"verde": "🟢", "azul": "🔵", "amarelo": "🟡", "vermelho": "🔴"}
+
+
+def selo_emoji(cor: Optional[str]) -> str:
+    """Emoji fixo da cor do selo (idêntico nos três sítios). Ausência/desconhecido → "—"."""
+    return _SELO_EMOJI.get(cor or "", "—")
+
+
+def selo_badge(
+    cor: Optional[str],
+    rotulo: Optional[str],
+    qualidade: Optional[str],
+    verificar: bool,
+) -> str:
+    """Monta a string curta de exibição do selo (emoji + qualidade + rótulo do quadrante).
+
+    - `verificar=True` (overlay D2): sufixa "· Verificar dados" e NÃO exibe rótulo de preço.
+    - cor None: degrada para o sentinela em-dash "—" (GRAF-03).
+    Copy descritiva; jamais imperativa ("compre/venda").
+    """
+    if cor is None:
+        return "—"
+    partes = [selo_emoji(cor)]
+    if qualidade:
+        partes.append(f"Qualidade {qualidade}")
+    if verificar:
+        partes.append("· Verificar dados")
+    elif rotulo:
+        partes.append(f"· {rotulo}")
+    return " ".join(partes)
