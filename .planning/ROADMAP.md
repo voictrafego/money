@@ -240,7 +240,7 @@ Plans:
 **Requirements**: COMP-01 (entrada de N tickers), COMP-02 (tabela comparativa de múltiplos), COMP-03 (selo por coluna)
 **Depends on:** Phase 20 (usa o selo).
 **Constraints (gates do projeto):** `app.py` read-only (lógica na engine); os testes golden seguem verdes; **zero novas dependências de runtime**; custo-zero; fronteira **"EXIBE, NUNCA recomenda"**.
-**Plans:** 0 plans
+**Plans:** 1 plan
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 21 to break down)
+- [ ] 21-01-PLAN.md — Comparador multi-ativo: normalizar_tickers + comparador.montar_comparativo (transposto, selo por coluna) na engine + 5º menu read-only em app.py (COMP-01/02/03)
