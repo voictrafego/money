@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: milestone_complete
-stopped_at: Completed 18-02-PLAN.md
-last_updated: "2026-07-02T13:24:48.100Z"
+status: completed
+stopped_at: Phase 20 context gathered
+last_updated: "2026-07-03T00:18:43.754Z"
 last_activity: 2026-07-02
 progress:
   total_phases: 7
-  completed_phases: 8
+  completed_phases: 7
   total_plans: 22
   completed_plans: 22
-  percent: 114
+  percent: 100
 ---
 
 # Project State
@@ -92,6 +92,8 @@ Last activity: 2026-07-02
 ### Roadmap Evolution
 
 - Phase 19 added (v1.7): Lentes de valuation e contexto na aba Analisar — Graham, Bazin, "quanto teria rendido", comparador de pares. Motivada pelo estudo do concorrente Investidor10.
+- Phase 20 added: Selo de Sustentabilidade do Dividendo cruzado com veredito de preço (DDM). Onda 1 do roadmap de diferenciação (estudo de mercado — inspiração AUVP "Selo de Viabilidade", mas cruzando com preço, o que a AUVP não faz). Reusa engine (BSD + veredito DDM); independente da Phase 19.
+- Phase 21 added: Comparador multi-ativo lado a lado (múltiplos + selo por coluna). Onda 1 de diferenciação (inspiração AUVP/TC). Depende da Phase 20.
 
 ### Decisions
 
@@ -171,9 +173,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-02T13:23:22.487Z
-Stopped at: Completed 18-02-PLAN.md
-Resume file: None
+Last session: 2026-07-03T00:18:43.749Z
+Stopped at: Phase 20 context gathered
+Resume file: .planning/phases/20-selo-de-sustentabilidade-do-dividendo-cruzado-com-veredito-d/20-CONTEXT.md
 
 ## Operator Next Steps
 

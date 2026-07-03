@@ -221,3 +221,25 @@ auth/billing/front no stack React+Vite+n8n+Asaas).
 - Trendlines automáticas (Dow) sobre pivôs; OBV / volume relativo avançado
 - Calibração fina de `prominence`/`distance` por timeframe (ATR-scaling) e params curtos de indicadores por TF intraday
 - Payout-alvo por setor configurável; sinalização de "ano extraordinário" na tabela de Fundamentos por ano; DDM-DOC-01 (docstring/teste de `t` em `ddm.py`)
+
+### Phase 20: Selo de Sustentabilidade do Dividendo cruzado com veredito de preço (DDM)
+
+**Goal:** A aba Analisar (e, onde couber, Garimpar/Ranking) exibe um **Selo de Sustentabilidade do Dividendo** em 4 cores, derivado de fatores que a engine JÁ calcula (score BSD em `core/screening.py` — payout peso 30% + `cobertura_juros` + `crescimento_lucro_lp` + bandas `REFERENCIA_BSD`; payout sustentável/mediana; CDC; endividamento), **cruzado com o veredito de preço do DDM** (`report/report.py`: SUBAVALIADA/NO INTERVALO/SOBREAVALIADA/VERIFICAR) num quadrante: bom+barato=joia · bom+caro=espere · ruim+barato=value trap · ruim+caro=evitar. Diferencial vs AUVP (mostra só a cor de fundamento e ignora preço).
+**Requirements**: SELO-01 (cálculo do selo na engine), SELO-02 (cruzamento selo×veredito), SELO-03 (exibição na UI)
+**Depends on:** Nenhuma — reusa a engine existente (BSD + veredito DDM); independente da Phase 19.
+**Constraints (gates do projeto):** `app.py` read-only (lógica na engine); os testes golden seguem verdes; **zero novas dependências de runtime**; custo-zero; fronteira **"EXIBE, NUNCA recomenda"**.
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 20 to break down)
+
+### Phase 21: Comparador multi-ativo lado a lado (múltiplos + selo por coluna)
+
+**Goal:** Promover o embrião "Comparador de pares" (`core/lentes.py`: `metricas_par`/`tabela_pares` — P/L, P/VP, ROE, DY, Valor de Mercado) a um **comparador lado a lado de N tickers escolhidos pelo usuário**, exibindo os múltiplos e o **Selo da Phase 20 por coluna** para triagem rápida.
+**Requirements**: COMP-01 (entrada de N tickers), COMP-02 (tabela comparativa de múltiplos), COMP-03 (selo por coluna)
+**Depends on:** Phase 20 (usa o selo).
+**Constraints (gates do projeto):** `app.py` read-only (lógica na engine); os testes golden seguem verdes; **zero novas dependências de runtime**; custo-zero; fronteira **"EXIBE, NUNCA recomenda"**.
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 21 to break down)
