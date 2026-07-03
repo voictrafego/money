@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: verifying
-stopped_at: Phase 21 context gathered
+status: verified
+stopped_at: Phase 21 executed and verified (7/7 must-haves; smoke visual pendente)
 last_updated: "2026-07-03T11:20:54.603Z"
-last_activity: 2026-07-03
+last_activity: 2026-07-03 -- Phase 21 executada e verificada
 progress:
   total_phases: 7
   completed_phases: 7
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-29)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação. No v1.4, a página de swing **EXIBE** sinais técnicos fiéis a Murphy e **NUNCA recomenda**.
-**Current focus:** Phase 20 — selo-de-sustentabilidade-do-dividendo-cruzado-com-veredito-d
+**Current focus:** Phase 21 — comparador-multi-ativo-lado-a-lado-múltiplos-selo-por-coluna
 
 ## Current Position
 
-Phase: 20 — COMPLETE
-Plan: 2 of 2 (todos os planos concluídos)
-Status: Phase complete — ready for verification
+Phase: 21 — COMPLETE (verificada)
+Plan: 1 of 1 (21-01 concluído)
+Status: Verificada — 7/7 must-haves automatizados; falta apenas o smoke visual humano do 5º menu
 Last activity: 2026-07-03
 
 ## Performance Metrics
