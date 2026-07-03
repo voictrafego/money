@@ -25,7 +25,7 @@ from analista.core import multiples as mult
 from analista.core import screening as sc
 from analista.glossario import h
 from analista.ingest import build, macro
-from analista.report import presentation, report, setup
+from analista.report import presentation, report, selo, setup
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 import yaml
@@ -839,6 +839,25 @@ if modo.startswith("Analisar"):
             else:
                 st.warning(esc_md(v))
 
+            # ----------------------------------------------------------------- #
+            # Selo de Sustentabilidade (Fase 20 / SELO-03) — READ-ONLY: só LÊ os
+            # campos já derivados na engine (a.selo), zero fórmula/recálculo aqui.
+            # Destaque perto do veredito + rótulo do quadrante (qualidade × preço).
+            # ----------------------------------------------------------------- #
+            if a.selo is not None and a.selo.cor is not None:
+                badge = presentation.selo_badge(
+                    a.selo.cor, a.selo.rotulo, a.selo.qualidade, a.selo.verificar
+                )
+                st.markdown(f"### {esc_md(badge)}")
+                st.caption("Selo = qualidade do dividendo (BSD) × preço (DDM). "
+                           "Descreve a combinação, não é recomendação.")
+                if a.selo.verificar:
+                    st.warning(
+                        "**Verificar dados:** o veredito de preço saiu como VERIFICAR "
+                        "(payout ou DY fora do razoável). O selo mostra só a qualidade do "
+                        "dividendo — o cruzamento com preço fica suspenso até revisar os dados."
+                    )
+
             # Métricas principais — intervalo intrínseco vem do cálculo único do veredito (WR-07)
             intervalo = f"{fmt_rs(a.vmin)} – {fmt_rs(a.vmax)}" if a.vmin is not None and a.vmax is not None else "—"
             m1, m2, m3, m4, m5 = st.columns(5)
@@ -1228,6 +1247,9 @@ elif modo.startswith("Garimpar"):
                     "_passou": bool(rc.passou),
                     "Ano-base": c.ultimo_ano(),
                     "BSD": round(b.get("bsd") or 0, 1),
+                    # Selo READ-ONLY: cor sai da função pura da engine (selo.cor_do_bsd),
+                    # o emoji da presentation. Nenhum threshold de cor vive aqui.
+                    "Selo": presentation.selo_emoji(selo.cor_do_bsd(b.get("bsd"), CFG)),
                     "BSD > 80": "Sim" if b.get("acima_de_80") else "Não",
                     "Passa filtros": "Sim" if rc.passou else "Não",
                     "Fatores faltando": b.get("n_fatores_faltantes") or 0,
@@ -1312,9 +1334,13 @@ elif modo.startswith("Ranking"):
                     veredito = "Subavaliada" if pa.subavaliada else "Cara"
                     if pa.payout_fora_faixa:  # espelha o alerta ">100%" do Analisar
                         veredito += " (payout ajustado)"
+                _c_sel = next(c for c in empresas if c.ticker == r["empresa"])
                 rows.append({
                     "Ticker": r["empresa"],
                     "Nota (0–100)": round(r["nota"], 1) if r["nota"] is not None else None,
+                    # Selo READ-ONLY: BSD por empresa vem da engine (sc.bsd_empresa, sem rede —
+                    # dados já carregados), cor de selo.cor_do_bsd. Zero recálculo na view.
+                    "Selo": presentation.selo_emoji(selo.cor_do_bsd(sc.bsd_empresa(_c_sel, CFG), CFG)),
                     "Ano-base": next(c.ultimo_ano() for c in empresas if c.ticker == r["empresa"]),
                     "Preço atual": fmt_rs(next(c.preco_atual for c in empresas if c.ticker == r["empresa"])),
                     "Preço-alvo": preco_alvo_txt,
