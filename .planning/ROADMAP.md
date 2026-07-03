@@ -228,11 +228,11 @@ auth/billing/front no stack React+Vite+n8n+Asaas).
 **Requirements**: SELO-01 (cálculo do selo na engine), SELO-02 (cruzamento selo×veredito), SELO-03 (exibição na UI)
 **Depends on:** Nenhuma — reusa a engine existente (BSD + veredito DDM); independente da Phase 19.
 **Constraints (gates do projeto):** `app.py` read-only (lógica na engine); os testes golden seguem verdes; **zero novas dependências de runtime**; custo-zero; fronteira **"EXIBE, NUNCA recomenda"**.
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 20-01-PLAN.md — Selo na engine: cor do BSD + cruzamento com veredito (quadrante) + wiring em analisar_acao (SELO-01/02)
-- [ ] 20-02-PLAN.md — Exibição read-only: selo em destaque + quadrante na Analisar, coluna de selo em Garimpo e Ranking (SELO-03)
+- [x] 20-02-PLAN.md — Exibição read-only: selo em destaque + quadrante na Analisar, coluna de selo em Garimpo e Ranking (SELO-03)
 
 ### Phase 21: Comparador multi-ativo lado a lado (múltiplos + selo por coluna)
 

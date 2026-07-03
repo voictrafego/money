@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: executing
-stopped_at: Phase 20 context gathered
-last_updated: "2026-07-03T00:48:05.596Z"
+status: verifying
+stopped_at: Completed 20-02-PLAN.md (Selo UI read-only)
+last_updated: "2026-07-03T00:57:14.427Z"
 last_activity: 2026-07-03
 progress:
   total_phases: 7
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 
 ## Current Position
 
-Phase: 20 (selo-de-sustentabilidade-do-dividendo-cruzado-com-veredito-d) — EXECUTING
-Plan: 2 of 2
-Status: Ready to execute
+Phase: 20 (selo-de-sustentabilidade-do-dividendo-cruzado-com-veredito-d) — COMPLETE
+Plan: 2 of 2 (todos os planos concluídos)
+Status: Phase complete — 20-02 verificado e aprovado (checkpoint humano)
 Last activity: 2026-07-03
 
 ## Performance Metrics
@@ -87,6 +87,7 @@ Last activity: 2026-07-03
 | Phase 19 P03 | ~8min | 2 tasks | 1 files |
 | Phase 19 P04 | 5min | 2 tasks | 0 files |
 | Phase 20 P01 | 12 | 3 tasks | 5 files |
+| Phase 20 P02 | ~10min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -134,6 +135,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - [Phase ?]: [Phase 19]: 4 lentes renderizadas read-only na aba Analisar (cards Graham+Bazin ao lado do DDM, retorno 1a/5a via Adj Close, comparador de pares em expander com alvo destacado); app.py so LE lentes.*, zero formula na view; degradacao por lente e copy exibe-nunca-recomenda; 307 verdes
 - [Phase 19]: fase fechada por verificacao dupla — gate automatizado (307 verdes = 296 baseline + 11 de test_lentes.py, zero dep nova, metodo intocado, app.py read-only) + smoke humano das 4 lentes aprovado sem regressao
 - [Phase 20]: Selo derivado do BSD (cor config-driven verde70/azul55/amarelo40) cruzado com veredito DDM num quadrante (JOIA/VALUE TRAP/...); VERIFICAR e overlay separado; report/selo.py puro com firewall vs report.py; a.selo populado never-raise em analisar_acao; 320 verdes
+- [Phase 20]: selo renderizado read-only em Analisar (destaque+quadrante) e como coluna em Garimpo/Ranking via render único (presentation.selo_badge/selo_emoji); app.py só lê a.selo/cor_do_bsd/bsd_empresa, zero threshold hardcoded; 325 verdes
 
 ### Pending Todos
 
@@ -175,8 +177,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-03T00:48:05.592Z
-Stopped at: Phase 20 context gathered
+Last session: 2026-07-03T00:57:14.423Z
+Stopped at: Completed 20-02-PLAN.md (Selo UI read-only)
 Resume file: None
 
 ## Operator Next Steps
