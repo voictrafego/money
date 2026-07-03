@@ -379,3 +379,31 @@ def bsd_ranking(
         })
     resultado.sort(key=lambda r: r["bsd"] or 0, reverse=True)
     return resultado
+
+
+def bsd_empresa(c: CompanyData, cfg: Optional[dict] = None) -> Optional[float]:
+    """BSD (0-100) de UMA empresa, reusando `bsd_ranking` (Fase 20 / SELO-01).
+
+    Como a padronização do BSD é ABSOLUTA (clamp contra `REFERENCIA_BSD`, bandas fixas) e
+    NÃO min-max do lote, o BSD de uma empresa isolada é IDÊNTICO ao que ela teria dentro de
+    um lote maior — logo `bsd_ranking([c])[0]["bsd"]` é reproduzível e estável. Isso permite
+    computar o selo de 1 ticker na aba Analisar sem depender de um universo carregado.
+
+    Lê `pesos`/`anos_media`/`winsor` de `cfg["screening"]["bsd"]` quando `cfg` vier (os MESMOS
+    parâmetros que o Garimpo usa → consistência entre menus). Com `cfg=None`, usa os defaults
+    canônicos (`PESOS_BSD_PADRAO`/3/0.10). Never-raise para a UI: degrada para None quando a
+    lista sai vazia ou o BSD é None.
+    """
+    pesos = PESOS_BSD_PADRAO
+    anos_media = 3
+    winsor = 0.10
+    if cfg:
+        bsd_cfg = (cfg.get("screening") or {}).get("bsd") or {}
+        pesos = bsd_cfg.get("pesos") or pesos
+        anos_media = bsd_cfg.get("anos_media", anos_media)
+        winsor = bsd_cfg.get("winsor", winsor)
+
+    ranking = bsd_ranking([c], pesos=pesos, anos_media=anos_media, winsor=winsor)
+    if not ranking:
+        return None
+    return ranking[0].get("bsd")

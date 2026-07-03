@@ -156,3 +156,14 @@ score:
     forte: 70                     # score >= 70 → "Forte"
     moderado: 50                  # score >= 50 → "Moderado"
     fraco: 25                     # score >= 25 → "Fraco"; abaixo (com gate ok) → ainda "Sem setup" (floor, Open Q1)
+
+# --- Fase 20: Selo de Sustentabilidade do Dividendo (SELO-01) ---
+# Bloco NOVO, irmão de `screening:`/`score:`. A cor do selo é DERIVADA do score BSD (0-100)
+# que a engine já calcula (screening.bsd_ranking) — nenhum score novo. Estes são os cortes
+# de cor INICIAIS (D1) e o ÚNICO ponto de ajuste dos limiares (tunável sem deploy). A matriz
+# de rótulos do quadrante (JOIA/VALUE TRAP/...) fica no código (copy estável, NÃO tunável).
+selo:
+  cor:                            # cortes do BSD → cor. verde >= 70 · azul 55-70 · amarelo 40-55 · vermelho < 40
+    verde_min: 70                 # BSD >= 70 → verde (qualidade Alta)
+    azul_min: 55                  # 55 <= BSD < 70 → azul (qualidade Alta)
+    amarelo_min: 40               # 40 <= BSD < 55 → amarelo (qualidade Baixa); abaixo de 40 → vermelho
