@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: completed
+status: executing
 stopped_at: Phase 20 context gathered
-last_updated: "2026-07-03T00:18:43.754Z"
-last_activity: 2026-07-02
+last_updated: "2026-07-03T00:48:05.596Z"
+last_activity: 2026-07-03
 progress:
   total_phases: 7
   completed_phases: 7
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-29)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação. No v1.4, a página de swing **EXIBE** sinais técnicos fiéis a Murphy e **NUNCA recomenda**.
-**Current focus:** Phase 19 — lentes-de-valuation-e-contexto-na-aba-analisar-graham-bazin-
+**Current focus:** Phase 20 — selo-de-sustentabilidade-do-dividendo-cruzado-com-veredito-d
 
 ## Current Position
 
-Phase: 19
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-07-02
+Phase: 20 (selo-de-sustentabilidade-do-dividendo-cruzado-com-veredito-d) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-07-03
 
 ## Performance Metrics
 
@@ -86,6 +86,7 @@ Last activity: 2026-07-02
 | Phase 19 P02 | ~2min | 3 tasks | 3 files |
 | Phase 19 P03 | ~8min | 2 tasks | 1 files |
 | Phase 19 P04 | 5min | 2 tasks | 0 files |
+| Phase 20 P01 | 12 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -132,6 +133,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - [Phase 19]: serie_precos_ajustada (Adj Close 5a) exposto em DadosMercado->CompanyData reaproveitando o ajustado ja baixado no tk.history do beta (zero rede nova); fonte separada da serie_precos nominal (grafico/DDM), so p/ RET-01; never-raise default None (307 verdes)
 - [Phase ?]: [Phase 19]: 4 lentes renderizadas read-only na aba Analisar (cards Graham+Bazin ao lado do DDM, retorno 1a/5a via Adj Close, comparador de pares em expander com alvo destacado); app.py so LE lentes.*, zero formula na view; degradacao por lente e copy exibe-nunca-recomenda; 307 verdes
 - [Phase 19]: fase fechada por verificacao dupla — gate automatizado (307 verdes = 296 baseline + 11 de test_lentes.py, zero dep nova, metodo intocado, app.py read-only) + smoke humano das 4 lentes aprovado sem regressao
+- [Phase 20]: Selo derivado do BSD (cor config-driven verde70/azul55/amarelo40) cruzado com veredito DDM num quadrante (JOIA/VALUE TRAP/...); VERIFICAR e overlay separado; report/selo.py puro com firewall vs report.py; a.selo populado never-raise em analisar_acao; 320 verdes
 
 ### Pending Todos
 
@@ -173,9 +175,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-03T00:18:43.749Z
+Last session: 2026-07-03T00:48:05.592Z
 Stopped at: Phase 20 context gathered
-Resume file: .planning/phases/20-selo-de-sustentabilidade-do-dividendo-cruzado-com-veredito-d/20-CONTEXT.md
+Resume file: None
 
 ## Operator Next Steps
 
