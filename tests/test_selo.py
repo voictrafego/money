@@ -17,7 +17,9 @@ from pathlib import Path
 
 import yaml
 
-from analista.report import selo
+from analista.core import screening
+from analista.core.fundamentals import CompanyData
+from analista.report import report, selo
 
 
 def _cfg() -> dict:
@@ -139,3 +141,54 @@ def test_firewall_selo_nao_importa_report():
         if ln.lstrip().startswith(("import ", "from "))
     ]
     assert not any("report" in ln for ln in linhas_import), linhas_import
+
+
+# --------------------------------------------------------------------------- #
+# Integração barata: analisar_acao popula a.selo coerente com o BSD e o veredito
+# --------------------------------------------------------------------------- #
+def _empresa_solida() -> CompanyData:
+    """Fixture determinística de empresa sólida (espelha tests/test_screening.py)."""
+    anos = list(range(2015, 2025))
+    c = CompanyData(ticker="TAEE11", nome="Empresa Sólida", setor="Energia Elétrica", anos=anos)
+    for a in anos:
+        c.lucro_liquido[a] = 1000 + (a - 2015) * 50
+        c.patrimonio_liquido[a] = 4000 + (a - 2015) * 100
+        c.dividendos[a] = 600 + (a - 2015) * 30
+        c.num_acoes[a] = 1000
+        c.vendas_liquidas[a] = 1800
+        c.fco[a] = 1200
+        c.ativo_circulante[a] = 2000
+        c.passivo_circulante[a] = 800
+        c.divida_lp[a] = 500
+        c.despesa_juros[a] = 100
+        c.ativo_intangivel[a] = 200
+    c.preco_atual = 30.0
+    c.volume_financeiro_diario = 40_000_000
+    c.desempenho_relativo_6m = 0.10
+    c.beta = 0.8
+    return c
+
+
+def test_bsd_empresa_reproduzivel_vs_ranking():
+    # bsd_empresa (1 empresa) == bsd_ranking([c]) — padronização ABSOLUTA, reproduzível.
+    c = _empresa_solida()
+    esperado = screening.bsd_ranking([c])[0]["bsd"]
+    obtido = screening.bsd_empresa(c, CFG)
+    assert obtido is not None
+    assert 0.0 <= obtido <= 100.0
+    assert abs(obtido - esperado) < 1e-9
+
+
+def test_analisar_acao_popula_selo_coerente():
+    c = _empresa_solida()
+    a = report.analisar_acao(c, CFG)
+    # a.selo é um Selo coerente com o BSD e o veredito JÁ calculados (read-only, sem rede).
+    assert isinstance(a.selo, selo.Selo)
+    bsd = screening.bsd_empresa(c, CFG)
+    assert a.selo.cor == selo.cor_do_bsd(bsd, CFG)
+    assert a.selo.qualidade == selo._qualidade(a.selo.cor)
+    if a.veredito.startswith("VERIFICAR"):
+        assert a.selo.verificar is True
+        assert a.selo.faixa_preco is None and a.selo.rotulo is None
+    else:
+        assert a.selo.faixa_preco == selo.faixa_do_veredito(a.veredito)
