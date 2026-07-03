@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
-status: executing
+status: verifying
 stopped_at: Phase 21 context gathered
-last_updated: "2026-07-03T10:58:27.158Z"
-last_activity: 2026-07-03 -- Phase 21 planning complete
+last_updated: "2026-07-03T11:20:54.603Z"
+last_activity: 2026-07-03
 progress:
   total_phases: 7
   completed_phases: 7
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 
 Phase: 20 — COMPLETE
 Plan: 2 of 2 (todos os planos concluídos)
-Status: Ready to execute
-Last activity: 2026-07-03 -- Phase 21 planning complete
+Status: Phase complete — ready for verification
+Last activity: 2026-07-03
 
 ## Performance Metrics
 
@@ -88,6 +88,7 @@ Last activity: 2026-07-03 -- Phase 21 planning complete
 | Phase 19 P04 | 5min | 2 tasks | 0 files |
 | Phase 20 P01 | 12 | 3 tasks | 5 files |
 | Phase 20 P02 | ~10min | 3 tasks | 3 files |
+| Phase 21 P01 | 6min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -136,6 +137,7 @@ Decisões que governam o v1.4 (ferramenta de swing trade):
 - [Phase 19]: fase fechada por verificacao dupla — gate automatizado (307 verdes = 296 baseline + 11 de test_lentes.py, zero dep nova, metodo intocado, app.py read-only) + smoke humano das 4 lentes aprovado sem regressao
 - [Phase 20]: Selo derivado do BSD (cor config-driven verde70/azul55/amarelo40) cruzado com veredito DDM num quadrante (JOIA/VALUE TRAP/...); VERIFICAR e overlay separado; report/selo.py puro com firewall vs report.py; a.selo populado never-raise em analisar_acao; 320 verdes
 - [Phase 20]: selo renderizado read-only em Analisar (destaque+quadrante) e como coluna em Garimpo/Ranking via render único (presentation.selo_badge/selo_emoji); app.py só lê a.selo/cor_do_bsd/bsd_empresa, zero threshold hardcoded; 325 verdes
+- [Phase ?]: Comparador (Fase 21): derivação nova na engine (normalizar_tickers, montar_comparativo, fmt_rs); app.py read-only; selo COMPLETO por coluna
 
 ### Pending Todos
 
@@ -177,9 +179,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-03T10:18:07.914Z
+Last session: 2026-07-03T11:20:23.168Z
 Stopped at: Phase 21 context gathered
-Resume file: .planning/phases/21-comparador-multi-ativo-lado-a-lado-m-ltiplos-selo-por-coluna/21-CONTEXT.md
+Resume file: None
 
 ## Operator Next Steps
 
