@@ -28,6 +28,16 @@ def fmt_num(x: Optional[float], casas: int = 2) -> str:
     return "—" if x is None else f"{x:.{casas}f}"
 
 
+def fmt_rs(x: Optional[float], casas: int = 2) -> str:
+    """Formata reais no padrão ptBR (fonte única da engine; espelha app.py fmt_rs).
+
+    None → "—"; separador de milhar "." e decimal "," (ex.: 1234.5 → "R$ 1.234,5").
+    """
+    if x is None:
+        return "—"
+    return f"R$ {x:,.{casas}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
 # --------------------------------------------------------------------------- #
 # Header do Dividend Yield (HIER-01 / D-01,D-02,D-03)
 #

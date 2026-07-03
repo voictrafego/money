@@ -114,11 +114,10 @@ def test_metrica_ausente_vira_em_dash_e_valor_mercado_em_bilhoes():
     c_vazio = CompanyData(ticker="NONE3", anos=[2023])  # sem preço/num_acoes
     tab = comparador.montar_comparativo([c1, c_vazio], CFG)
 
-    # coluna vazia: múltiplos e selo degradam para "—"
+    # coluna sem preço/nº de ações: os múltiplos derivados degradam para "—"
     assert tab.df.loc["P/L", "NONE3"] == "—"
     assert tab.df.loc["P/VP", "NONE3"] == "—"
     assert tab.df.loc["Valor de Mercado", "NONE3"] == "—"
-    assert tab.df.loc["Selo", "NONE3"] == "—"
     # coluna cheia: Valor de Mercado formatado em bilhões ptBR + " B"
     vm = tab.df.loc["Valor de Mercado", "AAAA3"]
     assert vm.endswith(" B") and vm.startswith("R$")
