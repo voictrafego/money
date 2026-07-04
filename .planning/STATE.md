@@ -162,6 +162,7 @@ None yet.
 |---|-------------|------|--------|--------|-----------|
 | 260629-ig6 | Aba Swing trade (MVP): candlestick intraday + timeframes + botão Atualizar (reusa engine Fase 12) | 2026-06-29 | 3c4eb15 | Verified | [260629-ig6-aba-swing-trade-mvp-candlestick-intraday](./quick/260629-ig6-aba-swing-trade-mvp-candlestick-intraday/) |
 | 260630-g0b | Auto-refresh opcional no 4º menu (Swing) via st.fragment(run_every): toggle + intervalo 30s/1min/5min; cache TTL=300s como porteiro do Yahoo | 2026-06-30 | ed9cf2e | — | [260630-g0b-adicionar-auto-refresh-opcional-ao-4-men](./quick/260630-g0b-adicionar-auto-refresh-opcional-ao-4-men/) |
+| 260704-kps | Tooltips (help=) por coluna em todas as tabelas (Pares, Garimpar, Ranking, Histórico, DDM, Comparar) + 20 chaves de glossário | 2026-07-04 | 2db3ddb | Verified | [260704-kps-tooltips-help-em-todas-as-tabelas-do-app](./quick/260704-kps-tooltips-help-em-todas-as-tabelas-do-app/) |
 
 ## Deferred Items
 
