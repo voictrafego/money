@@ -182,6 +182,96 @@ G: dict[str, str] = {
         "**subordinado ao fundamento**: nunca sobrepõe o veredito barato/caro do método e, ao romper a "
         "tendência, apenas pede que você **reverifique os fundamentos**."
     ),
+    # ---- Colunas das tabelas (Garimpar / Ranking / Pares / Comparar / Histórico) ----
+    "selo": (
+        "**Selo de Sustentabilidade do Dividendo** — cor que cruza a *qualidade* do dividendo "
+        "(nota BSD) com o *preço* (veredito do DDM): bom e barato = **joia**; bom, mas caro = "
+        "**espere**; ruim e barato = **cilada de valor**; ruim e caro = **evite**. Triagem visual, "
+        "não recomendação."
+    ),
+    "passa_filtros": (
+        "**Passa filtros** — 'Sim' quando a ação cumpre os cortes objetivos do método: Dividend "
+        "Yield acima da Selic (**DY > Selic**), liquidez (volume diário mínimo) e **ROE mínimo**. "
+        "Comece por aqui: o BSD sozinho não é recomendação."
+    ),
+    "bsd_maior_80": (
+        "**BSD > 80** — se a nota BSD ultrapassa o corte de referência **80** ('dividendo grande e "
+        "seguro'). Nota alta e rara; ainda assim, só faz sentido junto de 'Passa filtros'."
+    ),
+    "fatores_faltando": (
+        "**Fatores faltando** — quantos fatores do BSD ficaram sem dado para esta empresa. Fatores "
+        "ausentes entram como **neutros** (não como pior nota); quanto mais faltando, menos "
+        "confiável é o BSD."
+    ),
+    "setor": (
+        "**Setor** — classificação setorial da empresa (CVM/B3). Compare de preferência ações do "
+        "**mesmo setor**, pois os múltiplos 'normais' variam muito entre setores."
+    ),
+    "pl": (
+        "**P/L — Preço/Lucro** — quantas vezes o preço cabe no lucro por ação (≈ anos para "
+        "recuperar o investido, mantido o lucro). Menor costuma ser mais barato, mas compare "
+        "dentro do setor."
+    ),
+    "pvp": (
+        "**P/VP — Preço/Valor Patrimonial** — preço da ação ÷ valor patrimonial por ação. Abaixo "
+        "de 1 = negociada abaixo do patrimônio contábil. Faz mais sentido em bancos e empresas de "
+        "capital intensivo."
+    ),
+    "valor_mercado": (
+        "**Valor de mercado** — preço da ação × número de ações; o 'tamanho' da empresa na bolsa."
+    ),
+    "nota_padronizada": (
+        "**Nota (0–100)** — múltiplos (ML, ROE, P/L, EY) padronizados e combinados numa nota "
+        "comparável entre as ações do lote. Só **ordena** candidatas — não é preço-alvo nem "
+        "recomendação."
+    ),
+    "preco_alvo": (
+        "**Preço-alvo** — preço 'justo' estimado por **regressão** (P/L explicado por payout e ROE "
+        "do grupo). Depende da qualidade da amostra (de preferência mesmo setor); confira o R² e o "
+        "nº de empresas."
+    ),
+    "upside": (
+        "**Upside** — quanto o preço-alvo está acima (%) do preço atual. Positivo = candidata a "
+        "estar barata (subavaliada) pela regressão; negativo = cara. É estimativa, não garantia."
+    ),
+    "veredito": (
+        "**Veredito** — leitura da regressão de preço-alvo: *Subavaliada* (alvo acima do preço) ou "
+        "*Cara*; 'indisponível' quando faltou ROE/payout. É estudo, nunca ordem de compra/venda."
+    ),
+    "lucro_liq": (
+        "**Lucro líquido** — resultado final da empresa no ano (R$ milhões), das demonstrações da "
+        "CVM. Base dos dividendos e do ROE."
+    ),
+    "patrim_liq": (
+        "**Patrimônio líquido** — capital próprio da empresa (ativos − passivos), em R$ milhões. "
+        "É o denominador do ROE."
+    ),
+    "fco": (
+        "**FCO — Fluxo de Caixa Operacional** — caixa gerado pela operação no ano (R$ milhões). "
+        "Ajuda a checar se o lucro 'virou dinheiro' e se os dividendos são sustentáveis."
+    ),
+    "payout_col": (
+        "**Payout** — fatia do lucro do ano distribuída como proventos (%). Acima de 100% = "
+        "distribuir mais do que lucrou (alerta de sustentabilidade)."
+    ),
+    "valor_intrinseco_col": (
+        "**Valor intrínseco** — valor 'justo' por ação estimado pelo DDM em cada cenário (otimista "
+        "g constante / conservador modelo H). Acima do preço = ação barata."
+    ),
+    "vp_dividendos": (
+        "**VP dividendos** — parte do valor intrínseco vinda dos proventos do período projetado, "
+        "trazidos a valor presente."
+    ),
+    "vp_residual": (
+        "**VP residual** — parte do valor intrínseco vinda da perpetuidade (após a fase de alto "
+        "crescimento), trazida a valor presente."
+    ),
+    "comparar_metricas": (
+        "**O que a tabela mostra** (uma coluna por ticker): **Selo** (qualidade × preço), "
+        "**P/L** (preço/lucro), **P/VP** (preço/valor patrimonial), **ROE** (retorno sobre o "
+        "patrimônio), **DY** (dividend yield) e **Valor de mercado**. Triagem lado a lado, de "
+        "preferência do mesmo setor — não é ranking nem recomendação."
+    ),
 }
 
 

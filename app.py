@@ -973,7 +973,15 @@ if modo.startswith("Analisar"):
                             "DY": fmt_pct(p.dy),
                             "Valor de Mercado": _vm,
                         })
-                    st.dataframe(pd.DataFrame(_rows_pares), hide_index=True, use_container_width=True)
+                    st.dataframe(pd.DataFrame(_rows_pares), hide_index=True, use_container_width=True,
+                                 column_config={
+                                     "Ticker": st.column_config.Column("Ticker", help=h("ticker")),
+                                     "P/L": st.column_config.Column("P/L", help=h("pl")),
+                                     "P/VP": st.column_config.Column("P/VP", help=h("pvp")),
+                                     "ROE": st.column_config.Column("ROE", help=h("roe")),
+                                     "DY": st.column_config.Column("DY", help=h("dy")),
+                                     "Valor de Mercado": st.column_config.Column("Valor de Mercado", help=h("valor_mercado")),
+                                 })
                     st.caption("➤ marca o ticker analisado. Contexto de comparação — não é ranking nem recomendação.")
                 else:
                     st.info("Pares insuficientes do mesmo setor para comparar.")
@@ -1182,7 +1190,12 @@ if modo.startswith("Analisar"):
                         ("Conservador (modelo H)", fmt_rs(a.ddm_h.valor_intrinseco),
                          fmt_rs(a.ddm_h.vp_dividendos), fmt_rs(a.ddm_h.vp_residual)),
                     ], columns=["Cenário", "Valor intrínseco", "VP dividendos", "VP residual"]),
-                        hide_index=True, use_container_width=True)
+                        hide_index=True, use_container_width=True,
+                        column_config={
+                            "Valor intrínseco": st.column_config.Column("Valor intrínseco", help=h("valor_intrinseco_col")),
+                            "VP dividendos": st.column_config.Column("VP dividendos", help=h("vp_dividendos")),
+                            "VP residual": st.column_config.Column("VP residual", help=h("vp_residual")),
+                        })
 
                     if a.sensibilidade:
                         st.markdown("**Sensibilidade do valor (linhas = Ke, colunas = g)**", help=h("tab_sensibilidade"))
@@ -1206,7 +1219,14 @@ if modo.startswith("Analisar"):
                     "ROE": [fmt_pct(c.roe(x)) for x in anos],
                     "Payout": [fmt_pct(c.payout(x)) for x in anos],
                 })
-                st.dataframe(df, hide_index=True, use_container_width=True)
+                st.dataframe(df, hide_index=True, use_container_width=True,
+                             column_config={
+                                 "Lucro Líq. (R$ mi)": st.column_config.Column("Lucro Líq. (R$ mi)", help=h("lucro_liq")),
+                                 "Patrim. Líq. (R$ mi)": st.column_config.Column("Patrim. Líq. (R$ mi)", help=h("patrim_liq")),
+                                 "FCO (R$ mi)": st.column_config.Column("FCO (R$ mi)", help=h("fco")),
+                                 "ROE": st.column_config.Column("ROE", help=h("roe")),
+                                 "Payout": st.column_config.Column("Payout", help=h("payout_col")),
+                             })
                 st.bar_chart(df.set_index("Ano")["Lucro Líq. (R$ mi)"])
 
 
@@ -1260,7 +1280,16 @@ elif modo.startswith("Garimpar"):
             df = pd.DataFrame(rows).sort_values(["_passou", "BSD"], ascending=[False, False])
             df = df.drop(columns=["_passou"])
             st.dataframe(df, hide_index=True, use_container_width=True,
-                         column_config={"Ano-base": st.column_config.Column("Ano-base", help=h("ano_base"))})
+                         column_config={
+                             "Ticker": st.column_config.Column("Ticker", help=h("ticker")),
+                             "Ano-base": st.column_config.Column("Ano-base", help=h("ano_base")),
+                             "BSD": st.column_config.Column("BSD", help=h("bsd")),
+                             "Selo": st.column_config.Column("Selo", help=h("selo")),
+                             "BSD > 80": st.column_config.Column("BSD > 80", help=h("bsd_maior_80")),
+                             "Passa filtros": st.column_config.Column("Passa filtros", help=h("passa_filtros")),
+                             "Fatores faltando": st.column_config.Column("Fatores faltando", help=h("fatores_faltando")),
+                             "Setor": st.column_config.Column("Setor", help=h("setor")),
+                         })
             st.warning("**BSD > 80 sem 'Passa filtros' NÃO é recomendação.** O BSD é uma nota "
                        "de estabilidade do dividendo; o corte por Selic (DY > Selic) e os demais "
                        "filtros vivem na coluna 'Passa filtros'. Comece pelas que passam nos filtros.")
@@ -1348,7 +1377,16 @@ elif modo.startswith("Ranking"):
                     "Veredito": veredito,
                 })
             st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True,
-                         column_config={"Ano-base": st.column_config.Column("Ano-base", help=h("ano_base"))})
+                         column_config={
+                             "Ticker": st.column_config.Column("Ticker", help=h("ticker")),
+                             "Nota (0–100)": st.column_config.Column("Nota (0–100)", help=h("nota_padronizada")),
+                             "Selo": st.column_config.Column("Selo", help=h("selo")),
+                             "Ano-base": st.column_config.Column("Ano-base", help=h("ano_base")),
+                             "Preço atual": st.column_config.Column("Preço atual", help=h("preco")),
+                             "Preço-alvo": st.column_config.Column("Preço-alvo", help=h("preco_alvo")),
+                             "Upside": st.column_config.Column("Upside", help=h("upside")),
+                             "Veredito": st.column_config.Column("Veredito", help=h("veredito")),
+                         })
             if reg:
                 st.caption(f"Regressão: P/L = {reg.coeficientes[0]:.2f} + {reg.coeficientes[1]:.2f}·payout "
                            f"+ {reg.coeficientes[2]:.2f}·ROE  (R²={reg.r2:.2f}, n={reg.n})")
@@ -1393,7 +1431,7 @@ elif modo.startswith("Ranking"):
 #     sem ticker-alvo, sem destaque — só triagem lado a lado (D2/D4).
 # =========================================================================== #
 elif modo.startswith("Comparar"):
-    st.subheader("Comparar ações — múltiplos e selo lado a lado")
+    st.subheader("Comparar ações — múltiplos e selo lado a lado", help=h("comparar_metricas"))
     st.caption(
         "Compare múltiplos e o selo de vários tickers lado a lado — apenas triagem, "
         "não é ranking nem recomendação. De preferência do mesmo setor."
