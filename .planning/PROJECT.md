@@ -14,9 +14,18 @@ a mesma ação não pode parecer barata num menu e cara/ausente em outro sem exp
 
 ## Current State
 
-**v1.3 shipped 2026-06-28.** Quatro marcos completos (v1.0 consistência · v1.1 gráfico ·
-v1.2 indicadores de timing · v1.3 saneamento do valuation). Suíte 191 testes verdes; app
-deployado na VPS (Streamlit em money.voictech.com.br).
+**v1.7 shipped 2026-07-04 (tag única `v1.7`, cobrindo v1.4–v1.7).** Oito marcos completos:
+v1.0 consistência · v1.1 gráfico · v1.2 timing · v1.3 saneamento do valuation ·
+v1.4 Swing Trade (setups de análise técnica, Fases 12–16) · v1.5 Modo Trading (candlestick
+estilo TradingView, Fase 17) · v1.6 Home (watchlist + notícias, Fase 18) · v1.7 Lentes de
+valuation + Selo DDM + Comparador multi-ativo (Fases 19–21). Suíte **338 testes verdes**;
+Fase 21 com smoke visual do 5º menu "Comparar ações" validado. App na VPS (money.voictech.com.br)
+— redeploy do v1.7 pendente.
+
+<details>
+<summary>Histórico v1.3 (saneamento do valuation) — shipped 2026-06-28</summary>
+
+**v1.3 shipped 2026-06-28.** Suíte 191 testes verdes; app deployado na VPS.
 
 **v1.3 — Saneamento residual do valuation (fases 9–11):** payout sustentável geral (mediana
 sem clamp), DY recorrente earnings-based, g histórico log-linear robusto, screening sobre série
@@ -36,33 +45,16 @@ Mais disclaimer legal (software educacional, não recomendação). Continuação
 `.planning/milestones/v2.0-REQUIREMENTS.md`. Decisão (2026-06-29): **construir o v1.4 antes** —
 agregar valor de produto à ferramenta antes de cobrar. A v2.0 retoma depois.
 
-## Current Milestone: v1.4 — Ferramenta de Swing Trade (setups de análise técnica)
+</details>
 
-**Goal:** Adicionar um **menu/página novo e separado** ao app que monta *setups* de **análise
-técnica** (método de John Murphy — *Análise Técnica dos Mercados Financeiros*) para preparar
-**swing trades** de um ticker escolhido, exibindo sinais claros e **nunca recomendação**. Não
-toca no método fundamentalista validado (v1.0–v1.3) nem na aba "Analisar".
+## Próximo marco: v2.0 — Comercialização (produto cobrável)
 
-**Target features:**
-- Página dedicada que monta o setup de um ticker: **contexto de tendência** (Dow + MMs),
-  **níveis de preço** (S/R, zona de entrada, stop técnico, projeção/alvo por padrão ou Fibonacci),
-  **checklist de sinais** disparados (liga/desliga) e **score de qualidade + relação Risco:Retorno**.
-- **Gráfico interativo "do momento"** com overlays (S/R, padrões, Fibonacci, indicadores) e
-  **botão Atualizar** para re-buscar os dados mais recentes.
-- Escopo Murphy: tendência + S/R + linhas · padrões gráficos (OCO, topos/fundos duplos,
-  triângulos, bandeiras) · indicadores/osciladores (reusa `core/indicators.py`) · volume + Fibonacci.
-- **Timeframe diário** (padrão, swing clássico) + opções **1h / 30m / 5m** (intraday best-effort).
+**DEFINIDO e adiado** — reabre com `/gsd-new-milestone` (renumera as fases). Assinatura paga
+(trial 7 dias → mensal via Asaas), gate na frente do app Streamlit, produtização, software
+educacional. Requisitos (AUTH/BILL/ACCT/LEGAL/OPS) e arquitetura de gateway híbrido preservados
+em `.planning/milestones/v2.0-REQUIREMENTS.md`.
 
-**Key context:**
-- **Dados custo-zero mantido:** diário/semanal robustos via Yahoo; intraday 1h/30m/5m best-effort
-  com **aviso de atraso (~15min)** e histórico limitado (5m≈60d, 1m≈7d). Tempo real puro (streaming)
-  exige feed pago → **fora de escopo** no v1.4. Sem feed pago.
-- **Página nova dedicada** que reaproveita `core/indicators.py`, sem alterar a aba Analisar nem o
-  veredito fundamentalista. Sem scanner de universo (só ticker escolhido) neste marco.
-- Numeração de fases continua a partir da 11 → v1.4 começa na **Fase 12**.
-
-_(v1.3 e marcos anteriores arquivados em `.planning/milestones/`. v2.0 Comercialização definida e
-adiada em `.planning/milestones/v2.0-REQUIREMENTS.md`.)_
+_(Marcos v1.0–v1.7 arquivados em `.planning/milestones/`.)_
 
 ## Requirements
 

@@ -1,9 +1,9 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.4
-milestone_name: — Ferramenta de Swing Trade
-status: verified
-stopped_at: Phase 21 complete (7/7 must-haves + smoke visual humano do 5º menu OK)
+milestone: v1.7
+milestone_name: — Swing Trade + Modo Trading + Home + Lentes/Selo/Comparador (v1.4–v1.7, tag única)
+status: shipped
+stopped_at: v1.7 arquivado e tagueado (Fases 12–21); Fase 21 com smoke visual OK
 last_updated: "2026-07-04T00:00:00.000Z"
 last_activity: 2026-07-04 -- Smoke visual da Fase 21 validado no navegador (5º menu "Comparar ações")
 progress:
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-29)
 
 **Core value:** Os números do app são fiéis ao método do livro e consistentes entre si — a mesma ação não pode parecer barata num menu e cara/ausente em outro sem explicação. No v1.4, a página de swing **EXIBE** sinais técnicos fiéis a Murphy e **NUNCA recomenda**.
-**Current focus:** Phase 21 — comparador-multi-ativo-lado-a-lado-múltiplos-selo-por-coluna
+**Current focus:** v1.7 shipped (tag única cobrindo v1.4–v1.7). Próximo marco: v2.0 Comercialização (reabrir com `/gsd-new-milestone`).
 
 ## Current Position
 
-Phase: 21 — COMPLETE (verificada + smoke visual OK)
-Plan: 1 of 1 (21-01 concluído)
-Status: Fechada — 7/7 must-haves automatizados + smoke visual humano do 5º menu "Comparar ações" validado (338 testes verdes)
+Milestone: v1.7 — SHIPPED 2026-07-04 (tag única, Fases 12–21)
+Phase: 21 — COMPLETE (verificada + smoke visual OK), última fase do bloco
+Status: Marco arquivado (`.planning/milestones/v1.7-{ROADMAP,REQUIREMENTS}.md`), ROADMAP enxugado, 338 testes verdes. Pendente: tag git v1.7 (a criar) + redeploy na VPS.
 Last activity: 2026-07-04
 
 ## Performance Metrics
