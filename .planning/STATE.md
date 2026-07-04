@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: — Ferramenta de Swing Trade
 status: verified
-stopped_at: Phase 21 executed and verified (7/7 must-haves; smoke visual pendente)
-last_updated: "2026-07-03T11:20:54.603Z"
-last_activity: 2026-07-03 -- Phase 21 executada e verificada
+stopped_at: Phase 21 complete (7/7 must-haves + smoke visual humano do 5º menu OK)
+last_updated: "2026-07-04T00:00:00.000Z"
+last_activity: 2026-07-04 -- Smoke visual da Fase 21 validado no navegador (5º menu "Comparar ações")
 progress:
   total_phases: 7
   completed_phases: 7
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 
 ## Current Position
 
-Phase: 21 — COMPLETE (verificada)
+Phase: 21 — COMPLETE (verificada + smoke visual OK)
 Plan: 1 of 1 (21-01 concluído)
-Status: Verificada — 7/7 must-haves automatizados; falta apenas o smoke visual humano do 5º menu
-Last activity: 2026-07-03
+Status: Fechada — 7/7 must-haves automatizados + smoke visual humano do 5º menu "Comparar ações" validado (338 testes verdes)
+Last activity: 2026-07-04
 
 ## Performance Metrics
 
