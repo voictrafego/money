@@ -7,6 +7,10 @@ Engine Python + app Streamlit que replica o método do livro *O Investidor em A�
 gratuitos (CVM + Yahoo Finance + Banco Central). Voltado ao investidor pessoa física que quer
 aplicar o método do livro sem pagar por terminais de dados.
 
+A partir do marco v2.0 o produto é comercializado sob a marca **Lazari Capital** (domínio
+*Lazari Tech Capital*): assinatura mensal com trial, front comercial próprio e o engine atrás
+de um gate de acesso. Posicionamento: **software educacional, sem recomendação de investimento**.
+
 ## Core Value
 
 Os números que o app mostra precisam ser **fiéis ao método do livro e consistentes entre si** —
@@ -47,14 +51,32 @@ agregar valor de produto à ferramenta antes de cobrar. A v2.0 retoma depois.
 
 </details>
 
-## Próximo marco: v2.0 — Comercialização (produto cobrável)
+## Current Milestone: v2.0 — Comercialização (Lazari Capital)
 
-**DEFINIDO e adiado** — reabre com `/gsd-new-milestone` (renumera as fases). Assinatura paga
-(trial 7 dias → mensal via Asaas), gate na frente do app Streamlit, produtização, software
-educacional. Requisitos (AUTH/BILL/ACCT/LEGAL/OPS) e arquitetura de gateway híbrido preservados
-em `.planning/milestones/v2.0-REQUIREMENTS.md`.
+**Goal:** Transformar o app num produto cobrável sob a marca **Lazari Capital** — um front
+Django (auth + Asaas + webhooks, espelhando o `crm-voic`) na frente e o engine Streamlit
+**intacto atrás de um gate**, com trial de 7 dias → assinatura mensal, posicionado como
+software educacional (sem recomendação).
 
-_(Marcos v1.0–v1.7 arquivados em `.planning/milestones/`.)_
+**Target features:**
+- Login/cadastro **self-serve** (email+senha) + sessão + gate (Streamlit só acessível autenticado)
+- `status_assinatura` como fonte de verdade do acesso (novo usuário = trial 7 dias, sem cartão)
+- Cobrança recorrente mensal via **Asaas** (checkout hospedado; produto nunca toca cartão)
+- **Webhooks nativos Django** do Asaas (idempotentes) — **sem n8n** — atualizam o status
+- Página de conta (status, cancelar, link de cobrança)
+- Legal: Termos + Privacidade + disclaimer educacional aceitos no cadastro
+- Deploy integrado (Django + gate Traefik forward-auth + Streamlit) na VPS + teste **E2E pago**
+
+**Arquitetura (decidida):** gateway híbrido com **Django** — projeto Django novo (repo
+separado, `~/projects/lazari-capital`) espelha os apps do `crm-voic` (`accounts`, `users` com
+User custom email-como-login, `billing`/`asaas_client.py`, `webhooks`). Stack: Django 5.2 +
+HTMX + Alpine + Tailwind/Preline + Postgres, Docker/Traefik na VPS. Asaas em **conta e chave
+próprias** (só reusa a estrutura do crm-voic). Gate: Traefik **forward-auth** valida sessão +
+status de assinatura no Django e injeta header `X-User-Email` confiável no Streamlit.
+
+_(Marcos v1.0–v1.7 arquivados em `.planning/milestones/`. Requisitos v2.0 originais em
+`.planning/milestones/v2.0-REQUIREMENTS.md` — arquitetura atualizada de Supabase/n8n/React
+→ Django/webhooks-nativos/Traefik-forward-auth.)_
 
 ## Requirements
 
@@ -89,18 +111,19 @@ _(Marcos v1.0–v1.7 arquivados em `.planning/milestones/`.)_
 
 ### Active
 
-<!-- Marco v1.4 — Ferramenta de Swing Trade (setups de análise técnica). REQ-IDs em REQUIREMENTS.md. -->
+<!-- Marco v2.0 — Comercialização (Lazari Capital). REQ-IDs em REQUIREMENTS.md. -->
 
-- [ ] Menu/página nova e separada para montar setups de swing trade de um ticker (não toca na aba Analisar)
-- [ ] Contexto de tendência (Dow + MMs) com alinhamento de timeframes para o ticker
-- [ ] Níveis de preço: suporte/resistência, zona de entrada, stop técnico e projeção/alvo (padrão ou Fibonacci)
-- [ ] Checklist de sinais técnicos disparados (rompimento, cruzamento de MM, RSI/MACD, padrão, volume)
-- [ ] Score de qualidade do setup + relação Risco:Retorno calculada de entrada/stop/alvo
-- [ ] Detecção de padrões gráficos (OCO, topos/fundos duplos, triângulos, bandeiras) com projeção de alvo
-- [ ] Gráfico interativo "do momento" com overlays técnicos e botão Atualizar
-- [ ] Seleção de timeframe (diário padrão + 1h/30m/5m best-effort) com aviso de atraso/limite de histórico
+- [ ] Cadastro self-serve (email+senha) e login numa camada Django própria, emitindo sessão que governa o acesso (AUTH)
+- [ ] `status_assinatura` como fonte de verdade (novo usuário = trial 7 dias, sem cartão) (BILL/trial)
+- [ ] Gate: Streamlit só acessível autenticado E com trial/assinatura ativa (Traefik forward-auth) (AUTH/gate)
+- [ ] Cobrança recorrente mensal via Asaas (checkout hospedado; nunca manuseia cartão) (BILL)
+- [ ] Webhooks nativos Django do Asaas (idempotentes), sem n8n, atualizam o status (BILL)
+- [ ] Multiusuário real: contas isoladas, sessões simultâneas sem vazar estado (ACCT)
+- [ ] Página de conta: status, cancelar, link de cobrança (ACCT)
+- [ ] Legal: Termos + Privacidade + disclaimer educacional aceitos no cadastro (LEGAL)
+- [ ] Deploy integrado (Django + gate + Streamlit) na VPS + teste E2E pago (OPS)
 
-_(v2.0 Comercialização — AUTH/BILL/ACCT/LEGAL/OPS — definida e adiada; ver `milestones/v2.0-REQUIREMENTS.md`.)_
+_(v1.4–v1.7 — Swing Trade / Modo Trading / Home / Lentes-Selo-Comparador — SHIPPED 2026-07-04, tag `v1.7`.)_
 
 ### Out of Scope
 
@@ -152,6 +175,12 @@ _(v2.0 Comercialização — AUTH/BILL/ACCT/LEGAL/OPS — definida e adiada; ver
 | Swing trade = menu/produto NOVO e separado, não mexe na aba Analisar nem no veredito fundamentalista | Mantém o método do livro de dividendos intacto e validado; análise técnica é outro "produto" dentro do app | — Pending |
 | Setup técnico EXIBE sinais, nunca recomenda (sem "compre/venda") | Coerente com o posicionamento de software educacional; o investidor decide | — Pending |
 | Tempo real puro fora de escopo no v1.4 (custo-zero); intraday via Yahoo é best-effort com aviso de atraso (~15min) | Feed real-time da B3 é pago e quebraria o princípio de custo zero | — Pending |
+| Marca comercial = **Lazari Capital** (domínio Lazari Tech Capital) | Construir imagem de produto desde a etapa comercial | — Pending (v2.0) |
+| Comercialização = **gateway híbrido com Django** (front Django + Streamlit atrás de gate), não reescrever o app | Reusa código testado do crm-voic e o engine Streamlit (338 testes) intacto; robusto/seguro/escalável sem retrabalho | — Pending (v2.0) |
+| Pivô da arquitetura v2.0: **Django + webhooks nativos** no lugar de Supabase + n8n + React | Cortar dependência de n8n e reaproveitar o crm-voic 1:1; CRM já roda bem nesse padrão | — Pending (v2.0) |
+| Gate = **Traefik forward-auth** (Django valida sessão+status, injeta X-User-Email no Streamlit) | Menos código de segurança custom que JWT lido dentro do Streamlit; usa infra Traefik existente | — Pending (v2.0) |
+| Asaas em **conta e chave próprias** (não as do crm-voic) | Produto separado; só a estrutura de código é compartilhada | — Pending (v2.0) |
+| Cadastro **self-serve** (B2C/trial), diferente do crm-voic (invite-only) | Aquisição de clientes pessoa física precisa de cadastro aberto com trial | — Pending (v2.0) |
 
 ## Evolution
 
@@ -171,4 +200,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-29 — Marco v1.4 iniciado (ferramenta de swing trade / setups de análise técnica); v2.0 Comercialização definida e adiada*
+*Last updated: 2026-07-07 — Marco v2.0 Comercialização (Lazari Capital) reaberto: gateway híbrido com Django (auth + Asaas + webhooks nativos, espelhando crm-voic) + Streamlit atrás de gate Traefik forward-auth*

@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.7
-milestone_name: — Swing Trade + Modo Trading + Home + Lentes/Selo/Comparador (v1.4–v1.7, tag única)
-status: shipped
-stopped_at: v1.7 arquivado e tagueado (Fases 12–21); Fase 21 com smoke visual OK
-last_updated: "2026-07-04T00:00:00.000Z"
-last_activity: 2026-07-04 -- Smoke visual da Fase 21 validado no navegador (5º menu "Comparar ações")
+milestone: v2.0
+milestone_name: Comercialização (Lazari Capital)
+status: planning
+last_updated: "2026-07-07T23:46:48.423Z"
+last_activity: 2026-07-07
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 22
-  completed_plans: 22
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-06-29)
 
 ## Current Position
 
-Milestone: v1.7 — SHIPPED 2026-07-04 (tag única, Fases 12–21)
-Phase: 21 — COMPLETE (verificada + smoke visual OK), última fase do bloco
-Status: Marco arquivado (`.planning/milestones/v1.7-{ROADMAP,REQUIREMENTS}.md`), ROADMAP enxugado, 338 testes verdes. Pendente: tag git v1.7 (a criar) + redeploy na VPS.
-Last activity: 2026-07-04
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-07-07 — Milestone v2.0 started
 
 ## Performance Metrics
 
