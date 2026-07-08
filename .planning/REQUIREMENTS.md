@@ -26,8 +26,8 @@ verdade de contas/assinaturas no **Postgres**. Asaas em **conta e chave própria
 
 - [ ] **BILL-01**: **Trial de 7 dias** ao cadastrar, **sem cobrança imediata e sem cartão**, com data de fim de trial clara para o usuário; o status inicial (`status_assinatura`) já é a fonte de verdade que o gate consulta.
 - [x] **BILL-02**: Cobrança recorrente **mensal via Asaas** (criação de cliente + assinatura), com **checkout hospedado pelo Asaas** — o produto **nunca** manuseia dados de cartão.
-- [ ] **BILL-03**: **Webhooks do Asaas nativos Django** (idempotentes, sem n8n) atualizam o status da assinatura (ativa / inadimplente / cancelada / trial) na fonte de verdade (Postgres).
-- [ ] **BILL-04**: O gate lê o status (**trial ativo OU assinatura ativa**) para liberar/bloquear; inadimplência/cancelamento bloqueia o acesso após o período devido.
+- [x] **BILL-03**: **Webhooks do Asaas nativos Django** (idempotentes, sem n8n) atualizam o status da assinatura (ativa / inadimplente / cancelada / trial) na fonte de verdade (Postgres).
+- [x] **BILL-04**: O gate lê o status (**trial ativo OU assinatura ativa**) para liberar/bloquear; inadimplência/cancelamento bloqueia o acesso após o período devido.
 
 ### Conta & Multiusuário (ACCT)
 
@@ -71,8 +71,8 @@ verdade de contas/assinaturas no **Postgres**. Asaas em **conta e chave própria
 | ACCT-01 | Phase 1 | Pending |
 | LEGAL-01 | Phase 1 | Pending |
 | BILL-02 | Phase 2 | Complete |
-| BILL-03 | Phase 2 | Pending |
-| BILL-04 | Phase 2 | Pending |
+| BILL-03 | Phase 2 | Complete |
+| BILL-04 | Phase 2 | Complete |
 | ACCT-02 | Phase 2 | Complete |
 | OPS-01 | Phase 3 | Pending |
 

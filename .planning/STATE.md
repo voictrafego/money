@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comercialização (Lazari Capital)
-status: executing
-stopped_at: Phase 2 context gathered
-last_updated: "2026-07-08T14:06:10.053Z"
+status: verifying
+stopped_at: Phase 2 complete (02-03 executed) — ready for verification
+last_updated: "2026-07-08T14:16:02.222Z"
 last_activity: 2026-07-08
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 8
-  completed_plans: 7
-  percent: 88
+  completed_plans: 8
+  percent: 100
 ---
 
 # Project State
@@ -27,12 +27,12 @@ nunca prometer recomendação de investimento (software educacional / CVM).
 
 ## Current Position
 
-Phase: 02 (cobran-a-asaas-webhooks-conta) — EXECUTING
-Plan: 3 of 3
-Status: Ready to execute
+Phase: 02 (cobran-a-asaas-webhooks-conta) — COMPLETE
+Plan: 3 of 3 (all executed)
+Status: Phase complete — ready for verification
 Last activity: 2026-07-08
 
-Progress: [█████████░] 88%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -69,6 +69,8 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - **Cadastro self-serve** (B2C/trial), diferente do crm-voic (invite-only).
 - **AUTH-04 (reset de senha) na Phase 1**: acopla à camada de auth do app `accounts`; SMTP fica com backend de dev na Phase 1 e é ligado no deploy (Phase 3).
 - **Plan 02-02 (cancel-at-period-end, D-05)**: cancelar chama `DELETE /subscriptions/{id}` e só transiciona local (`CANCELADO` + `grace_ate=paid-through`) APÓS sucesso do DELETE; `grace_ate` reusado como "acesso liberado até" (trial_ate se em trial, senão proximo_vencimento, fim-do-dia aware). `_parse_resposta` trata 204/no-body sem regredir 200+JSON. Página de conta (ACCT-02) sem dado de cartão; anti-IDOR via `request.user.conta`.
+- **Plan 02-03 (BILL-04)**: `GateView` regra de 3 ramos fail-closed lendo só `Conta` — pago (`trial_ate is None`), trial vigente, grace de inadimplência (D-04) e paid-through de cancelamento (D-05, via `grace_ate`); corrige o bug em que o pagante (trial zerado por `_ativar_conta`) era bloqueado. `BillingGateMiddleware` isenta `billing-assinar`/`conta`/`cancelar-assinatura` (Pitfall 2) — os dois gates concordam.
+- **Plan 02-03 (BILL-03)**: ciclo `assinar→PAYMENT_CONFIRMED→ativação` travado SÓ por teste (`test_webhook_ciclo.py`); `AsaasWebhookView`/`_ativar_conta`/`_marcar_inadimplente` NÃO reescritos — idempotência por `event_id` + convergência por `dueDate` absoluto comprovadas.
 
 ### Pending Todos
 
@@ -96,7 +98,7 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-08T14:06:10.050Z
+Last session: 2026-07-08T14:16:02.218Z
 Stopped at: Phase 2 context gathered
 Resume file: None
 
