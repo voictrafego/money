@@ -32,6 +32,27 @@ import yaml
 
 st.set_page_config(page_title="Analista de Dividendos", layout="wide")
 
+
+def _current_user_email() -> str | None:
+    """Identidade injetada pelo gate Traefik forwardAuth (AUTH-03). Read-only.
+
+    O Traefik promove `X-User-Email` (via authResponseHeaders) para o request
+    upstream depois que o gate Django já validou a sessão/trial. Aqui só LEMOS
+    esse header — requer streamlit>=1.37 (st.context). Fora do gate (dev local
+    sem Traefik) `st.context` pode não trazer o header → retorna None (anônimo/dev).
+
+    ATENÇÃO: NUNCA usar este valor para autorizar acesso — o gate já garantiu que
+    só quem tem trial/assinatura ativa chega aqui. Serve apenas para
+    personalização / telemetria / "logado como fulano".
+    """
+    try:
+        return st.context.headers.get("X-User-Email")  # case-insensitive
+    except Exception:
+        return None
+
+
+user_email = _current_user_email()  # noqa: F841 — read-only; personalização/telemetria (não autoriza)
+
 # --------------------------------------------------------------------------- #
 # Design system (visual only — não altera dados nem fluxo). Mescla de 3 refs:
 # Financial SaaS Metrics (base dark institucional + verde #00E55F), Analytics
