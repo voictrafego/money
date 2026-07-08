@@ -380,24 +380,24 @@ with transaction.atomic():
 
 **Estas 7 assunções precisam de confirmação do usuário no `/gsd-discuss-phase` ou pelo planner antes de virarem decisão travada** (especialmente A1, A4, A5 — afetam schema/rota/infra).
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **CPF/CNPJ no signup B2C?**
+1. **RESOLVED: CPF/CNPJ no signup B2C?** — Fase 1 SEM CPF (Plano 01-02 remove cpf_cnpj/telefone/plano/cupom do SignupForm e TrialCpf/AsaasClient de provisionar_signup); CPF será coletado no checkout Asaas na Fase 2.
    - What we know: crm-voic exige CPF/CNPJ (validação mod-11 + guarda `TrialCpf` anti-abuso de trial). D-06 do Lazari pede só **nome+email+senha+aceite**.
    - What's unclear: o Asaas (Fase 2) precisa de CPF/CNPJ do cliente; coletar já na Fase 1 ou só no checkout?
    - Recommendation: Fase 1 sem CPF (menos fricção, D-06); coletar no checkout Asaas (Fase 2). Remover `TrialCpf`/`_valida_cpf` do fork. Manter a guarda anti-abuso de trial por **e-mail verificado** (já que verificação é obrigatória, D-07).
 
-2. **Domínios exatos (login vs app).**
+2. **RESOLVED: Domínios exatos (login vs app).** — Plano 01-04 Task 3 usa `SESSION_COOKIE_DOMAIN`/`CSRF_COOKIE_DOMAIN` via env var com placeholder de domínio-pai (sem hard-block); o domínio real trava na Fase 3 (infra).
    - What we know: precisa domínio-pai compartilhado; marca "Lazari Tech Capital".
    - What's unclear: `conta.lazari...` + `app.lazari...`? ou `app.` + path? domínio real registrado.
    - Recommendation: confirmar o domínio comprado e definir 2 subdomínios same-site (login e app) sob o mesmo pai. Decisão de infra que trava na Fase 3 mas o cookie/settings dependem dela já.
 
-3. **Onde mora a `GateView` — no serviço `web` do Django ou num serviço leve dedicado?**
+3. **RESOLVED: Onde mora a `GateView`?** — no serviço `web` do Django (Plano 01-04: endpoint `/gate/` no app `apps/gate`); o forwardauth.address do Plano 01-05 aponta para `http://web:8000/gate/`.
    - What we know: precisa estar na rede que o Traefik alcança; é read-only e barato.
    - What's unclear: reaproveitar o gunicorn principal (5 workers) ou um endpoint isolado.
    - Recommendation: mesmo serviço `web` (endpoint `/gate/`); é 1 query indexada por request, custo desprezível. Reavaliar só se virar gargalo.
 
-4. **Página "trial acabou" (D-12) — em qual host/rota, e como o browser chega nela.**
+4. **RESOLVED: Página "trial acabou" (D-12).** — Plano 01-04 Task 2 serve `/trial-acabou/` como rota Django pública standalone (fora do endpoint `/gate/`, sem loop), com botão [Assinar] placeholder.
    - What we know: o gate responde 302 → Traefik devolve ao browser. A rota precisa ser servida pelo Django **sem passar pelo próprio gate** (senão loop).
    - Recommendation: rota Django pública (`/trial-acabou/`) no host de login (conta.lazari...), fora do middleware do Streamlit. Botão [Assinar] = placeholder (link para lista de espera na Fase 1).
 
