@@ -4,6 +4,12 @@ services:
   money:
     image: money:latest
 
+    # D-11 / Pitfall 1: o Streamlit NÃO publica porta de host (sem bloco `ports:`).
+    # O ÚNICO ingresso é o Traefik + gate forwardAuth abaixo. Se ficasse alcançável
+    # fora do Traefik, um atacante poderia setar `X-User-Email` na mão e o app
+    # confiaria (spoof de identidade). A porta 8501 abaixo é só o alvo INTERNO do
+    # router Traefik (loadbalancer.server.port), não uma publicação pública.
+    # Fase 3 (OPS-01): confirmar host/domínio real e validar websockets atrás do gate.
     networks:
       - network_swarm_public
 
@@ -20,6 +26,16 @@ services:
         - traefik.http.routers.money.tls.certresolver=letsencryptresolver
 
         - traefik.http.services.money.loadbalancer.server.port=8501
+
+        # --- Gate forwardAuth (AUTH-02/AUTH-03) ---
+        # O Traefik chama o gate Django (GateView, /gate/) ANTES de rotear ao
+        # Streamlit; em 2xx libera e promove `X-User-Email` para o request upstream.
+        # `web` é o serviço Django do lazari-capital — money e web PRECISAM compartilhar
+        # a rede overlay Swarm para o forwardauth.address alcançar web:8000 (RESEARCH A3).
+        - traefik.http.middlewares.lazari-gate.forwardauth.address=http://web:8000/gate/
+        - traefik.http.middlewares.lazari-gate.forwardauth.authResponseHeaders=X-User-Email
+        - traefik.http.middlewares.lazari-gate.forwardauth.trustForwardHeader=true
+        - traefik.http.routers.money.middlewares=lazari-gate
 
 networks:
   network_swarm_public:
