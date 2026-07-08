@@ -373,18 +373,19 @@ enableWebsocketCompression = false
 | A4 | Não há base de contas legada a migrar (Postgres prod é novo) | Runtime State Inventory | Baixo — dev usa sqlite; produção do gate nunca existiu |
 | A5 | O worker (`processar_billing` diário) é desejável no go-live; senão pode ser removido | Runtime State Inventory | Baixo — decisão do planner |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Domínio exato: `lazaricapital.com.br` vs `lazaritechcapital.com.br`?** [BLOQUEANTE]
-   - What we know: CONTEXT D-03/05/06 e a memória de DNS dizem `lazaricapital.com.br` (`www`/`app`). Mas o `prod.py` tem default `SESSION_COOKIE_DOMAIN=.lazaritechcapital.com.br` e o PROJECT.md diz "domínio **Lazari Tech** Capital".
-   - What's unclear: qual domínio foi de fato **registrado no Cloudflare** e aponta à VPS.
-   - Recommendation: **confirmar com o usuário / `dig` no Cloudflare antes de planejar**. Tudo (cookie, ALLOWED_HOSTS, CSRF, cert) deriva disso. Setar `SESSION_COOKIE_DOMAIN` explicitamente no `.env` prod (não confiar no default do código).
+> Todas as 4 questões foram resolvidas antes/durante o planejamento (2026-07-08). Marcadores inline abaixo apontam para o plano/tarefa que entrega a resolução.
 
-2. **Onde mora o Postgres de produção?** Serviço novo no stack `lazari` (recomendado, padrão crm-voic) vs instância existente. Recommendation: serviço dedicado `lazari_db` em rede interna isolada.
+1. **Domínio exato: `lazaricapital.com.br` vs `lazaritechcapital.com.br`?** [BLOQUEANTE] — **RESOLVED: `lazaricapital.com.br`.**
+   - Evidência: `dig` confirma que `www.lazaricapital.com.br` e `app.lazaricapital.com.br` já resolvem para a VPS `31.97.130.40`; `lazaritechcapital.com.br` **não resolve**. CONTEXT D-03/05/06 e a memória de DNS concordam. O default `.lazaritechcapital.com.br` do `prod.py` é **stale**.
+   - Resolução no plano: **03-02 Task 2** corrige o default em `prod.py` E **03-02 Task 3** seta `SESSION_COOKIE_DOMAIN=.lazaricapital.com.br` explicitamente no `.env` prod.
 
-3. **O `money` v1.7 atual deve continuar servível durante a virada?** D-04 é hard-cut, mas convém um curto overlap para o smoke. Recommendation: subir `lazari` completo, validar, e só então trocar routers/301 (Pitfall 6).
+2. **Onde mora o Postgres de produção?** — **RESOLVED: serviço dedicado `lazari_db`** em rede interna isolada (padrão crm-voic). Resolução no plano: **03-03** (stack unificado `lazari` inclui `db`).
 
-4. **Worker no go-live?** `processar_billing` existe; `processar_fila_capi` (no stack herdado) **não**. Recommendation: manter só `processar_billing` ou omitir o worker nesta fase.
+3. **O `money` v1.7 atual deve continuar servível durante a virada?** — **RESOLVED: overlap curto controlado.** Subir `lazari` completo, validar healthy, e só então trocar routers/301 (Pitfall 6). Resolução no plano: **03-04** (ordem de cutover deploy→validar→virar, sem prune agressivo).
+
+4. **Worker no go-live?** — **RESOLVED: manter só `processar_billing`.** `processar_fila_capi` (herdado, podado na Phase 1) não existe → remover. Resolução no plano: **03-03 Task 1**.
 
 ## Environment Availability
 
