@@ -86,7 +86,7 @@ de conta deixa o usuário ver status, obter o link de cobrança e cancelar.
   3. O gate libera enquanto trial OU assinatura estiver ativa e bloqueia o acesso após inadimplência/cancelamento, passado o período devido.
   4. A página de conta mostra o status da assinatura, o link de cobrança do Asaas e permite cancelar, sem expor dados sensíveis de pagamento.
 **Plans**: 3 plans in 3 waves
-  - [ ] 02-01-PLAN.md — Checkout hospedado: seed Plano PRO + CpfForm + services.assinar + AssinarView (BILL-02)
+  - [x] 02-01-PLAN.md — Checkout hospedado: seed Plano PRO + CpfForm + services.assinar + AssinarView (BILL-02)
   - [ ] 02-02-PLAN.md — Página de conta + cancelamento (DELETE Asaas, cancel-at-period-end) (ACCT-02)
   - [ ] 02-03-PLAN.md — Gate honra status (3 ramos) + isenção de middleware + ciclo de webhook idempotente (BILL-03, BILL-04)
 **UI hint**: yes
