@@ -1,3 +1,9 @@
+# ⚠️ FALLBACK standalone — NÃO é o deploy canônico de produção.
+# O deploy de produção do `money` (Streamlit) acontece pelo stack UNIFICADO `lazari`
+# em ~/projects/lazari-capital/docker-stack.yml (serviço `money`), onde ele compartilha
+# a overlay com o `lazari_web` e alcança o gate pelo FQDN do Swarm. Este arquivo existe
+# só como referência/fallback de deploy standalone do engine; mantê-lo consistente com
+# o domínio/gate novos, mas o canônico é o stack `lazari`.
 version: "3.8"
 
 services:
@@ -20,7 +26,7 @@ services:
         - traefik.enable=true
         - traefik.docker.network=network_swarm_public
 
-        - traefik.http.routers.money.rule=Host(`money.voictech.com.br`)
+        - traefik.http.routers.money.rule=Host(`app.lazaricapital.com.br`)
         - traefik.http.routers.money.entrypoints=websecure
         - traefik.http.routers.money.tls=true
         - traefik.http.routers.money.tls.certresolver=letsencryptresolver
@@ -30,9 +36,10 @@ services:
         # --- Gate forwardAuth (AUTH-02/AUTH-03) ---
         # O Traefik chama o gate Django (GateView, /gate/) ANTES de rotear ao
         # Streamlit; em 2xx libera e promove `X-User-Email` para o request upstream.
-        # `web` é o serviço Django do lazari-capital — money e web PRECISAM compartilhar
-        # a rede overlay Swarm para o forwardauth.address alcançar web:8000 (RESEARCH A3).
-        - traefik.http.middlewares.lazari-gate.forwardauth.address=http://web:8000/gate/
+        # `lazari_web` é o serviço Django do stack unificado — money e web PRECISAM
+        # compartilhar a overlay Swarm; usar o FQDN do serviço (o nome curto `web` não
+        # resolve entre stacks — Pitfall 1).
+        - traefik.http.middlewares.lazari-gate.forwardauth.address=http://lazari_web:8000/gate/
         - traefik.http.middlewares.lazari-gate.forwardauth.authResponseHeaders=X-User-Email
         - traefik.http.middlewares.lazari-gate.forwardauth.trustForwardHeader=true
         - traefik.http.routers.money.middlewares=lazari-gate
