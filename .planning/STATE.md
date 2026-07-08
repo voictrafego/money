@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comercialização (Lazari Capital)
 status: executing
-stopped_at: Phase 3 context gathered
+stopped_at: Phase 3 — code plans done (03-01/03-02T2/03-03); deploy checkpoints pending
 last_updated: "2026-07-08T18:23:08.391Z"
-last_activity: 2026-07-08 -- Phase 03 planning complete
+last_activity: 2026-07-08 -- Phase 03 code plans executed (landing, prod.py, stack)
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 13
-  completed_plans: 8
-  percent: 62
+  completed_plans: 10
+  percent: 77
 ---
 
 # Project State
@@ -23,16 +23,21 @@ See: .planning/PROJECT.md (updated 2026-07-07)
 **Core value:** O produto cobra de forma confiável e o acesso reflete fielmente o status de
 assinatura — quem paga (ou está em trial) entra, quem não tem assinatura ativa não entra — sem
 nunca prometer recomendação de investimento (software educacional / CVM).
-**Current focus:** Phase 02 — cobran-a-asaas-webhooks-conta
+**Current focus:** Phase 03 — go-live-e2e-pago (deploy checkpoints pendentes)
 
 ## Current Position
 
-Phase: 02 (cobran-a-asaas-webhooks-conta) — COMPLETE
-Plan: 3 of 3 (all executed)
-Status: Ready to execute
-Last activity: 2026-07-08 -- Phase 03 planning complete
+Phase: 03 (go-live-e2e-pago) — IN PROGRESS
+Plans done (código): 03-01 (landing), 03-02 Task 2 (prod.py), 03-03 (stack unificado) — commitados em ambos os repos, 270 testes verdes
+Pendente (checkpoints do usuário, sessão de deploy):
+  - 03-02 Task 1: confirmar DNS grey-cloud (dig www/app → 31.97.130.40)
+  - 03-02 Task 3: criar /opt/lazari-capital/.env prod (chmod 600, segredos Asaas/Resend/DB)
+  - 03-04: build + docker stack deploy lazari na VPS + validar TLS/gate/WS + cutover + cron backup
+  - 03-05: E2E pago (sandbox + smoke real R$19,90 estornado)
+Status: aguardando o usuário para os passos de VPS/segredos/pagamento
+Last activity: 2026-07-08 -- Phase 03 code plans executed
 
-Progress: [██████████] 100%
+Progress: [███████░░░] ~70% (2.5 de 5 planos)
 
 ## Performance Metrics
 
