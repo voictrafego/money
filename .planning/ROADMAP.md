@@ -65,7 +65,12 @@ o Streamlit para quem está autenticado **E** com status ativo/trial — propaga
   3. Usuário loga, desloga e redefine a senha por link enviado ao e-mail — todo o fluxo self-serve, sem intervenção manual.
   4. Dois usuários simultâneos têm contas isoladas e não vazam estado entre sessões.
   5. `status_assinatura` existe como fonte de verdade no Postgres (novo usuário = trial 7 dias) e é o campo que o gate consulta: trial ativo libera, trial expirado bloqueia.
-**Plans**: TBD
+**Plans**: 5 plans in 4 waves
+  - [ ] 01-01-PLAN.md — Fork-and-prune scaffold do lazari-capital (remove leads/dashboard/integrations + papéis; check/migrate/pytest verdes)
+  - [ ] 01-02-PLAN.md — Cadastro self-serve + verificação de e-mail + armar trial 7d + aceite legal
+  - [ ] 01-03-PLAN.md — Login/logout + reset de senha nativo (net-new; ausente no crm-voic)
+  - [ ] 01-04-PLAN.md — Gate Traefik forward-auth (GateView) + página trial-acabou + cookie domínio-pai
+  - [ ] 01-05-PLAN.md — Traefik forwardAuth labels + leitura de X-User-Email no Streamlit + bump streamlit>=1.37
 **UI hint**: yes
 
 ### Phase 2: Cobrança Asaas + Webhooks + Conta
@@ -102,6 +107,6 @@ Fases executam em ordem numérica: 1 → 2 → 3
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1. Fundação — Cadastro, Login, Gate e Trial | v2.0 | 0/TBD | Not started | - |
+| 1. Fundação — Cadastro, Login, Gate e Trial | v2.0 | 0/5 | Planned | - |
 | 2. Cobrança Asaas + Webhooks + Conta | v2.0 | 0/TBD | Not started | - |
 | 3. Go-live E2E pago | v2.0 | 0/TBD | Not started | - |
