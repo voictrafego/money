@@ -102,9 +102,9 @@ ponta a ponta — cuidando de os websockets do Streamlit funcionarem atrás do f
   2. Um teste E2E pago percorre cadastro → trial → pagamento → acesso ao app → cancelamento → bloqueio, e cada transição de status reflete corretamente no acesso.
   3. Os websockets do Streamlit funcionam atrás do gate forward-auth: o app carrega e interage sem quebra de sessão nem loop de autenticação.
 **Plans**: 5 plans in 3 waves
-  - [ ] 03-01-PLAN.md — Landing mínima Lazari Capital (www) re-brandada (D-07/D-08)
+  - [x] 03-01-PLAN.md — Landing mínima Lazari Capital (www) re-brandada (D-07/D-08)
   - [ ] 03-02-PLAN.md — Prep de produção: DNS grey-cloud + .env prod + fix domínio prod.py
-  - [ ] 03-03-PLAN.md — Stack unificado `lazari` (web+worker+db+money, gate FQDN, 301) + backup
+  - [x] 03-03-PLAN.md — Stack unificado `lazari` (web+worker+db+money, gate FQDN, 301) + backup
   - [ ] 03-04-PLAN.md — Deploy + cutover + validação de gate/websockets + cron backup
   - [ ] 03-05-PLAN.md — Teste E2E pago (sandbox + live + smoke real R$19,90 estornado)
 
