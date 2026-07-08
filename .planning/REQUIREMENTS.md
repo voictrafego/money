@@ -32,7 +32,7 @@ verdade de contas/assinaturas no **Postgres**. Asaas em **conta e chave própria
 ### Conta & Multiusuário (ACCT)
 
 - [ ] **ACCT-01**: **Multiusuário real** — cada usuário tem conta isolada e o app serve sessões simultâneas **sem vazar estado** entre usuários.
-- [ ] **ACCT-02**: **Página de conta**: status da assinatura, gerenciar/cancelar e link para a cobrança (Asaas), sem o produto expor dados sensíveis de pagamento.
+- [x] **ACCT-02**: **Página de conta**: status da assinatura, gerenciar/cancelar e link para a cobrança (Asaas), sem o produto expor dados sensíveis de pagamento.
 
 ### Posicionamento & Legal (LEGAL)
 
@@ -73,7 +73,7 @@ verdade de contas/assinaturas no **Postgres**. Asaas em **conta e chave própria
 | BILL-02 | Phase 2 | Complete |
 | BILL-03 | Phase 2 | Pending |
 | BILL-04 | Phase 2 | Pending |
-| ACCT-02 | Phase 2 | Pending |
+| ACCT-02 | Phase 2 | Complete |
 | OPS-01 | Phase 3 | Pending |
 
 **Coverage:** 12 requisitos v2.0 mapeados. Phase 1 = Login/Cadastro + Gate + status de trial

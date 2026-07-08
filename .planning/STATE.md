@@ -4,14 +4,14 @@ milestone: v2.0
 milestone_name: Comercialização (Lazari Capital)
 status: executing
 stopped_at: Phase 2 context gathered
-last_updated: "2026-07-08T13:55:03.697Z"
+last_updated: "2026-07-08T14:06:10.053Z"
 last_activity: 2026-07-08
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 8
-  completed_plans: 6
-  percent: 75
+  completed_plans: 7
+  percent: 88
 ---
 
 # Project State
@@ -28,11 +28,11 @@ nunca prometer recomendação de investimento (software educacional / CVM).
 ## Current Position
 
 Phase: 02 (cobran-a-asaas-webhooks-conta) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-07-08
 
-Progress: [████████░░] 75%
+Progress: [█████████░] 88%
 
 ## Performance Metrics
 
@@ -68,6 +68,7 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - **Asaas em conta e chave próprias** (não as do crm-voic); só a estrutura de código é compartilhada.
 - **Cadastro self-serve** (B2C/trial), diferente do crm-voic (invite-only).
 - **AUTH-04 (reset de senha) na Phase 1**: acopla à camada de auth do app `accounts`; SMTP fica com backend de dev na Phase 1 e é ligado no deploy (Phase 3).
+- **Plan 02-02 (cancel-at-period-end, D-05)**: cancelar chama `DELETE /subscriptions/{id}` e só transiciona local (`CANCELADO` + `grace_ate=paid-through`) APÓS sucesso do DELETE; `grace_ate` reusado como "acesso liberado até" (trial_ate se em trial, senão proximo_vencimento, fim-do-dia aware). `_parse_resposta` trata 204/no-body sem regredir 200+JSON. Página de conta (ACCT-02) sem dado de cartão; anti-IDOR via `request.user.conta`.
 
 ### Pending Todos
 
@@ -95,7 +96,7 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-08T13:55:03.689Z
+Last session: 2026-07-08T14:06:10.050Z
 Stopped at: Phase 2 context gathered
 Resume file: None
 
