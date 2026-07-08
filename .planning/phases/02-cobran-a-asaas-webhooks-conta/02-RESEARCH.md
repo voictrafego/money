@@ -516,18 +516,20 @@ call + discount branch is a safe, optional simplification.
 | A4 | Setting `max_usuarios=1` on the PRO plano fits B2C | Plano seed | If multi-seat is wanted later, re-seed. No risk now. |
 | A5 | `DELETE /v3/subscriptions/{id}` returns 200 with `{deleted: true}` and the client's existing 200-only success path handles it | Pitfall 7 / Code Examples | If DELETE returns 204 (no body), `_parse_resposta` (`resp.json()`) would raise. Planner should verify DELETE response code/body against sandbox and, if needed, special-case 200-no-body in `_request`. |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> Todas as 4 questões foram resolvidas nos planos 02-01/02-02/02-03 (rastreabilidade).
 
 1. **DELETE response shape** — Does Asaas sandbox return 200 (with JSON `{deleted:true}`) or 204 for
    `DELETE /subscriptions/{id}`? `_parse_resposta` requires status 200 AND valid JSON.
-   - Recommendation: verify in sandbox during implementation; if 204/empty, add a no-body branch to `_request`.
+   - **(RESOLVED)** Tratado defensivamente em 02-02 Task 1: `_request`/`_parse_resposta` ganham um ramo no-body (`204` ou corpo vazio → `{}`) sem regredir o caminho 200+JSON; ambos os ramos têm teste. Verificar o shape real no sandbox durante a implementação.
 2. **CPF validation depth** — Validate CPF format only (11 digits + check digits) at the border, or
-   also CNPJ? B2C ⇒ CPF only is likely sufficient; confirm with product.
-3. **Where does [Assinar] live?** The trial-acabou page has a placeholder `#assinar` anchor
-   [VERIFIED: 01-04-SUMMARY Known Stubs]. Wire it to the new `assinar` route; also surface [Assinar]
-   on the account page for expired/cancelled users.
-4. **Should cancelled/suspended users reach checkout to re-subscribe?** (Drives `BillingGateMiddleware`
-   exemption list.) Recommendation: yes — exempt the checkout + account routes.
+   also CNPJ?
+   - **(RESOLVED)** 02-01 Task 2: CPF-only (11 dígitos + dígitos verificadores) na borda do `CpfForm`; CNPJ fora de escopo (B2C).
+3. **Where does [Assinar] live?** trial-acabou placeholder `#assinar` anchor.
+   - **(RESOLVED)** 02-01 Task 3 liga o `#assinar` da trial-acabou à rota `billing-assinar`; 02-02 Task 2 também expõe [Assinar] na página de conta para usuários expirados/cancelados.
+4. **Should cancelled/suspended users reach checkout to re-subscribe?**
+   - **(RESOLVED)** Sim — 02-03 Task 2 adiciona `billing-assinar`/`conta`/`cancelar-assinatura` ao `EXEMPT_URL_NAMES` do `BillingGateMiddleware`.
 
 ## Environment Availability
 
