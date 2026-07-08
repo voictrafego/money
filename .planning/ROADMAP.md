@@ -47,7 +47,7 @@ Capital** — front Django (auth + Asaas + webhooks) na frente, engine Streamlit
 gate Traefik forward-auth, com trial de 7 dias → assinatura mensal, como software educacional.
 
 - [ ] **Phase 1: Fundação — Cadastro, Login, Gate e Trial** - Projeto Django espelhando o crm-voic: cadastro self-serve + login/reset + trial modelado + gate forward-auth + aceite legal
-- [ ] **Phase 2: Cobrança Asaas + Webhooks + Conta** - Assinatura mensal via checkout hospedado Asaas, webhooks nativos idempotentes atualizando o status, página de conta
+- [x] **Phase 2: Cobrança Asaas + Webhooks + Conta** - Assinatura mensal via checkout hospedado Asaas, webhooks nativos idempotentes atualizando o status, página de conta
 - [ ] **Phase 3: Go-live E2E pago** - Deploy integrado (Django + gate + Streamlit) na VPS sob domínio Lazari Capital, segredos fora do git, teste E2E pago completo
 
 ## Phase Details
