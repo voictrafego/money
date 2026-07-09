@@ -17,30 +17,30 @@ verdade de contas/assinaturas no **Postgres**. Asaas em **conta e chave própria
 
 ### Auth & Acesso (AUTH)
 
-- [ ] **AUTH-01**: Usuário faz **cadastro self-serve** (email + senha) e login numa camada Django própria, emitindo uma sessão que governa o acesso ao app.
-- [ ] **AUTH-02**: O app Streamlit só é acessível **autenticado E com trial/assinatura ativa** — acesso direto à URL do Streamlit sem sessão válida é bloqueado pelo gate (Traefik forward-auth), sem vazar a aplicação.
-- [ ] **AUTH-03**: A identidade do usuário autenticado é propagada ao Streamlit de forma confiável (header `X-User-Email` injetado pelo gate), permitindo que o app saiba quem é o usuário da sessão.
-- [ ] **AUTH-04**: Usuário consegue **redefinir a senha** por link enviado ao e-mail (fluxo self-serve, sem intervenção manual).
+- [x] **AUTH-01**: Usuário faz **cadastro self-serve** (email + senha) e login numa camada Django própria, emitindo uma sessão que governa o acesso ao app.
+- [x] **AUTH-02**: O app Streamlit só é acessível **autenticado E com trial/assinatura ativa** — acesso direto à URL do Streamlit sem sessão válida é bloqueado pelo gate (Traefik forward-auth), sem vazar a aplicação.
+- [x] **AUTH-03**: A identidade do usuário autenticado é propagada ao Streamlit de forma confiável (header `X-User-Email` injetado pelo gate), permitindo que o app saiba quem é o usuário da sessão.
+- [x] **AUTH-04**: Usuário consegue **redefinir a senha** por link enviado ao e-mail (fluxo self-serve, sem intervenção manual).
 
 ### Assinatura & Billing (BILL)
 
-- [ ] **BILL-01**: **Trial de 7 dias** ao cadastrar, **sem cobrança imediata e sem cartão**, com data de fim de trial clara para o usuário; o status inicial (`status_assinatura`) já é a fonte de verdade que o gate consulta.
+- [x] **BILL-01**: **Trial de 7 dias** ao cadastrar, **sem cobrança imediata e sem cartão**, com data de fim de trial clara para o usuário; o status inicial (`status_assinatura`) já é a fonte de verdade que o gate consulta.
 - [x] **BILL-02**: Cobrança recorrente **mensal via Asaas** (criação de cliente + assinatura), com **checkout hospedado pelo Asaas** — o produto **nunca** manuseia dados de cartão.
 - [x] **BILL-03**: **Webhooks do Asaas nativos Django** (idempotentes, sem n8n) atualizam o status da assinatura (ativa / inadimplente / cancelada / trial) na fonte de verdade (Postgres).
 - [x] **BILL-04**: O gate lê o status (**trial ativo OU assinatura ativa**) para liberar/bloquear; inadimplência/cancelamento bloqueia o acesso após o período devido.
 
 ### Conta & Multiusuário (ACCT)
 
-- [ ] **ACCT-01**: **Multiusuário real** — cada usuário tem conta isolada e o app serve sessões simultâneas **sem vazar estado** entre usuários.
+- [x] **ACCT-01**: **Multiusuário real** — cada usuário tem conta isolada e o app serve sessões simultâneas **sem vazar estado** entre usuários.
 - [x] **ACCT-02**: **Página de conta**: status da assinatura, gerenciar/cancelar e link para a cobrança (Asaas), sem o produto expor dados sensíveis de pagamento.
 
 ### Posicionamento & Legal (LEGAL)
 
-- [ ] **LEGAL-01**: Copy e features reforçam "**software educacional, sem recomendação**" (sem "compre/venda", sem carteira personalizada); **Termos de Uso + Política de Privacidade + disclaimer** aceitos no cadastro.
+- [x] **LEGAL-01**: Copy e features reforçam "**software educacional, sem recomendação**" (sem "compre/venda", sem carteira personalizada); **Termos de Uso + Política de Privacidade + disclaimer** aceitos no cadastro.
 
 ### Go-live & Operação (OPS)
 
-- [ ] **OPS-01**: Deploy integrado (Django + gate + Streamlit) na VPS (Docker Swarm + Traefik) sob **domínio Lazari Capital**, com segredos (Asaas/DB) fora do git, e teste **E2E pago** (cadastro → trial → pagamento → acesso → cancelamento → bloqueio).
+- [x] **OPS-01**: Deploy integrado (Django + gate + Streamlit) na VPS (Docker Swarm + Traefik) sob **domínio Lazari Capital**, com segredos (Asaas/DB) fora do git, e teste **E2E pago** (cadastro → trial → pagamento → acesso → cancelamento → bloqueio).
 
 ## Future Requirements (pós-v2.0)
 
@@ -63,18 +63,23 @@ verdade de contas/assinaturas no **Postgres**. Asaas em **conta e chave própria
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| AUTH-03 | Phase 1 | Pending |
-| AUTH-04 | Phase 1 | Pending |
-| BILL-01 | Phase 1 | Pending |
-| ACCT-01 | Phase 1 | Pending |
-| LEGAL-01 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Complete |
+| AUTH-02 | Phase 1 | Complete |
+| AUTH-03 | Phase 1 | Complete |
+| AUTH-04 | Phase 1 | Complete |
+| BILL-01 | Phase 1 | Complete |
+| ACCT-01 | Phase 1 | Complete |
+| LEGAL-01 | Phase 1 | Complete |
 | BILL-02 | Phase 2 | Complete |
 | BILL-03 | Phase 2 | Complete |
 | BILL-04 | Phase 2 | Complete |
 | ACCT-02 | Phase 2 | Complete |
-| OPS-01 | Phase 3 | Pending |
+| OPS-01 | Phase 3 | Complete |
 
-**Coverage:** 12 requisitos v2.0 mapeados. Phase 1 = Login/Cadastro + Gate + status de trial
+**Coverage:** 12/12 requisitos v2.0 completos. Phase 1 = Login/Cadastro + Gate + status de trial
 (fundação que Billing consome); Phase 2 = Asaas + webhooks + conta; Phase 3 = deploy E2E pago.
+
+**Status (2026-07-09):** milestone v2.0 funcionalmente completo e no ar. E2E pago validado ao vivo
+(cadastro → trial → pagamento real R$19,90 PIX → webhook prod → acesso). LEGAL-01 fechado com as
+páginas de Termos de Uso + Política de Privacidade (commit lazari-capital 16fdb50). Recomendado:
+revisão jurídica dos documentos legais antes de abrir comercialmente em escala.
