@@ -1,6 +1,17 @@
 [browser]
 gatherUsageStats = false
 
+# Streamlit atrás do Traefik + gate forwardAuth (app.lazaricapital.com.br).
+# Com os defaults (enableCORS/enableXsrfProtection = true) o handshake do
+# WebSocket /_stcore/stream é rejeitado por checagem de origem/XSRF — o app
+# "fica carregando pra sempre". A autenticação é feita pelo gate e o container
+# não publica porta de host (só alcançável via Traefik), então desligar CORS/
+# XSRF aqui é seguro e é a config canônica de reverse-proxy do Streamlit.
+[server]
+enableCORS = false
+enableXsrfProtection = false
+enableWebsocketCompression = false
+
 [theme]
 base = "dark"
 primaryColor = "#00E55F"
