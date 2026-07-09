@@ -32,6 +32,13 @@ import yaml
 
 st.set_page_config(page_title="Analista de Dividendos", layout="wide")
 
+# Logout: o app roda atrás do gate Django (sessão no domínio .lazaricapital.com.br).
+# O botão aponta para o endpoint GET de logout no host www (encerra a sessão e
+# redireciona ao login). Override por env em dev/outros ambientes.
+LOGOUT_URL = os.environ.get(
+    "WWW_LOGOUT_URL", "https://www.lazaricapital.com.br/sair-app/"
+)
+
 
 def _current_user_email() -> str | None:
     """Identidade injetada pelo gate Traefik forwardAuth (AUTH-03). Read-only.
@@ -624,6 +631,9 @@ st.sidebar.caption(
     "rentabilidade passada não garante resultados futuros. Toda decisão de investimento é "
     "de responsabilidade exclusiva do usuário — verifique os dados na fonte (CVM/RI) antes de decidir."
 )
+
+st.sidebar.markdown("---")
+st.sidebar.link_button("Sair", LOGOUT_URL, use_container_width=True)
 
 
 # =========================================================================== #
