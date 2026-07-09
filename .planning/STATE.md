@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comercialização (Lazari Capital)
 status: executing
-stopped_at: Phase 3 — code plans done (03-01/03-02T2/03-03); deploy checkpoints pending
+stopped_at: Phase 3 — GO-LIVE no ar (03-01..03-04 done); falta só o E2E pago (03-05)
 last_updated: "2026-07-08T18:23:08.391Z"
-last_activity: 2026-07-08 -- Phase 03 code plans executed (landing, prod.py, stack)
+last_activity: 2026-07-08 -- Phase 03 deploy ao vivo: Lazari Capital no ar (www+app, TLS, gate, 301, backup)
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 13
-  completed_plans: 10
-  percent: 77
+  completed_plans: 12
+  percent: 92
 ---
 
 # Project State
@@ -23,21 +23,25 @@ See: .planning/PROJECT.md (updated 2026-07-07)
 **Core value:** O produto cobra de forma confiável e o acesso reflete fielmente o status de
 assinatura — quem paga (ou está em trial) entra, quem não tem assinatura ativa não entra — sem
 nunca prometer recomendação de investimento (software educacional / CVM).
-**Current focus:** Phase 03 — go-live-e2e-pago (deploy checkpoints pendentes)
+**Current focus:** Phase 03 — go-live-e2e-pago (produto NO AR; falta só o E2E pago 03-05)
 
 ## Current Position
 
-Phase: 03 (go-live-e2e-pago) — IN PROGRESS
-Plans done (código): 03-01 (landing), 03-02 Task 2 (prod.py), 03-03 (stack unificado) — commitados em ambos os repos, 270 testes verdes
-Pendente (checkpoints do usuário, sessão de deploy):
-  - 03-02 Task 1: confirmar DNS grey-cloud (dig www/app → 31.97.130.40)
-  - 03-02 Task 3: criar /opt/lazari-capital/.env prod (chmod 600, segredos Asaas/Resend/DB)
-  - 03-04: build + docker stack deploy lazari na VPS + validar TLS/gate/WS + cutover + cron backup
-  - 03-05: E2E pago (sandbox + smoke real R$19,90 estornado)
-Status: aguardando o usuário para os passos de VPS/segredos/pagamento
-Last activity: 2026-07-08 -- Phase 03 code plans executed
+Phase: 03 (go-live-e2e-pago) — 4 de 5 planos completos; **GO-LIVE no ar**
+Completos: 03-01 (landing), 03-02 (DNS+.env+prod.py), 03-03 (stack unificado), 03-04 (deploy+cutover+gate+WS+backup)
 
-Progress: [███████░░░] ~70% (2.5 de 5 planos)
+**LAZARI CAPITAL NO AR (2026-07-08):**
+  - www.lazaricapital.com.br → Django (landing/auth/billing), TLS Let's Encrypt
+  - app.lazaricapital.com.br → Analista de Ações (Streamlit) atrás do gate forwardAuth; WS 101 sem loop
+  - money.voictech.com.br → 301/308 → app (cutover do money v1.7 concluído; n8n/crm intactos)
+  - Stack `lazari` (web+db+money+worker) 1/1 healthy; cron de backup diário do lazari_db
+  - Pós-login vai ao produto (app.), não ao /painel/ placeholder do fork
+
+Pendente: **03-05 — E2E pago** (suíte Phase 2 ao vivo + webhook idempotente + transições de status no navegador + 1 cobrança real R$19,90 estornada). Precisa do usuário (pagamento real).
+
+Last activity: 2026-07-08 -- deploy ao vivo Lazari Capital
+
+Progress: [█████████░] ~92% (4 de 5 planos; falta o E2E pago)
 
 ## Performance Metrics
 

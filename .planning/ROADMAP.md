@@ -103,9 +103,9 @@ ponta a ponta — cuidando de os websockets do Streamlit funcionarem atrás do f
   3. Os websockets do Streamlit funcionam atrás do gate forward-auth: o app carrega e interage sem quebra de sessão nem loop de autenticação.
 **Plans**: 5 plans in 3 waves
   - [x] 03-01-PLAN.md — Landing mínima Lazari Capital (www) re-brandada (D-07/D-08)
-  - [ ] 03-02-PLAN.md — Prep de produção: DNS grey-cloud + .env prod + fix domínio prod.py
+  - [x] 03-02-PLAN.md — Prep de produção: DNS grey-cloud + .env prod + fix domínio prod.py
   - [x] 03-03-PLAN.md — Stack unificado `lazari` (web+worker+db+money, gate FQDN, 301) + backup
-  - [ ] 03-04-PLAN.md — Deploy + cutover + validação de gate/websockets + cron backup
+  - [x] 03-04-PLAN.md — Deploy + cutover + validação de gate/websockets + cron backup
   - [ ] 03-05-PLAN.md — Teste E2E pago (sandbox + live + smoke real R$19,90 estornado)
 
 ## Progress
