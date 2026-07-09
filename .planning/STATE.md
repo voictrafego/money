@@ -104,14 +104,17 @@ Items carried forward do fechamento do marco anterior:
 | Docs engine | DDM-DOC-01 (docstring/teste de t em ddm.py, IN-06) | v2+ | 2026-06-04 |
 | Refino | Payout-alvo por setor configurável | v2+ | 2026-06-27 |
 | UI | Sinalização de "ano extraordinário" na tabela de Fundamentos | v2+ | 2026-06-27 |
+| Fiscal/NF | Emissão de NFS-e via módulo nativo do Asaas — config no painel (município homologado + inscrição municipal + certificado A1 + código de serviço/ISS com o contador + emissão automática ao confirmar pagamento). É ação no painel Asaas, não código. | v2.1 | 2026-07-09 |
+| UI | NF-e: exibir link da nota emitida (vem no webhook Asaas) na página "Minha conta" → botão "Baixar nota fiscal". Depende da NF ativa no Asaas. | v2.1 | 2026-07-09 |
 
 ## Session Continuity
 
-Last session: 2026-07-08 (deploy ao vivo — GO-LIVE Lazari Capital)
-Stopped at: Phase 3 — 03-01..03-04 completos e no ar; falta só o 03-05 (E2E pago)
-Resume file: **.planning/phases/03-go-live-e2e-pago/.continue-here.md** (handoff do E2E pago)
+Last session: 2026-07-09 (E2E pago concluído — smoke real R$19,90 PIX confirmado ao vivo)
+Stopped at: Phase 3 COMPLETA (03-01..03-05). Milestone v2.0 (Comercialização/Lazari Capital) fechado.
+Resume file: **.planning/phases/03-go-live-e2e-pago/03-05-SUMMARY.md**
 
 ## Operator Next Steps
 
-- Planejar a Phase 1 com `/gsd-plan-phase 1` (Fundação: cadastro, login, gate e trial).
-- Considerar `/gsd-research-phase 1` para o gate Traefik forward-auth × websockets do Streamlit, se necessário.
+- Estornar (ou não) o smoke real R$19,90 PIX no painel Asaas — decisão do operador (deixado na conta por ora).
+- Arquivar o milestone v2.0 com `/gsd-complete-milestone` quando quiser.
+- Backlog v2.1 (ver Deferred Items): ativar NFS-e no painel Asaas + link da NF na página de conta.
