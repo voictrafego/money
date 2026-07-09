@@ -48,7 +48,7 @@ gate Traefik forward-auth, com trial de 7 dias → assinatura mensal, como softw
 
 - [ ] **Phase 1: Fundação — Cadastro, Login, Gate e Trial** - Projeto Django espelhando o crm-voic: cadastro self-serve + login/reset + trial modelado + gate forward-auth + aceite legal
 - [x] **Phase 2: Cobrança Asaas + Webhooks + Conta** - Assinatura mensal via checkout hospedado Asaas, webhooks nativos idempotentes atualizando o status, página de conta
-- [ ] **Phase 3: Go-live E2E pago** - Deploy integrado (Django + gate + Streamlit) na VPS sob domínio Lazari Capital, segredos fora do git, teste E2E pago completo
+- [x] **Phase 3: Go-live E2E pago** - Deploy integrado (Django + gate + Streamlit) na VPS sob domínio Lazari Capital, segredos fora do git, teste E2E pago completo (smoke real R$19,90 PIX confirmado ao vivo — 2026-07-09)
 
 ## Phase Details
 
@@ -106,7 +106,7 @@ ponta a ponta — cuidando de os websockets do Streamlit funcionarem atrás do f
   - [x] 03-02-PLAN.md — Prep de produção: DNS grey-cloud + .env prod + fix domínio prod.py
   - [x] 03-03-PLAN.md — Stack unificado `lazari` (web+worker+db+money, gate FQDN, 301) + backup
   - [x] 03-04-PLAN.md — Deploy + cutover + validação de gate/websockets + cron backup
-  - [ ] 03-05-PLAN.md — Teste E2E pago (sandbox + live + smoke real R$19,90 estornado)
+  - [x] 03-05-PLAN.md — Teste E2E pago (suíte 226 verde + webhook ao vivo idempotente + smoke real R$19,90 PIX confirmado; estorno pelo usuário)
 
 ## Progress
 
@@ -117,4 +117,4 @@ Fases executam em ordem numérica: 1 → 2 → 3
 |-------|-----------|----------------|--------|-----------|
 | 1. Fundação — Cadastro, Login, Gate e Trial | v2.0 | 0/5 | Planned | - |
 | 2. Cobrança Asaas + Webhooks + Conta | v2.0 | 0/TBD | Not started | - |
-| 3. Go-live E2E pago | v2.0 | 0/5 | Planned | - |
+| 3. Go-live E2E pago | v2.0 | 5/5 | ✅ Complete | 2026-07-09 |
