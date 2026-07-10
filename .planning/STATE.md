@@ -85,7 +85,17 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 
 [From .planning/todos/pending/ — ideas captured during sessions]
 
-None yet.
+- **Review de UX no navegador (2026-07-10)** — 18 achados de acabamento (engine Streamlit) em
+  `.planning/reviews/260710-ux-review-navegador.md`. Semente do **v2.1 (polish de UX)**. Fundação
+  sólida; itens são de acabamento. Top-5 já viraram quick tasks:
+  - `260710-u1f` 🔴 feedback de carregamento (~35s sem spinner no corpo)
+  - `260710-u2r` 🔴 flash de tabela colapsada ao trocar de aba + artefato "0"
+  - `260710-u3g` 🟠 glossário de siglas (tabelas transpostas) + legenda de selos/triângulos
+    (complementa `260704-kps`, que não cobre rótulo de linha)
+  - `260710-u4n` 🟠 padronizar formatação numérica BR (banner `.` vs card `,`; `-0.0%`; `+ -11.17`)
+  - `260710-u5c` 🟡 cópia inconsistente ("3 ferramentas"/"4 menus"/5 itens) + termos
+  - Achados 6–18 (notícias duplicadas, "carteira" engana, menu Streamlit exposto, responsivo não
+    validado, etc.) ficam no doc de review como backlog do v2.1.
 
 ### Blockers/Concerns
 
