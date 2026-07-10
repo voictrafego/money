@@ -39,7 +39,14 @@ Completos: 03-01 (landing), 03-02 (DNS+.env+prod.py), 03-03 (stack unificado), 0
 
 Pendente: **03-05 — E2E pago** (suíte Phase 2 ao vivo + webhook idempotente + transições de status no navegador + 1 cobrança real R$19,90 estornada). Precisa do usuário (pagamento real).
 
-Last activity: 2026-07-10 -- Completed quick task 260710-u5c: renomeia menus/termos + corrige contagem (Top-5 do review UX v2.1 concluído)
+Last activity: 2026-07-10 -- Top-5 do review UX (v2.1) DEPLOYADO na VPS (stack lazari, money:latest e6bf9a9) e validado ao vivo no navegador
+
+**DEPLOY 2026-07-10 (Top-5 review UX):** push origin/main `e6bf9a9` → VPS `/root/money` (backup em
+`/root/money.bak-260710` + `git stash@{0}` "prod-uncommitted-260710-preUX" retido; drift local era
+subconjunto estrito de origin) → `docker build -t money:latest .` (Streamlit 1.59.1, segmented_control ok)
+→ `docker service update --force --image money:latest lazari_money` (converged, 1/1). Validado ao vivo:
+spinner (u1f), abas sem flash + sem "0" (u2r), `R$ 41,57` BR + rótulos (u4n), legendas selo/triângulo +
+glossário (u3g), menus renomeados + contagem (u5c).
 
 Progress: [█████████░] ~92% (4 de 5 planos; falta o E2E pago)
 
