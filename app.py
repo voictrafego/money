@@ -1202,9 +1202,23 @@ if modo.startswith("Analisar"):
                 # Degradação holística (Plan 01): timing_resumo vazio ⇒ sem leitura, sem quebrar a aba.
                 st.caption("Leitura técnica indisponível — histórico insuficiente para os indicadores")
 
-            tab1, tab2, tab3 = st.tabs(["Múltiplos & Crescimento", "Valuation (DDM)", "Fundamentos (10 anos)"])
+            # Sub-seções da análise — quick-260710-u2r: trocamos st.tabs por
+            # st.segmented_control + render condicional. O st.tabs mantém as abas
+            # inativas no DOM (display:none) e o Streamlit as mede com largura 0 na
+            # 1ª pintura → os st.dataframe colapsam para a 1ª coluna por ~2s (achado #2)
+            # e o st.bar_chart de Fundamentos aparecia só com o eixo "0" solto (achado #3).
+            # Renderizando SÓ a seção ativa, nada é medido a largura 0: o flash e o "0"
+            # órfão somem na raiz. A troca de seção dispara rerun, mas a análise é gateada
+            # por session_state["analise_ticker"] (montar() é @st.cache_data), então o
+            # resultado não some — mesmo padrão dos toggles técnicos abaixo. Só
+            # apresentação: nomes, colunas e valores das tabelas seguem intactos.
+            _secoes = ["Múltiplos & Crescimento", "Valuation (DDM)", "Fundamentos (10 anos)"]
+            _aba = st.segmented_control(
+                "Detalhes da análise", _secoes, default=_secoes[0],
+                key="analise_aba", label_visibility="collapsed",
+            ) or _secoes[0]
 
-            with tab1:
+            if _aba == "Múltiplos & Crescimento":
                 cma, cmb = st.columns(2)
                 with cma:
                     st.markdown("**Múltiplos**", help=h("tab_multiplos"))
@@ -1226,7 +1240,7 @@ if modo.startswith("Analisar"):
                         ("Ke (CAPM)", fmt_pct(a.ke)),
                     ], columns=["Indicador", "Valor"]), hide_index=True, use_container_width=True)
 
-            with tab2:
+            elif _aba == "Valuation (DDM)":
                 if a.ddm_constante and a.ddm_h:
                     st.markdown("**Valor intrínseco por Desconto de Dividendos**", help=h("tab_ddm"))
                     st.dataframe(pd.DataFrame([
@@ -1254,7 +1268,7 @@ if modo.startswith("Analisar"):
                 else:
                     st.info("DDM não calculado (faltou Beta/Ke, payout ou crescimento). Veja os alertas acima.")
 
-            with tab3:
+            elif _aba == "Fundamentos (10 anos)":
                 anos = c.anos_ordenados()
                 df = pd.DataFrame({
                     "Ano": anos,
