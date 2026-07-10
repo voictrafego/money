@@ -39,7 +39,7 @@ Completos: 03-01 (landing), 03-02 (DNS+.env+prod.py), 03-03 (stack unificado), 0
 
 Pendente: **03-05 — E2E pago** (suíte Phase 2 ao vivo + webhook idempotente + transições de status no navegador + 1 cobrança real R$19,90 estornada). Precisa do usuário (pagamento real).
 
-Last activity: 2026-07-08 -- deploy ao vivo Lazari Capital
+Last activity: 2026-07-10 -- Completed quick task 260710-u1f: feedback de carregamento nas análises
 
 Progress: [█████████░] ~92% (4 de 5 planos; falta o E2E pago)
 
@@ -104,6 +104,12 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - **Websockets do Streamlit atrás do forward-auth:** o gate não pode quebrar os WS do Streamlit — validar na Phase 3 (e desde a Phase 1 ao montar o gate).
 - **Repo separado:** o projeto Django vive em `~/projects/lazari-capital` (novo `git init`), distinto deste repo (engine Streamlit). Não misturar históricos.
 - **Idempotência dos webhooks:** webhook repetido do Asaas não pode duplicar efeito no status (Phase 2).
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260710-u1f | Feedback de carregamento nas análises (spinner/status em Analisar/Garimpar/Ranking) | 2026-07-10 | 1e6524e | [260710-u1f-feedback-de-carregamento-nas-analises](./quick/260710-u1f-feedback-de-carregamento-nas-analises/) |
 
 ## Deferred Items
 
