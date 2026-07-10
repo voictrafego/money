@@ -10,11 +10,12 @@ from __future__ import annotations
 # Definições individuais (chave curta -> texto do tooltip).
 G: dict[str, str] = {
     "menu": (
-        "**Três ferramentas, na ordem do método:**\n\n"
+        "**As ferramentas, na ordem do método:**\n\n"
         "1. **Analisar uma ação** — estudo a fundo de um papel (múltiplos, valuation por DDM e fundamentos).\n"
-        "2. **Garimpar carteira (BSD)** — passa vários tickers por um filtro de *dividendo grande e seguro*.\n"
+        "2. **Garimpar ações (BSD)** — passa vários tickers por um filtro de *dividendo grande e seguro*.\n"
         "3. **Ranking por múltiplos** — ordena candidatas e estima preço-alvo por regressão.\n\n"
-        "Fluxo sugerido: garimpe → rankeie as melhores → analise as finalistas a fundo."
+        "Fluxo sugerido: garimpe → rankeie as melhores → analise as finalistas a fundo. "
+        "**Comparar ações** e **Análise técnica (timing)** são apoios complementares."
     ),
     "selic": (
         "Taxa básica de juros (meta Selic). Serve de **piso de comparação**: um Dividend Yield "

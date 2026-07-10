@@ -620,12 +620,12 @@ if st.query_params.get("p") == "metodologia":
 modo = st.sidebar.radio(
     "O que você quer fazer?",
     ["Início",  # 1º item → vira o default (radio stateless, sem key=/index=)
-     "Analisar uma ação", "Garimpar carteira (BSD)", "Ranking por múltiplos",
-     "Comparar ações", "Swing trade (análise técnica)"],
+     "Analisar uma ação", "Garimpar ações (BSD)", "Ranking por múltiplos",
+     "Comparar ações", "Análise técnica (timing)"],
     help=h("menu"),
 )
 st.sidebar.markdown("---")
-st.sidebar.metric("Selic (corte do DY)", fmt_pct(selic_atual()), help=h("selic"))
+st.sidebar.metric("Selic (piso do dividend yield)", fmt_pct(selic_atual()), help=h("selic"))
 st.sidebar.caption(f"Janela: {N_ANOS} anos · até {ANO_BASE} (quando já divulgado na CVM)")
 
 st.sidebar.markdown("---")
@@ -727,7 +727,7 @@ def render_home():
 
     st.subheader("Início — seu painel de acompanhamento")
     st.caption("Cotações da sua watchlist e notícias do mercado, num só lugar. "
-               "Os 4 menus ao lado continuam disponíveis.")
+               "Os menus ao lado continuam disponíveis.")
 
     st.markdown("### Minha watchlist")
 
@@ -1318,7 +1318,7 @@ if modo.startswith("Analisar"):
 # 2) GARIMPAR CARTEIRA (BSD)
 # =========================================================================== #
 elif modo.startswith("Garimpar"):
-    st.subheader("Garimpar uma carteira — ranking Big, Safe Dividend (BSD)", help=h("bsd"))
+    st.subheader("Garimpar ações — ranking Big, Safe Dividend (BSD)", help=h("bsd"))
     st.caption("Cole vários tickers (separados por vírgula ou espaço). "
                "BSD > 80 = 'dividendo grande e seguro'.")
     txt = st.text_area("Tickers", value="TAEE11, EGIE3, CMIG4, ALUP11, CPFE3, EQTL3, ITUB4, BBAS3")
@@ -1573,8 +1573,8 @@ elif modo.startswith("Comparar"):
 # =========================================================================== #
 # 4) SWING TRADE (ANÁLISE TÉCNICA) — MVP visual: candlestick intraday/diário
 # =========================================================================== #
-elif modo.startswith("Swing"):
-    st.subheader("Swing trade — leitura técnica do candlestick (intraday/diário)")
+elif modo.startswith("Análise técnica"):
+    st.subheader("Análise técnica (timing) — leitura do candlestick (intraday/diário)")
     st.caption(
         "Visão de candlestick de tickers da B3 via Yahoo (grátis, best-effort com atraso ~15min). "
         "Apenas exibe o gráfico — **não é recomendação de compra ou venda**."
