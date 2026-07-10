@@ -39,7 +39,7 @@ Completos: 03-01 (landing), 03-02 (DNS+.env+prod.py), 03-03 (stack unificado), 0
 
 Pendente: **03-05 — E2E pago** (suíte Phase 2 ao vivo + webhook idempotente + transições de status no navegador + 1 cobrança real R$19,90 estornada). Precisa do usuário (pagamento real).
 
-Last activity: 2026-07-10 -- Completed quick task 260710-u1f: feedback de carregamento nas análises
+Last activity: 2026-07-10 -- Completed quick task 260710-u2r: flash de colapso de tabela ao trocar de aba + artefato "0"
 
 Progress: [█████████░] ~92% (4 de 5 planos; falta o E2E pago)
 
@@ -110,6 +110,7 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260710-u1f | Feedback de carregamento nas análises (spinner/status em Analisar/Garimpar/Ranking) | 2026-07-10 | 1e6524e | [260710-u1f-feedback-de-carregamento-nas-analises](./quick/260710-u1f-feedback-de-carregamento-nas-analises/) |
+| 260710-u2r | Flash de tabela colapsada ao trocar de aba + artefato "0" (st.tabs → segmented_control) | 2026-07-10 | 4268eb9 | [260710-u2r-flash-de-colapso-de-tabela-ao-trocar-aba](./quick/260710-u2r-flash-de-colapso-de-tabela-ao-trocar-aba/) |
 
 ## Deferred Items
 
