@@ -195,16 +195,16 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
                 if flag_dy:
                     motivos.append("DY > 15%")
                 a.veredito = (
-                    f"VERIFICAR — preço R$ {a.preco_atual:.2f} abaixo do intervalo intrínseco "
-                    f"R$ {a.vmin:.2f}–{a.vmax:.2f}, mas sinais de risco ({', '.join(motivos)}) "
+                    f"VERIFICAR — preço R$ {_br(a.preco_atual)} abaixo do intervalo intrínseco "
+                    f"R$ {_br(a.vmin)}–{_br(a.vmax)}, mas sinais de risco ({', '.join(motivos)}) "
                     f"contradizem a tese de desconto: possível divergência de modelo."
                 )
             else:
-                a.veredito = f"SUBAVALIADA — preço R$ {a.preco_atual:.2f} abaixo do intervalo intrínseco R$ {a.vmin:.2f}–{a.vmax:.2f}"
+                a.veredito = f"SUBAVALIADA — preço R$ {_br(a.preco_atual)} abaixo do intervalo intrínseco R$ {_br(a.vmin)}–{_br(a.vmax)}"
         elif a.preco_atual > a.vmax:
-            a.veredito = f"SOBREAVALIADA — preço R$ {a.preco_atual:.2f} acima do intervalo intrínseco R$ {a.vmin:.2f}–{a.vmax:.2f}"
+            a.veredito = f"SOBREAVALIADA — preço R$ {_br(a.preco_atual)} acima do intervalo intrínseco R$ {_br(a.vmin)}–{_br(a.vmax)}"
         else:
-            a.veredito = f"NO INTERVALO — preço R$ {a.preco_atual:.2f} dentro de R$ {a.vmin:.2f}–{a.vmax:.2f}"
+            a.veredito = f"NO INTERVALO — preço R$ {_br(a.preco_atual)} dentro de R$ {_br(a.vmin)}–{_br(a.vmax)}"
 
     # --- Alertas / armadilhas de dividendos (Cap. 6) ---
     if flag_dy:
@@ -398,6 +398,13 @@ def _pct(x: Optional[float]) -> str:
 
 def _num(x: Optional[float], casas: int = 2) -> str:
     return "-" if x is None else f"{x:.{casas}f}"
+
+
+def _br(x: float, casas: int = 2) -> str:
+    """Número no padrão ptBR (milhar '.', decimal ',') para o veredito exibido no app
+    (banner), consistente com fmt_rs de app.py/presentation.py. Só FORMATA — nenhum valor
+    muda. Distinto de _num (superfície CLI, ponto decimal)."""
+    return f"{x:,.{casas}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
 def relatorio_markdown(c: CompanyData, a: AnaliseAcao, cfg: dict) -> str:

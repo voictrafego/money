@@ -270,7 +270,12 @@ N_ANOS = CFG["universo"]["anos_historico"]
 
 
 def fmt_pct(x, casas=1):
-    return "—" if x is None else f"{x*100:.{casas}f}%"
+    if x is None:
+        return "—"
+    v = x * 100
+    if round(v, casas) == 0:  # evita "-0.0%" (zero negativo) → "0.0%"
+        v = 0.0
+    return f"{v:.{casas}f}%"
 
 
 def fmt_num(x, casas=2):
@@ -907,12 +912,12 @@ if modo.startswith("Analisar"):
             intervalo = f"{fmt_rs(a.vmin)} – {fmt_rs(a.vmax)}" if a.vmin is not None and a.vmax is not None else "—"
             m1, m2, m3, m4, m5 = st.columns(5)
             m1.metric("Preço atual", esc_md(fmt_rs(a.preco_atual)), help=h("preco"))
-            m2.metric("Valor intrínseco (DDM)", esc_md(intervalo), help=h("valor_intrinseco"))
+            m2.metric("Intrínseco (DDM)", esc_md(intervalo), help=h("valor_intrinseco"))
             hdr = presentation.header_dy(a.multiplos.get("DY rec."), a.multiplos.get("DY"))
             m3.metric(hdr["label"], hdr["value"], delta=hdr["delta"],
                       delta_color="off", help=hdr["help"])
             m4.metric("ROE", fmt_pct(a.multiplos.get("ROE")), help=h("roe"))
-            m5.metric("Ke (custo capital)", fmt_pct(a.ke), help=h("ke"))
+            m5.metric("Ke (custo)", fmt_pct(a.ke), help=h("ke"))
 
             if a.preco_atual is None:
                 st.warning(
@@ -1025,7 +1030,7 @@ if modo.startswith("Analisar"):
                                      "P/VP": st.column_config.Column("P/VP", help=h("pvp")),
                                      "ROE": st.column_config.Column("ROE", help=h("roe")),
                                      "DY": st.column_config.Column("DY", help=h("dy")),
-                                     "Valor de Mercado": st.column_config.Column("Valor de Mercado", help=h("valor_mercado")),
+                                     "Valor de Mercado": st.column_config.Column("Valor de Mercado", help=h("valor_mercado"), width="medium"),
                                  })
                     st.caption("➤ marca o ticker analisado. Contexto de comparação — não é ranking nem recomendação.")
                 else:
@@ -1455,8 +1460,10 @@ elif modo.startswith("Ranking"):
                              "Veredito": st.column_config.Column("Veredito", help=h("veredito")),
                          })
             if reg:
-                st.caption(f"Regressão: P/L = {reg.coeficientes[0]:.2f} + {reg.coeficientes[1]:.2f}·payout "
-                           f"+ {reg.coeficientes[2]:.2f}·ROE  (R²={reg.r2:.2f}, n={reg.n})")
+                _t_payout = f"{'−' if reg.coeficientes[1] < 0 else '+'} {abs(reg.coeficientes[1]):.2f}·payout"
+                _t_roe = f"{'−' if reg.coeficientes[2] < 0 else '+'} {abs(reg.coeficientes[2]):.2f}·ROE"
+                st.caption(f"Regressão: P/L = {reg.coeficientes[0]:.2f} {_t_payout} "
+                           f"{_t_roe}  (R²={reg.r2:.2f}, n={reg.n})")
                 # RANK-CONF-01: amostra pequena → regressão instável, veredito pouco confiável.
                 if reg.amostra_pequena:
                     st.warning(

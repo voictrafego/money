@@ -173,8 +173,10 @@ def cmd_rank(args, cfg):
         nota = f"{r['nota']:.1f}" if r["nota"] is not None else "-"
         print(f"{i:>2} {r['empresa']:10} {nota:>6}  {alvo:>9}  {up:>7}")
     if reg:
-        print(f"\nRegressão P/L = {reg.coeficientes[0]:.2f} + {reg.coeficientes[1]:.2f}·DP "
-              f"+ {reg.coeficientes[2]:.2f}·ROE  (R²={reg.r2:.2f}, n={reg.n})", file=sys.stderr)
+        _t_dp = f"{'−' if reg.coeficientes[1] < 0 else '+'} {abs(reg.coeficientes[1]):.2f}·DP"
+        _t_roe = f"{'−' if reg.coeficientes[2] < 0 else '+'} {abs(reg.coeficientes[2]):.2f}·ROE"
+        print(f"\nRegressão P/L = {reg.coeficientes[0]:.2f} {_t_dp} "
+              f"{_t_roe}  (R²={reg.r2:.2f}, n={reg.n})", file=sys.stderr)
     return 0
 
 
