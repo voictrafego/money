@@ -1192,6 +1192,19 @@ if modo.startswith("Analisar"):
                         legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
                     )
                     st.plotly_chart(fig, width="stretch")
+                    # Legenda dos triângulos (quick-260710-u3g #7): os marcadores só tinham hover;
+                    # aqui a legenda fixa nomeia o que cada cor representa. Sinais de timing,
+                    # consultivos — nunca ordem de compra/venda (subordinados ao fundamento).
+                    if marcadores:
+                        st.caption(
+                            "**Marcadores no gráfico** (sinais de *timing*, consultivos — nunca ordem): "
+                            "▲ triângulo **verde** = fortalecimento da tendência "
+                            "(*golden cross* MM50×MM200 ou rompimento da máxima de Donchian); "
+                            "▼ triângulo **vermelho** = enfraquecimento "
+                            "(*death cross* ou perda da mínima de Donchian). "
+                            "Passe o mouse em cada marcador para ver o evento e a data.",
+                            help=h("tec_indicadores"),
+                        )
 
             # Enquadramento subordinado (UI-06): o veredito fundamentalista (acima) é o selo
             # decisório; a leitura técnica é CONSULTIVA e secundária — markdown/caption discreto,
@@ -1234,6 +1247,10 @@ if modo.startswith("Analisar"):
                     rows = presentation.linhas_multiplos(a.multiplos, payout_ult, payout_proj)
                     st.dataframe(pd.DataFrame(rows, columns=["Múltiplo", "Valor"]),
                                  hide_index=True, use_container_width=True)
+                    # UX (quick-260710-u3g #5): tabela transposta — o help= por coluna não pega o
+                    # rótulo de LINHA, então o glossário das siglas fica alcançável neste expander.
+                    with st.expander("O que cada sigla significa"):
+                        st.markdown(h("tab_multiplos"))
                 with cmb:
                     st.markdown("**Crescimento e custo de capital**", help=h("tab_crescimento"))
                     st.dataframe(pd.DataFrame([
@@ -1244,6 +1261,9 @@ if modo.startswith("Analisar"):
                         ("Beta", fmt_num(a.beta)),
                         ("Ke (CAPM)", fmt_pct(a.ke)),
                     ], columns=["Indicador", "Valor"]), hide_index=True, use_container_width=True)
+                    # UX (quick-260710-u3g #5): idem — glossário das siglas de crescimento/Ke.
+                    with st.expander("O que cada sigla significa"):
+                        st.markdown(h("tab_crescimento"))
 
             elif _aba == "Valuation (DDM)":
                 if a.ddm_constante and a.ddm_h:
@@ -1358,6 +1378,17 @@ elif modo.startswith("Garimpar"):
                              "Fatores faltando": st.column_config.Column("Fatores faltando", help=h("fatores_faltando")),
                              "Setor": st.column_config.Column("Setor", help=h("setor")),
                          })
+            # Legenda dos selos (quick-260710-u3g #6): a coluna Selo é só a bolinha; a régua de
+            # cores vem dos MESMOS cortes de config que o selo usa (selo.cor_do_bsd) — fiel, sem recálculo.
+            _cor = CFG["selo"]["cor"]
+            st.caption(
+                f"**Legenda do selo** (cor = nota BSD): 🟢 verde ≥ {_cor['verde_min']} · "
+                f"🔵 azul {_cor['azul_min']}–{_cor['verde_min'] - 1} · "
+                f"🟡 amarelo {_cor['amarelo_min']}–{_cor['azul_min'] - 1} · "
+                f"🔴 vermelho < {_cor['amarelo_min']}. Verde/azul = qualidade **Alta**; "
+                "amarelo/vermelho = qualidade **Baixa**. Triagem visual, não recomendação.",
+                help=h("selo"),
+            )
             st.warning("**BSD > 80 sem 'Passa filtros' NÃO é recomendação.** O BSD é uma nota "
                        "de estabilidade do dividendo; o corte por Selic (DY > Selic) e os demais "
                        "filtros vivem na coluna 'Passa filtros'. Comece pelas que passam nos filtros.")
@@ -1459,6 +1490,16 @@ elif modo.startswith("Ranking"):
                              "Upside": st.column_config.Column("Upside", help=h("upside")),
                              "Veredito": st.column_config.Column("Veredito", help=h("veredito")),
                          })
+            # Legenda dos selos (quick-260710-u3g #6): mesma régua de config do Garimpar.
+            _cor = CFG["selo"]["cor"]
+            st.caption(
+                f"**Legenda do selo** (cor = nota BSD): 🟢 verde ≥ {_cor['verde_min']} · "
+                f"🔵 azul {_cor['azul_min']}–{_cor['verde_min'] - 1} · "
+                f"🟡 amarelo {_cor['amarelo_min']}–{_cor['azul_min'] - 1} · "
+                f"🔴 vermelho < {_cor['amarelo_min']}. Verde/azul = qualidade **Alta**; "
+                "amarelo/vermelho = qualidade **Baixa**. Triagem visual, não recomendação.",
+                help=h("selo"),
+            )
             if reg:
                 _t_payout = f"{'−' if reg.coeficientes[1] < 0 else '+'} {abs(reg.coeficientes[1]):.2f}·payout"
                 _t_roe = f"{'−' if reg.coeficientes[2] < 0 else '+'} {abs(reg.coeficientes[2]):.2f}·ROE"

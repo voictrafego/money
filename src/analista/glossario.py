@@ -45,11 +45,17 @@ G: dict[str, str] = {
     "tab_multiplos": (
         "**Múltiplos**\n\n"
         "- **ML — Margem Líquida**: lucro líquido ÷ vendas. Quanto da receita vira lucro.\n"
-        "- **ROE**: lucro ÷ patrimônio líquido (rentabilidade do capital próprio).\n"
+        "- **ROE — Retorno sobre o Patrimônio**: lucro ÷ patrimônio líquido (rentabilidade do capital próprio).\n"
         "- **P/L — Preço/Lucro**: quantas vezes o preço cabe no lucro por ação (≈ anos para recuperar o investido).\n"
         "- **EY — Earnings Yield**: lucro por ação ÷ preço (o inverso do P/L), comparável a juros.\n"
-        "- **DP — Payout**: % do lucro distribuído como proventos. Acima de 100% é alerta.\n"
-        "- **DY — Dividend Yield**: proventos ÷ preço, em %."
+        "- **CDC — Cobertura de Dividendos pelo Caixa**: (fluxo de caixa operacional ÷ nº de ações) ÷ dividendo por "
+        "ação. Mede se o caixa da operação cobre os proventos pagos; **acima de 1 é adequado** (ex.: 1,50 = o caixa "
+        "cobriu 1,5× o dividendo).\n"
+        "- **Payout (último ano)**: % do lucro do exercício mais recente distribuído como proventos. Acima de 100% é alerta.\n"
+        "- **Payout p/ valuation (sustentável)**: mediana histórica do payout, usada pelo DDM (mais robusta a anos atípicos).\n"
+        "- **DY — Dividend Yield**: proventos ÷ preço, em %.\n"
+        "- **DY rec. — DY recorrente**: DY calculado sobre o provento normalizado/sustentável (exclui extraordinários), "
+        "leitura mais conservadora."
     ),
     "tab_crescimento": (
         "**Crescimento e custo de capital**\n\n"
