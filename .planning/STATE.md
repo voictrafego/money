@@ -39,7 +39,7 @@ Completos: 03-01 (landing), 03-02 (DNS+.env+prod.py), 03-03 (stack unificado), 0
 
 Pendente: **03-05 — E2E pago** (suíte Phase 2 ao vivo + webhook idempotente + transições de status no navegador + 1 cobrança real R$19,90 estornada). Precisa do usuário (pagamento real).
 
-Last activity: 2026-07-10 -- Completed quick task 260710-u3g: glossário de siglas + legenda de selos e triângulos
+Last activity: 2026-07-10 -- Completed quick task 260710-u5c: renomeia menus/termos + corrige contagem (Top-5 do review UX v2.1 concluído)
 
 Progress: [█████████░] ~92% (4 de 5 planos; falta o E2E pago)
 
@@ -113,6 +113,7 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 | 260710-u2r | Flash de tabela colapsada ao trocar de aba + artefato "0" (st.tabs → segmented_control) | 2026-07-10 | 4268eb9 | [260710-u2r-flash-de-colapso-de-tabela-ao-trocar-aba](./quick/260710-u2r-flash-de-colapso-de-tabela-ao-trocar-aba/) |
 | 260710-u4n | Formatação numérica BR no veredito + nits (-0.0%, sinal regressão, rótulos) | 2026-07-10 | 3a04ac8 | [260710-u4n-padronizar-formatacao-numerica-br](./quick/260710-u4n-padronizar-formatacao-numerica-br/) |
 | 260710-u3g | Glossário de siglas (tabelas transpostas) + legenda de selos e triângulos | 2026-07-10 | fa1cc4f | [260710-u3g-glossario-siglas-legenda-selos-e-triangulos](./quick/260710-u3g-glossario-siglas-legenda-selos-e-triangulos/) |
+| 260710-u5c | Renomeia menus/termos (Garimpar ações, Selic piso DY, Análise técnica) + corrige contagem | 2026-07-10 | 7d8d70b | [260710-u5c-consistencia-de-copia-contagem-menus](./quick/260710-u5c-consistencia-de-copia-contagem-menus/) |
 
 ## Deferred Items
 
