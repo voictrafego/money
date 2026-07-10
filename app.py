@@ -843,21 +843,35 @@ if modo.startswith("Analisar"):
 
     ticker_ativo = st.session_state.get("analise_ticker")
     if ticker_ativo:
-        with st.spinner(f"Coletando dados de {ticker_ativo} (CVM + Yahoo)..."):
+        # UX (quick-260710-u1f): feedback no CORPO da página durante os ~35s de coleta.
+        # st.status mostra o passo atual (CVM/Yahoo → BCB → valuation) em vez de deixar a
+        # tela parada com só o ícone do Streamlit no canto. Apenas apresentação — nenhum
+        # cálculo do método muda; as chamadas são as mesmas, só embrulhadas no status.
+        with st.status(f"Analisando {ticker_ativo}… (pode levar ~30s)", expanded=True) as _status:
+            st.write("Baixando fundamentos (CVM) e preço/dividendos (Yahoo)…")
             c = montar(ticker_ativo, ANO_BASE, N_ANOS)
-        if c is None or not c.anos:
+            _dados_ok = c is not None and c.anos
+            if _dados_ok:
+                st.write("Selic/IPCA (BCB) para o custo de capital…")
+                # FIX-03: injeta o rf do CAPM em CFG antes da engine. Rf = Selic through-the-cycle
+                # (média ~10 anos), não a spot — numa perpetuidade a taxa reflete o juro de LP (a
+                # sidebar/corte de DY seguem na Selic spot via selic_atual()). @st.cache_data
+                # garante UMA chamada de rede por execução. app.py segue read-only.
+                CFG["capm"]["rf_local"] = rf_capm(
+                    CFG["capm"]["selic_fallback"], CFG["capm"].get("rf_ciclo_anos", 10)
+                )
+                st.write("Calculando valuation (DDM + múltiplos)…")
+                a = report.analisar_acao(c, CFG)
+                _status.update(label=f"Análise de {ticker_ativo} concluída",
+                               state="complete", expanded=False)
+            else:
+                _status.update(label=f"Sem dados suficientes para {ticker_ativo}",
+                               state="error", expanded=False)
+
+        if not _dados_ok:
             st.error(f"Não encontrei dados suficientes para {ticker_ativo}. "
                      "Confira o ticker ou adicione o mapeamento em data/ticker_map.json.")
         else:
-            # FIX-03: injeta o rf do CAPM em CFG antes da engine. Rf = Selic through-the-cycle
-            # (média ~10 anos), não a spot — numa perpetuidade a taxa reflete o juro de LP (a
-            # sidebar/corte de DY seguem na Selic spot via selic_atual()). @st.cache_data
-            # garante UMA chamada de rede por execução. app.py segue read-only.
-            CFG["capm"]["rf_local"] = rf_capm(
-                CFG["capm"]["selic_fallback"], CFG["capm"].get("rf_ciclo_anos", 10)
-            )
-            a = report.analisar_acao(c, CFG)
-
             st.markdown(f"### {a.ticker} — {a.nome}")
             st.caption(f"Setor: {a.setor or '—'}  ·  Estágio: {a.estagio}")
 
@@ -1278,10 +1292,13 @@ elif modo.startswith("Garimpar"):
             if c is not None and c.anos:
                 empresas.append(c)
             prog.progress((i + 1) / len(tickers), text=f"Coletando {t}...")
-        prog.empty()
         if not empresas:
+            prog.empty()
             st.error("Nenhuma empresa com dados suficientes.")
         else:
+            # UX (quick-260710-u1f): mantém o feedback no corpo durante a consolidação
+            # (Selic/BCB + BSD + filtros) em vez de esvaziar a barra e "sumir" a tela.
+            prog.progress(1.0, text="Consolidando ranking (BSD + filtros)…")
             selic = selic_atual()
             csc = CFG["screening"]["custom"]
             bsd = sc.bsd_ranking(empresas, pesos=CFG["screening"]["bsd"]["pesos"],
@@ -1310,6 +1327,7 @@ elif modo.startswith("Garimpar"):
             # ANTES do BSD para que quem reprova no corte não apareça no topo.
             df = pd.DataFrame(rows).sort_values(["_passou", "BSD"], ascending=[False, False])
             df = df.drop(columns=["_passou"])
+            prog.empty()
             st.dataframe(df, hide_index=True, use_container_width=True,
                          column_config={
                              "Ticker": st.column_config.Column("Ticker", help=h("ticker")),
@@ -1355,10 +1373,13 @@ elif modo.startswith("Ranking"):
             if c is not None and c.anos:
                 empresas.append(c)
             prog.progress((i + 1) / len(tickers), text=f"Coletando {t}...")
-        prog.empty()
         if not empresas:
+            prog.empty()
             st.error("Nenhuma empresa com dados suficientes.")
         else:
+            # UX (quick-260710-u1f): feedback no corpo enquanto roda a regressão/ranking,
+            # em vez de esvaziar a barra e deixar a tela parada.
+            prog.progress(1.0, text="Calculando ranking e preço-alvo (regressão)…")
             nomes, ML, ROE, PL, EY, DP = [], [], [], [], [], []
             for c in empresas:
                 # FIX-04: ROE/LPA de valuation saem dos métodos canônicos normalizados —
@@ -1407,6 +1428,7 @@ elif modo.startswith("Ranking"):
                     "Upside": upside_txt,
                     "Veredito": veredito,
                 })
+            prog.empty()
             st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True,
                          column_config={
                              "Ticker": st.column_config.Column("Ticker", help=h("ticker")),
