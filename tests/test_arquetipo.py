@@ -26,6 +26,34 @@ from analista.core.fundamentals import CompanyData
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+# --- Séries REAIS de lucro líquido (CVM DFP, cache offline em data/cvm/) --------- #
+# Congeladas como literais (determinístico, sem rede/cache no teste). Derivadas via
+# `ingest.cvm.fundamentos_do_ano(cd_cvm, ano)` para os anos 2015-2023 durante o
+# desenvolvimento do 01-05. Fonte empírica: 01-AUDIT-COERENCIA.md (2/setor) e
+# 01-VERIFICATION.md. Substituem as progressões geométricas sintéticas (1.18**i),
+# que não replicam a variância de TAXA de crescimento de nenhuma empresa real
+# (Gap 1 / CR-01: o golden suave mascarava o misroute de WEGE3 real → ciclica).
+#
+# Compounders / defensivos (resid log-linear baixo — não cíclicos):
+LL_WEGE3 = [1165810000, 1127832000, 1140942000, 1344148000, 1632455000,   # cd_cvm 5410
+            2395957000, 3657480000, 4272872000, 5867615000]               # 2015-2023
+LL_RADL3 = [339785000, 451252000, 512653000, 509313000, 788735000,        # cd_cvm 5258
+            495533000, 764133000, 1014968000, 1087143000]                 # 2015-2023
+LL_ABEV3 = [12879141000, 13083397000, 7850504000, 11377427000, 12188332000,  # cd_cvm 23264
+            11731909000, 13122582000, 14891291000, 14960459000]              # 2015-2023
+LL_LREN3 = [578838000, 625058000, 732679000, 1020136000, 1099093000,      # cd_cvm 8133
+            1096269000, 633112000, 1291704000, 976259000]                 # 2015-2023
+# Cíclicas genuínas (ano(s) de prejuízo na janela → evidência cíclica forte):
+LL_VALE3 = [-45996622000, 13296496000, 17669992000, 25773768000, -8696040000,  # cd_cvm 4170
+            24902341000, 121343000000, 96337000000, 40554000000]               # 2015-2023
+LL_GGBR4 = [-4595986000, -2885929000, -338667000, 2326382000, 1216887000,  # cd_cvm 3980
+            2388054000, 15558938000, 11479552000, 7536983000]              # 2015-2023
+LL_SUZB3 = [-925354000, 1691998000, 1807433000, 318460000, -2814742000,    # cd_cvm 13986
+            -10714935000, 8635532000, 23394887000, 14106381000]            # 2015-2023
+LL_PETR4 = [-35171000000, -13045000000, 377000000, 26698000000, 40970000000,  # cd_cvm 9512
+            6246000000, 107264000000, 189005000000, 125166000000]             # 2015-2023
+
+
 def _cfg() -> dict:
     with open(os.path.join(ROOT, "config.yaml"), encoding="utf-8") as f:
         return yaml.safe_load(f)
@@ -109,19 +137,42 @@ def test_roe_alto_retencao_alta_vira_crescimento():
     assert r.fronteirico is False
 
 
-def test_compounder_realista_wege_vira_crescimento():
-    # Réplica de compounder REAL (WEGE3-shape): crescimento composto forte e MONOTÔNICO
-    # (>=15%/ano por 10 anos), payout baixo (retenção alta) e ROE de valuation ~0.25
-    # (WEGE3 real ≈0.258). A tendência de alta domina o CV do lucro CRU (~0.46 > 0.40),
-    # que hoje faz o compounder cair falsamente em 'ciclica' com fronteiriço (Gap 1 / CR-01
-    # da 01-VERIFICATION.md). Um sinal de ciclicidade correto mede a OSCILAÇÃO detrended, não
-    # o nível bruto: retornos ano-a-ano quase constantes → NÃO cíclica → crescimento limpo.
-    lucros = [round(1000 * (1.18 ** i)) for i in range(10)]
-    c = _empresa("WEGE3", "Máquinas e Equipamentos", lucros, payout=0.20, pl=15000.0)
+def test_compounder_real_wege_vira_crescimento():
+    # WEGE3 REAL (cd_cvm 5410, 2015-2023): compounder de crescimento DESIGUAL (retornos
+    # ano-a-ano de -3,3% a +52,6%), não uma progressão geométrica suave. O sinal antigo
+    # (CV dos retornos, ≈0.80) misrouteava para 'ciclica'/fronteiriço (Gap 1 / CR-01 /
+    # 01-VERIFICATION.md), porque penalizava a variância da TAXA de crescimento. O sinal
+    # correto (dispersão dos resíduos de ajuste log-linear, ≈0.174) só mede desvio da
+    # TENDÊNCIA: monotônico gruda na reta → NÃO cíclica → crescimento limpo.
+    c = _empresa("WEGE3", "Máquinas e Equipamentos", LL_WEGE3, payout=0.446, pl=17854776000.0)
     r = classificar(c, _cfg())
     assert r.chave == CRESCIMENTO
     assert r.fronteirico is False
     assert CICLICA not in r.candidatos
+
+
+def test_compounder_real_radl_vira_crescimento():
+    # RADL3 REAL (cd_cvm 5258, 2015-2023): compounder de saúde/varejo farma. Crescimento
+    # desigual (queda em 2020), mas ancorado na tendência (resid log-linear ≈0.156).
+    c = _empresa("RADL3", "Comércio e Distribuição", LL_RADL3, payout=0.30, pl=6028301000.0)
+    r = classificar(c, _cfg())
+    assert r.chave == CRESCIMENTO
+    assert CICLICA not in r.candidatos
+
+
+def test_ciclica_real_vale_permanece_ciclica():
+    # VALE3 REAL (cd_cvm 4170): commodity com anos de prejuízo (2015, 2019) → cíclica genuína.
+    c = _empresa("VALE3", "Mineração", LL_VALE3, payout=0.80, pl=198325000000.0)
+    r = classificar(c, _cfg())
+    assert r.chave == CICLICA
+
+
+def test_ciclica_real_ggbr_com_prejuizo_permanece_ciclica():
+    # GGBR4 REAL (cd_cvm 3980): siderurgia com 3 anos de prejuízo (2015-2017). Prejuízo = log
+    # indefinido → tratado como evidência cíclica (override precede o guard de <3 pontos).
+    c = _empresa("GGBR4", "Siderurgia e Metalurgia", LL_GGBR4, payout=0.80, pl=49238863000.0)
+    r = classificar(c, _cfg())
+    assert r.chave == CICLICA
 
 
 # --- Fronteiriço honesto (ARQ-02) --------------------------------------------- #
