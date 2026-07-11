@@ -4,14 +4,14 @@ milestone: v2.2
 milestone_name: Motor de Valuation por Arquétipo
 status: verifying
 stopped_at: Phase 1 context gathered
-last_updated: "2026-07-11T16:33:56.582Z"
+last_updated: "2026-07-11T17:26:50.378Z"
 last_activity: 2026-07-11
 progress:
   total_phases: 3
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
-  percent: 100
+  completed_phases: 0
+  total_plans: 4
+  completed_plans: 3
+  percent: 75
 ---
 
 # Project State
@@ -32,7 +32,7 @@ Plan: 2 of 2
 Status: Phase complete — ready for verification
 Last activity: 2026-07-11
 
-Progress: [██████████] 100%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Progress: [██████████] 100%
 *Updated after each plan completion*
 | Phase 01 P01 | 0h30m | 2 tasks | 3 files |
 | Phase 01 P02 | 0h35m | 3 tasks | 5 files |
+| Phase 01 P03 | 0h20m | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,7 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - [Phase ?]: candidatos sempre populado no ResultadoArquetipo; o flag fronteirico é o que distingue conflito real de rota crava
 - [Phase 01]: Roteamento por arquétipo plugado no funil analisar_acao é aditivo/read-only — DDM roda sempre como lente; a suspensão D-04 só troca o texto do veredito primário
 - [Phase 01]: Suspensão D-04 é genérica por motor_pendente e reusa o prefixo VERIFICAR — preserva o firewall selo↛report sem tocar selo.py/ddm.py
+- [Phase 01]: Sinal de ciclicidade = CV dos retornos ano-a-ano (detrended), não do nível bruto — fecha CR-01/Gap 1 (WEGE3 deixa de misroutar para cíclica)
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -129,7 +131,7 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-11T16:32:06.260Z
+Last session: 2026-07-11T17:25:25.083Z
 Stopped at: Phase 1 context gathered
 Resume file: None
 
