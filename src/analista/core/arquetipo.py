@@ -40,14 +40,17 @@ CICLICA = "ciclica"                  # lucro oscilante → lucro normalizado
 CRESCIMENTO = "crescimento"          # ROE alto + retenção → DCF multi-estágio (compounder)
 HOLDING = "holding"                  # participações → NAV/SOTP (stretch)
 
-# Registry arquétipo → motor primário (ENG-01). Só pagadora_regulada tem motor nesta
-# fase (DDM); os outros 4 ficam None até a Fase 2 plugar seus motores no registry.
+# Registry arquétipo → motor primário (ENG-01). A Fase 2 plugou os 4 motores que faltavam
+# (RIM/lucro normalizado/DCF/NAV do core/motores.py) — registry 5/5 preenchido. Os ids batem
+# 1:1 com o dispatch no funil (report.analisar_acao) e com o predicado de suspensão do veredito
+# (motor != "ddm"): o selo ainda consome só o DDM até VER-01/Fase 3, então onde o motor do
+# arquétipo não é o DDM o veredito de preço segue SUSPENSO (D-06) para não regredir o ITUB4.
 ARQUETIPO_MOTOR = {
-    FINANCEIRA: None,
+    FINANCEIRA: "rim",
     PAGADORA_REGULADA: "ddm",
-    CICLICA: None,
-    CRESCIMENTO: None,
-    HOLDING: None,
+    CICLICA: "normalizado",
+    CRESCIMENTO: "dcf",
+    HOLDING: "nav",
 }
 
 

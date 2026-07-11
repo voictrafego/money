@@ -13,8 +13,9 @@ from typing import Dict, List, Optional
 import pandas as pd
 from tabulate import tabulate
 
-from ..core import arquetipo, capm, ddm, growth, indicators, lifecycle, screening
+from ..core import arquetipo, capm, ddm, growth, indicators, lentes, lifecycle, motores, screening
 from ..core import multiples as mult
+from ..core import normalizacao as norm
 from ..core.fundamentals import CompanyData
 from . import selo as selo_mod
 
@@ -54,6 +55,9 @@ class AnaliseAcao:
     arquetipo_fronteirico: bool = False                    # conflito real de sinais (ARQ-02)
     arquetipo_candidatos: List[str] = field(default_factory=list)  # candidatos do funil (fallback honesto)
     motor_pendente: bool = False                           # True quando o motor do arquétipo chega só na Fase 2 (D-04)
+    # --- Fase 2 v2.2: intrínseco pelo motor do arquétipo (aditivo; motor CALCULA e EXIBE, D-06) ---
+    intrinseco_motor: Optional[float] = None               # valor intrínseco pelo motor primário do arquétipo (None se degradou)
+    motor_rotulo: str = ""                                  # rótulo humano do motor (motores.MOTOR_ROTULO)
     # --- Fase 3 v2.2 (Achado 2 / SAN-01): guarda-corpo do DDM ---
     ddm_inaplicavel: bool = False                          # True quando a faixa DDM saiu negativa/degenerada (suprimida na borda)
 
@@ -184,6 +188,43 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     motor = arquetipo.ARQUETIPO_MOTOR.get(arq.chave)
     a.motor = motor or "pendente_fase_2"
     a.motor_pendente = motor is None
+
+    # --- Dispatch do motor do arquétipo (Fase 2 v2.2, ENG-02..05) ---
+    # O motor primário resolvido CALCULA e GRAVA o intrínseco do arquétipo (D-06: motor
+    # calcula e EXIBE; o selo NÃO consome ainda — VER-01/Fase 3). Consome SEMPRE os números
+    # já-síntese (*_valuation / base_normalizada / lentes.vpa), NUNCA o cru (Pitfall 2/FIX-04).
+    # Motores são never-raise (devolvem None sob dado degenerado). O bloco DDM abaixo continua
+    # rodando SEMPRE (agora como lente conservadora onde motor != "ddm") — cálculo intocado.
+    a.motor_rotulo = motores.MOTOR_ROTULO.get(a.motor, "")
+    if a.motor == "rim":
+        res_rim = motores.rim(
+            vpa0=lentes.vpa(c.patrimonio_liquido.get(ult), c.num_acoes.get(ult)),
+            roe0=c.roe_valuation(),
+            ke=motores.ke_rim(c.beta, cfg),
+            retencao=(1.0 - (c.payout_valuation() or 0.0)),
+            n=cfg["motores"]["rim"]["n_fade"],
+        )
+        a.intrinseco_motor = res_rim.valor_intrinseco if res_rim else None
+    elif a.motor == "normalizado":
+        cic = cfg["motores"]["ciclica"]
+        lpa_mid = mult.lpa(
+            norm.base_normalizada(
+                c.serie("lucro_liquido"),
+                anos_media=cic["anos_media"], winsor=cic["winsor"],
+            ),
+            c.num_acoes.get(ult),
+        )
+        a.intrinseco_motor = motores.lucro_normalizado(lpa_mid, a.ke, g_estavel)
+    elif a.motor == "dcf":
+        a.intrinseco_motor = motores.dcf_crescimento(
+            c.lpa_valuation(), a.g_alto, g_estavel, a.ke,
+            cfg["motores"]["crescimento"]["n_anos_explicito"],
+        )
+    elif a.motor == "nav":
+        a.intrinseco_motor = motores.nav_contabil(
+            c.patrimonio_liquido.get(ult), c.num_acoes.get(ult)
+        )
+    # motor == "ddm": o bloco DDM abaixo é o motor primário deste arquétipo (nada a fazer aqui).
 
     # --- DDM de dois estágios (Cap. 15/17) ---
     payout_proj = c.payout_valuation()  # média 3a + clamp 1.0 (função canônica única)
