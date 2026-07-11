@@ -4,14 +4,14 @@ milestone: v2.2
 milestone_name: Motor de Valuation por Arquétipo
 status: verifying
 stopped_at: Phase 1 context gathered
-last_updated: "2026-07-11T17:29:58.287Z"
+last_updated: "2026-07-11T20:36:38.009Z"
 last_activity: 2026-07-11
 progress:
   total_phases: 3
-  completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
-  percent: 100
+  completed_phases: 0
+  total_plans: 8
+  completed_plans: 5
+  percent: 63
 ---
 
 # Project State
@@ -32,7 +32,7 @@ Plan: 2 of 2
 Status: Phase complete — ready for verification
 Last activity: 2026-07-11
 
-Progress: [██████████] 100%
+Progress: [██████░░░░] 63%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [██████████] 100%
 | Phase 01 P02 | 0h35m | 3 tasks | 5 files |
 | Phase 01 P03 | 0h20m | 2 tasks | 3 files |
 | Phase 01 P04 | 0h08m | 1 tasks | 1 files |
+| Phase 01 P05 | 0h25m | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,7 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - [Phase 01]: Suspensão D-04 é genérica por motor_pendente e reusa o prefixo VERIFICAR — preserva o firewall selo↛report sem tocar selo.py/ddm.py
 - [Phase 01]: Sinal de ciclicidade = CV dos retornos ano-a-ano (detrended), não do nível bruto — fecha CR-01/Gap 1 (WEGE3 deixa de misroutar para cíclica)
 - [Phase ?]: [Phase 01]: UI Streamlit (app.py) expõe 'Arquétipo → motor' no caption principal, incondicional em motor_pendente — fecha Gap 2 (paridade CLI/UI, inclui pagadora_regulada/TAEE11)
+- [Phase ?]: [Phase 01]: Sinal de ciclicidade = dispersão dos resíduos de ajuste log-linear do lucro (substitui CV dos retornos ano-a-ano); prejuízo na janela = evidência cíclica forte que precede o guard de <3 pontos; ciclica_cv_min recalibrado 0.50 para 0.35 com margem — fecha Achado 1a/CR-01 (WEGE3/RADL3 reais viram crescimento)
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -133,7 +135,7 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-11T17:29:46.205Z
+Last session: 2026-07-11T20:36:30.582Z
 Stopped at: Phase 1 context gathered
 Resume file: None
 
