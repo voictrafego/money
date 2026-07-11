@@ -90,7 +90,7 @@ funil de `report.py` entre o CAPM (`:113`) e a montagem do DDM (`:136`), sem toc
   3. TAEE11 (pagadora regulada) é roteada para **DDM como primário** e seus números/veredito permanecem idênticos aos de hoje — `test_ddm`, `test_selo`, `test_consistencia_modos` continuam verdes.
   4. Um ticker de confiança baixa (híbrido/fronteiriço) é marcado como **fronteiriço** e o classificador expõe 2–3 arquétipos candidatos em vez de cravar um único.
 **Plans**: 2 plans
-- [ ] 01-01-PLAN.md — Classificador puro (core/arquetipo.py) + registry ARQUETIPO_MOTOR + bloco config arquetipo: + golden (Wave 1)
+- [x] 01-01-PLAN.md — Classificador puro (core/arquetipo.py) + registry ARQUETIPO_MOTOR + bloco config arquetipo: + golden (Wave 1)
 - [ ] 01-02-PLAN.md — Roteamento no funil report.py + suspensão D-04 (reuso "VERIFICAR") + render mínimo + golden e2e (Wave 2)
 
 ### Phase 2: Motores por Arquétipo

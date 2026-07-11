@@ -12,12 +12,12 @@
 
 ### Classificador de arquétipo (ARQ) — o coração
 
-- [ ] **ARQ-01**: A ferramenta classifica o **arquétipo do negócio antes de valuar**, a partir dos dados já puxados (CVM + Yahoo + BCB): filtro grosso por setor CVM como primeiro corte + refino quantitativo pelas métricas que a própria ação entrega (financeira → RIM; pagadora estável com payout comportado → DDM elegível; ROE alto e estável com retenção alta → compounder; margem/lucro oscilando violento ano a ano → cíclica).
-- [ ] **ARQ-02**: **Fallback honesto** — quando a confiança do classificador for baixa (caso-fronteira, híbrido, mudança de estágio), a ferramenta **não chuta**: marca a ação como fronteiriça e roda 2–3 lentes candidatas em vez de forçar um único arquétipo.
+- [x] **ARQ-01**: A ferramenta classifica o **arquétipo do negócio antes de valuar**, a partir dos dados já puxados (CVM + Yahoo + BCB): filtro grosso por setor CVM como primeiro corte + refino quantitativo pelas métricas que a própria ação entrega (financeira → RIM; pagadora estável com payout comportado → DDM elegível; ROE alto e estável com retenção alta → compounder; margem/lucro oscilando violento ano a ano → cíclica).
+- [x] **ARQ-02**: **Fallback honesto** — quando a confiança do classificador for baixa (caso-fronteira, híbrido, mudança de estágio), a ferramenta **não chuta**: marca a ação como fronteiriça e roda 2–3 lentes candidatas em vez de forçar um único arquétipo.
 
 ### Registro de motores (ENG)
 
-- [ ] **ENG-01**: Existe um **registry arquétipo→motor primário** que a agregação do veredito consome — a escolha do motor deixa de ser fixa (DDM) e passa a ser função do arquétipo classificado.
+- [x] **ENG-01**: Existe um **registry arquétipo→motor primário** que a agregação do veredito consome — a escolha do motor deixa de ser fixa (DDM) e passa a ser função do arquétipo classificado.
 - [ ] **ENG-02**: **RIM (Residual Income Model)** — VPA + VP do excesso de ROE sobre Ke — disponível como motor primário para **banco/seguradora** (ITUB4, BBAS3, BBSE3). *(É o motor que destrava o ITUB4.)*
 - [ ] **ENG-03**: **Lucro normalizado** (média 7–10 anos ou mid-cycle) → EV/EBITDA ou FCF disponível como motor primário para **cíclica de commodity** (VALE3, GGBR4, SUZB3), em vez do lucro de um ano só.
 - [ ] **ENG-04**: **DCF de FCF multi-estágio** (ou múltiplo relativo) disponível como motor primário para **crescimento/capital-light** (WEGE3, tech, varejo em expansão), sem o DDM cuspir zero/lixo.
@@ -62,9 +62,9 @@ Quais fases cobrem quais requisitos. Preenchido na criação do roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ARQ-01 | Phase 1 | Pending |
-| ARQ-02 | Phase 1 | Pending |
-| ENG-01 | Phase 1 | Pending |
+| ARQ-01 | Phase 1 | Complete |
+| ARQ-02 | Phase 1 | Complete |
+| ENG-01 | Phase 1 | Complete |
 | ENG-06 | Phase 1 | Pending |
 | ENG-02 | Phase 2 | Pending |
 | ENG-03 | Phase 2 | Pending |

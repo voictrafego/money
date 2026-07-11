@@ -4,14 +4,14 @@ milestone: v2.2
 milestone_name: Motor de Valuation por Arquétipo
 status: executing
 stopped_at: Phase 1 context gathered
-last_updated: "2026-07-11T15:46:11.390Z"
-last_activity: 2026-07-11 -- Phase 1 planning complete
+last_updated: "2026-07-11T16:23:37.839Z"
+last_activity: 2026-07-11
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 2
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 50
 ---
 
 # Project State
@@ -23,16 +23,16 @@ See: .planning/PROJECT.md (updated 2026-07-11)
 **Core value:** Cada tipo de negócio é roteado para o motor de valuation certo antes de valuar,
 e nenhum veredito final é puxado por um modelo que não serve àquele perfil — um compounder de
 qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio único não cabe nele.
-**Current focus:** v2.2 — Fase 1: Classificador de Arquétipo + Roteamento (roadmap criado).
+**Current focus:** Phase 01 — classificador-de-arqu-tipo-roteamento
 
 ## Current Position
 
-Phase: 1 of 3 (Classificador de Arquétipo + Roteamento)
-Plan: — (aguardando planejamento)
+Phase: 01 (classificador-de-arqu-tipo-roteamento) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-07-11 -- Phase 1 planning complete
+Last activity: 2026-07-11
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 01 P01 | 0h30m | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -67,6 +68,8 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - **Fallback honesto:** quando a confiança do classificador for baixa (caso-fronteira/híbrido), NÃO chutar — marcar como fronteiriço e rodar 2–3 lentes candidatas com bandeira de divergência.
 - **RIM é o motor que destrava o ITUB4** (banco/seguradora): VPA + VP do excesso de ROE sobre Ke. DDM permanece como primário só para pagadora madura/regulada (TAEE11/SAPR11/EGIE3) — não quebrar o que funciona.
 - **Nota técnica (repo):** golden `tests/test_ddm.py` trava DDM Itaú ≈ R$ 37,22 com Ke fixo de livro (12,48%). A run ao vivo injeta Rf via Selic → Ke ~17,3% → comprime para ~R$ 16. A refatoração NÃO deve quebrar o golden (input fixo), mas confirma a hipersensibilidade do DDM ao vivo ao Ke.
+- [Phase ?]: Classificador de arquétipo = função pura config-driven em core/arquetipo.py (espelha lifecycle.py); consome sinais canônicos de CompanyData sem recalcular método
+- [Phase ?]: candidatos sempre populado no ResultadoArquetipo; o flag fronteirico é o que distingue conflito real de rota crava
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -123,9 +126,9 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-11T14:51:23.488Z
+Last session: 2026-07-11T16:22:09.906Z
 Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-classificador-de-arqu-tipo-roteamento/01-CONTEXT.md
+Resume file: None
 
 ## Operator Next Steps
 
