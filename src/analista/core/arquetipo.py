@@ -56,17 +56,29 @@ class ResultadoArquetipo:
 
 
 def _cv_lucro(serie: list) -> Optional[float]:
-    """Coeficiente de variação da série de lucro CRU (a oscilação É o sinal de ciclicidade).
+    """Coeficiente de variação da OSCILAÇÃO detrended do lucro (o sinal de ciclicidade).
 
-    Filtra None; None se < 3 pontos válidos (poucos dados p/ afirmar oscilação) ou média == 0
-    (CV indefinido). Senão `pstdev(vals) / abs(mean(vals))` — dispersão relativa ao nível médio."""
+    A oscilação — não o nível — é o sinal de cíclica (CR-01). O CV do lucro CRU é dominado
+    pela TENDÊNCIA: qualquer compounder monotônico (WEGE3-shape) tem dispersão alta só por
+    subir, e seria carimbado cíclico por engano. Medimos então a dispersão dos RETORNOS
+    ano-a-ano `(lucro[t] - lucro[t-1]) / |lucro[t-1]|`, que é invariante à tendência:
+    - compounder monotônico → retornos ~constantes e do mesmo sinal → CV BAIXO;
+    - cíclico que alterna sinal (lucro sobe e cai) → retornos oscilam de sinal, média perto
+      de zero → CV ALTO.
+
+    Filtra None; pula pontos com `lucro[t-1] == 0` (retorno indefinido). None se < 3 pontos
+    válidos ou < 2 retornos calculáveis (poucos dados p/ afirmar oscilação) ou média dos
+    retornos == 0 (CV indefinido). Função pura, sem I/O — O(n) sobre <=10 pontos."""
     vals = [float(v) for v in serie if v is not None]
     if len(vals) < 3:
         return None
-    m = mean(vals)
+    ret = [(b - a) / abs(a) for a, b in zip(vals, vals[1:]) if a != 0]
+    if len(ret) < 2:
+        return None
+    m = mean(ret)
     if m == 0:
         return None
-    return pstdev(vals) / abs(m)
+    return pstdev(ret) / abs(m)
 
 
 def classificar(c: "CompanyData", cfg: dict) -> ResultadoArquetipo:
@@ -78,8 +90,9 @@ def classificar(c: "CompanyData", cfg: dict) -> ResultadoArquetipo:
        quantitativo). O SETOR_ATIV da CVM é confiável para financeiras.
     2. HARD-ROUTE regulada — `eh_concessionaria` E setor NÃO contém token de exclusão
        (guarda anti-Petróleo OBRIGATÓRIA) → PAGADORA_REGULADA.
-    3. REFINO quantitativo p/ todo o resto — CV(lucro cru) >= corte → cíclica; ROE alto E
-       retenção alta → crescimento; nenhum → pagadora_regulada (default maduro).
+    3. REFINO quantitativo p/ todo o resto — CV da oscilação detrended do lucro (retornos
+       ano-a-ano) >= corte → cíclica; ROE alto E retenção alta → crescimento; nenhum →
+       pagadora_regulada (default maduro).
     4. CONFLITO — >= 2 candidatos distintos → fronteiriço honesto (confiança baixa).
 
     Cada sinal é guardado com `is not None` ANTES de qualquer comparação (Pitfall 2): sob

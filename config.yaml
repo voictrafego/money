@@ -192,4 +192,6 @@ arquetipo:
     - petroleo
   roe_alto_min: 0.15              # ROE de valuation >= isto (com retenção alta) → candidato compounder (crescimento)
   retencao_alta_min: 0.50         # (1 - payout) >= isto (com ROE alto) → candidato compounder (crescimento)
-  ciclica_cv_min: 0.40            # coef. de variação do lucro cru >= isto → candidato cíclica (lucro oscilante)
+  ciclica_cv_min: 0.50            # CV da OSCILAÇÃO detrended (retornos ano-a-ano do lucro) >= isto → candidato cíclica.
+                                  # Escala nova (CR-01): compounder monotônico ~0.00-0.01; cíclico que alterna sinal >1.3.
+                                  # 0.50 senta com folga entre os dois regimes; calibração empírica é BACKTEST-01 (deferida).
