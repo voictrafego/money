@@ -150,6 +150,8 @@ def _empresa_solida() -> CompanyData:
     """Fixture determinística de empresa sólida (espelha tests/test_screening.py)."""
     anos = list(range(2015, 2025))
     c = CompanyData(ticker="TAEE11", nome="Empresa Sólida", setor="Energia Elétrica", anos=anos)
+    # Fidelidade à ingestão: utility regulada → pagadora_regulada → motor ddm (não pendente).
+    c.eh_concessionaria = True
     for a in anos:
         c.lucro_liquido[a] = 1000 + (a - 2015) * 50
         c.patrimonio_liquido[a] = 4000 + (a - 2015) * 100

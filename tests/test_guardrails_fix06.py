@@ -33,6 +33,8 @@ def _empresa_crescente_solida(ticker="SOLID3"):
     """10 anos de lucro/dividendos crescentes — DDM roda e a matriz Ke×g tem spread claro."""
     anos = list(range(2015, 2025))
     c = CompanyData(ticker=ticker, nome="Sólida Crescente", setor="Energia Elétrica", anos=anos)
+    # Fidelidade à ingestão: utility regulada → pagadora_regulada → motor ddm (não pendente).
+    c.eh_concessionaria = True
     for i, a in enumerate(anos):
         lucro = round(1000 * (1 + 0.08) ** i)
         c.lucro_liquido[a] = lucro

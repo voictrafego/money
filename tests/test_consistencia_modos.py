@@ -35,6 +35,9 @@ def _empresa_solida(ticker="TAEE11"):
     """Fixture-modelo (espelha tests/test_screening.py:7-26): 10 anos, todos os campos."""
     anos = list(range(2015, 2025))
     c = CompanyData(ticker=ticker, nome="Empresa Sólida", setor="Energia Elétrica", anos=anos)
+    # Fidelidade à ingestão (build.py:68 deriva Energia/Saneamento/Água/Gás): utility regulada
+    # → roteia pagadora_regulada → motor ddm (motor_pendente=False), mantendo o veredito DDM.
+    c.eh_concessionaria = True
     for a in anos:
         c.lucro_liquido[a] = 1000 + (a - 2015) * 50
         c.patrimonio_liquido[a] = 4000 + (a - 2015) * 100
@@ -110,6 +113,8 @@ def _empresa_param(ticker, *, preco, lucro, pl, div, num_acoes=1000):
     """
     anos = list(range(2015, 2025))
     c = CompanyData(ticker=ticker, nome=ticker, setor="Energia Elétrica", anos=anos)
+    # Fidelidade à ingestão: utility regulada → pagadora_regulada → motor ddm (não pendente).
+    c.eh_concessionaria = True
     for a in anos:
         c.lucro_liquido[a] = lucro
         c.patrimonio_liquido[a] = pl
@@ -139,6 +144,10 @@ def _empresa_param_crescente(ticker, *, preco, lucro_inicial, g, pl, payout, num
     """
     anos = list(range(2015, 2025))
     c = CompanyData(ticker=ticker, nome=ticker, setor="Energia Elétrica", anos=anos)
+    # Fidelidade à ingestão: utility regulada → pagadora_regulada → motor ddm (não pendente).
+    # AAA3 tem retenção alta (payout 0.35) e roteava "crescimento" (motor pendente) sem este
+    # flag — a suspensão D-04 quebraria o veredito SUBAVALIADA que este golden trava.
+    c.eh_concessionaria = True
     for i, a in enumerate(anos):
         lucro = round(lucro_inicial * (1 + g) ** i)
         c.lucro_liquido[a] = lucro
