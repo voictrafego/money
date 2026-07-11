@@ -109,6 +109,21 @@ def test_roe_alto_retencao_alta_vira_crescimento():
     assert r.fronteirico is False
 
 
+def test_compounder_realista_wege_vira_crescimento():
+    # Réplica de compounder REAL (WEGE3-shape): crescimento composto forte e MONOTÔNICO
+    # (>=15%/ano por 10 anos), payout baixo (retenção alta) e ROE de valuation ~0.25
+    # (WEGE3 real ≈0.258). A tendência de alta domina o CV do lucro CRU (~0.46 > 0.40),
+    # que hoje faz o compounder cair falsamente em 'ciclica' com fronteiriço (Gap 1 / CR-01
+    # da 01-VERIFICATION.md). Um sinal de ciclicidade correto mede a OSCILAÇÃO detrended, não
+    # o nível bruto: retornos ano-a-ano quase constantes → NÃO cíclica → crescimento limpo.
+    lucros = [round(1000 * (1.18 ** i)) for i in range(10)]
+    c = _empresa("WEGE3", "Máquinas e Equipamentos", lucros, payout=0.20, pl=15000.0)
+    r = classificar(c, _cfg())
+    assert r.chave == CRESCIMENTO
+    assert r.fronteirico is False
+    assert CICLICA not in r.candidatos
+
+
 # --- Fronteiriço honesto (ARQ-02) --------------------------------------------- #
 
 def test_conflito_de_sinais_marca_fronteirico():
