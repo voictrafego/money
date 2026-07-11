@@ -15,6 +15,7 @@ dem da Fase 2):
 import os
 
 import numpy as np
+import pytest
 import yaml
 
 from analista.cli import _motor_pendente, alvo_regressao_confiavel
@@ -128,3 +129,49 @@ def test_motor_pendente_regulada_tem_motor():
     """Pagadora regulada → motor 'ddm' resolvido (não pendente)."""
     util = _empresa("TAEE11", "Energia Elétrica", eh_concessionaria=True)
     assert _motor_pendente(util, _cfg()) is False
+
+
+# --------------------------------------------------------------------------- #
+# Task 2 — sinalização de divergência entre lentes (DDM × regressão)
+# --------------------------------------------------------------------------- #
+def test_divergencia_wege3_sinalizada():
+    """WEGE3: DDM mid ~R$11,5 vs regressão R$35 (~3×) → divergência sinalizada."""
+    divergiu, razao = cmp.divergencia_entre_lentes(11.535, 34.97)
+    assert divergiu is True
+    assert razao == pytest.approx(3.03, abs=0.05)
+
+
+def test_divergencia_itub4_sinalizada():
+    """ITUB4: DDM mid ~R$15 vs regressão R$33 (~2,2×) → divergência sinalizada."""
+    divergiu, razao = cmp.divergencia_entre_lentes(15.03, 33.44)
+    assert divergiu is True
+    assert razao == pytest.approx(2.22, abs=0.05)
+
+
+def test_divergencia_estimativas_proximas_guard_inverso():
+    """Estimativas próximas (< limiar) → SEM aviso (guard inverso)."""
+    divergiu, razao = cmp.divergencia_entre_lentes(30.0, 33.0)
+    assert divergiu is False
+    assert razao == pytest.approx(1.1, abs=0.01)
+
+
+def test_divergencia_no_limiar_exato():
+    """No limiar exato (2×) → divergência (>=). Trava o corte."""
+    divergiu, razao = cmp.divergencia_entre_lentes(10.0, 20.0)
+    assert divergiu is True
+    assert razao == pytest.approx(2.0)
+
+
+def test_divergencia_lente_ausente_nao_inventa():
+    """Dado ausente/inválido em uma lente → (False, ...): não inventa divergência."""
+    assert cmp.divergencia_entre_lentes(None, 33.0) == (False, 1.0)
+    assert cmp.divergencia_entre_lentes(33.0, None) == (False, 1.0)
+    assert cmp.divergencia_entre_lentes(0.0, 33.0) == (False, 1.0)
+    assert cmp.divergencia_entre_lentes(-5.0, 33.0) == (False, 1.0)
+
+
+def test_limiar_divergencia_padrao():
+    """LIMIAR_DIVERGENCIA é const de módulo (padrão 2×), coerente com a Fase 3 do roadmap."""
+    assert cmp.LIMIAR_DIVERGENCIA == 2.0
+    # o default do helper usa a constante de módulo (sem config.yaml novo)
+    assert cmp.divergencia_entre_lentes(10.0, 25.0)[0] is True
