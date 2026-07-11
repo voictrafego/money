@@ -101,6 +101,12 @@ Ambas as tasks têm par de commits `test(...)` (RED) → `feat(...)` (GREEN) no 
 - Fase 2 (motores por arquétipo) pluga os motores primários no registry; quando um arquétipo deixa de ser `motor_pendente`, o freio do Ranking passa a exibir o alvo automaticamente (sem mexer no cmd_rank).
 - Fase 3 (veredito honesto) consome o sinal de divergência já emitido aqui para construir a reconciliação/ensemble real (DDM × motor). O helper `divergencia_entre_lentes` e `LIMIAR_DIVERGENCIA` são a base pronta.
 
+## Self-Check: PASSED
+
+- Arquivos criados/modificados existem (test_ranking_freio.py, cli.py, comparables.py, 01-08-SUMMARY.md).
+- Commits confirmados no git log: 14c3483, 50f2fba, 456d0f9, e8be1a9, 7283be9.
+- Suíte completa verde: 386 passed (era 372; +14 novos). ddm.py/selo.py intocados.
+
 ---
 *Phase: 01-classificador-de-arqu-tipo-roteamento*
 *Completed: 2026-07-11*

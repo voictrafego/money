@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Motor de Valuation por Arquétipo
 status: verifying
-stopped_at: Phase 1 context gathered
-last_updated: "2026-07-11T20:45:11.924Z"
+stopped_at: Completed 01-08-PLAN.md
+last_updated: "2026-07-11T20:55:41.893Z"
 last_activity: 2026-07-11
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 8
-  completed_plans: 6
-  percent: 75
+  completed_plans: 7
+  percent: 88
 ---
 
 # Project State
@@ -32,7 +32,7 @@ Plan: 2 of 2
 Status: Phase complete — ready for verification
 Last activity: 2026-07-11
 
-Progress: [████████░░] 75%
+Progress: [█████████░] 88%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [████████░░] 75%
 | Phase 01 P04 | 0h08m | 1 tasks | 1 files |
 | Phase 01 P05 | 0h25m | 2 tasks | 3 files |
 | Phase 01 P07 | 0h20m | 2 tasks | 3 files |
+| Phase 01 P08 | 0h22m | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,8 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - [Phase ?]: [Phase 01]: UI Streamlit (app.py) expõe 'Arquétipo → motor' no caption principal, incondicional em motor_pendente — fecha Gap 2 (paridade CLI/UI, inclui pagadora_regulada/TAEE11)
 - [Phase ?]: [Phase 01]: Sinal de ciclicidade = dispersão dos resíduos de ajuste log-linear do lucro (substitui CV dos retornos ano-a-ano); prejuízo na janela = evidência cíclica forte que precede o guard de <3 pontos; ciclica_cv_min recalibrado 0.50 para 0.35 com margem — fecha Achado 1a/CR-01 (WEGE3/RADL3 reais viram crescimento)
 - [Phase 01]: Guarda-corpo do DDM (Achado 2/SAN-01): faixa negativa (vmax<=0) ou degenerada (0-0) suprimida na borda de emissão — vmin/vmax->None + ddm_inaplicavel + nota honesta; faixa que só cruza zero (vmax>0) preservada. core/ddm.py e selo.py intocados.
+- [Phase ?]: [Phase 01]: Freio do modo Ranking (Achado 3): cmd_rank só estampa alvo de regressão quando reg não é frágil (r2_baixo/amostra_pequena), upside não é degenerado (>−0,90) e o arquétipo tem motor (não motor_pendente) — paridade com a suspensão D-04 do Analisar; a NOTA do ranque fica intacta.
+- [Phase ?]: [Phase 01]: Divergência entre lentes (Achado 4) é SINALIZAÇÃO honesta (helper puro divergencia_entre_lentes + LIMIAR_DIVERGENCIA=2×), não reconciliação — o ensemble real (DDM × motor do arquétipo) depende da Fase 2 e é escopo da Fase 3.
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -137,8 +140,8 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-11T20:44:57.983Z
-Stopped at: Phase 1 context gathered
+Last session: 2026-07-11T20:55:31.118Z
+Stopped at: Completed 01-08-PLAN.md
 Resume file: None
 
 ## Operator Next Steps

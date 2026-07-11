@@ -26,7 +26,7 @@
 
 ### Ensemble & divergência (ENS)
 
-- [ ] **ENS-01**: A ferramenta **nunca crava um número único quando os modelos discordam muito**: roda o motor primário do arquétipo + ≥1 contraponto e, se a divergência passar do limiar (ex.: maior modelo > 2× o menor), **levanta uma bandeira de divergência** com hipótese exibida ("compounder subvalorizado pelo DDM", "cíclica no topo do ciclo", etc.). Divergência é informação exibida, não defeito escondido.
+- [x] **ENS-01**: A ferramenta **nunca crava um número único quando os modelos discordam muito**: roda o motor primário do arquétipo + ≥1 contraponto e, se a divergência passar do limiar (ex.: maior modelo > 2× o menor), **levanta uma bandeira de divergência** com hipótese exibida ("compounder subvalorizado pelo DDM", "cíclica no topo do ciclo", etc.). Divergência é informação exibida, não defeito escondido.
 
 ### Guarda-corpo de sanidade (SAN)
 
@@ -70,7 +70,7 @@ Quais fases cobrem quais requisitos. Preenchido na criação do roadmap.
 | ENG-03 | Phase 2 | Pending |
 | ENG-04 | Phase 2 | Pending |
 | ENG-05 | Phase 2 | Pending |
-| ENS-01 | Phase 3 | Pending |
+| ENS-01 | Phase 3 | Complete |
 | SAN-01 | Phase 3 | Complete |
 | VER-01 | Phase 3 | Pending |
 | VER-02 | Phase 3 | Pending |
