@@ -394,20 +394,27 @@ Domínio interno de finanças/heurística — sem "estado da arte" de biblioteca
 
 **Nenhuma dessas é bloqueante.** A única que merece decisão explícita do operador antes de codar é **A4** (rótulo do veredito suspenso).
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> **RESOLVED (planejamento Fase 1, 2026-07-11):** as 3 questões abaixo foram fechadas pelas decisões
+> adotadas em `01-01-PLAN.md` / `01-02-PLAN.md`. Cada item carrega um marcador `RESOLVED:` inline
+> apontando o task/decisão que a resolve. Nenhuma permanece aberta para a implementação.
 
 1. **Detectar banco por código de conta CVM (2.08 vs 2.03) vale o encanamento novo?**
    - What we know: `cvm.fundamentos_do_ano` já usa `nome_primeiro=True` com códigos `["2.03","2.08"]` para o PL (`cvm.py:224-228`) e "Receitas da Intermediação Financeira" para receita (`:221`), **mas não retorna qual template casou** — não há flag de "é banco" hoje.
    - What's unclear: o setor string já resolve financeiras com confiança (A3). O detector por conta seria **reforço** (robustez contra cadastro errado), ao custo de propagar um flag `cvm → build.py → CompanyData.eh_financeira`.
    - Recommendation: **Fase 1 usa o hard-route por `c.setor` string** (já disponível, verificado). Tratar o detector por conta como melhoria opcional/Fase-2 se algum banco escapar. Registrar como decisão no plano.
+   - **RESOLVED:** `01-01-PLAN.md` Task 1/2 adota o hard-route financeira por `c.setor` string-match (lista `financeiro_tokens` no bloco `arquetipo:` do `config.yaml`). O detector por código de conta CVM fica explicitamente como melhoria opcional/Fase-2. Fechado.
 
 2. **Regra de conflito D-01 quando o hard-route de setor bate mas o quantitativo discorda.**
    - What we know: D-02 diz que setores fortes hard-route DIRETO (sem quantitativo). D-01 diz que fronteiriço dispara em conflito setor×quantitativo.
    - What's unclear: para `pagadora_regulada` (onde o DDM existe e roda), vale rodar um **veto quantitativo** (ex.: margem oscilando como cíclica) antes de cravar, ou o hard-route é soberano? Ex.: uma "geradora" muito exposta a preço de energia.
    - Recommendation: hard-route **financeira** soberano (sem quantitativo). Hard-route **regulada** soberano **exceto** a guarda anti-Petróleo (Pitfall 1); adiar veto quantitativo fino da regulada para calibração futura. Confirmar na discussão.
+   - **RESOLVED:** `01-01-PLAN.md` Task 2 implementa hard-route financeira soberano e hard-route regulada soberano **exceto** a guarda anti-Petróleo (`regulada_excluir_tokens`); nenhum veto quantitativo adicional sobre a regulada nesta fase. Fechado.
 
 3. **Onde exibir o arquétipo/motor no CLI markdown?** O `relatorio_markdown` (`report.py:410`) hoje **não** mostra Graham/Bazin (só o app.py mostra, `:943-965`). D-04 pede "mostra Graham/Bazin como referência".
    - Recommendation: exposição mínima — uma linha no cabeçalho do relatório (`:414`) tipo "Arquétipo: X → motor Y" e, quando `motor_pendente`, uma nota no bloco Veredito apontando as lentes clássicas. UX rica é Fase 3 (discricionário).
+   - **RESOLVED:** `01-02-PLAN.md` Task 3 estende o cabeçalho de `relatorio_markdown` com "Arquétipo: X → motor Y"; quando `motor_pendente`, o veredito reusa o prefixo "VERIFICAR — …" apontando Graham/Bazin como referência. UX rica permanece Fase 3. Fechado.
 
 ## Environment Availability
 
