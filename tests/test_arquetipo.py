@@ -11,6 +11,7 @@ Tudo offline: fixtures sintéticas de 10 anos, nenhuma chamada de rede.
 
 import os
 
+import pytest
 import yaml
 
 from analista.core.arquetipo import (
@@ -30,8 +31,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Congeladas como literais (determinístico, sem rede/cache no teste). Derivadas via
 # `ingest.cvm.fundamentos_do_ano(cd_cvm, ano)` para os anos 2015-2023 durante o
 # desenvolvimento do 01-05. Fonte empírica: 01-AUDIT-COERENCIA.md (2/setor) e
-# 01-VERIFICATION.md. Substituem as progressões geométricas sintéticas (1.18**i),
-# que não replicam a variância de TAXA de crescimento de nenhuma empresa real
+# 01-VERIFICATION.md. Substituem as progressões geométricas sintéticas (crescimento
+# perfeitamente suave), que não replicam a variância de TAXA de crescimento real
 # (Gap 1 / CR-01: o golden suave mascarava o misroute de WEGE3 real → ciclica).
 #
 # Compounders / defensivos (resid log-linear baixo — não cíclicos):
@@ -171,6 +172,43 @@ def test_ciclica_real_ggbr_com_prejuizo_permanece_ciclica():
     # GGBR4 REAL (cd_cvm 3980): siderurgia com 3 anos de prejuízo (2015-2017). Prejuízo = log
     # indefinido → tratado como evidência cíclica (override precede o guard de <3 pontos).
     c = _empresa("GGBR4", "Siderurgia e Metalurgia", LL_GGBR4, payout=0.80, pl=49238863000.0)
+    r = classificar(c, _cfg())
+    assert r.chave == CICLICA
+
+
+# --- Golden multi-ticker: calibração travada contra AMBOS os regimes reais ----- #
+# Fonte: audit empírico 2/setor (01-AUDIT-COERENCIA.md). A calibração do corte é
+# validada em >=3 compounders reais e >=4 cíclicas reais (não num único ponto —
+# exigência da 01-VERIFICATION.md), para que uma regressão futura do sinal ou do
+# corte seja pega por golden de série REAL, não sintética.
+
+# (ticker, setor, série real, payout, pl) — compounders/defensivos: chave != 'ciclica'.
+_COMPOUNDERS_REAIS = [
+    ("WEGE3", "Máquinas e Equipamentos", LL_WEGE3, 0.446, 17854776000.0),
+    ("RADL3", "Comércio e Distribuição", LL_RADL3, 0.30, 6028301000.0),
+    ("ABEV3", "Bebidas", LL_ABEV3, 0.90, 80143802000.0),  # defensivo (resid 0.158) — âncora limpa (NÃO TOTS3)
+]
+
+# Cíclicas reais (todas com ano(s) de prejuízo na janela): chave == 'ciclica'.
+_CICLICAS_REAIS = [
+    ("VALE3", "Mineração", LL_VALE3, 0.80, 198325000000.0),
+    ("GGBR4", "Siderurgia e Metalurgia", LL_GGBR4, 0.80, 49238863000.0),
+    ("SUZB3", "Papel e Celulose", LL_SUZB3, 0.30, 44810300000.0),
+    ("PETR4", "Petróleo", LL_PETR4, 0.60, 382340000000.0),
+]
+
+
+@pytest.mark.parametrize("ticker,setor,lucros,payout,pl", _COMPOUNDERS_REAIS)
+def test_compounder_defensivo_real_nao_vira_ciclica(ticker, setor, lucros, payout, pl):
+    c = _empresa(ticker, setor, lucros, payout=payout, pl=pl)
+    r = classificar(c, _cfg())
+    assert r.chave != CICLICA
+    assert CICLICA not in r.candidatos
+
+
+@pytest.mark.parametrize("ticker,setor,lucros,payout,pl", _CICLICAS_REAIS)
+def test_ciclica_real_permanece_ciclica(ticker, setor, lucros, payout, pl):
+    c = _empresa(ticker, setor, lucros, payout=payout, pl=pl)
     r = classificar(c, _cfg())
     assert r.chave == CICLICA
 
