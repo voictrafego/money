@@ -23,6 +23,7 @@ from analista.core.arquetipo import (
     classificar,
 )
 from analista.core.fundamentals import CompanyData
+from analista.ingest import universe
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -225,6 +226,42 @@ def test_conflito_de_sinais_marca_fronteirico():
     assert len(r.candidatos) >= 2
     assert len(set(r.candidatos)) >= 2
     assert r.confianca == "baixa"
+
+
+# --- Achado 1b (01-06): over-match do hard-route financeiro no MDIA3 ----------- #
+# Causa-raiz REPRODUZIDA (build.montar_empresa via rede, como no audit): MDIA3 (M. Dias
+# Branco, Alimentos, cd_cvm 20338) NÃO estava no ticker_map, então resolvia por NOME. O
+# estágio "contém" de universe._resolver_base casou o fragmento CVM "rci" (sobra de "Banco
+# RCI Brasil S.A." depois de stripar tokens jurídicos) dentro de "comeRCIo" no nome do MDIA3
+# e, escolhendo o nome mais curto, resolveu para cd 21466 (Banco RCI Brasil) → setor "Bancos".
+# O setor ENVENENADO "Bancos" então casava CORRETAMENTE o financeiro_token 'banco' → financeira.
+# Logo o bug é de RESOLUÇÃO (empresa errada), não do casamento do classificador: o fix
+# operativo é o override determinístico no ticker_map (precedência sobre o match por nome).
+
+_MDIA3_NOME_YAHOO = "M. Dias Branco S.A. Industria e Comercio de Alimentos"
+
+
+def test_mdia3_resolve_para_alimentos_nao_banco():
+    # Override determinístico no ticker_map fecha a porta da resolução por nome envenenada.
+    cd, setor = universe.resolver("MDIA3", _MDIA3_NOME_YAHOO)
+    assert cd == 20338
+    assert "banco" not in setor.lower()
+
+
+def test_mdia3_alimentos_nao_vira_financeira():
+    # Fim-a-fim do achado: o setor que o classificador recebe para MDIA3 não vira financeira.
+    _, setor = universe.resolver("MDIA3", _MDIA3_NOME_YAHOO)
+    c = _empresa("MDIA3", setor, [500] * 10)
+    r = classificar(c, _cfg())
+    assert r.chave != FINANCEIRA
+
+
+def test_hard_route_financeiro_nao_faz_over_match_substring_embutida():
+    # Defesa em profundidade (T-0106-01): um financeiro_token embutido em OUTRA palavra
+    # (substring solta) não pode disparar o hard-route — só casa em limite de palavra.
+    # 'banco' dentro de 'Bancoreal' (rótulo fictício de consumo) não é setor financeiro.
+    c = _empresa("OVR3", "Bancoreal Alimentos", [500] * 10)
+    assert classificar(c, _cfg()).chave != FINANCEIRA
 
 
 # --- Degradação graciosa (Pitfall 2 / T-01-01) -------------------------------- #
