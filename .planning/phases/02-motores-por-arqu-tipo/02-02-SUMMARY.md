@@ -104,4 +104,9 @@ completed: 2026-07-11
 - `git diff --name-only 2531656 HEAD -- src/` NÃO lista `core/ddm.py`/`core/lentes.py`/`report/selo.py` (firewall + primitivas intactas) ✓
 - Ranking (`cli._motor_pendente`) mantém paridade com a suspensão do Analisar (`motor != "ddm"`) ✓
 
-## Self-Check: PENDING
+## Self-Check: PASSED
+
+- FOUND: .planning/phases/02-motores-por-arqu-tipo/02-02-SUMMARY.md
+- FOUND commit: 277f239 (Task 1)
+- FOUND commit: e9df65c (Task 2)
+- FOUND commit: a08d6c6 (Task 3)

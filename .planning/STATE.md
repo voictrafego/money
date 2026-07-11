@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Motor de Valuation por Arquétipo
-status: executing
+status: verifying
 stopped_at: Phase 2 context gathered
-last_updated: "2026-07-11T22:58:38.625Z"
+last_updated: "2026-07-11T23:11:38.722Z"
 last_activity: 2026-07-11
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 10
-  completed_plans: 9
-  percent: 90
+  completed_plans: 10
+  percent: 100
 ---
 
 # Project State
@@ -29,10 +29,10 @@ qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio úni
 
 Phase: 02 (motores-por-arqu-tipo) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-11
 
-Progress: [█████████░] 90%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ Progress: [█████████░] 90%
 | Phase 01 P08 | 0h22m | 2 tasks | 3 files |
 | Phase 01 P06 | 0h20m | 1 tasks | 4 files |
 | Phase 02 P01 | 18min | 3 tasks | 3 files |
+| Phase 02 P02 | 16min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,8 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - [Phase ?]: [Phase 01]: Achado 1b (MDIA3): misroute era de RESOLUÇÃO (empresa errada), não do classificador — o estágio 'contém' de universe._resolver_base casou o fragmento CVM 'rci' (de 'Banco RCI Brasil') dentro de 'comeRCIo' no nome do MDIA3, trazendo setor 'Bancos'. Fix: override determinístico no ticker_map (MDIA3->{20338,'Alimentos'}) + hard-route financeiro por limite de palavra (defesa T-0106-01). ITUB4/BBAS3 seguem financeira.
 - [Phase ?]: [Phase 02]: RIM honesto ~R$28 (faixa R$26-34, sem premio terminal D-02) vence o alvo aproximado ~R$40 de D-01 — materialmente > DDM ao vivo ~R$16, destrava o ITUB4
 - [Phase ?]: [Phase 02]: ke_rim = rf-ciclo + beta×erp_banco (0.045 sem premio small-cap), clamp [0.11,0.14] e nunca > ke_live (D-01); motores puros config-driven compoem primitivas testadas sem tocar ddm/lentes/capm/normalizacao
+- [Phase 02]: Suspensão do veredito migrada de motor_pendente → motor != 'ddm' nas 3 superfícies (report/cli/goldens) no mesmo wave do plug do registry — o motor do arquétipo já existe mas o selo só o consome na Fase 3 (VER-01); sem a migração o ITUB4 regride de VERIFICAR para 'evitar'
+- [Phase 02]: Registry ARQUETIPO_MOTOR 5/5 plugado + dispatch dos 4 motores no funil analisar_acao consumindo insumos canônicos; motor CALCULA e EXIBE intrínseco (D-06), DDM rebaixado a lente conservadora onde motor != ddm
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -146,7 +149,7 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-11T22:58:06.902Z
+Last session: 2026-07-11T23:11:15.177Z
 Stopped at: Phase 2 context gathered
 Resume file: None
 
