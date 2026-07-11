@@ -367,7 +367,9 @@ a.motor_rotulo = {...}[a.motor]   # rótulo humano exibido no render
 | A4 | VULC3 (`Têxtil e Vestuário`) roteia p/ cíclica ou regulada e segue suspenso ("VERIFICAR") pós-migração | Validation | Médio — se VULC3 rotear p/ um motor≠ddm, o novo predicado mantém "VERIFICAR" ✓; confirmar em execução que `test_vulc3` não regride |
 | A5 | Introduzir `core/motores.py` único (vs. um módulo por motor) | Structure | Baixo — discrição do planner (D-06); ambos funcionam |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> **RESOLVED (2026-07-11, plan revision):** as três perguntas abaixo foram decididas e já estão refletidas nos planos 02-01/02-02 — (1) predicado explícito de suspensão migrado para `motor != "ddm"` nas 3 superfícies; (2) render mínimo (uma linha por motor + DDM "lente conservadora"); (3) fade LINEAR do ROE até Ke. Adicionalmente, o alvo "~R$40" do RIM (D-01) foi reconciliado para o número honesto ~R$28 que o modelo conservador (fade a zero, D-02) produz — decisão do usuário, o número honesto vence.
 
 1. **Semântica final do campo de suspensão (`motor_pendente` vs. novo `veredito_suspenso`/`selo_consome_motor`).**
    - What we know: o predicado precisa virar `motor != "ddm"` nas 3 superfícies.
