@@ -200,3 +200,26 @@ arquetipo:
                                   # (VALE3 0.49, GGBR4 0.61, SUZB3 0.87, PETR4 1.24). Ano de prejuízo na janela
                                   # (log indefinido) é forçado a cíclico. 0.35 senta com folga entre os dois
                                   # regimes (acima de 0.22, abaixo de 0.49); calibração empírica é BACKTEST-01 (deferida).
+
+# --- Fase 2 (v2.2): Motores de valuation por arquétipo (ENG-02..05) ---
+# Bloco NOVO, irmão de `arquetipo:`. Knobs dos motores primários (core/motores.py). São
+# config-driven: os motores nunca hardcodam os números no corpo — leem tudo daqui via
+# cfg["motores"][...]. Valores iniciais são ponto de partida honesto; a calibração empírica
+# (backtest sobre a B3) é BACKTEST-01, deferida. Ajuste sem deploy.
+# Anti-rebaseline (Pitfall 5): nenhum bloco pré-existente (capm/ddm/arquetipo) é tocado.
+motores:
+  rim:                            # RIM (ENG-02, banco/seguradora) — Ke ESTRUTURAL, menor que o CAPM ao vivo (D-01)
+    erp_banco: 0.045              # ERP aplicado sobre a Selic-ciclo no ke_rim: ~4,5% de mercado maduro (Damodaran)
+                                  # SEM o prêmio small-cap/iliquidez do capm.erp_local (0.06) — impróprio para
+                                  # banco large-cap/líquido. É a alavanca que destrava o ITUB4 do "evitar" (D-01).
+    ke_piso: 0.11                 # clamp inferior do Ke do RIM (nunca abaixo — evita intrínseco explosivo)
+    ke_teto: 0.14                 # clamp superior do Ke do RIM; o ke_rim também nunca excede o Ke ao vivo (ke_live)
+    n_fade: 10                    # horizonte de fade do excesso de ROE até o Ke (D-02, sem prêmio terminal).
+                                  # Golden ITUB4 (VPA~22, ROE~19,3%, Ke~12,5%, retenção~0,53, n=10) ancora ~R$28
+                                  # — número HONESTO do modelo conservador (faixa R$26-34), NÃO ~R$40. Materialmente
+                                  # acima do DDM ao vivo (~R$16). Calibração empírica é BACKTEST-01 (deferida).
+  ciclica:                        # Lucro normalizado (ENG-03, cíclica) — P/L justo sobre lucro médio 7-10a
+    anos_media: 10                # janela do norm.base_normalizada (média/mediana robusta a exercício atípico)
+    winsor: 0.10                  # winsorização a 10% nos extremos (>=5 pontos), espelha o bloco `normalizacao`
+  crescimento:                    # DCF de crescimento (ENG-04, compounder) — reuso de ddm.ddm_dois_estagios
+    n_anos_explicito: 10          # estágio de alto crescimento explícito (modelo-H decrescente, conservador)
