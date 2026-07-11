@@ -93,7 +93,7 @@ funil de `report.py` entre o CAPM (`:113`) e a montagem do DDM (`:136`), sem toc
 - [x] 01-01-PLAN.md — Classificador puro (core/arquetipo.py) + registry ARQUETIPO_MOTOR + bloco config arquetipo: + golden (Wave 1)
 - [x] 01-02-PLAN.md — Roteamento no funil report.py + suspensão D-04 (reuso "VERIFICAR") + render mínimo + golden e2e (Wave 2)
 - [x] 01-03-PLAN.md — [gap] Detrend do sinal de ciclicidade (_cv_lucro) + golden WEGE3 realista — fecha Gap 1 CR-01/SC#1 (Wave 1)
-- [ ] 01-04-PLAN.md — [gap] Expõe Arquétipo → motor na UI Streamlit (app.py), inclusive não-suspenso — fecha Gap 2/SC#1 (Wave 1)
+- [x] 01-04-PLAN.md — [gap] Expõe Arquétipo → motor na UI Streamlit (app.py), inclusive não-suspenso — fecha Gap 2/SC#1 (Wave 1)
 
 ### Phase 2: Motores por Arquétipo
 **Goal**: Plugar no registry os motores primários que faltam — as fórmulas de livro-texto (~20% do
