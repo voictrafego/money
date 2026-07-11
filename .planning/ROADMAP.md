@@ -117,7 +117,7 @@ primário do arquétipo.
   4. Um arquétipo holding/imobiliária patrimonial usa **NAV/SOTP** como motor primário.
   5. O golden `test_ddm` (DDM Itaú ≈ R$37,22, input fixo de livro) continua verde — os motores novos não alteram o DDM puro.
 **Plans**: 2 plans
-- [ ] 02-01-PLAN.md — Motores puros (core/motores.py): RIM+Ke estrutural, lucro normalizado, DCF crescimento, NAV contábil + bloco config + goldens (Wave 1)
+- [x] 02-01-PLAN.md — Motores puros (core/motores.py): RIM+Ke estrutural, lucro normalizado, DCF crescimento, NAV contábil + bloco config + goldens (Wave 1)
 - [ ] 02-02-PLAN.md — Plug no registry + dispatch no funil + migração D-06 da suspensão (3 superfícies) + render DDM lente conservadora + anchors e2e (Wave 2)
 
 ### Phase 3: Veredito Honesto — Ensemble, Divergência, Guarda-corpos e Selo

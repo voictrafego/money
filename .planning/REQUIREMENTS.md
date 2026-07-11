@@ -18,10 +18,10 @@
 ### Registro de motores (ENG)
 
 - [x] **ENG-01**: Existe um **registry arquétipo→motor primário** que a agregação do veredito consome — a escolha do motor deixa de ser fixa (DDM) e passa a ser função do arquétipo classificado.
-- [ ] **ENG-02**: **RIM (Residual Income Model)** — VPA + VP do excesso de ROE sobre Ke — disponível como motor primário para **banco/seguradora** (ITUB4, BBAS3, BBSE3). *(É o motor que destrava o ITUB4.)*
-- [ ] **ENG-03**: **Lucro normalizado** (média 7–10 anos ou mid-cycle) → EV/EBITDA ou FCF disponível como motor primário para **cíclica de commodity** (VALE3, GGBR4, SUZB3), em vez do lucro de um ano só.
-- [ ] **ENG-04**: **DCF de FCF multi-estágio** (ou múltiplo relativo) disponível como motor primário para **crescimento/capital-light** (WEGE3, tech, varejo em expansão), sem o DDM cuspir zero/lixo.
-- [ ] **ENG-05**: **NAV / Soma das Partes (SOTP)** disponível como motor primário para **holding/imobiliária patrimonial**.
+- [x] **ENG-02**: **RIM (Residual Income Model)** — VPA + VP do excesso de ROE sobre Ke — disponível como motor primário para **banco/seguradora** (ITUB4, BBAS3, BBSE3). *(É o motor que destrava o ITUB4.)*
+- [x] **ENG-03**: **Lucro normalizado** (média 7–10 anos ou mid-cycle) → EV/EBITDA ou FCF disponível como motor primário para **cíclica de commodity** (VALE3, GGBR4, SUZB3), em vez do lucro de um ano só.
+- [x] **ENG-04**: **DCF de FCF multi-estágio** (ou múltiplo relativo) disponível como motor primário para **crescimento/capital-light** (WEGE3, tech, varejo em expansão), sem o DDM cuspir zero/lixo.
+- [x] **ENG-05**: **NAV / Soma das Partes (SOTP)** disponível como motor primário para **holding/imobiliária patrimonial**.
 - [x] **ENG-06**: **DDM permanece** como motor primário para **pagadora madura/regulada** (TAEE11, SAPR11, EGIE3) — reaproveitando o motor atual, sem quebrar o que já funciona.
 
 ### Ensemble & divergência (ENS)
@@ -66,10 +66,10 @@ Quais fases cobrem quais requisitos. Preenchido na criação do roadmap.
 | ARQ-02 | Phase 1 | Complete |
 | ENG-01 | Phase 1 | Complete |
 | ENG-06 | Phase 1 | Complete |
-| ENG-02 | Phase 2 | Pending |
-| ENG-03 | Phase 2 | Pending |
-| ENG-04 | Phase 2 | Pending |
-| ENG-05 | Phase 2 | Pending |
+| ENG-02 | Phase 2 | Complete |
+| ENG-03 | Phase 2 | Complete |
+| ENG-04 | Phase 2 | Complete |
+| ENG-05 | Phase 2 | Complete |
 | ENS-01 | Phase 3 | Parcial (F1 gap: bandeira divergência · restante F3) |
 | SAN-01 | Phase 3 | Parcial (F1 gap: guarda-corpo DDM + freio Ranking · restante F3) |
 | VER-01 | Phase 3 | Pending |
