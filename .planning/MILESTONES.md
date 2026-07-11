@@ -1,5 +1,20 @@
 # Milestones
 
+## v2.0 Comercialização — Lazari Capital (Shipped: 2026-07-10)
+
+**Phases completed:** 3 phases (01–03), 12 de 13 plans. Fases arquivadas em `.planning/milestones/v2.0-phases/`.
+
+**Key accomplishments:**
+
+- **Fundação (Fase 01):** camada Django própria (repo `lazari-capital`, espelhando o `crm-voic`) com cadastro self-serve email+senha, sessão, `status_assinatura` como fonte de verdade e trial de 7 dias sem cartão; gate via Traefik forward-auth (Django valida sessão+status, injeta `X-User-Email` no Streamlit).
+- **Cobrança (Fase 02):** cobrança recorrente mensal via Asaas (checkout hospedado, produto nunca toca cartão), webhooks nativos Django idempotentes (sem n8n) atualizando o status, e página de conta (status/cancelar/link de cobrança).
+- **Go-live (Fase 03):** deploy integrado na VPS — `www.lazaricapital.com.br` (Django landing/auth/billing, TLS) + `app.lazaricapital.com.br` (Streamlit atrás do gate, WS 101 sem loop); cutover do `money.voictech.com.br` (301/308) concluído com n8n/crm intactos; stack `lazari` 1/1 healthy + cron de backup diário. Marca comercial Lazari Capital no ar, posicionada como software educacional (sem recomendação).
+- **v2.1 (polish de UX, entregue como quick-tasks):** Top-5 do review UX deployado 2026-07-10 (spinner de carregamento, abas sem flash, formatação numérica BR `R$ 41,57`, legendas de selo/triângulo + glossário de siglas, menus renomeados + contagem corrigida).
+
+**E2E pago (03-05):** CONCLUÍDO — smoke real R$19,90 PIX confirmado ao vivo (suíte Phase 2 ao vivo + webhook idempotente + transições de status no navegador). NFS-e automática por assinatura implementada e validada. Único item aberto (não-técnico): operador decidir se estorna o R$19,90 do smoke no painel Asaas.
+
+---
+
 ## v1.3 Saneamento residual do valuation (Shipped: 2026-06-28)
 
 **Phases completed:** 3 phases (09–11), 9 plans

@@ -1,54 +1,36 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Comercialização (Lazari Capital)
-status: executing
-stopped_at: Phase 3 — GO-LIVE no ar (03-01..03-04 done); falta só o E2E pago (03-05)
-last_updated: "2026-07-08T18:23:08.391Z"
-last_activity: 2026-07-08 -- Phase 03 deploy ao vivo: Lazari Capital no ar (www+app, TLS, gate, 301, backup)
+milestone: v2.2
+milestone_name: Motor de Valuation por Arquétipo
+status: planning
+last_updated: "2026-07-11T13:48:55.296Z"
+last_activity: 2026-07-11
 progress:
-  total_phases: 3
-  completed_phases: 2
-  total_plans: 13
-  completed_plans: 12
-  percent: 92
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-07)
+See: .planning/PROJECT.md (updated 2026-07-11)
 
-**Core value:** O produto cobra de forma confiável e o acesso reflete fielmente o status de
-assinatura — quem paga (ou está em trial) entra, quem não tem assinatura ativa não entra — sem
-nunca prometer recomendação de investimento (software educacional / CVM).
-**Current focus:** Phase 03 — go-live-e2e-pago (produto NO AR; falta só o E2E pago 03-05)
+**Core value:** Cada tipo de negócio é roteado para o motor de valuation certo antes de valuar,
+e nenhum veredito final é puxado por um modelo que não serve àquele perfil — um compounder de
+qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio único não cabe nele.
+**Current focus:** v2.2 — Motor de Valuation por Arquétipo — definindo requisitos (a partir do
+brief `.planning/BRIEF-motor-arquetipo.md`).
 
 ## Current Position
 
-Phase: 03 (go-live-e2e-pago) — 4 de 5 planos completos; **GO-LIVE no ar**
-Completos: 03-01 (landing), 03-02 (DNS+.env+prod.py), 03-03 (stack unificado), 03-04 (deploy+cutover+gate+WS+backup)
-
-**LAZARI CAPITAL NO AR (2026-07-08):**
-  - www.lazaricapital.com.br → Django (landing/auth/billing), TLS Let's Encrypt
-  - app.lazaricapital.com.br → Analista de Ações (Streamlit) atrás do gate forwardAuth; WS 101 sem loop
-  - money.voictech.com.br → 301/308 → app (cutover do money v1.7 concluído; n8n/crm intactos)
-  - Stack `lazari` (web+db+money+worker) 1/1 healthy; cron de backup diário do lazari_db
-  - Pós-login vai ao produto (app.), não ao /painel/ placeholder do fork
-
-Pendente: **03-05 — E2E pago** (suíte Phase 2 ao vivo + webhook idempotente + transições de status no navegador + 1 cobrança real R$19,90 estornada). Precisa do usuário (pagamento real).
-
-Last activity: 2026-07-10 -- Top-5 do review UX (v2.1) DEPLOYADO na VPS (stack lazari, money:latest e6bf9a9) e validado ao vivo no navegador
-
-**DEPLOY 2026-07-10 (Top-5 review UX):** push origin/main `e6bf9a9` → VPS `/root/money` (backup em
-`/root/money.bak-260710` + `git stash@{0}` "prod-uncommitted-260710-preUX" retido; drift local era
-subconjunto estrito de origin) → `docker build -t money:latest .` (Streamlit 1.59.1, segmented_control ok)
-→ `docker service update --force --image money:latest lazari_money` (converged, 1/1). Validado ao vivo:
-spinner (u1f), abas sem flash + sem "0" (u2r), `R$ 41,57` BR + rótulos (u4n), legendas selo/triângulo +
-glossário (u3g), menus renomeados + contagem (u5c).
-
-Progress: [█████████░] ~92% (4 de 5 planos; falta o E2E pago)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-07-11 — Milestone v2.2 started
 
 ## Performance Metrics
 
@@ -57,17 +39,15 @@ Progress: [█████████░] ~92% (4 de 5 planos; falta o E2E pago
 - Total plans completed (v1.0–v1.7): 66+ plans em 21 fases (marcos arquivados)
 - v2.0: 0 plans completed
 
-**By Phase (v2.0):**
+**By Phase (v2.2):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1 | TBD | - | - |
-| 2 | TBD | - | - |
-| 3 | TBD | - | - |
+| (roadmap pendente) | TBD | - | - |
 
 **Recent Trend:**
 
-- Último marco enviado: v1.7 (2026-07-04, 338 testes verdes)
+- Último marco enviado: v2.0 Comercialização/Lazari Capital (2026-07-10, produto no ar, E2E pago concluído)
 - Trend: —
 
 *Updated after each plan completion*
@@ -76,41 +56,36 @@ Progress: [█████████░] ~92% (4 de 5 planos; falta o E2E pago
 
 ### Decisions
 
-Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v2.0:
+Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v2.2:
 
-- **Gateway híbrido com Django** (não reescrever): front Django espelha o crm-voic; engine Streamlit (338 testes) fica intacto atrás do gate.
-- **Django + webhooks nativos** no lugar de Supabase + n8n + React — reaproveita o crm-voic 1:1.
-- **Gate = Traefik forward-auth**: Django valida sessão+status e injeta `X-User-Email` no Streamlit (menos código de segurança custom que JWT dentro do Streamlit).
-- **Asaas em conta e chave próprias** (não as do crm-voic); só a estrutura de código é compartilhada.
-- **Cadastro self-serve** (B2C/trial), diferente do crm-voic (invite-only).
-- **AUTH-04 (reset de senha) na Phase 1**: acopla à camada de auth do app `accounts`; SMTP fica com backend de dev na Phase 1 e é ligado no deploy (Phase 3).
-- **Plan 02-02 (cancel-at-period-end, D-05)**: cancelar chama `DELETE /subscriptions/{id}` e só transiciona local (`CANCELADO` + `grace_ate=paid-through`) APÓS sucesso do DELETE; `grace_ate` reusado como "acesso liberado até" (trial_ate se em trial, senão proximo_vencimento, fim-do-dia aware). `_parse_resposta` trata 204/no-body sem regredir 200+JSON. Página de conta (ACCT-02) sem dado de cartão; anti-IDOR via `request.user.conta`.
-- **Plan 02-03 (BILL-04)**: `GateView` regra de 3 ramos fail-closed lendo só `Conta` — pago (`trial_ate is None`), trial vigente, grace de inadimplência (D-04) e paid-through de cancelamento (D-05, via `grace_ate`); corrige o bug em que o pagante (trial zerado por `_ativar_conta`) era bloqueado. `BillingGateMiddleware` isenta `billing-assinar`/`conta`/`cancelar-assinatura` (Pitfall 2) — os dois gates concordam.
-- **Plan 02-03 (BILL-03)**: ciclo `assinar→PAYMENT_CONFIRMED→ativação` travado SÓ por teste (`test_webhook_ciclo.py`); `AsaasWebhookView`/`_ativar_conta`/`_marcar_inadimplente` NÃO reescritos — idempotência por `event_id` + convergência por `dueDate` absoluto comprovadas.
+- **O problema do ITUB4 é erro de arquitetura, não de fórmula.** DDM/Graham/Bazin estão matematicamente corretos; o defeito é aplicar DDM de estágio único como motor primário para TODO negócio e agregar o veredito por ele. Conserto = roteamento por arquétipo.
+- **Gargalo = classificador (~60% do esforço), não os motores (~20%, fórmulas de livro-texto).** Priorizar a árvore de decisão do classificador primeiro, depois plugar os motores nela.
+- **Fallback honesto:** quando a confiança do classificador for baixa (caso-fronteira/híbrido), NÃO chutar — marcar como fronteiriço e rodar 2–3 lentes candidatas com bandeira de divergência.
+- **RIM é o motor que destrava o ITUB4** (banco/seguradora): VPA + VP do excesso de ROE sobre Ke. DDM permanece como primário só para pagadora madura/regulada (TAEE11/SAPR11/EGIE3) — não quebrar o que funciona.
+- **Nota técnica (repo):** golden `tests/test_ddm.py` trava DDM Itaú ≈ R$ 37,22 com Ke fixo de livro (12,48%). A run ao vivo injeta Rf via Selic → Ke ~17,3% → comprime para ~R$ 16. A refatoração NÃO deve quebrar o golden (input fixo), mas confirma a hipersensibilidade do DDM ao vivo ao Ke.
 
 ### Pending Todos
 
 [From .planning/todos/pending/ — ideas captured during sessions]
 
-- **Review de UX no navegador (2026-07-10)** — 18 achados de acabamento (engine Streamlit) em
-  `.planning/reviews/260710-ux-review-navegador.md`. Semente do **v2.1 (polish de UX)**. Fundação
-  sólida; itens são de acabamento. Top-5 já viraram quick tasks:
-  - `260710-u1f` 🔴 feedback de carregamento (~35s sem spinner no corpo)
-  - `260710-u2r` 🔴 flash de tabela colapsada ao trocar de aba + artefato "0"
-  - `260710-u3g` 🟠 glossário de siglas (tabelas transpostas) + legenda de selos/triângulos
-    (complementa `260704-kps`, que não cobre rótulo de linha)
-  - `260710-u4n` 🟠 padronizar formatação numérica BR (banner `.` vs card `,`; `-0.0%`; `+ -11.17`)
-  - `260710-u5c` 🟡 cópia inconsistente ("3 ferramentas"/"4 menus"/5 itens) + termos
-  - Achados 6–18 (notícias duplicadas, "carteira" engana, menu Streamlit exposto, responsivo não
-    validado, etc.) ficam no doc de review como backlog do v2.1.
+- **Backlog v2.1 (polish de UX) — deferido.** Achados 6–18 do review de UX de 2026-07-10
+  (`.planning/reviews/260710-ux-review-navegador.md`): notícias duplicadas, rótulo "carteira"
+  engana, menu Streamlit exposto, responsivo não validado, etc. Top-5 já entregues como quick
+  tasks (u1f/u2r/u3g/u4n/u5c). Não faz parte do v2.2 (engine).
 
 ### Blockers/Concerns
 
 [Issues that affect future work]
 
-- **Websockets do Streamlit atrás do forward-auth:** o gate não pode quebrar os WS do Streamlit — validar na Phase 3 (e desde a Phase 1 ao montar o gate).
-- **Repo separado:** o projeto Django vive em `~/projects/lazari-capital` (novo `git init`), distinto deste repo (engine Streamlit). Não misturar históricos.
-- **Idempotência dos webhooks:** webhook repetido do Asaas não pode duplicar efeito no status (Phase 2).
+- **Não quebrar os golden do valuation sem intenção:** `test_ddm.py` (DDM Itaú R$37,22 input fixo),
+  `test_selo.py` (cortes de cor + rótulos da matriz + firewall selo↛report), `test_vulc3_regressao.py`
+  (capstone e2e; veredito começa com "VERIFICAR"), `test_guardrails_fix06.py`, `test_consistencia_modos.py`
+  (mesmo número entre Analisar/Garimpo/Ranking — Core Value). Se a refatoração mudar prefixos/rótulos
+  de veredito, atualizar `faixa_do_veredito` (selo.py:88) e `report._veredito_token` (report.py:355) juntos.
+- **Firewall selo↛report:** `selo.py` NÃO importa `report.py` (recebe só primitivos) — preservar ao
+  refatorar a agregação do veredito.
+- **Consistência cross-modo:** métodos canônicos `*_valuation()` em `fundamentals.py` são fonte única
+  — mexer neles reverbera nos 3 modos (Analisar/Garimpo/Ranking).
 
 ### Quick Tasks Completed
 
@@ -136,12 +111,12 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-09 (E2E pago concluído — smoke real R$19,90 PIX confirmado ao vivo)
-Stopped at: Phase 3 COMPLETA (03-01..03-05). Milestone v2.0 (Comercialização/Lazari Capital) fechado.
-Resume file: **.planning/phases/03-go-live-e2e-pago/03-05-SUMMARY.md**
+Last session: 2026-07-11 (milestone v2.0 fechado e arquivado; aberto v2.2 — Motor por Arquétipo)
+Stopped at: v2.2 iniciado — PROJECT.md/STATE.md/MILESTONES atualizados; definindo requisitos → roadmap.
+Resume file: **.planning/BRIEF-motor-arquetipo.md**
 
 ## Operator Next Steps
 
-- Estornar (ou não) o smoke real R$19,90 PIX no painel Asaas — decisão do operador (deixado na conta por ora).
-- Arquivar o milestone v2.0 com `/gsd-complete-milestone` quando quiser.
-- Backlog v2.1 (ver Deferred Items): ativar NFS-e no painel Asaas + link da NF na página de conta.
+- **v2.2:** após aprovar o roadmap, rodar `/gsd-discuss-phase [N]` (ou `/gsd-plan-phase [N]`) para a 1ª fase (classificador de arquétipo).
+- **v2.0 (encerrado):** estornar (ou não) o smoke real R$19,90 PIX no painel Asaas — decisão do operador.
+- **Backlog v2.1 (UX, deferido):** ativar NFS-e no painel Asaas + link da NF na página de conta; achados 6–18 do review de UX.

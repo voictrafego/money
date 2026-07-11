@@ -18,6 +18,18 @@ a mesma ação não pode parecer barata num menu e cara/ausente em outro sem exp
 
 ## Current State
 
+**v2.0 Comercialização (Lazari Capital) shipped 2026-07-10.** Produto no ar sob a marca Lazari
+Capital: Django (auth + Asaas + webhooks nativos) na frente, engine Streamlit atrás de gate
+Traefik forward-auth. `www.lazaricapital.com.br` + `app.lazaricapital.com.br`, cutover do
+`money.voictech.com.br` (301) concluído. E2E pago (03-05) concluído — smoke real R$19,90 PIX
+confirmado ao vivo. Fases v2.0 arquivadas em `.planning/milestones/v2.0-phases/`.
+
+**Agora: v2.2 — Motor de Valuation por Arquétipo** (trabalho de engine). Ver seção Current
+Milestone abaixo e `.planning/BRIEF-motor-arquetipo.md`.
+
+<details>
+<summary>Histórico v1.7 (Swing Trade / Modo Trading / Home / Lentes-Selo-Comparador) — shipped 2026-07-04</summary>
+
 **v1.7 shipped 2026-07-04 (tag única `v1.7`, cobrindo v1.4–v1.7).** Oito marcos completos:
 v1.0 consistência · v1.1 gráfico · v1.2 timing · v1.3 saneamento do valuation ·
 v1.4 Swing Trade (setups de análise técnica, Fases 12–16) · v1.5 Modo Trading (candlestick
@@ -51,32 +63,36 @@ agregar valor de produto à ferramenta antes de cobrar. A v2.0 retoma depois.
 
 </details>
 
-## Current Milestone: v2.0 — Comercialização (Lazari Capital)
+</details>
 
-**Goal:** Transformar o app num produto cobrável sob a marca **Lazari Capital** — um front
-Django (auth + Asaas + webhooks, espelhando o `crm-voic`) na frente e o engine Streamlit
-**intacto atrás de um gate**, com trial de 7 dias → assinatura mensal, posicionado como
-software educacional (sem recomendação).
+## Current Milestone: v2.2 — Motor de Valuation por Arquétipo
+
+**Goal:** Corrigir o erro de **arquitetura** (não de fórmula) em que a ferramenta aplica um
+único motor primário (DDM de estágio único) para todas as ações, gerando vereditos falsos
+("qualidade baixa / evitar") em compounders de qualidade. Rotear cada tipo de negócio para o
+motor certo **antes** de valuar, e nunca deixar o veredito final ser puxado por um modelo que
+não serve àquele perfil. Meta: acertar os ~85% de casos claros e assumir honestamente a dúvida
+nos ~15% fronteiriços.
 
 **Target features:**
-- Login/cadastro **self-serve** (email+senha) + sessão + gate (Streamlit só acessível autenticado)
-- `status_assinatura` como fonte de verdade do acesso (novo usuário = trial 7 dias, sem cartão)
-- Cobrança recorrente mensal via **Asaas** (checkout hospedado; produto nunca toca cartão)
-- **Webhooks nativos Django** do Asaas (idempotentes) — **sem n8n** — atualizam o status
-- Página de conta (status, cancelar, link de cobrança)
-- Legal: Termos + Privacidade + disclaimer educacional aceitos no cadastro
-- Deploy integrado (Django + gate Traefik forward-auth + Streamlit) na VPS + teste **E2E pago**
+- **Classificador de arquétipo** (o coração, ~60% do esforço): filtro grosso por setor CVM +
+  refino quantitativo (financeira→RIM; pagadora estável→DDM; ROE alto+retenção→compounder;
+  margem/lucro oscilando→cíclica), com **fallback honesto** quando a confiança é baixa
+- **Registro de motores** arquétipo→motor primário: RIM (banco/seguradora), DDM (pagadora
+  regulada — já existe), lucro normalizado (cíclica), DCF multi-estágio (crescimento), NAV/SOTP
+  (holding — stretch)
+- **Ensemble com bandeira de divergência**: motor primário + ≥1 contraponto; se maior > 2× menor,
+  levantar bandeira com hipótese em vez de cravar número único
+- **Guarda-corpos de sanidade** anti-aberração antes de virar selo (caso ITUB4)
+- **Veredito honesto**: agregação do selo consome o motor **do arquétipo**, não o DDM fixo; em
+  caso-fronteira assume a dúvida (range + bandeira) em vez de fingir certeza
 
-**Arquitetura (decidida):** gateway híbrido com **Django** — projeto Django novo (repo
-separado, `~/projects/lazari-capital`) espelha os apps do `crm-voic` (`accounts`, `users` com
-User custom email-como-login, `billing`/`asaas_client.py`, `webhooks`). Stack: Django 5.2 +
-HTMX + Alpine + Tailwind/Preline + Postgres, Docker/Traefik na VPS. Asaas em **conta e chave
-próprias** (só reusa a estrutura do crm-voic). Gate: Traefik **forward-auth** valida sessão +
-status de assinatura no Django e injeta header `X-User-Email` confiável no Streamlit.
+**Natureza:** trabalho de **engine** (arquitetura do valuation), não de comercialização. Brief
+completo (Core Value, requisitos ARQ/ENG/ENS/SAN/VER, critérios de aceite, mapa de código com
+âncoras `arquivo:linha`, ordem sugerida de fases) em `.planning/BRIEF-motor-arquetipo.md`.
 
-_(Marcos v1.0–v1.7 arquivados em `.planning/milestones/`. Requisitos v2.0 originais em
-`.planning/milestones/v2.0-REQUIREMENTS.md` — arquitetura atualizada de Supabase/n8n/React
-→ Django/webhooks-nativos/Traefik-forward-auth.)_
+_(Marcos v1.0–v1.7 e v2.0 Comercialização arquivados em `.planning/milestones/`. v2.0 shipped
+2026-07-10 com 1 item deferido — 03-05 E2E pago, depende de pagamento real do operador.)_
 
 ## Requirements
 
@@ -111,19 +127,18 @@ _(Marcos v1.0–v1.7 arquivados em `.planning/milestones/`. Requisitos v2.0 orig
 
 ### Active
 
-<!-- Marco v2.0 — Comercialização (Lazari Capital). REQ-IDs em REQUIREMENTS.md. -->
+<!-- Marco v2.2 — Motor de Valuation por Arquétipo. REQ-IDs em REQUIREMENTS.md. -->
 
-- [ ] Cadastro self-serve (email+senha) e login numa camada Django própria, emitindo sessão que governa o acesso (AUTH)
-- [ ] `status_assinatura` como fonte de verdade (novo usuário = trial 7 dias, sem cartão) (BILL/trial)
-- [ ] Gate: Streamlit só acessível autenticado E com trial/assinatura ativa (Traefik forward-auth) (AUTH/gate)
-- [ ] Cobrança recorrente mensal via Asaas (checkout hospedado; nunca manuseia cartão) (BILL)
-- [ ] Webhooks nativos Django do Asaas (idempotentes), sem n8n, atualizam o status (BILL)
-- [ ] Multiusuário real: contas isoladas, sessões simultâneas sem vazar estado (ACCT)
-- [ ] Página de conta: status, cancelar, link de cobrança (ACCT)
-- [ ] Legal: Termos + Privacidade + disclaimer educacional aceitos no cadastro (LEGAL)
-- [ ] Deploy integrado (Django + gate + Streamlit) na VPS + teste E2E pago (OPS)
+- [ ] Classificador de arquétipo que roteia cada ação ao motor certo antes de valuar, com fallback honesto em casos-fronteira (ARQ)
+- [ ] Registro de motores arquétipo→motor primário (RIM/DDM/lucro normalizado/DCF/SOTP) consumido pela agregação do veredito (ENG)
+- [ ] Ensemble com bandeira de divergência (motor primário + contraponto; bandeira quando maior > 2× menor) (ENS)
+- [ ] Guarda-corpos de sanidade anti-aberração antes de estampar veredito "evitar" (SAN)
+- [ ] Veredito honesto: selo consome o motor do arquétipo, não o DDM fixo; assume a dúvida em caso-fronteira (VER)
 
-_(v1.4–v1.7 — Swing Trade / Modo Trading / Home / Lentes-Selo-Comparador — SHIPPED 2026-07-04, tag `v1.7`.)_
+<!-- v2.0 Comercialização — SHIPPED 2026-07-10 (1 item deferido: 03-05 E2E pago). -->
+
+_(v1.4–v1.7 — Swing Trade / Modo Trading / Home / Lentes-Selo-Comparador — SHIPPED 2026-07-04, tag `v1.7`.
+v2.0 Comercialização/Lazari Capital — SHIPPED 2026-07-10, produto no ar, E2E pago concluído.)_
 
 ### Out of Scope
 
@@ -181,6 +196,9 @@ _(v1.4–v1.7 — Swing Trade / Modo Trading / Home / Lentes-Selo-Comparador —
 | Gate = **Traefik forward-auth** (Django valida sessão+status, injeta X-User-Email no Streamlit) | Menos código de segurança custom que JWT lido dentro do Streamlit; usa infra Traefik existente | — Pending (v2.0) |
 | Asaas em **conta e chave próprias** (não as do crm-voic) | Produto separado; só a estrutura de código é compartilhada | — Pending (v2.0) |
 | Cadastro **self-serve** (B2C/trial), diferente do crm-voic (invite-only) | Aquisição de clientes pessoa física precisa de cadastro aberto com trial | — Pending (v2.0) |
+| Abrir v2.2 (Motor por Arquétipo) fechando v2.0 (E2E pago concluído; só resta operador decidir estorno do smoke R$19,90) | v2.0 está no ar, funcional e validado end-to-end; nada bloqueia o trabalho de engine | — Pending (2026-07-11) |
+| O problema do ITUB4 é erro de **arquitetura** (ausência de roteamento), não de fórmula | DDM/Graham/Bazin estão matematicamente corretos; o defeito é aplicar DDM de estágio único como motor primário para todo negócio e agregar o veredito por ele | — Pending (v2.2) |
+| Gargalo do v2.2 = **classificador** (~60%), não os motores (~20%, fórmulas de livro-texto) | Priorizar a árvore de decisão do classificador primeiro, depois plugar os motores nela | — Pending (v2.2) |
 
 ## Evolution
 
@@ -200,4 +218,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-07 — Marco v2.0 Comercialização (Lazari Capital) reaberto: gateway híbrido com Django (auth + Asaas + webhooks nativos, espelhando crm-voic) + Streamlit atrás de gate Traefik forward-auth*
+*Last updated: 2026-07-11 — Marco v2.0 Comercialização (Lazari Capital) SHIPPED (1 item deferido: 03-05 E2E pago); aberto v2.2 — Motor de Valuation por Arquétipo (trabalho de engine: classificador + registry de motores + ensemble/divergência + guarda-corpos + veredito honesto)*
