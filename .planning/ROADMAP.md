@@ -89,11 +89,15 @@ funil de `report.py` entre o CAPM (`:113`) e a montagem do DDM (`:136`), sem toc
   2. A escolha do motor vem do **registry arquétipo→motor** (não mais de DDM fixo no código); um arquétipo cujo motor primário ainda não existe cai num fallback explícito, não em crash.
   3. TAEE11 (pagadora regulada) é roteada para **DDM como primário** e seus números/veredito permanecem idênticos aos de hoje — `test_ddm`, `test_selo`, `test_consistencia_modos` continuam verdes.
   4. Um ticker de confiança baixa (híbrido/fronteiriço) é marcado como **fronteiriço** e o classificador expõe 2–3 arquétipos candidatos em vez de cravar um único.
-**Plans**: 4 plans (2 execução + 2 gap-closure)
+**Plans**: 8 plans (2 execução + 6 gap-closure)
 - [x] 01-01-PLAN.md — Classificador puro (core/arquetipo.py) + registry ARQUETIPO_MOTOR + bloco config arquetipo: + golden (Wave 1)
 - [x] 01-02-PLAN.md — Roteamento no funil report.py + suspensão D-04 (reuso "VERIFICAR") + render mínimo + golden e2e (Wave 2)
 - [x] 01-03-PLAN.md — [gap] Detrend do sinal de ciclicidade (_cv_lucro) + golden WEGE3 realista — fecha Gap 1 CR-01/SC#1 (Wave 1)
 - [x] 01-04-PLAN.md — [gap] Expõe Arquétipo → motor na UI Streamlit (app.py), inclusive não-suspenso — fecha Gap 2/SC#1 (Wave 1)
+- [ ] 01-05-PLAN.md — [gap Achado 1a] Sinal de ciclicidade = resíduos log-lineares + recalibra ciclica_cv_min + goldens REAIS (WEGE3/RADL3→crescimento; VALE3/GGBR4/SUZB3/PETR4→ciclica) — reabre ARQ-01/ARQ-02 (Wave 1)
+- [ ] 01-06-PLAN.md — [gap Achado 1b] Corrige over-match do hard-route financeiro (MDIA3/alimentos ≠ financeira) (Wave 2, depende de 01-05)
+- [ ] 01-07-PLAN.md — [gap Achado 2 · SAN-01 puxado da Fase 3] Guarda-corpos DDM: não emitir/exibir faixa degenerada (vmax≤0/0-0: HAPV3/PCAR3/PRIO3) (Wave 1)
+- [ ] 01-08-PLAN.md — [gap Achado 3+4 · SAN-01/ENS-01 puxados da Fase 3] Freio do modo Ranking (R²≈0/ROMI3 + suspensão por arquétipo) + sinalização de divergência entre lentes (reconciliação DEFERIDA à Fase 3) (Wave 1)
 
 ### Phase 2: Motores por Arquétipo
 **Goal**: Plugar no registry os motores primários que faltam — as fórmulas de livro-texto (~20% do
@@ -142,6 +146,6 @@ Fases executam em ordem numérica: 1 → 2 → 3
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1. Classificador de Arquétipo + Roteamento | v2.2 | 0/2 | Not started | - |
+| 1. Classificador de Arquétipo + Roteamento | v2.2 | 4/8 | Gap closure | - |
 | 2. Motores por Arquétipo | v2.2 | 0/TBD | Not started | - |
 | 3. Veredito Honesto — Ensemble, Divergência, Guarda-corpos e Selo | v2.2 | 0/TBD | Not started | - |
