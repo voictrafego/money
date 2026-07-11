@@ -112,27 +112,31 @@ def test_regulada_mantem_motor_ddm_e_veredito_ddm():
     assert a.veredito  # DDM rodou e produziu veredito direcional
 
 
-# --- (b) FINANCEIRA — motor pendente → veredito suspenso, selo sem 'evitar' (D-04) --- #
+# --- (b) FINANCEIRA — motor RIM plugado → veredito suspenso, selo sem 'evitar' (D-06) --- #
 def test_financeira_suspende_veredito_e_nao_estampa_evitar():
     cfg = _cfg()
     a = report.analisar_acao(_financeira(), cfg)
     assert a.arquetipo == "financeira"
-    assert a.motor_pendente is True
+    # Fase 2: o motor RIM está PLUGADO (não mais None); a suspensão migrou de motor_pendente
+    # para motor != "ddm" (D-06) — o veredito segue "VERIFICAR", NÃO regride para "evitar".
+    assert a.motor == "rim"
     assert a.veredito.startswith("VERIFICAR")
     # O selo sobre o veredito suspenso marca verificar=True e NÃO estampa faixa/rótulo
     # (não vira 'evitar'), via prefixo "VERIFICAR" reusado — sem tocar selo.py.
     s = selo_mod.montar_selo(70.0, a.veredito, cfg)
     assert s.verificar is True
     assert s.rotulo is None
-    # A suspensão adiciona um alerta explicando o porquê (D-04).
-    assert any("motor pendente" in al.lower() for al in a.alertas)
+    # A suspensão adiciona um alerta explicando o porquê (D-06).
+    assert any("suspenso" in al.lower() for al in a.alertas)
 
 
 # --- (c) ANTI-PETRÓLEO — não vira regulada mesmo com eh_concessionaria=True ------ #
 def test_petroleo_nao_vira_pagadora_regulada():
     a = report.analisar_acao(_petroleo_compounder(), _cfg())
     assert a.arquetipo != "pagadora_regulada"
-    assert a.motor_pendente is True
+    # Fase 2: petróleo-compounder roteia para crescimento (dcf) ou cíclica (normalizado) —
+    # em ambos o motor != "ddm", então o veredito segue suspenso (D-06).
+    assert a.motor in {"dcf", "normalizado"}
 
 
 # --- (d) DEGRADAÇÃO — 1 ano, não levanta, popula o arquétipo -------------------- #

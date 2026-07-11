@@ -120,13 +120,17 @@ def test_freio_alvo_ausente():
 
 
 def test_motor_pendente_financeira_suspende():
-    """Suspensão por arquétipo (key_link): financeira → motor pendente (True)."""
+    """Suspensão por arquétipo (key_link, D-06): financeira → motor 'rim' (!= 'ddm') → suspensa.
+
+    Fase 2: o motor RIM está plugado, mas o selo ainda consome só o DDM — o predicado migrou
+    de 'registry devolveu None' para `motor != "ddm"`, então o Ranking segue suspenso (True).
+    """
     banco = _empresa("ITUB4", "Bancos")
     assert _motor_pendente(banco, _cfg()) is True
 
 
 def test_motor_pendente_regulada_tem_motor():
-    """Pagadora regulada → motor 'ddm' resolvido (não pendente)."""
+    """Pagadora regulada → motor 'ddm' → NÃO suspensa (motor == 'ddm', paridade D-06)."""
     util = _empresa("TAEE11", "Energia Elétrica", eh_concessionaria=True)
     assert _motor_pendente(util, _cfg()) is False
 

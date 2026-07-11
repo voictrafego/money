@@ -43,15 +43,17 @@ def _tickers(args) -> List[str]:
 
 
 def _motor_pendente(c, cfg: dict) -> bool:
-    """Resolve motor_pendente do arquétipo da empresa (paridade com report.py:180-186).
+    """Resolve a suspensão do Ranking pelo arquétipo da empresa (paridade com report.py, D-06).
 
-    O Ranking classifica o negócio e consulta o registry ARQUETIPO_MOTOR: se o arquétipo
-    (financeira/ciclica/crescimento/holding) ainda não tem motor primário na Fase 1, o motor
-    está pendente (chega na Fase 2) e o Ranking NÃO pode afirmar um preço-alvo por um modelo
-    que não serve a este perfil — é o mesmo erro de arquitetura do ITUB4 (suspensão D-04).
+    O Ranking classifica o negócio e consulta o registry ARQUETIPO_MOTOR. Na Fase 2 os motores
+    JÁ EXISTEM (financeira→rim, ciclica→normalizado, crescimento→dcf, holding→nav), mas o SELO
+    ainda consome só o DDM até a Fase 3 — então onde o motor do arquétipo NÃO é o DDM
+    (`motor != "ddm"`) o Ranking segue SEM estampar preço-alvo por regressão, para não afirmar
+    um alvo por um modelo que não é o do perfil (é o mesmo erro de arquitetura do ITUB4). O
+    predicado migrou de "registry devolveu None" para `motor != "ddm"` no MESMO wave do plug.
     """
     arq = arquetipo.classificar(c, cfg)
-    return arquetipo.ARQUETIPO_MOTOR.get(arq.chave) is None
+    return arquetipo.ARQUETIPO_MOTOR.get(arq.chave) != "ddm"
 
 
 def alvo_regressao_confiavel(reg, pa, motor_pendente: bool):

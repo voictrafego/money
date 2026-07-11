@@ -278,22 +278,29 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     # NEGATIVA (vmax<=0) ou DEGENERADA (0–0) é ruído — não preço-alvo. Suprime aqui, read-only
     # sobre o veredito e sem tocar core/ddm.py (borda de emissão apenas).
     _guarda_faixa_ddm(a)
-    if a.motor_pendente:
-        # Suspensão D-04: o arquétipo deste negócio NÃO tem motor primário na Fase 1
-        # (financeira→RIM, crescimento→DCF, cíclica→lucro normalizado, holding→SOTP chegam
-        # na Fase 2). NÃO estampar um veredito de preço por um modelo (DDM de estágio único)
-        # que não serve a este perfil — é o erro de arquitetura do ITUB4. Reusa o PREFIXO
-        # existente "VERIFICAR" (Pitfall 3): selo.montar_selo (selo.py:119) já suprime
-        # faixa/rótulo nesse prefixo → não estampa 'evitar', sem tocar selo.py. Guard
-        # GENÉRICO por motor_pendente (não condicionado a arquetipo == financeira).
+    if a.motor != "ddm":
+        # Suspensão D-06 (migrada de motor_pendente → motor != "ddm", MESMO wave que o plug do
+        # registry): o motor primário deste arquétipo JÁ EXISTE e calculou o intrínseco
+        # (a.intrinseco_motor), mas o SELO ainda consome só o DDM até VER-01/Fase 3. Estampar
+        # aqui um veredito de preço pelo DDM de estágio único — que não serve a este perfil — é
+        # o erro de arquitetura do ITUB4 (regride para "evitar"). Então o veredito de preço
+        # segue SUSPENSO, exibindo o intrínseco do motor do arquétipo como referência primária
+        # e rebaixando o DDM a lente conservadora. Reusa o PREFIXO "VERIFICAR" (Pitfall 3):
+        # selo.montar_selo (selo.py:119) já suprime faixa/rótulo nesse prefixo → não estampa
+        # 'evitar', sem tocar selo.py. O ramo DDM abaixo só é alcançado quando motor == "ddm".
+        if a.intrinseco_motor is not None:
+            ref = f"intrínseco ≈ R$ {_br(a.intrinseco_motor)} ({a.motor_rotulo or a.motor})"
+        else:
+            ref = f"motor '{a.motor}' ({a.motor_rotulo or a.motor})"
         a.veredito = (
-            f"VERIFICAR — arquétipo {a.arquetipo} usa o motor '{a.motor}', que chega na "
-            f"Fase 2; o DDM abaixo é lente conservadora, não o motor deste perfil. "
-            f"Referências: Graham/Bazin."
+            f"VERIFICAR — arquétipo {a.arquetipo}: referência primária pelo {ref}; o DDM abaixo "
+            f"é lente conservadora, não o motor deste perfil (o selo consome o motor do "
+            f"arquétipo só na Fase 3)."
         )
         a.alertas.append(
-            f"Roteamento: {a.arquetipo} → motor pendente (Fase 2). Veredito de preço suspenso "
-            f"para não estampar selo por um modelo que não serve a este perfil (D-04)."
+            f"Roteamento: {a.arquetipo} → motor '{a.motor}'. Veredito de preço pelo selo "
+            f"suspenso nesta fase para não estampar um selo pelo DDM, que não serve a este "
+            f"perfil (D-06); o intrínseco do motor é exibido como referência primária."
         )
     elif a.vmin is not None and a.vmax is not None and a.preco_atual:
         if a.preco_atual < a.vmin:
