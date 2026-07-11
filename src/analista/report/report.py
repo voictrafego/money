@@ -13,7 +13,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 from tabulate import tabulate
 
-from ..core import capm, ddm, growth, indicators, lifecycle, screening
+from ..core import arquetipo, capm, ddm, growth, indicators, lifecycle, screening
 from ..core import multiples as mult
 from ..core.fundamentals import CompanyData
 from . import selo as selo_mod
@@ -48,6 +48,12 @@ class AnaliseAcao:
     alerta_reverificacao: Optional[str] = None             # None se nada rompeu (Plan 02)
     # --- Fase 20: Selo de Sustentabilidade × veredito de preço (aditivo, read-only) ---
     selo: Optional["selo_mod.Selo"] = None                 # cor do BSD × faixa do DDM → quadrante
+    # --- Fase 1 v2.2: roteamento por arquétipo (aditivo, read-only) ---
+    arquetipo: str = ""                                    # chave do classificador (core/arquetipo)
+    motor: str = ""                                        # motor primário resolvido ("ddm" ou "pendente_fase_2")
+    arquetipo_fronteirico: bool = False                    # conflito real de sinais (ARQ-02)
+    arquetipo_candidatos: List[str] = field(default_factory=list)  # candidatos do funil (fallback honesto)
+    motor_pendente: bool = False                           # True quando o motor do arquétipo chega só na Fase 2 (D-04)
 
 
 def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
@@ -132,6 +138,19 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     # em vez de convergir — artefato matemático, não tese de valor. Teto econômico = Ke.
     if a.g_alto is not None and a.ke is not None:
         a.g_alto = min(a.g_alto, a.ke)
+
+    # --- Roteamento por arquétipo (Fase 1 v2.2, ARQ-01/ENG-01) ---
+    # Classifica o negócio ANTES do valuation e resolve o motor primário do registry.
+    # Aditivo/read-only: NÃO altera o bloco DDM abaixo (que roda sempre como lente); a
+    # suspensão D-04 do veredito primário quando o motor está pendente é aplicada no
+    # bloco de veredito. pagadora_regulada → "ddm" (TAEE11 idêntica, ENG-06).
+    arq = arquetipo.classificar(c, cfg)
+    a.arquetipo = arq.chave
+    a.arquetipo_fronteirico = arq.fronteirico
+    a.arquetipo_candidatos = arq.candidatos
+    motor = arquetipo.ARQUETIPO_MOTOR.get(arq.chave)
+    a.motor = motor or "pendente_fase_2"
+    a.motor_pendente = motor is None
 
     # --- DDM de dois estágios (Cap. 15/17) ---
     payout_proj = c.payout_valuation()  # média 3a + clamp 1.0 (função canônica única)
