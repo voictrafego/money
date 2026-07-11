@@ -4,14 +4,14 @@ milestone: v2.2
 milestone_name: Motor de Valuation por Arquétipo
 status: verifying
 stopped_at: Phase 1 context gathered
-last_updated: "2026-07-11T20:36:38.009Z"
+last_updated: "2026-07-11T20:45:11.924Z"
 last_activity: 2026-07-11
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 8
-  completed_plans: 5
-  percent: 63
+  completed_plans: 6
+  percent: 75
 ---
 
 # Project State
@@ -32,7 +32,7 @@ Plan: 2 of 2
 Status: Phase complete — ready for verification
 Last activity: 2026-07-11
 
-Progress: [██████░░░░] 63%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [██████░░░░] 63%
 | Phase 01 P03 | 0h20m | 2 tasks | 3 files |
 | Phase 01 P04 | 0h08m | 1 tasks | 1 files |
 | Phase 01 P05 | 0h25m | 2 tasks | 3 files |
+| Phase 01 P07 | 0h20m | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,7 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - [Phase 01]: Sinal de ciclicidade = CV dos retornos ano-a-ano (detrended), não do nível bruto — fecha CR-01/Gap 1 (WEGE3 deixa de misroutar para cíclica)
 - [Phase ?]: [Phase 01]: UI Streamlit (app.py) expõe 'Arquétipo → motor' no caption principal, incondicional em motor_pendente — fecha Gap 2 (paridade CLI/UI, inclui pagadora_regulada/TAEE11)
 - [Phase ?]: [Phase 01]: Sinal de ciclicidade = dispersão dos resíduos de ajuste log-linear do lucro (substitui CV dos retornos ano-a-ano); prejuízo na janela = evidência cíclica forte que precede o guard de <3 pontos; ciclica_cv_min recalibrado 0.50 para 0.35 com margem — fecha Achado 1a/CR-01 (WEGE3/RADL3 reais viram crescimento)
+- [Phase 01]: Guarda-corpo do DDM (Achado 2/SAN-01): faixa negativa (vmax<=0) ou degenerada (0-0) suprimida na borda de emissão — vmin/vmax->None + ddm_inaplicavel + nota honesta; faixa que só cruza zero (vmax>0) preservada. core/ddm.py e selo.py intocados.
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -135,7 +137,7 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-11T20:36:30.582Z
+Last session: 2026-07-11T20:44:57.983Z
 Stopped at: Phase 1 context gathered
 Resume file: None
 

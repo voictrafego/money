@@ -30,7 +30,7 @@
 
 ### Guarda-corpo de sanidade (SAN)
 
-- [ ] **SAN-01**: Regras **anti-aberração** capturam o absurdo antes de virar selo. Ex.: SE `intrínseco < 0,5 × mediana dos pares` E `ROE > 15%` E `normalização de payout cortou o dividendo > 40%` ENTÃO **não estampar** "qualidade baixa / evitar" — estampar "DDM conservador demais para o perfil, ver motor primário do arquétipo". Todo veredito "evitar" passa pelos guarda-corpos antes de ser exibido.
+- [x] **SAN-01**: Regras **anti-aberração** capturam o absurdo antes de virar selo. Ex.: SE `intrínseco < 0,5 × mediana dos pares` E `ROE > 15%` E `normalização de payout cortou o dividendo > 40%` ENTÃO **não estampar** "qualidade baixa / evitar" — estampar "DDM conservador demais para o perfil, ver motor primário do arquétipo". Todo veredito "evitar" passa pelos guarda-corpos antes de ser exibido.
 
 ### Veredito honesto (VER)
 
@@ -71,7 +71,7 @@ Quais fases cobrem quais requisitos. Preenchido na criação do roadmap.
 | ENG-04 | Phase 2 | Pending |
 | ENG-05 | Phase 2 | Pending |
 | ENS-01 | Phase 3 | Pending |
-| SAN-01 | Phase 3 | Pending |
+| SAN-01 | Phase 3 | Complete |
 | VER-01 | Phase 3 | Pending |
 | VER-02 | Phase 3 | Pending |
 

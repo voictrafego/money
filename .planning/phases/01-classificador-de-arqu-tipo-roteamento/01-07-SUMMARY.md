@@ -101,6 +101,12 @@ None - no external service configuration required.
 - Achado 2 fechado. Restam para a Fase 3: freio de arquétipo no modo Ranking (Achado 3), reconciliação/ensemble de divergência entre lentes (Achado 4) e normalização de lucro no pico do ciclo (PETR4 56–91, faixa POSITIVA — fora deste guarda-corpo, pertence à Fase 2).
 - Suíte verde: 372 passed (365 baseline + 7 novos). Nenhuma dependência nova.
 
+## Self-Check: PASSED
+
+- FOUND: tests/test_guardrails_ddm.py
+- FOUND: .planning/phases/01-classificador-de-arqu-tipo-roteamento/01-07-SUMMARY.md
+- FOUND commits: 48a7a4c (test), ea96878 (feat), b51bfb6 (feat), 46835ff (docs)
+
 ---
 *Phase: 01-classificador-de-arqu-tipo-roteamento*
 *Completed: 2026-07-11*
