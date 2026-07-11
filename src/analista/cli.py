@@ -203,6 +203,7 @@ def cmd_rank(args, cfg):
     reg = cmp.ajustar_regressao_pl(PL, DP, ROE)
     alvos = {}            # ticker -> PrecoAlvo (regressão crua, antes do freio)
     pendentes = {}        # ticker -> motor_pendente (suspensão por arquétipo, paridade D-04)
+    ddm_mid = {}          # ticker -> mid da faixa DDM (2ª lente, p/ o aviso de divergência)
     for c in empresas:
         pendentes[c.ticker] = _motor_pendente(c, cfg)
         if reg:
@@ -210,8 +211,14 @@ def cmd_rank(args, cfg):
                 reg, c.payout_valuation(), c.roe_valuation(), c.lpa_valuation(), c.preco_atual)
             if pa:
                 alvos[c.ticker] = pa
+        # 2ª lente (DDM absoluto) só para SINALIZAR divergência (Achado 4) — read-only, offline
+        # (analisar_acao lê cfg["capm"]["rf_local"], já resolvido/default; não toca a rede aqui).
+        a = report.analisar_acao(c, cfg)
+        if a.vmin is not None and a.vmax is not None:
+            ddm_mid[c.ticker] = (a.vmin + a.vmax) / 2.0
 
     print(f"\n{'#':>2} {'TICKER':10} {'NOTA':>6}  {'ALVO R$':>9}  {'UPSIDE':>7}")
+    avisos = []           # SINALIZAÇÃO de divergência entre lentes (Achado 4) — NÃO reconciliação
     for i, r in enumerate(ranking, 1):
         tk = r["empresa"]
         pa = alvos.get(tk)
@@ -227,6 +234,17 @@ def cmd_rank(args, cfg):
             up = f"({motivo})" if motivo else "-"
         nota = f"{r['nota']:.1f}" if r["nota"] is not None else "-"
         print(f"{i:>2} {tk:10} {nota:>6}  {alvo:>9}  {up:>7}")
+        # Aviso de divergência entre lentes (Achado 4 — SINALIZAÇÃO honesta, reconciliação →
+        # Fase 3): as duas lentes crua da MESMA ação (DDM absoluto × regressão relativa) medem
+        # coisas diferentes; quando divergem além do limiar, AVISAR em vez de fingir uma verdade.
+        if pa is not None and tk in ddm_mid:
+            divergiu, razao = cmp.divergencia_entre_lentes(ddm_mid[tk], pa.preco_alvo)
+            if divergiu:
+                avisos.append(
+                    f"⚠ {tk}: lentes divergem ~{razao:.1f}× (DDM R$ {ddm_mid[tk]:.2f} × regressão "
+                    f"R$ {pa.preco_alvo:.2f}) — ver Analisar; reconciliação na Fase 3.")
+    for aviso in avisos:
+        print(aviso, file=sys.stderr)
     if reg:
         _t_dp = f"{'−' if reg.coeficientes[1] < 0 else '+'} {abs(reg.coeficientes[1]):.2f}·DP"
         _t_roe = f"{'−' if reg.coeficientes[2] < 0 else '+'} {abs(reg.coeficientes[2]):.2f}·ROE"
