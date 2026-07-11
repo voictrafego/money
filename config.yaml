@@ -175,6 +175,8 @@ selo:
 # a calibração empírica (backtest sobre a B3) é BACKTEST-01, deferida. Ajuste sem deploy.
 # Anti-rebaseline (Pitfall 4): nenhum bloco pré-existente é tocado.
 arquetipo:
+  # Casados por LIMITE DE PALAVRA (não substring solta) — plural tolerado (Bancos/Seguradoras).
+  # Evita over-match de token curto dentro de palavra não-financeira (Achado 1b / T-0106-01).
   financeiro_tokens:              # setor CVM contendo QUALQUER destes → hard-route financeira (RIM), soberano
     - banco
     - "intermediação financeira"

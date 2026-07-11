@@ -20,6 +20,7 @@ Thresholds são config-driven (`cfg["arquetipo"]`); calibração empírica é BA
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from math import log
 from statistics import pstdev
@@ -100,6 +101,23 @@ def _cv_lucro(serie: list) -> Optional[float]:
     return pstdev(residuos)
 
 
+def _setor_casa_token(setor: str, tokens: list) -> bool:
+    """Casa um token financeiro no setor por LIMITE DE PALAVRA, não substring solta (T-0106-01).
+
+    O casamento ingênuo `tok in setor` sofre over-match: um token financeiro curto casa DENTRO
+    de uma palavra não-financeira (ex.: 'banco' ⊂ 'Bancoreal'). Ancoramos em fronteira de palavra
+    (`\\b`) e toleramos sufixo de plural (Bancos/Seguradoras) para NÃO afrouxar os hard-routes
+    financeiros genuínos; tokens multi-palavra ('intermediação financeira') casam como frase.
+    Função pura, sem I/O. `setor` já vem em minúsculas."""
+    for tok in tokens:
+        t = str(tok).lower().strip()
+        if not t:
+            continue
+        if re.search(r"\b" + re.escape(t) + r"(?:s|es)?\b", setor):
+            return True
+    return False
+
+
 def classificar(c: "CompanyData", cfg: dict) -> ResultadoArquetipo:
     """Roteia uma empresa ao seu arquétipo lendo só sinais canônicos de `CompanyData`.
 
@@ -127,7 +145,9 @@ def classificar(c: "CompanyData", cfg: dict) -> ResultadoArquetipo:
     setor = (c.setor or "").lower()
 
     # 1. HARD-ROUTE financeira (soberano) ------------------------------------- #
-    if any(tok.lower() in setor for tok in financeiro_tokens):
+    # Casamento por LIMITE DE PALAVRA (não substring solta) — impede que um token financeiro
+    # curto case dentro de uma palavra não-financeira (over-match; Achado 1b / T-0106-01).
+    if _setor_casa_token(setor, financeiro_tokens):
         return ResultadoArquetipo(FINANCEIRA, confianca="alta")
 
     # 2. HARD-ROUTE regulada + guarda anti-Petróleo --------------------------- #
