@@ -167,3 +167,29 @@ selo:
     verde_min: 70                 # BSD >= 70 → verde (qualidade Alta)
     azul_min: 55                  # 55 <= BSD < 70 → azul (qualidade Alta)
     amarelo_min: 40               # 40 <= BSD < 55 → amarelo (qualidade Baixa); abaixo de 40 → vermelho
+
+# --- Fase 1 (v2.2): Classificador de Arquétipo (ARQ-01/ARQ-02) ---
+# Bloco NOVO, irmão de `selo:`. Thresholds INICIAIS do classificador de arquétipo
+# (core/arquetipo.py). São config-driven: o classificador nunca hardcoda 0.15/0.40/0.50
+# no corpo — lê tudo daqui via cfg["arquetipo"]. Valores são ponto de partida honesto;
+# a calibração empírica (backtest sobre a B3) é BACKTEST-01, deferida. Ajuste sem deploy.
+# Anti-rebaseline (Pitfall 4): nenhum bloco pré-existente é tocado.
+arquetipo:
+  financeiro_tokens:              # setor CVM contendo QUALQUER destes → hard-route financeira (RIM), soberano
+    - banco
+    - "intermediação financeira"
+    - "intermediacao financeira"
+    - seguradora
+    - "arrendamento mercantil"
+    - "crédito imobiliário"
+    - "credito imobiliario"
+    - factoring
+    - securitização
+    - securitizacao
+    - "bolsas de valores"
+  regulada_excluir_tokens:        # guarda anti-Petróleo: eh_concessionaria + setor com estes NÃO vira pagadora_regulada
+    - petróleo
+    - petroleo
+  roe_alto_min: 0.15              # ROE de valuation >= isto (com retenção alta) → candidato compounder (crescimento)
+  retencao_alta_min: 0.50         # (1 - payout) >= isto (com ROE alto) → candidato compounder (crescimento)
+  ciclica_cv_min: 0.40            # coef. de variação do lucro cru >= isto → candidato cíclica (lucro oscilante)
