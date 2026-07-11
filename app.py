@@ -879,6 +879,7 @@ if modo.startswith("Analisar"):
         else:
             st.markdown(f"### {a.ticker} — {a.nome}")
             st.caption(f"Setor: {a.setor or '—'}  ·  Estágio: {a.estagio}")
+            st.caption(f"Arquétipo: {esc_md(a.arquetipo or '—')} → motor {esc_md(a.motor or '—')}")
 
             # Veredito colorido
             v = a.veredito or "Indeterminado"
