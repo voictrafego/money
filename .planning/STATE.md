@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Motor de Valuation por Arquétipo
 status: planning
-last_updated: "2026-07-11T13:48:55.296Z"
+last_updated: "2026-07-11T14:10:00.000Z"
 last_activity: 2026-07-11
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -22,28 +22,31 @@ See: .planning/PROJECT.md (updated 2026-07-11)
 **Core value:** Cada tipo de negócio é roteado para o motor de valuation certo antes de valuar,
 e nenhum veredito final é puxado por um modelo que não serve àquele perfil — um compounder de
 qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio único não cabe nele.
-**Current focus:** v2.2 — Motor de Valuation por Arquétipo — definindo requisitos (a partir do
-brief `.planning/BRIEF-motor-arquetipo.md`).
+**Current focus:** v2.2 — Fase 1: Classificador de Arquétipo + Roteamento (roadmap criado).
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-07-11 — Milestone v2.2 started
+Phase: 1 of 3 (Classificador de Arquétipo + Roteamento)
+Plan: — (aguardando planejamento)
+Status: Ready to plan
+Last activity: 2026-07-11 — Roadmap v2.2 criado (3 fases, 12/12 requisitos mapeados)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed (v1.0–v1.7): 66+ plans em 21 fases (marcos arquivados)
-- v2.0: 0 plans completed
+- Total plans completed (v1.0–v2.0): marcos arquivados (v1.7 = 66+ plans/21 fases; v2.0 = 3 fases)
+- v2.2: 0 plans completed
 
 **By Phase (v2.2):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| (roadmap pendente) | TBD | - | - |
+| 1. Classificador + Roteamento | TBD | - | - |
+| 2. Motores por Arquétipo | TBD | - | - |
+| 3. Veredito Honesto | TBD | - | - |
 
 **Recent Trend:**
 
@@ -59,10 +62,16 @@ Last activity: 2026-07-11 — Milestone v2.2 started
 Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v2.2:
 
 - **O problema do ITUB4 é erro de arquitetura, não de fórmula.** DDM/Graham/Bazin estão matematicamente corretos; o defeito é aplicar DDM de estágio único como motor primário para TODO negócio e agregar o veredito por ele. Conserto = roteamento por arquétipo.
-- **Gargalo = classificador (~60% do esforço), não os motores (~20%, fórmulas de livro-texto).** Priorizar a árvore de decisão do classificador primeiro, depois plugar os motores nela.
+- **Gargalo = classificador (~60% do esforço), não os motores (~20%, fórmulas de livro-texto).** Priorizar a árvore de decisão do classificador (Fase 1) primeiro, depois plugar os motores nela (Fase 2).
 - **Fallback honesto:** quando a confiança do classificador for baixa (caso-fronteira/híbrido), NÃO chutar — marcar como fronteiriço e rodar 2–3 lentes candidatas com bandeira de divergência.
 - **RIM é o motor que destrava o ITUB4** (banco/seguradora): VPA + VP do excesso de ROE sobre Ke. DDM permanece como primário só para pagadora madura/regulada (TAEE11/SAPR11/EGIE3) — não quebrar o que funciona.
 - **Nota técnica (repo):** golden `tests/test_ddm.py` trava DDM Itaú ≈ R$ 37,22 com Ke fixo de livro (12,48%). A run ao vivo injeta Rf via Selic → Ke ~17,3% → comprime para ~R$ 16. A refatoração NÃO deve quebrar o golden (input fixo), mas confirma a hipersensibilidade do DDM ao vivo ao Ke.
+
+### Estrutura do Roadmap v2.2 (criado 2026-07-11)
+
+- **Fase 1 — Classificador de Arquétipo + Roteamento** (ARQ-01, ARQ-02, ENG-01, ENG-06): classifica antes de valuar + fallback honesto + registry arquétipo→motor com DDM plugado para pagadora regulada. Roteamento entra em `report.py` entre CAPM (:113) e DDM (:136).
+- **Fase 2 — Motores por Arquétipo** (ENG-02 RIM, ENG-03 lucro normalizado, ENG-04 DCF, ENG-05 NAV/SOTP): pluga no registry os motores primários que faltam; DDM puro (`core/ddm.py`) não é tocado.
+- **Fase 3 — Veredito Honesto** (ENS-01, SAN-01, VER-01, VER-02): selo consome o motor do arquétipo + ensemble/divergência + guarda-corpos + dúvida honesta em caso-fronteira. Preservar firewall selo↛report.
 
 ### Pending Todos
 
@@ -83,7 +92,7 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
   (mesmo número entre Analisar/Garimpo/Ranking — Core Value). Se a refatoração mudar prefixos/rótulos
   de veredito, atualizar `faixa_do_veredito` (selo.py:88) e `report._veredito_token` (report.py:355) juntos.
 - **Firewall selo↛report:** `selo.py` NÃO importa `report.py` (recebe só primitivos) — preservar ao
-  refatorar a agregação do veredito.
+  refatorar a agregação do veredito (Fase 3).
 - **Consistência cross-modo:** métodos canônicos `*_valuation()` em `fundamentals.py` são fonte única
   — mexer neles reverbera nos 3 modos (Analisar/Garimpo/Ranking).
 
@@ -106,17 +115,17 @@ Items carried forward do fechamento do marco anterior:
 | Docs engine | DDM-DOC-01 (docstring/teste de t em ddm.py, IN-06) | v2+ | 2026-06-04 |
 | Refino | Payout-alvo por setor configurável | v2+ | 2026-06-27 |
 | UI | Sinalização de "ano extraordinário" na tabela de Fundamentos | v2+ | 2026-06-27 |
-| Fiscal/NF | **NFS-e AUTOMÁTICA IMPLEMENTADA + VALIDADA (2026-07-09).** Módulo Asaas via Portal Nacional montado (serviço **01.03.01** / tributação nacional **010301**, ISS **2,01%**, Simples, inscrição 3813487, certificado A1). CNAE **6319-4/00**. **Emissão automática por assinatura implementada no código** (lazari-capital `ac0528d`+`15a93eb`): o `assinar` chama `POST /subscriptions/{id}/invoiceSettings` (emite na confirmação do pagamento) e o checkout agora coleta **CEP + número** (exigidos pela NFS-e — sem endereço o Asaas rejeita). Settings env: `ASAAS_NF_AUTO_EMIT`/`_SERVICE_CODE`/`_ISS_ALIQUOTA`. **Validado ao vivo:** invoiceSettings 200; nota de teste do R$19,90 (`inv_000021028809`) foi forçada (`POST /invoices/{id}/authorize` → 200) e está **`SYNCHRONIZED`** (enviada à prefeitura de Londrina, SEM erro) — aguardando retorno assíncrono p/ virar `AUTHORIZED`. **RETOMAR AQUI:** conferir se essa nota autorizou (painel Asaas → Notas Fiscais → Todas, ou reconsultar `/invoices`); se `ERROR`, corrigir o dado recusado. Depois: contador confirmar alíquota ISS oficial (usado 2,01%). Fluxo de venda real já pronto (emite no ato do pagamento). | done | 2026-07-09 |
-| UI | NF-e: exibir link da nota emitida (vem no webhook Asaas) na página "Minha conta" → botão "Baixar nota fiscal". Depende da NF ativa no Asaas. | v2.1 | 2026-07-09 |
+| Fiscal/NF | NFS-e automática por assinatura IMPLEMENTADA + VALIDADA (2026-07-09). RETOMAR: conferir no painel Asaas se a nota do smoke (`inv_000021028809`) autorizou; contador confirmar alíquota ISS oficial (usado 2,01%). | done | 2026-07-09 |
+| UI | NF-e: exibir link da nota emitida (webhook Asaas) na página "Minha conta" → botão "Baixar nota fiscal". | v2.1 | 2026-07-09 |
 
 ## Session Continuity
 
-Last session: 2026-07-11 (milestone v2.0 fechado e arquivado; aberto v2.2 — Motor por Arquétipo)
-Stopped at: v2.2 iniciado — PROJECT.md/STATE.md/MILESTONES atualizados; definindo requisitos → roadmap.
+Last session: 2026-07-11 (roadmap v2.2 criado — 3 fases, 12/12 requisitos mapeados)
+Stopped at: ROADMAP.md + REQUIREMENTS.md (traceability) + STATE.md escritos. Aguardando aprovação do roadmap.
 Resume file: **.planning/BRIEF-motor-arquetipo.md**
 
 ## Operator Next Steps
 
-- **v2.2:** após aprovar o roadmap, rodar `/gsd-discuss-phase [N]` (ou `/gsd-plan-phase [N]`) para a 1ª fase (classificador de arquétipo).
+- **v2.2:** aprovar o roadmap e rodar `/gsd-discuss-phase 1` (ou `/gsd-plan-phase 1`) para a Fase 1 (classificador de arquétipo — o coração/gargalo do milestone).
 - **v2.0 (encerrado):** estornar (ou não) o smoke real R$19,90 PIX no painel Asaas — decisão do operador.
 - **Backlog v2.1 (UX, deferido):** ativar NFS-e no painel Asaas + link da NF na página de conta; achados 6–18 do review de UX.

@@ -62,24 +62,29 @@ Quais fases cobrem quais requisitos. Preenchido na criação do roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ARQ-01 | TBD | Pending |
-| ARQ-02 | TBD | Pending |
-| ENG-01 | TBD | Pending |
-| ENG-02 | TBD | Pending |
-| ENG-03 | TBD | Pending |
-| ENG-04 | TBD | Pending |
-| ENG-05 | TBD | Pending |
-| ENG-06 | TBD | Pending |
-| ENS-01 | TBD | Pending |
-| SAN-01 | TBD | Pending |
-| VER-01 | TBD | Pending |
-| VER-02 | TBD | Pending |
+| ARQ-01 | Phase 1 | Pending |
+| ARQ-02 | Phase 1 | Pending |
+| ENG-01 | Phase 1 | Pending |
+| ENG-06 | Phase 1 | Pending |
+| ENG-02 | Phase 2 | Pending |
+| ENG-03 | Phase 2 | Pending |
+| ENG-04 | Phase 2 | Pending |
+| ENG-05 | Phase 2 | Pending |
+| ENS-01 | Phase 3 | Pending |
+| SAN-01 | Phase 3 | Pending |
+| VER-01 | Phase 3 | Pending |
+| VER-02 | Phase 3 | Pending |
 
 **Coverage:**
 - v2.2 requirements: 12 total
-- Mapped to phases: 0 (roadmap pendente)
-- Unmapped: 12 ⚠️
+- Mapped to phases: 12 ✓
+- Unmapped: 0
+
+**Por fase:**
+- Phase 1 (Classificador + Roteamento): ARQ-01, ARQ-02, ENG-01, ENG-06 (4)
+- Phase 2 (Motores por Arquétipo): ENG-02, ENG-03, ENG-04, ENG-05 (4)
+- Phase 3 (Veredito Honesto): ENS-01, SAN-01, VER-01, VER-02 (4)
 
 ---
 *Requirements defined: 2026-07-11*
-*Last updated: 2026-07-11 — milestone v2.2 aberto a partir de BRIEF-motor-arquetipo.md*
+*Last updated: 2026-07-11 — roadmap criado; 12/12 requisitos mapeados em 3 fases (numeração reiniciada em Phase 1)*
