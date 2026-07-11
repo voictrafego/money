@@ -3,8 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Motor de Valuation por Arquétipo
 status: planning
-last_updated: "2026-07-11T14:10:00.000Z"
-last_activity: 2026-07-11
+stopped_at: Phase 1 context gathered
+last_updated: "2026-07-11T14:51:23.491Z"
+last_activity: 2026-07-11 — Roadmap v2.2 criado (3 fases, 12/12 requisitos mapeados)
 progress:
   total_phases: 3
   completed_phases: 0
@@ -91,8 +92,10 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
   (capstone e2e; veredito começa com "VERIFICAR"), `test_guardrails_fix06.py`, `test_consistencia_modos.py`
   (mesmo número entre Analisar/Garimpo/Ranking — Core Value). Se a refatoração mudar prefixos/rótulos
   de veredito, atualizar `faixa_do_veredito` (selo.py:88) e `report._veredito_token` (report.py:355) juntos.
+
 - **Firewall selo↛report:** `selo.py` NÃO importa `report.py` (recebe só primitivos) — preservar ao
   refatorar a agregação do veredito (Fase 3).
+
 - **Consistência cross-modo:** métodos canônicos `*_valuation()` em `fundamentals.py` são fonte única
   — mexer neles reverbera nos 3 modos (Analisar/Garimpo/Ranking).
 
@@ -120,9 +123,9 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-11 (roadmap v2.2 criado — 3 fases, 12/12 requisitos mapeados)
-Stopped at: ROADMAP.md + REQUIREMENTS.md (traceability) + STATE.md escritos. Aguardando aprovação do roadmap.
-Resume file: **.planning/BRIEF-motor-arquetipo.md**
+Last session: 2026-07-11T14:51:23.488Z
+Stopped at: Phase 1 context gathered
+Resume file: .planning/phases/01-classificador-de-arqu-tipo-roteamento/01-CONTEXT.md
 
 ## Operator Next Steps
 
