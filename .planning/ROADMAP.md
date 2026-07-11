@@ -116,7 +116,9 @@ primário do arquétipo.
   3. WEGE3 (crescimento) usa **DCF multi-estágio** (ou múltiplo relativo) e não recebe mais DDM cuspindo zero/lixo.
   4. Um arquétipo holding/imobiliária patrimonial usa **NAV/SOTP** como motor primário.
   5. O golden `test_ddm` (DDM Itaú ≈ R$37,22, input fixo de livro) continua verde — os motores novos não alteram o DDM puro.
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 02-01-PLAN.md — Motores puros (core/motores.py): RIM+Ke estrutural, lucro normalizado, DCF crescimento, NAV contábil + bloco config + goldens (Wave 1)
+- [ ] 02-02-PLAN.md — Plug no registry + dispatch no funil + migração D-06 da suspensão (3 superfícies) + render DDM lente conservadora + anchors e2e (Wave 2)
 
 ### Phase 3: Veredito Honesto — Ensemble, Divergência, Guarda-corpos e Selo
 **Goal**: Fechar o loop na **agregação do veredito**, que hoje é single-model (BSD × DDM). Refatorar
@@ -147,5 +149,5 @@ Fases executam em ordem numérica: 1 → 2 → 3
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1. Classificador de Arquétipo + Roteamento | v2.2 | 4/8 | Gap closure | - |
-| 2. Motores por Arquétipo | v2.2 | 0/TBD | Not started | - |
+| 2. Motores por Arquétipo | v2.2 | 0/2 | Planned | - |
 | 3. Veredito Honesto — Ensemble, Divergência, Guarda-corpos e Selo | v2.2 | 0/TBD | Not started | - |
