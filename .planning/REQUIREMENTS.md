@@ -1,85 +1,85 @@
-# Requirements: Lazari Capital — v2.0 Comercialização
+# Requirements: Analista de Dividendos — v2.2 Motor de Valuation por Arquétipo
 
-**Defined:** 2026-07-07 (reabertura; requisitos originais de 2026-06-28 em `milestones/v2.0-REQUIREMENTS.md`)
-**Core Value:** O produto cobra de forma confiável e o acesso reflete fielmente o status de assinatura — quem paga (ou está em trial) entra; quem não tem assinatura ativa não entra — sem nunca prometer recomendação de investimento.
-**Milestone goal:** Transformar o app de usuário único num produto cobrável sob a marca **Lazari Capital**: cadastro self-serve, trial de 7 dias → assinatura mensal (Asaas), gate de acesso e multiusuário, posicionado como **software educacional (sem recomendação)**.
+**Defined:** 2026-07-11
+**Core Value:** Cada tipo de negócio é roteado para o motor de valuation certo antes de valuar, e **nenhum veredito final é puxado por um modelo que não serve àquele perfil** — um compounder de qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio único não cabe nele.
+**Milestone goal:** Corrigir o erro de **arquitetura** (não de fórmula) em que a ferramenta aplica um único motor primário (DDM de estágio único) para todas as ações. Construir: (1) classificador de arquétipo, (2) registry de motores por arquétipo, (3) ensemble com bandeira de divergência, (4) guarda-corpos de sanidade anti-aberração, (5) agregação de veredito que consome o motor **do arquétipo** e assume a dúvida em casos-fronteira. Meta: acertar os ~85% de casos claros e assumir honestamente a dúvida nos ~15% fronteiriços.
 
-**Arquitetura (decidida):** **Gateway híbrido com Django.** Projeto Django novo (repo separado,
-`~/projects/lazari-capital`) espelha os apps do `crm-voic` — `accounts`, `users` (User custom com
-email como USERNAME_FIELD, sem username), `billing` (`asaas_client.py`, `cupom_service.py`),
-`webhooks` (idempotentes, **nativos Django, sem n8n**). O engine de valuation continua em
-**Streamlit intacto atrás de um gate**. Gate = **Traefik forward-auth**: o Django valida
-sessão + status de assinatura e injeta um header `X-User-Email` confiável no Streamlit. Fonte de
-verdade de contas/assinaturas no **Postgres**. Asaas em **conta e chave próprias**. Stack Django
-5.2 + HTMX + Alpine + Tailwind/Preline + Postgres, Docker/Traefik na VPS.
+**Contexto (caso ITUB4):** Preço R$43,59 · DDM ao vivo R$12,93–19,32 · Graham R$39,88 · Bazin R$28,97. Veredito estampado: SOBREAVALIADA / Qualidade Baixa / Evitar. Divergência de ~3× entre DDM e Graham/mercado é sinal de motor primário errado para o negócio. Raiz: Ke ~17,3% ao vivo (Selic alta via CAPM) comprime `V=D1/(Ke−g)`; normalização de payout 105%→46,7% derruba o DY de entrada 7,9%→4,0%; DDM ignora o lucro retido reinvestido (ROE 19,3%, retenção ~53%). Os modelos individuais estão matematicamente corretos — o defeito é a **ausência de roteamento** e a **agregação single-model do veredito**.
 
-## v2.0 Requirements
+**Brief-fonte:** `.planning/BRIEF-motor-arquetipo.md` (mapa de código com âncoras `arquivo:linha`, ordem sugerida de fases). **Gargalo = o classificador (~60% do esforço), não os motores (~20%, fórmulas de livro-texto).**
 
-### Auth & Acesso (AUTH)
+## v2.2 Requirements
 
-- [x] **AUTH-01**: Usuário faz **cadastro self-serve** (email + senha) e login numa camada Django própria, emitindo uma sessão que governa o acesso ao app.
-- [x] **AUTH-02**: O app Streamlit só é acessível **autenticado E com trial/assinatura ativa** — acesso direto à URL do Streamlit sem sessão válida é bloqueado pelo gate (Traefik forward-auth), sem vazar a aplicação.
-- [x] **AUTH-03**: A identidade do usuário autenticado é propagada ao Streamlit de forma confiável (header `X-User-Email` injetado pelo gate), permitindo que o app saiba quem é o usuário da sessão.
-- [x] **AUTH-04**: Usuário consegue **redefinir a senha** por link enviado ao e-mail (fluxo self-serve, sem intervenção manual).
+### Classificador de arquétipo (ARQ) — o coração
 
-### Assinatura & Billing (BILL)
+- [ ] **ARQ-01**: A ferramenta classifica o **arquétipo do negócio antes de valuar**, a partir dos dados já puxados (CVM + Yahoo + BCB): filtro grosso por setor CVM como primeiro corte + refino quantitativo pelas métricas que a própria ação entrega (financeira → RIM; pagadora estável com payout comportado → DDM elegível; ROE alto e estável com retenção alta → compounder; margem/lucro oscilando violento ano a ano → cíclica).
+- [ ] **ARQ-02**: **Fallback honesto** — quando a confiança do classificador for baixa (caso-fronteira, híbrido, mudança de estágio), a ferramenta **não chuta**: marca a ação como fronteiriça e roda 2–3 lentes candidatas em vez de forçar um único arquétipo.
 
-- [x] **BILL-01**: **Trial de 7 dias** ao cadastrar, **sem cobrança imediata e sem cartão**, com data de fim de trial clara para o usuário; o status inicial (`status_assinatura`) já é a fonte de verdade que o gate consulta.
-- [x] **BILL-02**: Cobrança recorrente **mensal via Asaas** (criação de cliente + assinatura), com **checkout hospedado pelo Asaas** — o produto **nunca** manuseia dados de cartão.
-- [x] **BILL-03**: **Webhooks do Asaas nativos Django** (idempotentes, sem n8n) atualizam o status da assinatura (ativa / inadimplente / cancelada / trial) na fonte de verdade (Postgres).
-- [x] **BILL-04**: O gate lê o status (**trial ativo OU assinatura ativa**) para liberar/bloquear; inadimplência/cancelamento bloqueia o acesso após o período devido.
+### Registro de motores (ENG)
 
-### Conta & Multiusuário (ACCT)
+- [ ] **ENG-01**: Existe um **registry arquétipo→motor primário** que a agregação do veredito consome — a escolha do motor deixa de ser fixa (DDM) e passa a ser função do arquétipo classificado.
+- [ ] **ENG-02**: **RIM (Residual Income Model)** — VPA + VP do excesso de ROE sobre Ke — disponível como motor primário para **banco/seguradora** (ITUB4, BBAS3, BBSE3). *(É o motor que destrava o ITUB4.)*
+- [ ] **ENG-03**: **Lucro normalizado** (média 7–10 anos ou mid-cycle) → EV/EBITDA ou FCF disponível como motor primário para **cíclica de commodity** (VALE3, GGBR4, SUZB3), em vez do lucro de um ano só.
+- [ ] **ENG-04**: **DCF de FCF multi-estágio** (ou múltiplo relativo) disponível como motor primário para **crescimento/capital-light** (WEGE3, tech, varejo em expansão), sem o DDM cuspir zero/lixo.
+- [ ] **ENG-05**: **NAV / Soma das Partes (SOTP)** disponível como motor primário para **holding/imobiliária patrimonial**.
+- [ ] **ENG-06**: **DDM permanece** como motor primário para **pagadora madura/regulada** (TAEE11, SAPR11, EGIE3) — reaproveitando o motor atual, sem quebrar o que já funciona.
 
-- [x] **ACCT-01**: **Multiusuário real** — cada usuário tem conta isolada e o app serve sessões simultâneas **sem vazar estado** entre usuários.
-- [x] **ACCT-02**: **Página de conta**: status da assinatura, gerenciar/cancelar e link para a cobrança (Asaas), sem o produto expor dados sensíveis de pagamento.
+### Ensemble & divergência (ENS)
 
-### Posicionamento & Legal (LEGAL)
+- [ ] **ENS-01**: A ferramenta **nunca crava um número único quando os modelos discordam muito**: roda o motor primário do arquétipo + ≥1 contraponto e, se a divergência passar do limiar (ex.: maior modelo > 2× o menor), **levanta uma bandeira de divergência** com hipótese exibida ("compounder subvalorizado pelo DDM", "cíclica no topo do ciclo", etc.). Divergência é informação exibida, não defeito escondido.
 
-- [x] **LEGAL-01**: Copy e features reforçam "**software educacional, sem recomendação**" (sem "compre/venda", sem carteira personalizada); **Termos de Uso + Política de Privacidade + disclaimer** aceitos no cadastro.
+### Guarda-corpo de sanidade (SAN)
 
-### Go-live & Operação (OPS)
+- [ ] **SAN-01**: Regras **anti-aberração** capturam o absurdo antes de virar selo. Ex.: SE `intrínseco < 0,5 × mediana dos pares` E `ROE > 15%` E `normalização de payout cortou o dividendo > 40%` ENTÃO **não estampar** "qualidade baixa / evitar" — estampar "DDM conservador demais para o perfil, ver motor primário do arquétipo". Todo veredito "evitar" passa pelos guarda-corpos antes de ser exibido.
 
-- [x] **OPS-01**: Deploy integrado (Django + gate + Streamlit) na VPS (Docker Swarm + Traefik) sob **domínio Lazari Capital**, com segredos (Asaas/DB) fora do git, e teste **E2E pago** (cadastro → trial → pagamento → acesso → cancelamento → bloqueio).
+### Veredito honesto (VER)
 
-## Future Requirements (pós-v2.0)
+- [ ] **VER-01**: A **agregação do selo final** (hoje BSD × DDM) é refatorada para **consumir o motor do arquétipo**, não o DDM fixo — quando o DDM não é o motor do perfil, ele é rebaixado a "lente conservadora".
+- [ ] **VER-02**: Em **caso-fronteira**, o veredito **assume a dúvida em voz alta** (range + bandeira de divergência) em vez de fingir certeza cravando um selo falso.
 
-- Múltiplos planos/tiers (free limitado, Pro, Pro+) e gate por feature
-- Plano anual, cupons, programa de afiliados
-- OAuth (Google) no login, além de email+senha
-- Landing page de marketing/SEO própria da marca Lazari Capital
-- Watchlist/histórico por usuário, export PDF, alertas (WhatsApp via Evolution API)
-- Migração do front do app para React+Vite (rebuild além do gateway híbrido)
+## v2 Requirements (deferido)
 
-## Out of Scope (v2.0)
+Rastreado, fora do roadmap atual.
 
-- Reescrever a UI do app em React ou Django — o engine continua em **Streamlit atrás do gate**
-- Múltiplos tiers/planos — v2.0 é **plano único** (trial → mensal)
-- **n8n** para webhooks — substituído por app `webhooks` nativo Django
-- Qualquer recomendação/aconselhamento personalizado de investimento (regulatório CVM)
-- Nova fonte de dados paga — segue só com CVM/Yahoo/BCB
+- **BACKTEST-01**: Backtesting dos modelos contra retorno futuro (validar empiricamente qual motor acerta por arquétipo). Explicitamente fora de escopo desta fase.
+- **ARQ-AUTO-01**: Acertar 100% dos tickers automaticamente. Meta do v2.2 é ~85% claros + assumir a dúvida nos ~15% fronteiriços.
+
+## Out of Scope
+
+Explicitamente excluído para manter o milestone fechado.
+
+| Feature | Reason |
+|---------|--------|
+| Novas fontes de dados além de CVM, Yahoo e BCB | Princípio de custo zero; classificador e motores devem trabalhar só com o que já se puxa |
+| Redesenho de UI além da lógica de veredito e da bandeira de divergência | Milestone é de engine; UI muda só onde o veredito/bandeira aparecem |
+| Backtesting dos modelos contra retorno futuro | Fase posterior (ver BACKTEST-01); v2.2 é sobre roteamento correto, não validação empírica de retorno |
+| Acertar 100% dos tickers automaticamente | Meta é ~85% claros + dúvida honesta nos ~15%; perseguir 100% seria over-fitting do classificador |
+| Reescrever os modelos individuais (DDM/Graham/Bazin) | Estão matematicamente corretos; o defeito é ausência de roteamento e agregação single-model, não as fórmulas |
 
 ## Traceability
 
+Quais fases cobrem quais requisitos. Preenchido na criação do roadmap.
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Complete |
-| AUTH-02 | Phase 1 | Complete |
-| AUTH-03 | Phase 1 | Complete |
-| AUTH-04 | Phase 1 | Complete |
-| BILL-01 | Phase 1 | Complete |
-| ACCT-01 | Phase 1 | Complete |
-| LEGAL-01 | Phase 1 | Complete |
-| BILL-02 | Phase 2 | Complete |
-| BILL-03 | Phase 2 | Complete |
-| BILL-04 | Phase 2 | Complete |
-| ACCT-02 | Phase 2 | Complete |
-| OPS-01 | Phase 3 | Complete |
+| ARQ-01 | TBD | Pending |
+| ARQ-02 | TBD | Pending |
+| ENG-01 | TBD | Pending |
+| ENG-02 | TBD | Pending |
+| ENG-03 | TBD | Pending |
+| ENG-04 | TBD | Pending |
+| ENG-05 | TBD | Pending |
+| ENG-06 | TBD | Pending |
+| ENS-01 | TBD | Pending |
+| SAN-01 | TBD | Pending |
+| VER-01 | TBD | Pending |
+| VER-02 | TBD | Pending |
 
-**Coverage:** 12/12 requisitos v2.0 completos. Phase 1 = Login/Cadastro + Gate + status de trial
-(fundação que Billing consome); Phase 2 = Asaas + webhooks + conta; Phase 3 = deploy E2E pago.
+**Coverage:**
+- v2.2 requirements: 12 total
+- Mapped to phases: 0 (roadmap pendente)
+- Unmapped: 12 ⚠️
 
-**Status (2026-07-09):** milestone v2.0 funcionalmente completo e no ar. E2E pago validado ao vivo
-(cadastro → trial → pagamento real R$19,90 PIX → webhook prod → acesso). LEGAL-01 fechado com as
-páginas de Termos de Uso + Política de Privacidade (commit lazari-capital 16fdb50). Recomendado:
-revisão jurídica dos documentos legais antes de abrir comercialmente em escala.
+---
+*Requirements defined: 2026-07-11*
+*Last updated: 2026-07-11 — milestone v2.2 aberto a partir de BRIEF-motor-arquetipo.md*
