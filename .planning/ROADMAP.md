@@ -89,9 +89,11 @@ funil de `report.py` entre o CAPM (`:113`) e a montagem do DDM (`:136`), sem toc
   2. A escolha do motor vem do **registry arquétipo→motor** (não mais de DDM fixo no código); um arquétipo cujo motor primário ainda não existe cai num fallback explícito, não em crash.
   3. TAEE11 (pagadora regulada) é roteada para **DDM como primário** e seus números/veredito permanecem idênticos aos de hoje — `test_ddm`, `test_selo`, `test_consistencia_modos` continuam verdes.
   4. Um ticker de confiança baixa (híbrido/fronteiriço) é marcado como **fronteiriço** e o classificador expõe 2–3 arquétipos candidatos em vez de cravar um único.
-**Plans**: 2 plans
+**Plans**: 4 plans (2 execução + 2 gap-closure)
 - [x] 01-01-PLAN.md — Classificador puro (core/arquetipo.py) + registry ARQUETIPO_MOTOR + bloco config arquetipo: + golden (Wave 1)
 - [x] 01-02-PLAN.md — Roteamento no funil report.py + suspensão D-04 (reuso "VERIFICAR") + render mínimo + golden e2e (Wave 2)
+- [ ] 01-03-PLAN.md — [gap] Detrend do sinal de ciclicidade (_cv_lucro) + golden WEGE3 realista — fecha Gap 1 CR-01/SC#1 (Wave 1)
+- [ ] 01-04-PLAN.md — [gap] Expõe Arquétipo → motor na UI Streamlit (app.py), inclusive não-suspenso — fecha Gap 2/SC#1 (Wave 1)
 
 ### Phase 2: Motores por Arquétipo
 **Goal**: Plugar no registry os motores primários que faltam — as fórmulas de livro-texto (~20% do
