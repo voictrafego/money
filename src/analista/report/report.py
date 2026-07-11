@@ -54,6 +54,39 @@ class AnaliseAcao:
     arquetipo_fronteirico: bool = False                    # conflito real de sinais (ARQ-02)
     arquetipo_candidatos: List[str] = field(default_factory=list)  # candidatos do funil (fallback honesto)
     motor_pendente: bool = False                           # True quando o motor do arquétipo chega só na Fase 2 (D-04)
+    # --- Fase 3 v2.2 (Achado 2 / SAN-01): guarda-corpo do DDM ---
+    ddm_inaplicavel: bool = False                          # True quando a faixa DDM saiu negativa/degenerada (suprimida na borda)
+
+
+def _guarda_faixa_ddm(a: AnaliseAcao) -> None:
+    """Guarda-corpo de emissão do DDM (Achado 2 / SAN-01) — puro e read-only sobre o veredito.
+
+    Onde o DDM roda mas a faixa intrínseca (vmin/vmax = min/max da matriz de sensibilidade)
+    sai economicamente INVÁLIDA — NEGATIVA (`vmax <= 0`: HAPV3 −2,20/−1,66; PCAR3 −7,67/−5,95)
+    ou DEGENERADA (`vmin == 0 and vmax == 0`: PRIO3 0–0) — essa faixa NÃO é preço-alvo, é
+    ruído que o usuário lê como intrínseco. Payout baixo / alto capex / lucro negativo tornam
+    o DDM por dividendos estruturalmente inaplicável àquele perfil.
+
+    Ação: marca `a.ddm_inaplicavel` e ZERA vmin/vmax → None, de modo que a métrica
+    "Intrínseco (DDM)" e a tabela do relatório caiam no caminho de "não disponível" (o ramo
+    condicional existente já suprime o veredito SUB/SOBRE a partir de faixa None). Acrescenta
+    um alerta honesto do porquê. NÃO toca core/ddm.py nem o firewall selo↛report — só a borda.
+
+    O caso vmin<0 mas vmax>0 (faixa cruza zero com teto positivo) NÃO é degenerado aqui: o
+    teto ainda carrega informação, então a faixa é preservada (só `vmax<=0` ou 0–0 disparam)."""
+    if a.vmax is None:
+        return
+    faixa_negativa = a.vmax <= 0
+    faixa_degenerada = a.vmin == 0 and a.vmax == 0
+    if faixa_negativa or faixa_degenerada:
+        a.ddm_inaplicavel = True
+        a.vmin = None
+        a.vmax = None
+        a.alertas.append(
+            "DDM estruturalmente inaplicável a este perfil (payout baixo / alto capex ou "
+            "lucro negativo): a faixa por dividendos resultou negativa ou zero e NÃO é "
+            "preço-alvo — por isso não é exibida como intrínseco."
+        )
 
 
 def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
@@ -200,6 +233,10 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
         valores = [r.valor_intrinseco for r in (a.ddm_h, a.ddm_constante) if r]
         if valores:
             a.vmin, a.vmax = min(valores), max(valores)
+    # Guarda-corpo de emissão (Achado 2 / SAN-01): antes de qualquer veredito, uma faixa DDM
+    # NEGATIVA (vmax<=0) ou DEGENERADA (0–0) é ruído — não preço-alvo. Suprime aqui, read-only
+    # sobre o veredito e sem tocar core/ddm.py (borda de emissão apenas).
+    _guarda_faixa_ddm(a)
     if a.motor_pendente:
         # Suspensão D-04: o arquétipo deste negócio NÃO tem motor primário na Fase 1
         # (financeira→RIM, crescimento→DCF, cíclica→lucro normalizado, holding→SOTP chegam
@@ -493,7 +530,15 @@ def relatorio_markdown(c: CompanyData, a: AnaliseAcao, cfg: dict) -> str:
 
     # DDM
     L.append("## Valuation por Desconto de Dividendos (Cap. 13-17)")
-    if a.ddm_constante and a.ddm_h:
+    if a.ddm_inaplicavel:
+        # Achado 2 / SAN-01: o DDM rodou mas devolveu faixa negativa/zero — inaplicável a este
+        # perfil. Nota honesta em vez da tabela (distinta de "_DDM não calculado_" = faltou
+        # insumo). Não estampa R$ negativo nem 0,00 como intrínseco.
+        L.append("_DDM estruturalmente inaplicável a este perfil (payout baixo / alto capex ou "
+                 "lucro negativo): a faixa por dividendos resultou negativa ou zero e NÃO é "
+                 "preço-alvo — por isso não é exibida._")
+        L.append("")
+    elif a.ddm_constante and a.ddm_h:
         L.append(tabulate([
             ["Otimista (g constante)", f"R$ {_num(a.ddm_constante.valor_intrinseco)}",
              f"R$ {_num(a.ddm_constante.vp_dividendos)}", f"R$ {_num(a.ddm_constante.vp_residual)}",
