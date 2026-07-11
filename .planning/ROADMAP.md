@@ -95,7 +95,7 @@ funil de `report.py` entre o CAPM (`:113`) e a montagem do DDM (`:136`), sem toc
 - [x] 01-03-PLAN.md — [gap] Detrend do sinal de ciclicidade (_cv_lucro) + golden WEGE3 realista — fecha Gap 1 CR-01/SC#1 (Wave 1)
 - [x] 01-04-PLAN.md — [gap] Expõe Arquétipo → motor na UI Streamlit (app.py), inclusive não-suspenso — fecha Gap 2/SC#1 (Wave 1)
 - [x] 01-05-PLAN.md — [gap Achado 1a] Sinal de ciclicidade = resíduos log-lineares + recalibra ciclica_cv_min + goldens REAIS (WEGE3/RADL3→crescimento; VALE3/GGBR4/SUZB3/PETR4→ciclica) — reabre ARQ-01/ARQ-02 (Wave 1)
-- [ ] 01-06-PLAN.md — [gap Achado 1b] Corrige over-match do hard-route financeiro (MDIA3/alimentos ≠ financeira) (Wave 2, depende de 01-05)
+- [x] 01-06-PLAN.md — [gap Achado 1b] Corrige over-match do hard-route financeiro (MDIA3/alimentos ≠ financeira) (Wave 2, depende de 01-05)
 - [x] 01-07-PLAN.md — [gap Achado 2 · SAN-01 puxado da Fase 3] Guarda-corpos DDM: não emitir/exibir faixa degenerada (vmax≤0/0-0: HAPV3/PCAR3/PRIO3) (Wave 1)
 - [x] 01-08-PLAN.md — [gap Achado 3+4 · SAN-01/ENS-01 puxados da Fase 3] Freio do modo Ranking (R²≈0/ROMI3 + suspensão por arquétipo) + sinalização de divergência entre lentes (reconciliação DEFERIDA à Fase 3) (Wave 1)
 

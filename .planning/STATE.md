@@ -4,14 +4,14 @@ milestone: v2.2
 milestone_name: Motor de Valuation por Arquétipo
 status: verifying
 stopped_at: Completed 01-08-PLAN.md
-last_updated: "2026-07-11T20:55:41.893Z"
+last_updated: "2026-07-11T21:05:52.584Z"
 last_activity: 2026-07-11
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 8
-  completed_plans: 7
-  percent: 88
+  completed_plans: 8
+  percent: 100
 ---
 
 # Project State
@@ -32,7 +32,7 @@ Plan: 2 of 2
 Status: Phase complete — ready for verification
 Last activity: 2026-07-11
 
-Progress: [█████████░] 88%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: [█████████░] 88%
 | Phase 01 P05 | 0h25m | 2 tasks | 3 files |
 | Phase 01 P07 | 0h20m | 2 tasks | 3 files |
 | Phase 01 P08 | 0h22m | 2 tasks | 3 files |
+| Phase 01 P06 | 0h20m | 1 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,7 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - [Phase 01]: Guarda-corpo do DDM (Achado 2/SAN-01): faixa negativa (vmax<=0) ou degenerada (0-0) suprimida na borda de emissão — vmin/vmax->None + ddm_inaplicavel + nota honesta; faixa que só cruza zero (vmax>0) preservada. core/ddm.py e selo.py intocados.
 - [Phase ?]: [Phase 01]: Freio do modo Ranking (Achado 3): cmd_rank só estampa alvo de regressão quando reg não é frágil (r2_baixo/amostra_pequena), upside não é degenerado (>−0,90) e o arquétipo tem motor (não motor_pendente) — paridade com a suspensão D-04 do Analisar; a NOTA do ranque fica intacta.
 - [Phase ?]: [Phase 01]: Divergência entre lentes (Achado 4) é SINALIZAÇÃO honesta (helper puro divergencia_entre_lentes + LIMIAR_DIVERGENCIA=2×), não reconciliação — o ensemble real (DDM × motor do arquétipo) depende da Fase 2 e é escopo da Fase 3.
+- [Phase ?]: [Phase 01]: Achado 1b (MDIA3): misroute era de RESOLUÇÃO (empresa errada), não do classificador — o estágio 'contém' de universe._resolver_base casou o fragmento CVM 'rci' (de 'Banco RCI Brasil') dentro de 'comeRCIo' no nome do MDIA3, trazendo setor 'Bancos'. Fix: override determinístico no ticker_map (MDIA3->{20338,'Alimentos'}) + hard-route financeiro por limite de palavra (defesa T-0106-01). ITUB4/BBAS3 seguem financeira.
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -140,7 +142,7 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-11T20:55:31.118Z
+Last session: 2026-07-11T21:05:35.377Z
 Stopped at: Completed 01-08-PLAN.md
 Resume file: None
 
