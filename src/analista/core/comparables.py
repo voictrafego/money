@@ -73,6 +73,11 @@ LIMIAR_AMOSTRA = 10
 # Abaixo deste R², a regressão explica pouco da variação de P/L do setor — o preço-alvo
 # derivado é frágil e o veredito Subavaliada/Cara não deve ser lido com confiança (AUD-CMP-02).
 LIMIAR_R2 = 0.5
+# Freio de sanidade do preço-alvo de regressão (Achado 3 — freio do Ranking): um alvo com
+# upside abaixo deste piso (ex.: ROMI3 alvo R$0,10 / −98%) é degenerado — a regressão extrapolou
+# fora do suporte, não é uma tese de −98%. O Ranking marca esse alvo como não-confiável em vez de
+# estampá-lo como preço-alvo cravado. Constante de módulo (sem config.yaml novo, padrão LIMIAR_*).
+LIMIAR_UPSIDE_ABSURDO = -0.90
 
 
 @dataclass

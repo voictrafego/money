@@ -16,6 +16,7 @@ from typing import List, Optional
 
 import yaml
 
+from .core import arquetipo
 from .core import comparables as cmp
 from .core import multiples as mult
 from .core import screening as sc
@@ -39,6 +40,49 @@ def _tickers(args) -> List[str]:
         with open(args.tickers_file, encoding="utf-8") as f:
             return [l.strip().upper() for l in f if l.strip() and not l.startswith("#")]
     return []
+
+
+def _motor_pendente(c, cfg: dict) -> bool:
+    """Resolve motor_pendente do arquétipo da empresa (paridade com report.py:180-186).
+
+    O Ranking classifica o negócio e consulta o registry ARQUETIPO_MOTOR: se o arquétipo
+    (financeira/ciclica/crescimento/holding) ainda não tem motor primário na Fase 1, o motor
+    está pendente (chega na Fase 2) e o Ranking NÃO pode afirmar um preço-alvo por um modelo
+    que não serve a este perfil — é o mesmo erro de arquitetura do ITUB4 (suspensão D-04).
+    """
+    arq = arquetipo.classificar(c, cfg)
+    return arquetipo.ARQUETIPO_MOTOR.get(arq.chave) is None
+
+
+def alvo_regressao_confiavel(reg, pa, motor_pendente: bool):
+    """Freio do modo Ranking (Achado 3): o alvo de regressão pode ser ESTAMPADO como preço-alvo?
+
+    Puro/testável — NÃO toca a NOTA do ranque (múltiplos padronizados), governa apenas a COLUNA
+    de alvo/upside. Suprime (retorna confiavel=False) em quatro condições, paridade com a
+    suspensão D-04 do modo Analisar:
+      1. sem PrecoAlvo (regressão não gerou alvo p/ a empresa) → (False, None);
+      2. regressão frágil — `reg.r2_baixo` (R²≈0: ITUB4/BBAS3) ou `reg.amostra_pequena` (n<10):
+         o alvo derivado é ruído/instável;
+      3. alvo degenerado — upside <= `LIMIAR_UPSIDE_ABSURDO` (ROMI3 R$0,10, −98%): extrapolação
+         fora do suporte, não uma tese de −98%;
+      4. suspensão por arquétipo — `motor_pendente`: não afirmar preço-alvo por um modelo (P/L
+         relativo) que não serve ao perfil cujo motor primário só chega na Fase 2.
+
+    Devolve `(confiavel: bool, motivo: Optional[str])`; `motivo` explica a supressão (p/ nota).
+    """
+    if pa is None:
+        return (False, None)
+    if reg is None:
+        return (False, "sem regressão")
+    if reg.r2_baixo:
+        return (False, "R² baixo")
+    if reg.amostra_pequena:
+        return (False, "amostra pequena")
+    if pa.upside is not None and pa.upside <= cmp.LIMIAR_UPSIDE_ABSURDO:
+        return (False, "alvo degenerado")
+    if motor_pendente:
+        return (False, "motor pendente")
+    return (True, None)
 
 
 def _montar(tickers: List[str], cfg: dict):
@@ -157,9 +201,11 @@ def cmd_rank(args, cfg):
 
     # regressão P/L ~ f(DP, ROE) e preço-alvo, quando houver pares suficientes (Cap. 12)
     reg = cmp.ajustar_regressao_pl(PL, DP, ROE)
-    alvos = {}
-    if reg:
-        for c in empresas:
+    alvos = {}            # ticker -> PrecoAlvo (regressão crua, antes do freio)
+    pendentes = {}        # ticker -> motor_pendente (suspensão por arquétipo, paridade D-04)
+    for c in empresas:
+        pendentes[c.ticker] = _motor_pendente(c, cfg)
+        if reg:
             pa = cmp.preco_alvo_por_regressao(
                 reg, c.payout_valuation(), c.roe_valuation(), c.lpa_valuation(), c.preco_atual)
             if pa:
@@ -167,11 +213,20 @@ def cmd_rank(args, cfg):
 
     print(f"\n{'#':>2} {'TICKER':10} {'NOTA':>6}  {'ALVO R$':>9}  {'UPSIDE':>7}")
     for i, r in enumerate(ranking, 1):
-        pa = alvos.get(r["empresa"])
-        alvo = f"{pa.preco_alvo:.2f}" if pa else "-"
-        up = f"{pa.upside*100:.0f}%" if pa and pa.upside is not None else "-"
+        tk = r["empresa"]
+        pa = alvos.get(tk)
+        # Freio do Ranking (Achado 3): só estampa o alvo como preço-alvo quando a regressão é
+        # robusta (R²/n), o alvo não é degenerado e o arquétipo tem motor. Caso contrário marca
+        # "—" com o motivo — a NOTA do ranque abaixo permanece intacta.
+        confiavel, motivo = alvo_regressao_confiavel(reg, pa, pendentes.get(tk, False))
+        if confiavel:
+            alvo = f"{pa.preco_alvo:.2f}"
+            up = f"{pa.upside*100:.0f}%" if pa.upside is not None else "-"
+        else:
+            alvo = "—"
+            up = f"({motivo})" if motivo else "-"
         nota = f"{r['nota']:.1f}" if r["nota"] is not None else "-"
-        print(f"{i:>2} {r['empresa']:10} {nota:>6}  {alvo:>9}  {up:>7}")
+        print(f"{i:>2} {tk:10} {nota:>6}  {alvo:>9}  {up:>7}")
     if reg:
         _t_dp = f"{'−' if reg.coeficientes[1] < 0 else '+'} {abs(reg.coeficientes[1]):.2f}·DP"
         _t_roe = f"{'−' if reg.coeficientes[2] < 0 else '+'} {abs(reg.coeficientes[2]):.2f}·ROE"
