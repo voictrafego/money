@@ -67,3 +67,63 @@ def _cv_lucro(serie: list) -> Optional[float]:
     if m == 0:
         return None
     return pstdev(vals) / abs(m)
+
+
+def classificar(c: "CompanyData", cfg: dict) -> ResultadoArquetipo:
+    """Roteia uma empresa ao seu arquétipo lendo só sinais canônicos de `CompanyData`.
+
+    Árvore híbrida (D-01/D-02), config-driven (`cfg["arquetipo"]`, com defaults):
+
+    1. HARD-ROUTE financeira — setor contém token financeiro → FINANCEIRA (soberano, sem
+       quantitativo). O SETOR_ATIV da CVM é confiável para financeiras.
+    2. HARD-ROUTE regulada — `eh_concessionaria` E setor NÃO contém token de exclusão
+       (guarda anti-Petróleo OBRIGATÓRIA) → PAGADORA_REGULADA.
+    3. REFINO quantitativo p/ todo o resto — CV(lucro cru) >= corte → cíclica; ROE alto E
+       retenção alta → crescimento; nenhum → pagadora_regulada (default maduro).
+    4. CONFLITO — >= 2 candidatos distintos → fronteiriço honesto (confiança baixa).
+
+    Cada sinal é guardado com `is not None` ANTES de qualquer comparação (Pitfall 2): sob
+    dados faltantes degrada para o default sem TypeError.
+    """
+    arq = (cfg or {}).get("arquetipo", {})
+    financeiro_tokens = arq.get("financeiro_tokens", [])
+    regulada_excluir = arq.get("regulada_excluir_tokens", [])
+    roe_alto_min = arq.get("roe_alto_min", 0.15)
+    retencao_alta_min = arq.get("retencao_alta_min", 0.50)
+    ciclica_cv_min = arq.get("ciclica_cv_min", 0.40)
+
+    setor = (c.setor or "").lower()
+
+    # 1. HARD-ROUTE financeira (soberano) ------------------------------------- #
+    if any(tok.lower() in setor for tok in financeiro_tokens):
+        return ResultadoArquetipo(FINANCEIRA, confianca="alta")
+
+    # 2. HARD-ROUTE regulada + guarda anti-Petróleo --------------------------- #
+    if c.eh_concessionaria and not any(tok.lower() in setor for tok in regulada_excluir):
+        return ResultadoArquetipo(PAGADORA_REGULADA, confianca="alta")
+
+    # 3. REFINO quantitativo -------------------------------------------------- #
+    roe = c.roe_valuation()
+    payout = c.payout_valuation()
+    retencao = (1.0 - payout) if payout is not None else None
+    cv = _cv_lucro(c.serie("lucro_liquido"))
+    sinais = {"roe": roe, "retencao": retencao, "cv_lucro": cv}
+
+    candidatos: List[str] = []
+    if cv is not None and cv >= ciclica_cv_min:
+        candidatos.append(CICLICA)
+    if (roe is not None and roe >= roe_alto_min
+            and retencao is not None and retencao >= retencao_alta_min):
+        candidatos.append(CRESCIMENTO)
+    if not candidatos:
+        candidatos.append(PAGADORA_REGULADA)  # pagadora madura por eliminação
+
+    # 4. CONFLITO real de sinais → fronteiriço honesto (D-01) ----------------- #
+    # `candidatos` sempre populado (debug/Fase 3 e must_have "inclui X nos candidatos");
+    # o flag `fronteirico` é o que distingue conflito real (>= 2 distintos) de rota crava.
+    distintos = list(dict.fromkeys(candidatos))
+    if len(distintos) >= 2:
+        return ResultadoArquetipo(distintos[0], fronteirico=True,
+                                  candidatos=distintos, confianca="baixa", sinais=sinais)
+    return ResultadoArquetipo(distintos[0], candidatos=distintos,
+                              confianca="alta", sinais=sinais)

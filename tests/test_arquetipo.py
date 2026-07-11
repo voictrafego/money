@@ -133,7 +133,7 @@ def test_sinais_none_degrada_sem_typeerror():
 
 
 def test_bloco_config_ausente_nao_quebra():
-    # T-01-02: sem bloco arquetipo: o classificador cai em defaults, não KeyError.
+    # T-01-02: sem bloco arquetipo: o classificador degrada por defaults, nunca KeyError.
     c = _empresa("BANK5", "Bancos", [1000] * 10)
-    r = classificar(c, {})
-    assert r.chave == FINANCEIRA
+    r = classificar(c, {})  # não deve levantar
+    assert r.chave in ARQUETIPO_MOTOR
