@@ -576,8 +576,20 @@ def relatorio_markdown(c: CompanyData, a: AnaliseAcao, cfg: dict) -> str:
     L.append(f"- Beta: **{_num(a.beta)}**  |  Ke (CAPM): **{_pct(a.ke)}**")
     L.append("")
 
+    # Intrínseco pelo MOTOR do arquétipo (Fase 2 v2.2, D-06): onde o motor não é o DDM, o
+    # intrínseco do motor certo é a referência PRIMÁRIA e o DDM abaixo vira lente conservadora.
+    # Só EXIBIÇÃO (render mínimo, Open Question 2): não toca cálculo nem bandeira de divergência.
+    ddm_e_lente = a.motor != "ddm"
+    if ddm_e_lente and a.intrinseco_motor is not None:
+        L.append(f"## Valuation pelo motor do arquétipo ({a.arquetipo})")
+        L.append(f"- **{a.motor_rotulo or a.motor}: R$ {_num(a.intrinseco_motor)}** (motor do arquétipo)")
+        L.append("")
+
     # DDM
     L.append("## Valuation por Desconto de Dividendos (Cap. 13-17)")
+    if ddm_e_lente:
+        L.append("_(lente conservadora — não é o motor deste arquétipo)_")
+        L.append("")
     if a.ddm_inaplicavel:
         # Achado 2 / SAN-01: o DDM rodou mas devolveu faixa negativa/zero — inaplicável a este
         # perfil. Nota honesta em vez da tabela (distinta de "_DDM não calculado_" = faltou
