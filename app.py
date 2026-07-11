@@ -920,6 +920,16 @@ if modo.startswith("Analisar"):
             m4.metric("ROE", fmt_pct(a.multiplos.get("ROE")), help=h("roe"))
             m5.metric("Ke (custo)", fmt_pct(a.ke), help=h("ke"))
 
+            # Guarda-corpo do DDM (Achado 2 / SAN-01): quando a faixa saiu negativa/zero a
+            # engine já zerou vmin/vmax (Intrínseco cai em "—"). Aqui só a nota honesta do
+            # porquê — nunca exibimos faixa negativa/degenerada como preço-alvo.
+            if getattr(a, "ddm_inaplicavel", False):
+                st.caption(
+                    "DDM estruturalmente inaplicável a este perfil (payout baixo / alto capex "
+                    "ou lucro negativo): a faixa por dividendos ficou negativa ou zero e NÃO é "
+                    "preço-alvo — por isso o Intrínseco (DDM) não é exibido."
+                )
+
             if a.preco_atual is None:
                 st.warning(
                     "Preço atual indisponível agora (fonte Yahoo instável). Os fundamentos e o "
