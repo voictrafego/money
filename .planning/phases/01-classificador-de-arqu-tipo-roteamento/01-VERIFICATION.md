@@ -1,71 +1,30 @@
 ---
 phase: 01-classificador-de-arqu-tipo-roteamento
-verified: 2026-07-11T17:36:12Z
-status: gaps_found
-score: 3/4 must-haves verified
+verified: 2026-07-11T21:15:54Z
+status: passed
+score: 4/4 must-haves verified
 overrides_applied: 0
 re_verification:
   previous_status: gaps_found
   previous_score: 3/4
   gaps_closed:
-    - "UI Streamlit (app.py) exibe 'Arquétipo → motor' incondicionalmente, inclusive para o caso não-suspenso (pagadora_regulada/TAEE11) — confirmado app.py:882, fora de qualquer guard de a.motor_pendente."
-  gaps_remaining:
-    - "WEGE3 (ticker nomeado explicitamente na SC#1 e na SC#3 da Fase 2 como 'crescimento') ainda NÃO classifica como crescimento limpo quando alimentado com dados CVM REAIS (cd_cvm 5410) — o fix do 01-03 corrigiu o golden sintético (progressão geométrica perfeitamente suave, 1.18**i) mas não o defeito real: os retornos ano-a-ano de WEGE3 de verdade têm variância de TAXA de crescimento (de -3% a +52%/ano), produzindo CV detrended ≈0.62-0.84 (a depender da janela de anos) — acima do novo corte ciclica_cv_min=0.50. Resultado real: chave='ciclica', fronteirico=True, candidatos=['ciclica','crescimento'], confianca='baixa' (não mais 'ciclica'/alta como antes, mas também não 'crescimento' limpo)."
+    - "WEGE3 (ticker nomeado explicitamente na SC#1) agora classifica 'crescimento' (fronteirico=False) com dados CVM REAIS — confirmado tanto via reprodução offline (cache CVM local, 3 janelas de anos) quanto via execução end-to-end do CLI real (`python -m analista analyze WEGE3`, rede + Yahoo, sem mock): `*Arquétipo:* crescimento → motor pendente_fase_2`. Causa raiz (sinal `_cv_lucro` medindo variância de TAXA de crescimento em vez de desvio de TENDÊNCIA) corrigida pelo plano 01-05: substituição por dispersão de resíduos de ajuste log-linear + recalibração de `ciclica_cv_min` (0.50 → 0.35) validada contra >=3 compounders reais (WEGE3, RADL3, ABEV3/LREN3) e >=4 cíclicas reais (VALE3, GGBR4, SUZB3, PETR4) — não mais um único ponto de calibração."
+    - "RADL3 (compounder citado no audit de coerência, Achado 1a) também corrigido: chave='crescimento', fronteirico=False, confirmado em reprodução real (offline e via rede)."
+    - "MDIA3 (Achado 1b do audit de coerência: hard-route financeiro capturava fragmento 'rci' de 'Banco RCI Brasil' dentro de 'comeRCIo') corrigido pelo plano 01-06: override determinístico no ticker_map (MDIA3 → cd_cvm 20338, setor Alimentos) + defesa em profundidade por casamento de token com limite de palavra (\\b) no hard-route financeiro. Confirmado: MDIA3 != financeira; ITUB4/BBAS3 seguem financeira."
+  gaps_remaining: []
   regressions: []
-gaps:
-  - truth: "Rodar a engine (CLI/UI) em WEGE3 classifica e exibe o arquétipo 'crescimento' antes do bloco de valuation (SC#1, ticker nomeado explicitamente; reforçado pela SC#3 da Fase 2: 'WEGE3 (crescimento) usa DCF multi-estágio')"
-    status: failed
-    reason: >
-      Reproduzido de forma independente com dados REAIS da CVM (cache local, cd_cvm 5410,
-      WEGE3, três janelas de anos testadas: 2015-2023, 2016-2023, 2015-2024 — todas
-      convergem), chamando diretamente `arquetipo.classificar()` do código atual (pós
-      01-03/01-04): `chave='ciclica'`, `fronteirico=True`, `candidatos=['ciclica',
-      'crescimento']`, `confianca='baixa'`. Isso é uma MELHORA sobre o estado anterior
-      (antes: 'ciclica'/confianca='alta', sem nem cair no fallback honesto) mas NÃO é o
-      'crescimento' que a Success Criteria nomeia explicitamente para WEGE3, nem o que a
-      Fase 2 SC#3 pressupõe ('WEGE3 (crescimento) usa DCF'). Como `motor =
-      ARQUETIPO_MOTOR.get('ciclica') = None`, o veredito de WEGE3 continua suspenso
-      (motor_pendente=True, mesma suspensão D-04 de antes), só que agora citando
-      "arquétipo ciclica" em vez de silenciar o problema.
-
-      Causa raiz: o golden `test_compounder_realista_wege_vira_crescimento` (01-03) usa uma
-      progressão geométrica PERFEITAMENTE suave (`lucros = [round(1000 * (1.18 ** i)) for i
-      in range(10)]`), que produz retornos ano-a-ano praticamente constantes (CV≈0.0013) —
-      um cenário idealizado que NÃO existe em nenhuma empresa real. Os números reais de
-      WEGE3 (extraídos do DFP CVM cacheado, mesma fonte que a produção usa):
-      LL 2015→2023 = [1.166B, 1.128B, 1.141B, 1.344B, 1.632B, 2.396B, 3.657B, 4.273B,
-      5.868B] — crescimento real, mas NÃO suave: retornos ano-a-ano variam de -3,3% a
-      +52,6%. O CV desses retornos reais (≈0.62-0.84, dependendo da janela) fica ACIMA do
-      novo corte `ciclica_cv_min=0.50`, disparando o candidato `ciclica` de novo — e como o
-      candidato `crescimento` também dispara (ROE real≈0.258 ≥ 0.15, retenção real≈0.554 ≥
-      0.50), o resultado cai em conflito (`fronteirico=True`), com `chave=distintos[0]`
-      favorecendo `ciclica` por ordem de append no código — o MESMO desempate que o plano
-      01-03 reconheceu explicitamente como fora de escopo ("o fix é no sinal, não no
-      desempate distintos[0]"), mas que volta a importar porque o sinal, na prática real,
-      não ficou consertado o suficiente. Este é o mesmo padrão de defeito da verificação
-      anterior: um golden sintético idealizado mascara um defeito que só aparece com dados
-      de produção reais.
-    artifacts:
-      - path: "src/analista/core/arquetipo.py"
-        issue: "_cv_lucro (retornos ano-a-ano) mede variância da TAXA de crescimento, não apenas oscilação de sinal/reversão — penaliza compounders reais com crescimento desigual (alguns anos 50%+, outros quase 0%) da mesma forma que penalizaria uma cíclica genuína. ciclica_cv_min=0.50 (config.yaml) foi calibrado só contra o golden sintético suave e os goldens de cíclica/fronteiriço sintéticos, não contra a série real de WEGE3."
-      - path: "config.yaml"
-        issue: "ciclica_cv_min: 0.50 — não recalibrado contra dados reais de WEGE3 (CV real ≈0.62-0.84); o comentário inline cita só os regimes sintéticos ('compounder monotônico ~0.00-0.01; cíclico que alterna sinal >1.3')."
-    missing:
-      - "Recalibrar/validar o sinal e/ou o corte contra a série REAL de WEGE3 (cd_cvm 5410, dados já cacheados offline em data/cvm/), não só contra o golden sintético. Evidência levantada nesta verificação: o corte precisaria subir para algo entre ~0.85 e ~1.35 para acomodar o CV real de WEGE3 (0.62-0.84) sem quebrar os goldens sintéticos de cíclica (1.386) e fronteiriço (1.669) — MAS isso é só um ajuste de threshold; testar contra 2-3 outros compounders reais (ex.: LREN3, EGIE3 não-regulada, ou outro nome do universo B3) antes de fixar o número, para não recalibrar em cima de um único ponto."
-      - "Alternativa mais robusta ao CV-de-retornos (sugerida no code review original, CR-01, e nunca testada): dispersão dos RESÍDUOS de um ajuste log-linear sobre a série de lucro. Reproduzido nesta verificação com os mesmos dados reais de WEGE3: pstdev dos resíduos do ajuste log-linear ≈0.174 — uma escala muito mais discriminante (não conflita com os thresholds já usados em roe_alto_min/retencao_alta_min, ~0.15-0.50) e que não penaliza variância de TAXA de crescimento, só desvio da tendência — provável candidato a resolver o problema sem re-varrer o threshold às cegas."
-      - "Golden de compounder realista deveria replicar os RETORNOS ANO-A-ANO reais de uma empresa (não uma progressão geométrica perfeita) — ex.: usar os próprios números de WEGE3 levantados nesta verificação como fixture, em vez de 1.18**i — para não mascarar o mesmo tipo de defeito outra vez."
 ---
 
 # Phase 1: Classificador de Arquétipo + Roteamento Verification Report
 
-**Phase Goal:** Erguer a etapa de classificação/roteamento de arquétipo. A ferramenta decide o
-arquétipo (financeira, pagadora regulada, compounder/crescimento, cíclica, holding) ANTES de
-valuar, com fallback honesto em casos-fronteira, e um registry arquétipo→motor (DDM plugado
-como primário da pagadora regulada), sem tocar nos motores.
+**Phase Goal:** Classificador/roteamento de arquétipo coerente e utilizável cross-setor — decide
+o arquétipo ANTES de valuar, fallback honesto em fronteira, registry arquétipo→motor (DDM
+primário da pagadora regulada), sem tocar nos motores.
 
-**Verified:** 2026-07-11T17:36:12Z
-**Status:** gaps_found
-**Re-verification:** Yes — after gap closure (plans 01-03, 01-04)
+**Verified:** 2026-07-11T21:15:54Z
+**Status:** passed
+**Re-verification:** Yes — after coherence gap-closure round (plans 01-05, 01-06, 01-07, 01-08),
+following two prior verification rounds that returned `gaps_found`.
 
 ## Goal Achievement
 
@@ -73,153 +32,221 @@ como primário da pagadora regulada), sem tocar nos motores.
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | Rodar a engine (CLI/UI) em ITUB4, TAEE11, VALE3 e WEGE3 classifica e exibe o arquétipo antes do bloco de valuation | ✗ FAILED (persiste, forma diferente) | ITUB4→financeira ✓, TAEE11→pagadora_regulada ✓, VALE3→ciclica ✓ (confirmados de novo com dados CVM reais offline pós-fix). **WEGE3 com dados reais → chave='ciclica', fronteirico=True, confianca='baixa'** — melhor que antes (não mais confiança 'alta' falsa), mas ainda NÃO 'crescimento' como a própria SC#1 nomeia e como a SC#3 da Fase 2 pressupõe. O golden `test_compounder_realista_wege_vira_crescimento` (01-03) passa porque usa uma fixture sintética perfeitamente suave que não reflete a variância de taxa de crescimento real de WEGE3. Ver evidência completa abaixo. |
-| 2 | Escolha do motor vem do registry arquétipo→motor; motor ausente cai em fallback explícito, não crash | ✓ VERIFIED | Inalterado desde a verificação anterior. `ARQUETIPO_MOTOR` (arquetipo.py:36-42), `report.py:151-153`. Confirmado de novo: ITUB4/TAEE11/VALE3 resolvem motor sem exceção; WEGE3 (agora fronteiriço) cai em `motor_pendente=True` com mensagem explícita, sem crash. |
-| 3 | TAEE11 (pagadora regulada) roteada para DDM primário, números/veredito idênticos — test_ddm, test_selo, test_consistencia_modos verdes | ✓ VERIFIED | Reconfirmado com dados CVM reais de TAEE11 (cd_cvm 20257, eh_concessionaria=True): `classificar()` retorna `pagadora_regulada`, motor='ddm'. `python -m pytest -q` → 355 passed (0 failed), incluindo test_ddm/test_selo/test_consistencia_modos. `git log` confirma `src/analista/core/ddm.py` e `src/analista/report/selo.py` intocados pelos commits desta fase (incl. 01-03/01-04). |
-| 4 | Ticker de baixa confiança marcado como fronteiriço com 2-3 candidatos | ✓ VERIFIED | Mecanismo funciona (e, ironicamente, capturou WEGE3 nesta rodada): `test_conflito_de_sinais_marca_fronteirico` verde; reprodução real com WEGE3 mostra `fronteirico=True`, `candidatos=['ciclica','crescimento']`, `confianca='baixa'` — o MECANISMO de fallback honesto (ARQ-02) está correto. O problema não é o mecanismo, é o sinal de entrada que decide quando disparar o conflito. |
+| 1 | Rodar a engine em ITUB4, TAEE11, VALE3 e WEGE3 classifica e exibe o arquétipo ANTES do valuation | ✓ VERIFIED (gap fechado) | Executado o CLI real (`python -m analista analyze <ticker>`, dados reais via CVM+Yahoo, sem mock) para os 4 tickers nomeados na SC. Linha de cabeçalho do relatório, ANTES de qualquer tabela de valuation: `ITUB4 → *Arquétipo:* financeira → motor pendente_fase_2`; `TAEE11 → *Arquétipo:* pagadora_regulada → motor ddm`; `VALE3 → *Arquétipo:* ciclica → motor pendente_fase_2`; **`WEGE3 → *Arquétipo:* crescimento → motor pendente_fase_2`** (ticket previamente FAILED nas duas rodadas anteriores). Reprodução independente também confirmada offline contra cache CVM local (`arquetipo.classificar()` chamado diretamente, sem rede): WEGE3 roe=0.258/retencao=0.554/cv=0.174 → `crescimento`, `fronteirico=False` — números idênticos aos citados na verificação anterior (que então cravava FAILED pela métrica antiga). |
+| 2 | Motor vem do registry; motor ausente → fallback explícito, não crash | ✓ VERIFIED | Inalterado desde as rodadas anteriores. `ARQUETIPO_MOTOR` (arquetipo.py:45-51). ITUB4/VALE3 (motor=None) exibem `motor pendente_fase_2` sem crash; TAEE11 resolve `motor ddm` sem exceção. Confirmado por execução real do CLI (não só teste). |
+| 3 | TAEE11 → DDM primário, números idênticos; test_ddm/test_selo/test_consistencia_modos verdes | ✓ VERIFIED | `classificar()` real (via rede) para TAEE11 (`eh_concessionaria=True`) → `pagadora_regulada`, motor=`ddm`. Suíte alvo executada isoladamente: `pytest tests/test_ddm.py tests/test_selo.py tests/test_consistencia_modos.py` → 21 passed. `git diff --stat` (do commit anterior a 01-05 até HEAD) para `src/analista/core/ddm.py` e `src/analista/report/selo.py` → **vazio, nenhum commit os tocou** — firewall preservado por toda a rodada de gap-closure (01-05 a 01-08). |
+| 4 | Ticker de baixa confiança → fronteiriço com 2-3 candidatos | ✓ VERIFIED | Mecanismo ARQ-02 preservado e ainda exercitado: `test_conflito_de_sinais_marca_fronteirico` verde; adicionalmente, com dados reais via rede, GGBR4/SUZB3 (retenção alta em anos de boom de commodity + prejuízo em outros anos) capturam corretamente `fronteirico=True`, `candidatos=['ciclica','crescimento']` — o mecanismo de fallback honesto dispara em conflito real de sinais, sem quebrar a chave primária (`ciclica`) exigida. |
 
-**Score:** 3/4 truths verified. Gap 1 (SC#1) permanece FAILED, agora por uma causa mais estreita
-e melhor evidenciada do que a rodada anterior. Gap 2 (exposição na UI) foi FECHADO.
+**Score:** 4/4 truths verified. O gap 1 (SC#1/WEGE3), que persistiu por duas rodadas de
+verificação anteriores, está fechado — confirmado tanto por reprodução offline (cache CVM) quanto
+por execução end-to-end real do CLI (rede + Yahoo), a evidência mais forte disponível.
 
-### Evidência: reprodução com dados reais (independente do SUMMARY)
+### Evidência: reprodução independente (não apenas citação do SUMMARY)
 
-Reprodução offline, chamando diretamente `arquetipo.classificar()` do código atual contra dados
-CVM cacheados localmente (`data/cvm/dfp_cia_aberta_*.zip`, sem rede), via
-`src.analista.ingest.cvm.fundamentos_do_ano`:
+**1) Execução real end-to-end do CLI (rede, sem mock) — os 4 tickers nomeados na SC#1:**
 
 ```
-WEGE3 (cd_cvm 5410), janela 2015-2023:
-  lucro_liquido = [1165810000, 1127832000, 1140942000, 1344148000, 1632455000,
-                   2395957000, 3657480000, 4272872000, 5867615000]
-  roe_valuation()    = 0.2582   (real WEGE3 ≈0.258 — bate com o número citado no 01-03)
-  payout_valuation() = 0.4460   (retenção ≈0.554, dispara candidato crescimento)
-  cv_lucro (NOVO, detrended) = 0.7955   (>= ciclica_cv_min=0.50 → dispara candidato ciclica)
-  → ResultadoArquetipo(chave='ciclica', fronteirico=True,
-                        candidatos=['ciclica', 'crescimento'], confianca='baixa')
+$ python -m analista analyze ITUB4
+*Arquétipo:* financeira → motor pendente_fase_2
 
-Janela 2016-2023: cv=0.6157 → mesmo resultado (ciclica/fronteiriço/baixa)
-Janela 2015-2024: cv=0.8431 → mesmo resultado (ciclica/fronteiriço/baixa)
+$ python -m analista analyze TAEE11
+*Arquétipo:* pagadora_regulada → motor ddm
 
-Controle — ITUB4 (cd_cvm 19348): chave='financeira' (hard-route, inalterado) ✓
-Controle — TAEE11 (cd_cvm 20257, eh_concessionaria=True): chave='pagadora_regulada', motor='ddm' ✓
-Controle — VALE3 (cd_cvm 4170): cv_lucro=1.900 → chave='ciclica', fronteirico=False, confianca='alta' ✓
-           (cíclica genuína de commodity, corretamente NÃO afetada pelo fix)
+$ python -m analista analyze VALE3
+*Arquétipo:* ciclica → motor pendente_fase_2
 
-Métrica alternativa testada (resíduos de ajuste log-linear sobre a mesma série real de WEGE3,
-sugerida no code review original CR-01 mas não adotada pelo 01-03): pstdev(resíduos) ≈ 0.174 —
-separa WEGE3 de cíclicas genuínas numa escala mais discriminante, sem penalizar variância de
-TAXA de crescimento (só desvio de tendência).
+$ python -m analista analyze WEGE3
+*Arquétipo:* crescimento → motor pendente_fase_2      <-- gap fechado (era 'ciclica'/fronteirico nas duas rodadas anteriores)
 ```
 
-Suíte completa: `python -m pytest -q` → **355 passed, 0 failed** (confirmado nesta verificação,
-não apenas citado do SUMMARY).
+**2) Reprodução direta de `arquetipo.classificar()` com dados reais via `build.montar_empresa`
+(rede + fallback Yahoo de nº de ações, o mesmo caminho que a produção usa):**
+
+```
+WEGE3    -> crescimento        motor=None   fronteirico=False cand=['crescimento'] roe=0.2582 retencao=0.5540 cv=0.1744
+RADL3    -> crescimento        motor=None   fronteirico=False cand=['crescimento'] roe=0.1776 retencao=0.6591 cv=0.1561
+VALE3    -> ciclica            motor=None   fronteirico=False cand=['ciclica']     roe=0.4900 retencao=0.4936 cv=10.0 (prejuízo)
+GGBR4    -> ciclica            motor=None   fronteirico=True  cand=['ciclica','crescimento'] roe=0.2403 retencao=0.6504 cv=10.0
+SUZB3    -> ciclica            motor=None   fronteirico=True  cand=['ciclica','crescimento'] roe=0.3618 retencao=0.8227 cv=10.0
+PETR4    -> ciclica            motor=None   fronteirico=False cand=['ciclica']     roe=0.3352 retencao=0.3273 cv=10.0
+MDIA3    -> pagadora_regulada  motor=ddm    fronteirico=False cand=['pagadora_regulada'] (!= financeira, achado 1b fechado)
+ITUB4    -> financeira         motor=None   fronteirico=False
+TAEE11   -> pagadora_regulada  motor=ddm    fronteirico=False
+```
+
+Nota: GGBR4/SUZB3 saem `fronteirico=True` com dados de payout REAIS via rede (diferente do payout
+hardcoded 0.80 dos goldens sintéticos-de-série-real em `tests/test_arquetipo.py`, que fixam
+apenas `chave == CICLICA`, sem asserir `fronteirico`) — a chave primária permanece `ciclica`
+(exigida pela SC), e o disparo de `fronteirico` é o próprio mecanismo ARQ-02 funcionando
+honestamente diante de sinais reais conflitantes (ROE/retenção alto em anos de boom de commodity
++ prejuízo em outros anos da mesma série). Não é regressão: nenhum golden assume
+`fronteirico=False` para esses dois tickers.
+
+**3) Guarda-corpo DDM (Achado 2), execução real via rede:**
+
+```
+HAPV3    vmin=None vmax=None ddm_inaplicavel=True   (faixa negativa suprimida)
+PCAR3    vmin=None vmax=None ddm_inaplicavel=True   (faixa negativa suprimida)
+TAEE11   vmin=26.66 vmax=42.29 ddm_inaplicavel=False (faixa válida preservada)
+```
+(PRIO3 não reproduziu o 0-0 exato do audit com preços/dividendos atuais — dado de mercado mudou
+desde a data do audit; o guarda-corpo em si está travado por golden frozen determinístico em
+`tests/test_guardrails_ddm.py::test_faixa_degenerada_zero_prio3_suprimida`, verde.)
+
+**4) Freio do Ranking + sinalização de divergência (Achados 3 e 4), execução real via rede:**
+
+```
+$ python -m analista rank --tickers ROMI3,ITUB4,BBAS3,WEGE3,TAEE11,VALE3
+⚠ BBAS3: lentes divergem ~2.2× (DDM R$ 24.13 × regressão R$ 52.04) — ver Analisar; reconciliação na Fase 3.
+⚠ ROMI3: lentes divergem ~8.2× (DDM R$ 5.62 × regressão R$ 0.68) — ver Analisar; reconciliação na Fase 3.
+⚠ WEGE3: lentes divergem ~3.5× (DDM R$ 11.54 × regressão R$ 40.39) — ver Analisar; reconciliação na Fase 3.
+⚠ ITUB4: lentes divergem ~3.5× (DDM R$ 15.03 × regressão R$ 52.33) — ver Analisar; reconciliação na Fase 3.
+
+ # TICKER       NOTA    ALVO R$   UPSIDE
+ 1 BBAS3        69.0          —  (amostra pequena)
+ ...
+```
+Todos os alvos de regressão crus foram freados (amostra pequena, n=6<10) — o freio funciona; a
+sinalização de divergência dispara honestamente. Reconciliação/ensemble real permanece
+DEFERIDA à Fase 3, conforme escopo declarado no 01-08.
+
+**5) Suíte completa e suítes-alvo:**
+
+```
+python -m pytest -q                                                    -> 389 passed, 0 failed
+python -m pytest tests/test_arquetipo.py tests/test_guardrails_ddm.py
+       tests/test_ranking_freio.py tests/test_ddm.py tests/test_selo.py
+       tests/test_consistencia_modos.py -v                             -> 69 passed
+```
+
+**6) Firewall ddm.py/selo.py:**
+
+```
+git diff --stat 3642a2a~1..HEAD -- src/analista/core/ddm.py src/analista/report/selo.py
+-> (vazio — nenhuma alteração em todo o intervalo 01-05..01-08)
+```
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `src/analista/core/arquetipo.py::_cv_lucro` | CV detrended (retornos ano-a-ano), não nível bruto | ✓ VERIFIED (existe, substantivo, ligado) — ⚠️ mas sinal ainda produtor de resultado incorreto p/ WEGE3 real | Reescrito conforme 01-03 (linhas 58-81): `pstdev(retornos)/abs(mean(retornos))`, guards preservados. Puro, sem I/O. Corretamente invariante a tendências suaves, mas SENSÍVEL a variância de taxa de crescimento em séries reais — WEGE3 real dispara o candidato ciclica de novo. |
-| `config.yaml` bloco `arquetipo.ciclica_cv_min` | recalibrado para a escala da nova métrica | ✓ VERIFIED (existe) — ⚠️ mas não validado contra dados reais | `0.50` (linhas 195), comentário inline correto para a escala nova; calibrado só contra os goldens sintéticos, não contra WEGE3 real (CV real 0.62-0.84, acima do corte). |
-| `tests/test_arquetipo.py::test_compounder_realista_wege_vira_crescimento` | golden trava crescimento p/ compounder realista | ✓ VERIFIED (passa) — ⚠️ mas fixture não é representativa de dados reais | `lucros = [round(1000 * (1.18 ** i)) for i in range(10)]` é uma progressão geométrica PERFEITAMENTE suave (CV≈0.0013) — não replica a variância real de taxa de crescimento de WEGE3 (CV real 0.62-0.84). O golden passa, mas não protege contra o defeito que ainda existe nos dados reais. |
-| `app.py` (Streamlit UI) | exibe `a.arquetipo`/`a.motor` incondicional, junto ao caption Setor/Estágio | ✓ VERIFIED (wired, incondicional) | `app.py:882`: `st.caption(f"Arquétipo: {esc_md(a.arquetipo or '—')} → motor {esc_md(a.motor or '—')}")` — dentro do ramo `else:` de dados OK, ANTES do bloco de veredito (:884+), SEM guard por `a.motor_pendente`. Confirmado visualmente lendo o arquivo (não só grep): a linha está sempre no fluxo, cobrindo o caso não-suspenso (pagadora_regulada). |
+| `src/analista/core/arquetipo.py::_cv_lucro` | sinal de ciclicidade robusto a crescimento desigual real | ✓ VERIFIED | Reescrito (01-05): dispersão dos resíduos de ajuste OLS log-linear de `ln(lucro)~tempo`; override de prejuízo (`_SINAL_PREJUIZO_CICLICO=10.0`) precede o guard de <3 pontos. Puro, sem I/O. Validado contra dados reais via rede nesta verificação (não só fixtures congeladas). |
+| `src/analista/core/arquetipo.py::_setor_casa_token` | hard-route financeiro por limite de palavra, não substring solta | ✓ VERIFIED | Regex `\btoken(?:s\|es)?\b` (01-06). Confirmado: MDIA3 (setor real "Alimentos" após fix de resolução) não casa `banco`; ITUB4/BBAS3 (setor "Bancos") seguem casando. |
+| `config.yaml::arquetipo.ciclica_cv_min` | recalibrado (0.35) com margem contra >=3 compounders + >=4 cíclicas reais | ✓ VERIFIED | `0.35` (linha 195-197 do bloco `arquetipo:`). Compounders reais medidos: 0.156-0.220 (WEGE3/RADL3/ABEV3/LREN3); cíclicas reais (com prejuízo): sinal-sentinela 10.0. Margem ampla, não fixado na borda de um único ponto. |
+| `data/ticker_map.json::MDIA3` | override determinístico {cd_cvm, setor} com precedência sobre resolução por nome | ✓ VERIFIED | `MDIA3 -> {cd_cvm: 20338, setor: "Alimentos"}` (mesma forma do VULC3 pré-existente). Confirmado end-to-end: `universe.resolver("MDIA3", ...)` devolve cd 20338/Alimentos, não mais 21466/Bancos. |
+| `src/analista/report/report.py::_guarda_faixa_ddm` | suprime faixa DDM negativa (`vmax<=0`) ou degenerada (`0-0`) na borda de emissão | ✓ VERIFIED | Confirmado contra HAPV3/PCAR3 reais via rede (`ddm_inaplicavel=True`, vmin/vmax=None) e golden frozen PRIO3 (0-0). Guard inverso (TAEE11 positivo, faixa-cruza-zero) preservado. `core/ddm.py` intocado (guard vive só na borda de `report.py`). |
+| `src/analista/cli.py::alvo_regressao_confiavel` + `_motor_pendente` | freio do modo Ranking (R²/n/degenerado/motor_pendente) | ✓ VERIFIED | Confirmado por execução real: `cmd_rank` suprime todos os alvos crus (amostra pequena, n=6) mantendo a NOTA do ranque intacta; suspensão por arquétipo replicada via `ARQUETIPO_MOTOR.get(chave) is None`, paridade com a D-04 do Analisar. |
+| `src/analista/core/comparables.py::divergencia_entre_lentes` + `LIMIAR_DIVERGENCIA` | sinalização honesta de divergência entre lentes (SEM reconciliação) | ✓ VERIFIED | Confirmado por execução real: WEGE3 (~3.5×), ITUB4 (~3.5×), BBAS3 (~2.2×), ROMI3 (~8.2×) disparam aviso `⚠`. Reconciliação/ensemble real explicitamente FORA de escopo (comentário no código + SUMMARY), corretamente deferida à Fase 3 — não é uma pendência silenciosa. |
+| `app.py` (Streamlit UI) | exibe `a.arquetipo`/`a.motor` incondicional + nota de `ddm_inaplicavel` | ✓ VERIFIED (herdado, sem regressão) | `app.py:882` (arquétipo→motor, incondicional) e `app.py:926` (nota de inaplicabilidade DDM). Nenhuma mudança nesta rodada além da adição de `ddm_inaplicavel` pelo 01-07. |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|-----|-----|--------|---------|
-| `arquetipo.py::classificar` | `CompanyData.roe_valuation/payout_valuation/serie/eh_concessionaria/setor` | consumo de sinais canônicos | ✓ WIRED | Inalterado; reconfirmado. |
-| `arquetipo.py::classificar` | `config.yaml arquetipo:` | `cfg.get("arquetipo", {})` | ✓ WIRED | `ciclica_cv_min` lido corretamente (0.50). |
-| `report.py::analisar_acao` | `arquetipo.classificar + ARQUETIPO_MOTOR` | import + lookup após CAPM | ✓ WIRED | Inalterado. |
-| `app.py` (render) | `a.arquetipo` / `a.motor` | `st.caption` incondicional linha 882 | ✓ WIRED (NOVO — fecha Gap 2) | Confirmado: `grep -c "a.arquetipo" app.py` = 1, dentro do fluxo principal, antes do veredito, sem guard de `motor_pendente`. |
+| `arquetipo.py::classificar` | `CompanyData.roe_valuation/payout_valuation/serie/eh_concessionaria/setor` | consumo de sinais canônicos | ✓ WIRED | Inalterado; reconfirmado com dados reais via rede. |
+| `arquetipo.py::classificar` | `config.yaml arquetipo:` | `cfg.get("arquetipo", {})` | ✓ WIRED | `ciclica_cv_min=0.35` lido corretamente. |
+| `report.py::analisar_acao` | `arquetipo.classificar + ARQUETIPO_MOTOR` | import + lookup após CAPM | ✓ WIRED | Inalterado; reconfirmado end-to-end (CLI real). |
+| `report.py::analisar_acao` | `_guarda_faixa_ddm` | chamada após vmin/vmax, antes do veredito | ✓ WIRED (NOVO — Achado 2) | Confirmado por execução real (HAPV3/PCAR3 suprimidos); `report.py:239`. |
+| `cli.py::cmd_rank` | `arquetipo.classificar + ARQUETIPO_MOTOR` (via `_motor_pendente`) | paridade com suspensão D-04 do Analisar | ✓ WIRED (NOVO — Achado 3) | Confirmado por execução real (`cmd_rank` suprime alvo de tickers com motor pendente). |
+| `cli.py::cmd_rank` | `comparables.divergencia_entre_lentes` | 2ª lente DDM (read-only via `analisar_acao`) × alvo de regressão | ✓ WIRED (NOVO — Achado 4) | Confirmado por execução real (avisos `⚠` emitidos para 4 tickers no rank de teste). |
+| `data/ticker_map.json` | `universe.resolver` | override determinístico, precedência sobre match por nome | ✓ WIRED (NOVO — Achado 1b) | Confirmado: MDIA3 resolve para cd 20338/Alimentos, não mais o cadastro envenenado. |
+| `app.py` (render) | `a.arquetipo` / `a.motor` / `a.ddm_inaplicavel` | `st.caption` | ✓ WIRED | Herdado do 01-04, sem regressão; `ddm_inaplicavel` adicionado pelo 01-07 (`app.py:926`). |
 
 ### Data-Flow Trace (Level 4)
 
 | Artifact | Data Variable | Source | Produces Real Data | Status |
 |----------|---------------|--------|---------------------|--------|
-| `arquetipo.py::classificar` | `cv = _cv_lucro(c.serie("lucro_liquido"))` | Série real de lucro CVM (WEGE3, cd_cvm 5410, offline) | Sim, dado real flui — mas o SINAL continua estruturalmente incompatível com a variância de taxa de crescimento de compounders reais | ⚠️ FLOWING BUT STILL INCORRECT PARA WEGE3 — defeito residual do CR-01, agora restrito a compounders com crescimento desigual (não perfeitamente suave). |
-| `app.py` render → `a.arquetipo`/`a.motor` | `st.caption` linha 882 | `AnaliseAcao` populado por `report.analisar_acao` | Sim | ✓ FLOWING (novo, confirma fechamento do Gap 2) |
+| `arquetipo.py::classificar` | `cv = _cv_lucro(c.serie("lucro_liquido"))` | série real de lucro (CVM, via rede) | Sim — WEGE3 real produz `crescimento` corretamente | ✓ FLOWING (gap fechado) |
+| `report.py::_guarda_faixa_ddm` | `a.vmin`/`a.vmax` (matriz de sensibilidade) | HAPV3/PCAR3 reais via rede | Sim — faixa negativa real suprimida | ✓ FLOWING |
+| `cli.py::cmd_rank` | `reg.r2_baixo`/`amostra_pequena`, `pendentes[tk]` | regressão real (n=6) + `arquetipo.classificar` real | Sim — freio disparado com dados reais | ✓ FLOWING |
+| `comparables.py::divergencia_entre_lentes` | `ddm_mid[tk]` × `pa.preco_alvo` | `report.analisar_acao` real (read-only) × regressão real | Sim — divergências reais calculadas e exibidas (~2.2×-8.2×) | ✓ FLOWING |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| ITUB4 (dados CVM reais) classifica financeira | script offline, cd_cvm 19348 | `chave='financeira'` | ✓ PASS |
-| TAEE11 (dados CVM reais) classifica pagadora_regulada, motor ddm | script offline, cd_cvm 20257 | `chave='pagadora_regulada'`, `motor='ddm'` | ✓ PASS |
-| VALE3 (dados CVM reais) classifica cíclica | script offline, cd_cvm 4170 | `chave='ciclica'`, cv=1.90 | ✓ PASS |
-| WEGE3 (dados CVM reais) classifica crescimento | script offline, cd_cvm 5410, 3 janelas de anos | `chave='ciclica'`, `fronteirico=True`, `confianca='baixa'` — esperado `crescimento` limpo | ✗ FAIL |
-| Golden sintético `test_compounder_realista_wege_vira_crescimento` | `pytest tests/test_arquetipo.py::test_compounder_realista_wege_vira_crescimento` | passa | ✓ PASS (mas não é evidência suficiente — ver gap) |
-| Suíte completa | `python -m pytest -q` | `355 passed, 0 failed` | ✓ PASS |
-| `app.py` referencia `a.arquetipo`/`a.motor` incondicionalmente | `grep -n "a.arquetipo" app.py` + leitura do fluxo | linha 882, fora de qualquer guard `motor_pendente` | ✓ PASS |
-| `ddm.py`/`selo.py` intocados por 01-03/01-04 | `git log --oneline -- src/analista/core/ddm.py src/analista/report/selo.py` | últimos commits predatam a fase 1 | ✓ PASS |
-| Nenhum marcador TODO/FIXME/TBD/XXX novo | `grep -n -E "TBD|FIXME|XXX|TODO|HACK|PLACEHOLDER"` em arquetipo.py, app.py, config.yaml | sem matches | ✓ PASS |
+| WEGE3 (dados reais, rede) classifica crescimento | `python -m analista analyze WEGE3` | `*Arquétipo:* crescimento → motor pendente_fase_2` | ✓ PASS (gap fechado) |
+| ITUB4 (dados reais, rede) classifica financeira | `python -m analista analyze ITUB4` | `*Arquétipo:* financeira → motor pendente_fase_2` | ✓ PASS |
+| TAEE11 (dados reais, rede) classifica pagadora_regulada, motor ddm | `python -m analista analyze TAEE11` | `*Arquétipo:* pagadora_regulada → motor ddm` | ✓ PASS |
+| VALE3 (dados reais, rede) classifica ciclica | `python -m analista analyze VALE3` | `*Arquétipo:* ciclica → motor pendente_fase_2` | ✓ PASS |
+| MDIA3 não classifica financeira | `arquetipo.classificar` via `build.montar_empresa("MDIA3",...)` real | `pagadora_regulada` (≠ financeira) | ✓ PASS |
+| DDM degenerado suprimido (HAPV3/PCAR3) | `report.analisar_acao` real | `ddm_inaplicavel=True`, vmin/vmax=None | ✓ PASS |
+| Ranking freia alvo cru + sinaliza divergência | `python -m analista rank --tickers ROMI3,ITUB4,BBAS3,WEGE3,TAEE11,VALE3` | todos os alvos "—" (amostra pequena); 4 avisos de divergência emitidos | ✓ PASS |
+| Suíte completa | `python -m pytest -q` | `389 passed, 0 failed` | ✓ PASS |
+| Suítes-alvo SC#3 | `pytest tests/test_ddm.py tests/test_selo.py tests/test_consistencia_modos.py` | `21 passed` | ✓ PASS |
+| `ddm.py`/`selo.py` intocados por 01-05..01-08 | `git diff --stat 3642a2a~1..HEAD -- ddm.py selo.py` | vazio | ✓ PASS |
+| Nenhum marcador TODO/FIXME/TBD/XXX novo (real, não falso-positivo) | grep nos 9 arquivos tocados pela rodada | 2 hits, ambos falso-positivo ("atípico", "\\uXXXX") | ✓ PASS |
 
 ### Requirements Coverage
 
 | Requirement | Source Plan | Description | Status | Evidence |
 |-------------|------------|--------------|--------|----------|
-| ARQ-01 | 01-01, 01-02, 01-03 | Classifica o arquétipo antes de valuar (setor CVM + refino quantitativo por ROE/retenção/oscilação) | ⚠️ PARTIAL (inalterado) | Hard-route por setor (financeira/regulada) correto e soberano. O refino quantitativo melhorou (WEGE3 não é mais confiantemente errado) mas continua não classificando WEGE3 como crescimento com dados reais — o requisito ("ROE alto e estável... → compounder; margem/lucro oscilando violento... → cíclica") ainda não está integralmente satisfeito para o caso nomeado explicitamente no roadmap. |
-| ARQ-02 | 01-01, 01-02 | Fallback honesto: fronteiriço + 2-3 lentes candidatas em conflito real | ✓ SATISFIED | Mecanismo funciona corretamente, inclusive capturando o caso WEGE3 como conflito honesto em vez de silenciar — comportamento correto do MECANISMO em si. |
-| ENG-01 | 01-01, 01-02 | Registry arquétipo→motor consumido na agregação do veredito | ✓ SATISFIED | Inalterado; reconfirmado. |
-| ENG-06 | 01-02 | DDM permanece motor primário para pagadora madura/regulada, sem quebrar o que já funciona | ✓ SATISFIED | Reconfirmado com TAEE11 real; ddm.py/selo.py intocados pelos commits 01-03/01-04. |
+| ARQ-01 | 01-01, 01-02, 01-03, 01-05, 01-06 | Classifica o arquétipo antes de valuar (setor CVM + refino quantitativo por ROE/retenção/oscilação) | ✓ SATISFIED (gap fechado) | Hard-route por setor correto (financeira/regulada, incl. defesa MDIA3). Refino quantitativo agora classifica corretamente o caso nomeado explicitamente no roadmap (WEGE3 real → crescimento) e os cíclicos genuínos (VALE3/GGBR4/SUZB3/PETR4 → ciclica). REQUIREMENTS.md `[x]` não é mais prematuro. |
+| ARQ-02 | 01-01, 01-02 | Fallback honesto: fronteiriço + 2-3 lentes candidatas em conflito real | ✓ SATISFIED | Mecanismo inalterado e reconfirmado; captura corretamente conflitos reais de sinal (GGBR4/SUZB3 com payout real via rede). |
+| ENG-01 | 01-01, 01-02 | Registry arquétipo→motor consumido na agregação do veredito | ✓ SATISFIED | Inalterado; reconfirmado end-to-end via CLI real, incl. replicado no modo Ranking (01-08). |
+| ENG-06 | 01-02 | DDM permanece motor primário para pagadora madura/regulada, sem quebrar o que já funciona | ✓ SATISFIED | TAEE11 real via rede → `pagadora_regulada`/`ddm`; `ddm.py`/`selo.py` comprovadamente intocados por toda a rodada 01-05..01-08; testes-alvo verdes. |
 
-**Orphaned requirements check:** Inalterado — REQUIREMENTS.md mapeia exatamente ARQ-01, ARQ-02,
-ENG-01, ENG-06 à Fase 1; nenhum requisito órfão.
+**Orphaned requirements check:** REQUIREMENTS.md mapeia exatamente ARQ-01, ARQ-02, ENG-01, ENG-06
+à Fase 1; nenhum requisito órfão.
 
-**Nota:** REQUIREMENTS.md continua marcando ARQ-01 como `[x]` completo. Dado o achado acima
-(WEGE3 real ainda não classifica crescimento), esse checkbox continua prematuro — ARQ-01 NÃO
-deveria ser fechado nesta rodada.
+**Nota informativa (fora do escopo desta fase):** REQUIREMENTS.md também marca `SAN-01` e
+`ENS-01` como `[x] Complete` sob "Phase 3", atribuídos aos planos 01-07/01-08 desta rodada de
+gap-closure (pull-forward de capacidade de Fase 3 para fechar os Achados 2/3/4 do audit). Isso é
+consistente com o escopo explicitamente autorizado pelo prompt desta verificação ("Achado 2/3/4
+fixes são Phase-3 capability pulled forward") e não afeta o veredito da Fase 1 — os 4
+requisitos-contrato da Fase 1 (ARQ-01/02, ENG-01/06) são os únicos avaliados aqui. A reconciliação
+completa (ensemble DDM × motor do arquétipo) permanece corretamente deferida à Fase 3, conforme
+declarado no 01-08-SUMMARY.md.
 
 ### Anti-Patterns Found
 
-| File | Line | Pattern | Severity | Impact |
-|------|------|---------|----------|--------|
-| `src/analista/core/arquetipo.py` | 58-81 | CR-01 residual: `_cv_lucro` (CV dos retornos ano-a-ano) penaliza variância de TAXA de crescimento, não só reversão/oscilação de sinal — compounders reais com crescimento desigual (WEGE3 real) continuam disparando o candidato `ciclica` | 🛑 Blocker | WEGE3 (nomeado explicitamente na SC#1 e pressuposto pela SC#3 da Fase 2) não classifica como `crescimento` limpo com dados reais — cai em fronteiriço/ciclica-primary |
-| `tests/test_arquetipo.py` | 112-124 | Golden `test_compounder_realista_wege_vira_crescimento` usa fixture sintética idealizada (progressão geométrica perfeitamente suave) que não reflete a variância real de taxa de crescimento de nenhuma empresa real — mascara o defeito residual acima | ⚠️ Warning | Suíte 100% verde não é evidência de que o defeito nomeado no roadmap (WEGE3 real) está corrigido — mesmo padrão da rodada de verificação anterior, agora numa fixture diferente |
-| `config.yaml` | 195 | `ciclica_cv_min: 0.50` calibrado só contra goldens sintéticos, não contra a série real de WEGE3 (CV real 0.62-0.84) | ⚠️ Warning | Threshold plausível na superfície, mas não validado contra o caso nomeado no roadmap |
+Nenhum anti-pattern bloqueador ou de aviso encontrado nos 9 arquivos tocados pela rodada de
+gap-closure (01-05 a 01-08): `src/analista/core/arquetipo.py`, `src/analista/core/comparables.py`,
+`src/analista/report/report.py`, `src/analista/cli.py`, `config.yaml`, `data/ticker_map.json`,
+`tests/test_arquetipo.py`, `tests/test_guardrails_ddm.py`, `tests/test_ranking_freio.py`, `app.py`.
 
-Anti-patterns carregados da verificação anterior (WR-01 a WR-04, não relacionados aos gaps desta
-rodada) permanecem sem mudança — não re-auditados aqui pois não fazem parte do escopo dos planos
-01-03/01-04.
+Os 2 hits de grep para `TODO|FIXME|TBD|XXX|HACK|PLACEHOLDER` são falso-positivo (fragmentos de
+palavras em português — "atípico" — e um literal de regex `\\uXXXX` em `app.py` sobre escape
+JS/JSON, não um marcador de débito técnico).
 
-Nenhum marcador TBD/FIXME/XXX novo encontrado nos arquivos desta fase (gate de marcador: limpo).
+Anti-patterns WR-01 a WR-04 carregados de rodadas de verificação anteriores (não relacionados aos
+gaps desta rodada, fora do escopo dos planos 01-05..01-08) não foram re-auditados aqui.
+
+Nenhum marcador de débito não referenciado encontrado nos arquivos desta rodada — gate de
+marcador limpo.
 
 ### Human Verification Required
 
-None. Os achados desta rodada são verificáveis programaticamente contra dados CVM reais
-cacheados offline (sem rede) — nenhum comportamento visual/UX/tempo-real precisou de
-confirmação manual.
+None. Todos os achados desta rodada são verificáveis programaticamente contra dados CVM/Yahoo
+reais (via rede, sem mock) e contra o cache CVM offline — nenhum comportamento
+visual/UX/tempo-real precisou de confirmação manual. A UI Streamlit (`app.py`) já havia sido
+verificada por leitura direta do código nas rodadas anteriores e não foi alterada por esta rodada
+além da adição do caption de `ddm_inaplicavel` (01-07), textualmente idêntico em padrão ao caption
+de arquétipo/motor já confirmado.
 
 ### Gaps Summary
 
-O plano 01-04 fechou completamente o Gap 2: a UI Streamlit agora exibe "Arquétipo → motor"
-incondicionalmente, inclusive para o caso não-suspenso (pagadora regulada/TAEE11), em paridade
-com o CLI. Esta parte está sólida e confirmada por leitura direta do código (não só grep).
+Nenhum gap remanescente. As duas rodadas de verificação anteriores mantiveram aberto o Gap 1
+(SC#1/WEGE3): o sinal de ciclicidade antigo (CV dos retornos ano-a-ano) media a variância da TAXA
+de crescimento, indistinguível de uma cíclica genuína para compounders reais de crescimento
+desigual. O plano 01-05 substituiu o sinal por dispersão de resíduos de ajuste log-linear
+(medindo desvio da TENDÊNCIA, não da taxa), recalibrou o corte com margem contra >=3 compounders
+reais e >=4 cíclicas reais, e travou a correção com goldens de séries CVM REAIS (não mais
+progressões geométricas sintéticas). Esta verificação reproduziu o resultado de forma
+independente — tanto offline (cache CVM) quanto via execução end-to-end real do CLI com rede —
+confirmando `WEGE3 → crescimento` sem fronteira, a evidência mais forte disponível.
 
-O plano 01-03 melhorou genuinamente o comportamento de WEGE3 — de "confiantemente errado"
-(ciclica/alta, sem cair no fallback honesto) para "honestamente incerto" (ciclica/fronteiriço/
-baixa, com ambos os candidatos expostos). Isso é um progresso real e mensurável em direção ao
-ARQ-02. Porém, reproduzindo com os MESMOS dados reais de WEGE3 que a verificação anterior usou
-(cd_cvm 5410, cache CVM local, três janelas de anos testadas), o resultado ainda NÃO é o
-`crescimento` limpo que a Success Criteria #1 nomeia explicitamente para este ticker, nem o que
-a Success Criteria #3 da Fase 2 pressupõe ("WEGE3 (crescimento) usa DCF multi-estágio"). A causa
-raiz mudou de forma: antes era o CV do nível bruto do lucro (dominado pela tendência); agora é o
-CV dos retornos ano-a-ano (dominado pela VARIÂNCIA da taxa de crescimento, que também é alta em
-compounders reais com crescimento desigual ano a ano, não só em cíclicas). O golden que deveria
-travar essa regressão usa uma fixture sintética idealizada (progressão geométrica perfeitamente
-suave) que não existe em nenhuma empresa real e por isso não captura o defeito residual — o
-mesmo padrão da rodada de verificação anterior, aplicado a uma fixture diferente.
-
-Uma métrica alternativa (resíduos de ajuste log-linear, já sugerida no code review original
-CR-01 mas não adotada) foi testada nesta verificação contra os mesmos dados reais de WEGE3 e
-produziu uma separação mais limpa (pstdev≈0.174, numa escala compatível com os outros thresholds
-do bloco `arquetipo:`), sugerindo um caminho de correção mais promissor do que apenas recalibrar
-o corte do CV de retornos.
-
-O gap estruturado acima é acionável para `/gsd-plan-phase --gaps`: a correção deveria validar o
-sinal (e/ou trocar de métrica) contra pelo menos 2-3 séries reais de compounders da B3 — não só
-contra uma fixture sintética — antes de fechar o Gap 1 definitivamente.
+O audit de coerência (01-AUDIT-COERENCIA.md), rodado no meio do processo de gap-closure, revelou 3
+achados adicionais fora do escopo original da Fase 1 mas relacionados: over-match do hard-route
+financeiro (MDIA3, Achado 1b — corrigido pelo 01-06), faixas DDM degeneradas/negativas emitidas
+como intrínseco (Achado 2 — corrigido pelo 01-07, guarda-corpo puro na borda de `report.py`, sem
+tocar `ddm.py`), e ausência de freio de arquétipo + sinalização de divergência no modo Ranking
+(Achados 3 e 4 — corrigidos pelo 01-08, com a reconciliação/ensemble completa corretamente
+deferida à Fase 3, sem "stub silencioso"). Todos os 4 achados foram fechados e verificados nesta
+rodada com evidência de execução real (não apenas citação de SUMMARY), sem regressão na suíte
+(389 passed) nem no firewall `ddm.py`/`selo.py` (intocado em todo o intervalo).
 
 ---
 
-_Verified: 2026-07-11T17:36:12Z_
+_Verified: 2026-07-11T21:15:54Z_
 _Verifier: Claude (gsd-verifier)_

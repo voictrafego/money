@@ -26,11 +26,11 @@
 
 ### Ensemble & divergência (ENS)
 
-- [x] **ENS-01**: A ferramenta **nunca crava um número único quando os modelos discordam muito**: roda o motor primário do arquétipo + ≥1 contraponto e, se a divergência passar do limiar (ex.: maior modelo > 2× o menor), **levanta uma bandeira de divergência** com hipótese exibida ("compounder subvalorizado pelo DDM", "cíclica no topo do ciclo", etc.). Divergência é informação exibida, não defeito escondido.
+- [~] **ENS-01** _(PARCIAL — entregue na Fase 1 gap-closure 01-08: a bandeira de divergência DDM×regressão com limiar 2×. O "motor primário do arquétipo + ≥1 contraponto" depende dos motores da Fase 2; a hipótese exibida e o ensemble completo ficam na Fase 3.)_: A ferramenta **nunca crava um número único quando os modelos discordam muito**: roda o motor primário do arquétipo + ≥1 contraponto e, se a divergência passar do limiar (ex.: maior modelo > 2× o menor), **levanta uma bandeira de divergência** com hipótese exibida ("compounder subvalorizado pelo DDM", "cíclica no topo do ciclo", etc.). Divergência é informação exibida, não defeito escondido.
 
 ### Guarda-corpo de sanidade (SAN)
 
-- [x] **SAN-01**: Regras **anti-aberração** capturam o absurdo antes de virar selo. Ex.: SE `intrínseco < 0,5 × mediana dos pares` E `ROE > 15%` E `normalização de payout cortou o dividendo > 40%` ENTÃO **não estampar** "qualidade baixa / evitar" — estampar "DDM conservador demais para o perfil, ver motor primário do arquétipo". Todo veredito "evitar" passa pelos guarda-corpos antes de ser exibido.
+- [~] **SAN-01** _(PARCIAL — entregue na Fase 1 gap-closure: guarda-corpo de faixa DDM degenerada/≤0 (01-07) + freio do Ranking por R²/n/upside absurdo (01-08). A regra anti-aberração completa (intrínseco < 0,5× mediana dos pares E ROE>15% E corte de payout >40% → texto "DDM conservador demais") depende da mediana-de-pares e do motor do arquétipo, e fica na Fase 3.)_: Regras **anti-aberração** capturam o absurdo antes de virar selo. Ex.: SE `intrínseco < 0,5 × mediana dos pares` E `ROE > 15%` E `normalização de payout cortou o dividendo > 40%` ENTÃO **não estampar** "qualidade baixa / evitar" — estampar "DDM conservador demais para o perfil, ver motor primário do arquétipo". Todo veredito "evitar" passa pelos guarda-corpos antes de ser exibido.
 
 ### Veredito honesto (VER)
 
@@ -70,8 +70,8 @@ Quais fases cobrem quais requisitos. Preenchido na criação do roadmap.
 | ENG-03 | Phase 2 | Pending |
 | ENG-04 | Phase 2 | Pending |
 | ENG-05 | Phase 2 | Pending |
-| ENS-01 | Phase 3 | Complete |
-| SAN-01 | Phase 3 | Complete |
+| ENS-01 | Phase 3 | Parcial (F1 gap: bandeira divergência · restante F3) |
+| SAN-01 | Phase 3 | Parcial (F1 gap: guarda-corpo DDM + freio Ranking · restante F3) |
 | VER-01 | Phase 3 | Pending |
 | VER-02 | Phase 3 | Pending |
 
