@@ -192,6 +192,9 @@ arquetipo:
     - petroleo
   roe_alto_min: 0.15              # ROE de valuation >= isto (com retenção alta) → candidato compounder (crescimento)
   retencao_alta_min: 0.50         # (1 - payout) >= isto (com ROE alto) → candidato compounder (crescimento)
-  ciclica_cv_min: 0.50            # CV da OSCILAÇÃO detrended (retornos ano-a-ano do lucro) >= isto → candidato cíclica.
-                                  # Escala nova (CR-01): compounder monotônico ~0.00-0.01; cíclico que alterna sinal >1.3.
-                                  # 0.50 senta com folga entre os dois regimes; calibração empírica é BACKTEST-01 (deferida).
+  ciclica_cv_min: 0.35            # Dispersão dos RESÍDUOS do ajuste log-linear do lucro >= isto → candidato cíclica.
+                                  # Escala real (CR-01, séries CVM 2015-2023): compounder/defensivo ~0.15-0.22
+                                  # (WEGE3 0.174, RADL3 0.156, ABEV3 0.158, LREN3 0.220); cíclico ~0.49-1.24
+                                  # (VALE3 0.49, GGBR4 0.61, SUZB3 0.87, PETR4 1.24). Ano de prejuízo na janela
+                                  # (log indefinido) é forçado a cíclico. 0.35 senta com folga entre os dois
+                                  # regimes (acima de 0.22, abaixo de 0.49); calibração empírica é BACKTEST-01 (deferida).

@@ -21,8 +21,16 @@ Thresholds são config-driven (`cfg["arquetipo"]`); calibração empírica é BA
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from statistics import mean, pstdev
+from math import log
+from statistics import pstdev
 from typing import List, Optional
+
+# Ano de prejuízo (lucro <= 0) torna o ajuste log-linear indefinido (log de ≤0). Um ano de
+# prejuízo é, por si só, evidência CÍCLICA forte (o método não trata quem dá prejuízo como
+# compounder de dividendos). Em vez de descartar em silêncio, `_cv_lucro` devolve este
+# sinal-sentinela, garantido ACIMA de qualquer `ciclica_cv_min` razoável (cíclicas reais
+# medem 0.49-1.24 na escala de resíduos; o corte fica ~0.35). Precede o guard de <3 pontos.
+_SINAL_PREJUIZO_CICLICO = 10.0
 
 # 5 chaves de arquétipo, 1:1 com os motores primários (D-03/ENG-01) --------------- #
 FINANCEIRA = "financeira"            # banco/seguradora → RIM
@@ -56,29 +64,40 @@ class ResultadoArquetipo:
 
 
 def _cv_lucro(serie: list) -> Optional[float]:
-    """Coeficiente de variação da OSCILAÇÃO detrended do lucro (o sinal de ciclicidade).
+    """Sinal de ciclicidade: dispersão dos RESÍDUOS de um ajuste log-linear do lucro (CR-01).
 
-    A oscilação — não o nível — é o sinal de cíclica (CR-01). O CV do lucro CRU é dominado
-    pela TENDÊNCIA: qualquer compounder monotônico (WEGE3-shape) tem dispersão alta só por
-    subir, e seria carimbado cíclico por engano. Medimos então a dispersão dos RETORNOS
-    ano-a-ano `(lucro[t] - lucro[t-1]) / |lucro[t-1]|`, que é invariante à tendência:
-    - compounder monotônico → retornos ~constantes e do mesmo sinal → CV BAIXO;
-    - cíclico que alterna sinal (lucro sobe e cai) → retornos oscilam de sinal, média perto
-      de zero → CV ALTO.
+    O desvio da TENDÊNCIA — não a variância da TAXA de crescimento — é o sinal de cíclica.
+    O sinal antigo (CV dos retornos ano-a-ano) penalizava compounders reais de crescimento
+    DESIGUAL (WEGE3 real: retornos de -3% a +53% → CV≈0.80) da mesma forma que uma cíclica
+    genuína, misrouteando-os para 'ciclica' (Gap 1 / 01-VERIFICATION.md). Ajustamos ln(lucro)
+    ~ tempo por OLS sobre os anos de lucro POSITIVO e medimos o `pstdev` dos resíduos:
+    - compounder que cresce ao longo de uma reta em log (ainda que desigual) → resíduos
+      pequenos, gruda na tendência → dispersão BAIXA (~0.15-0.22);
+    - cíclico que oscila em torno da tendência → resíduos grandes → dispersão ALTA (~0.50+).
 
-    Filtra None; pula pontos com `lucro[t-1] == 0` (retorno indefinido). None se < 3 pontos
-    válidos ou < 2 retornos calculáveis (poucos dados p/ afirmar oscilação) ou média dos
-    retornos == 0 (CV indefinido). Função pura, sem I/O — O(n) sobre <=10 pontos."""
+    ANO DE PREJUÍZO (lucro <= 0): log indefinido. Precedência EXPLÍCITA — o override de
+    prejuízo (evidência cíclica forte → devolve `_SINAL_PREJUIZO_CICLICO`, acima do corte)
+    PRECEDE o guard de degradação de <3 pontos: uma empresa que dá prejuízo em algum ano é
+    cíclica por este método, mesmo com poucos anos positivos. Sem prejuízo e com < 3 pontos
+    válidos → None (degrada gracioso para o default, Pitfall 2). Função pura, O(n), sem I/O."""
     vals = [float(v) for v in serie if v is not None]
+    # Override de prejuízo (precede o guard de <3 pontos) --------------------- #
+    if any(v <= 0 for v in vals):
+        return _SINAL_PREJUIZO_CICLICO
     if len(vals) < 3:
         return None
-    ret = [(b - a) / abs(a) for a, b in zip(vals, vals[1:]) if a != 0]
-    if len(ret) < 2:
+    # Ajuste OLS de ln(lucro) sobre o índice de tempo; dispersão dos resíduos -- #
+    pts = [(i, log(v)) for i, v in enumerate(vals)]
+    n = len(pts)
+    mx = sum(x for x, _ in pts) / n
+    my = sum(y for _, y in pts) / n
+    sxx = sum((x - mx) ** 2 for x, _ in pts)
+    if sxx == 0:
         return None
-    m = mean(ret)
-    if m == 0:
-        return None
-    return pstdev(ret) / abs(m)
+    b = sum((x - mx) * (y - my) for x, y in pts) / sxx
+    a = my - b * mx
+    residuos = [y - (a + b * x) for x, y in pts]
+    return pstdev(residuos)
 
 
 def classificar(c: "CompanyData", cfg: dict) -> ResultadoArquetipo:
@@ -90,9 +109,9 @@ def classificar(c: "CompanyData", cfg: dict) -> ResultadoArquetipo:
        quantitativo). O SETOR_ATIV da CVM é confiável para financeiras.
     2. HARD-ROUTE regulada — `eh_concessionaria` E setor NÃO contém token de exclusão
        (guarda anti-Petróleo OBRIGATÓRIA) → PAGADORA_REGULADA.
-    3. REFINO quantitativo p/ todo o resto — CV da oscilação detrended do lucro (retornos
-       ano-a-ano) >= corte → cíclica; ROE alto E retenção alta → crescimento; nenhum →
-       pagadora_regulada (default maduro).
+    3. REFINO quantitativo p/ todo o resto — dispersão dos resíduos do ajuste log-linear do
+       lucro (ou prejuízo na janela) >= corte → cíclica; ROE alto E retenção alta →
+       crescimento; nenhum → pagadora_regulada (default maduro).
     4. CONFLITO — >= 2 candidatos distintos → fronteiriço honesto (confiança baixa).
 
     Cada sinal é guardado com `is not None` ANTES de qualquer comparação (Pitfall 2): sob
@@ -103,7 +122,7 @@ def classificar(c: "CompanyData", cfg: dict) -> ResultadoArquetipo:
     regulada_excluir = arq.get("regulada_excluir_tokens", [])
     roe_alto_min = arq.get("roe_alto_min", 0.15)
     retencao_alta_min = arq.get("retencao_alta_min", 0.50)
-    ciclica_cv_min = arq.get("ciclica_cv_min", 0.40)
+    ciclica_cv_min = arq.get("ciclica_cv_min", 0.35)
 
     setor = (c.setor or "").lower()
 
