@@ -91,7 +91,7 @@ funil de `report.py` entre o CAPM (`:113`) e a montagem do DDM (`:136`), sem toc
   4. Um ticker de confiança baixa (híbrido/fronteiriço) é marcado como **fronteiriço** e o classificador expõe 2–3 arquétipos candidatos em vez de cravar um único.
 **Plans**: 2 plans
 - [x] 01-01-PLAN.md — Classificador puro (core/arquetipo.py) + registry ARQUETIPO_MOTOR + bloco config arquetipo: + golden (Wave 1)
-- [ ] 01-02-PLAN.md — Roteamento no funil report.py + suspensão D-04 (reuso "VERIFICAR") + render mínimo + golden e2e (Wave 2)
+- [x] 01-02-PLAN.md — Roteamento no funil report.py + suspensão D-04 (reuso "VERIFICAR") + render mínimo + golden e2e (Wave 2)
 
 ### Phase 2: Motores por Arquétipo
 **Goal**: Plugar no registry os motores primários que faltam — as fórmulas de livro-texto (~20% do

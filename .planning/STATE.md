@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Motor de Valuation por Arquétipo
-status: executing
+status: verifying
 stopped_at: Phase 1 context gathered
-last_updated: "2026-07-11T16:23:37.839Z"
+last_updated: "2026-07-11T16:33:56.582Z"
 last_activity: 2026-07-11
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 50
+  completed_plans: 2
+  percent: 100
 ---
 
 # Project State
@@ -29,10 +29,10 @@ qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio úni
 
 Phase: 01 (classificador-de-arqu-tipo-roteamento) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-11
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [█████░░░░░] 50%
 
 *Updated after each plan completion*
 | Phase 01 P01 | 0h30m | 2 tasks | 3 files |
+| Phase 01 P02 | 0h35m | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - **Nota técnica (repo):** golden `tests/test_ddm.py` trava DDM Itaú ≈ R$ 37,22 com Ke fixo de livro (12,48%). A run ao vivo injeta Rf via Selic → Ke ~17,3% → comprime para ~R$ 16. A refatoração NÃO deve quebrar o golden (input fixo), mas confirma a hipersensibilidade do DDM ao vivo ao Ke.
 - [Phase ?]: Classificador de arquétipo = função pura config-driven em core/arquetipo.py (espelha lifecycle.py); consome sinais canônicos de CompanyData sem recalcular método
 - [Phase ?]: candidatos sempre populado no ResultadoArquetipo; o flag fronteirico é o que distingue conflito real de rota crava
+- [Phase 01]: Roteamento por arquétipo plugado no funil analisar_acao é aditivo/read-only — DDM roda sempre como lente; a suspensão D-04 só troca o texto do veredito primário
+- [Phase 01]: Suspensão D-04 é genérica por motor_pendente e reusa o prefixo VERIFICAR — preserva o firewall selo↛report sem tocar selo.py/ddm.py
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -126,7 +129,7 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-11T16:22:09.906Z
+Last session: 2026-07-11T16:32:06.260Z
 Stopped at: Phase 1 context gathered
 Resume file: None
 

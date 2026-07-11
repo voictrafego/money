@@ -22,7 +22,7 @@
 - [ ] **ENG-03**: **Lucro normalizado** (média 7–10 anos ou mid-cycle) → EV/EBITDA ou FCF disponível como motor primário para **cíclica de commodity** (VALE3, GGBR4, SUZB3), em vez do lucro de um ano só.
 - [ ] **ENG-04**: **DCF de FCF multi-estágio** (ou múltiplo relativo) disponível como motor primário para **crescimento/capital-light** (WEGE3, tech, varejo em expansão), sem o DDM cuspir zero/lixo.
 - [ ] **ENG-05**: **NAV / Soma das Partes (SOTP)** disponível como motor primário para **holding/imobiliária patrimonial**.
-- [ ] **ENG-06**: **DDM permanece** como motor primário para **pagadora madura/regulada** (TAEE11, SAPR11, EGIE3) — reaproveitando o motor atual, sem quebrar o que já funciona.
+- [x] **ENG-06**: **DDM permanece** como motor primário para **pagadora madura/regulada** (TAEE11, SAPR11, EGIE3) — reaproveitando o motor atual, sem quebrar o que já funciona.
 
 ### Ensemble & divergência (ENS)
 
@@ -65,7 +65,7 @@ Quais fases cobrem quais requisitos. Preenchido na criação do roadmap.
 | ARQ-01 | Phase 1 | Complete |
 | ARQ-02 | Phase 1 | Complete |
 | ENG-01 | Phase 1 | Complete |
-| ENG-06 | Phase 1 | Pending |
+| ENG-06 | Phase 1 | Complete |
 | ENG-02 | Phase 2 | Pending |
 | ENG-03 | Phase 2 | Pending |
 | ENG-04 | Phase 2 | Pending |
