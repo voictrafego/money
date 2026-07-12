@@ -150,3 +150,104 @@ def test_relatorio_markdown_valido_mantem_tabela():
     secao = md[ini:fim]
     assert "45" in secao
     assert "inaplic" not in secao.lower()
+
+
+# --------------------------------------------------------------------------- #
+# SAN-01 (Plan 03-02, Task 1) — guarda-corpo anti-aberração + reetiqueta literal
+# --------------------------------------------------------------------------- #
+# Regra literal do brief: SE intrínseco < 0,5×valor-dos-pares E ROE > 15% E corte de
+# payout > 40% ENTÃO trocar "qualidade baixa/evitar" por "DDM conservador demais para
+# este perfil — ver motor primário do arquétipo". No funil single-stock (valor_pares=None)
+# a condição de pares degrada e o gate cai para as 2 restantes (custo-zero).
+
+def _company_san01(lucro=1000, pl=5180, div_hist=467, div_ult=1050):
+    """Empresa-âncora ITUB4-like: ROE ~19,3% (lucro/PL), payout cru do último ano ~105%
+    mas mediana histórica ~46,7% → corte de payout ~55% (> 40%)."""
+    anos = list(range(2015, 2025))
+    c = CompanyData(ticker="ITX4", nome="Banco Aberr", setor="Bancos", anos=anos)
+    for ano in anos:
+        c.lucro_liquido[ano] = lucro
+        c.patrimonio_liquido[ano] = pl
+        c.num_acoes[ano] = 1000
+        c.vendas_liquidas[ano] = 4000
+        c.fco[ano] = 1200
+        c.dividendos[ano] = div_ult if ano == anos[-1] else div_hist
+    c.preco_atual = 70.0
+    c.beta = 0.9
+    return c
+
+
+def _analise_sobreavaliada(intrinseco=8.0):
+    a = report.AnaliseAcao(ticker="ITX4", nome="Banco Aberr", setor="Bancos", preco_atual=70.0)
+    a.motor = "rim"
+    a.motor_rotulo = "RIM"
+    a.intrinseco_motor = intrinseco
+    a.vmin, a.vmax = 5.0, 10.0
+    a.veredito = (
+        "SOBREAVALIADA — preço R$ 70,00 acima do intervalo intrínseco R$ 5,00–10,00"
+    )
+    return a
+
+
+def test_san01_reetiqueta_aberracao_itub4_like():
+    """Aberração-âncora (SOBREAVALIADA, ROE 19,3%, corte payout ~55%, valor_pares=None):
+    dispara → veredito reetiquetado 'conservador demais', número visível, flag True."""
+    c = _company_san01()
+    a = _analise_sobreavaliada(intrinseco=8.0)
+    assert abs((c.roe_valuation() or 0) - 0.193) < 0.01
+    assert c.payout(c.ultimo_ano()) > 1.0
+    report._guarda_san01(a, c, _cfg())
+    assert a.san01_reetiquetado is True
+    assert "conservador demais" in a.veredito
+    assert "8" in a.veredito                       # intrínseco do motor visível
+    assert "Evitar" not in a.veredito
+    assert any("san" in al.lower() or "conservador" in al.lower() for al in a.alertas)
+
+
+def test_san01_nao_dispara_sem_aberracao_roe_baixo():
+    """ROE baixo (0,08): NÃO é aberração — veredito SOBREAVALIADA inalterado."""
+    c = _company_san01(pl=12500)                   # ROE = 1000/12500 = 0,08
+    a = _analise_sobreavaliada(intrinseco=8.0)
+    veredito_antes = a.veredito
+    assert (c.roe_valuation() or 0) < 0.15
+    report._guarda_san01(a, c, _cfg())
+    assert a.san01_reetiquetado is False
+    assert a.veredito == veredito_antes
+
+
+def test_san01_nao_dispara_veredito_nao_sobreavaliada():
+    """Gatilho é o prefixo SOBREAVALIADA (o quadrante Baixa×Caro='Evitar'). Um veredito
+    SUBAVALIADA/NO INTERVALO nunca é reetiquetado, por mais aberrante que sejam ROE/payout."""
+    c = _company_san01()
+    a = _analise_sobreavaliada()
+    a.veredito = "NO INTERVALO — preço R$ 7,00 dentro de R$ 5,00–10,00"
+    report._guarda_san01(a, c, _cfg())
+    assert a.san01_reetiquetado is False
+    assert a.veredito.startswith("NO INTERVALO")
+
+
+def test_san01_never_raise_insumo_none():
+    """Insumo ausente (sem PL do ano anterior → roe_valuation None) NÃO inventa aberração."""
+    c = _company_san01()
+    for ano in list(c.patrimonio_liquido):
+        c.patrimonio_liquido[ano] = None           # roe_valuation → None
+    a = _analise_sobreavaliada()
+    report._guarda_san01(a, c, _cfg())
+    assert a.san01_reetiquetado is False
+
+
+def test_san01_pares_none_nao_puxa_rede():
+    """valor_pares=None (funil single-stock, D-04): o gate cai para as 2 condições restantes
+    (ROE E corte payout) e dispara sem nenhuma dependência de pares/rede."""
+    c = _company_san01()
+    a = _analise_sobreavaliada()
+    report._guarda_san01(a, c, _cfg(), valor_pares=None)
+    assert a.san01_reetiquetado is True
+
+
+def test_config_tem_bloco_san01():
+    cfg = _cfg()
+    san01 = cfg["veredito"]["san01"]
+    assert san01["fator_pares"] == 0.5
+    assert san01["roe_min"] == 0.15
+    assert san01["corte_payout_min"] == 0.40
