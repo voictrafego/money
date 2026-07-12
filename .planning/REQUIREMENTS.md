@@ -15,7 +15,7 @@ NÃO o Ke (que move só ~R$3 no range 10,5%–17,3%). Um residual income COM per
 
 ### Calibração do modelo (CAL)
 
-- [ ] **CAL-01**: O motor **RIM ganha um valor terminal** — uma perpetuidade de residual income (ou
+- [x] **CAL-01**: O motor **RIM ganha um valor terminal** — uma perpetuidade de residual income (ou
   P/B justo `(ROE−g)/(Ke−g)` equivalente) que substitui/complementa o fade-para-zero-sem-terminal
   atual (D-02), de forma que o valor deixe de ancorar no VPA para um banco que sustenta ROE > Ke. A
   formulação tem **fundamento teórico** (não um fator de fudge), é **parametrizada em `config.yaml`**
@@ -24,7 +24,7 @@ NÃO o Ke (que move só ~R$3 no range 10,5%–17,3%). Um residual income COM per
   ordem de grandeza de Graham (R$39,88) e do preço (R$44,30), NÃO os ~R$23 atuais. *(Este é o alvo
   quantitativo que o v2.2 não cobrou; verificação deve cobrar o NÚMERO, não só "não é Evitar".)*
 
-- [ ] **CAL-02**: O **Ke do RIM por arquétipo (banco)** é revisado como ajuste secundário — rever o
+- [x] **CAL-02**: O **Ke do RIM por arquétipo (banco)** é revisado como ajuste secundário — rever o
   teto de 14% que hoje binda o `ke_rim` (e o `erp_banco`), documentando a escolha. É a alavanca fina
   (≈R$3), aplicada **por cima** do valor terminal do CAL-01, não como conserto principal. Não pode
   produzir intrínseco explosivo (manter clamps sãos).

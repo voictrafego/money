@@ -2,15 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.3
 milestone_name: Calibração do Valuation à Realidade (RIM com Valor Terminal)
-status: planning
-last_updated: "2026-07-12T22:12:19.526Z"
+status: verifying
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-07-12T23:37:26.276Z"
 last_activity: 2026-07-12
 progress:
   total_phases: 3
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
+  percent: 100
 ---
 
 # Project State
@@ -22,14 +23,14 @@ See: .planning/PROJECT.md (updated 2026-07-11)
 **Core value:** Cada tipo de negócio é roteado para o motor de valuation certo antes de valuar,
 e nenhum veredito final é puxado por um modelo que não serve àquele perfil — um compounder de
 qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio único não cabe nele.
-**Current focus:** v2.3 — Calibração do Valuation à Realidade (RIM com valor terminal / BACKTEST-01). Definindo requisitos.
+**Current focus:** Phase 04 — rim-com-valor-terminal-ke-revisado
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-07-12 — Milestone v2.3 started
+Phase: 04 (rim-com-valor-terminal-ke-revisado) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
+Last activity: 2026-07-12
 
 ## Deferred Items
 
@@ -81,6 +82,7 @@ Progress: [██████████] 100%
 | Phase 03 P02 | 25min | 2 tasks | 3 files |
 | Phase 03 P03 | 0h20m | 2 tasks | 2 files |
 | Phase 03 P04 | 0h20m | 2 tasks | 2 files |
+| Phase 04 P01 | 0h04m | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -113,6 +115,9 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - [Phase ?]: [Phase 03]: VER-02 = ramo fronteiriço na borda do veredito — roda o motor de cada arquétipo candidato (helper _intrinseco_por_motor extraído), monta range [menor..maior] + bandeira 'classificação incerta entre X e Y'; prefixo VERIFICAR suprime a faixa do selo sem tocar selo.py; degradação 1 candidato -> valor único, 0 -> VERIFICAR informativo
 - [Phase ?]: [Phase 03]: UI Streamlit (app.py) renderiza read-only os sinais do veredito honesto (bandeira de divergência ENS-01, range fronteiriço VER-02, nota da reetiqueta SAN-01) no bloco veredito+selo do Analisar — paridade CLI↔UI, zero recálculo
 - [Phase ?]: [Phase 03]: rótulo do intrínseco reflete a.motor_rotulo quando motor != ddm (T-0304-01) — a UI não chama mais RIM/DCF/NAV/normalizado de 'DDM'; 'Intrínseco (DDM)' só quando o DDM é o motor de fato (TAEE11)
+- [Phase ?]: [Phase 04]: RIM ganha valor terminal (perpetuidade de Gordon via reuso de ddm.valor_gordon); ITUB4 R$23->R$32,9 (terminal ~17%), gate duro R$32-40 em teste unit+integracao
+- [Phase ?]: [Phase 04]: ke_teto revisado 0.14->0.13 (CAL-02); Selic-ciclo ja embute risco-pais (erp_banco=0.045 sem double-count); ajuste fino secundario, alavanca principal e o valor terminal (CAL-01)
+- [Phase ?]: [Phase 04]: guarda anti-bad-bank fade_para=ke+min(roe0-ke,cap) sem clampar a >=ke; banco ROE<Ke valua <book; knobs config-driven recalibraveis na Fase 5
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -170,7 +175,7 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-12T12:46:44.831Z
+Last session: 2026-07-12T23:36:53.311Z
 Stopped at: Completed 03-04-PLAN.md
 Resume file: None
 
