@@ -5,8 +5,9 @@ ponta-a-ponta via `report.analisar_acao`: o roteamento vira comportamento observ
 veredito e no render.
 
 - REGULADA (motor ddm): TAEE11-like idêntica — veredito DDM, NÃO suspenso (ENG-06).
-- FINANCEIRA (motor pendente): ITUB4-like — veredito suspenso via "VERIFICAR" e o selo
-  NÃO estampa 'evitar' (D-04), sem tocar selo.py.
+- FINANCEIRA (motor RIM): ITUB4-like — a partir da Fase 3 (VER-01) o selo CONSOME o motor,
+  o veredito é REAL (banda do ensemble motor×contraponto), NÃO mais suspenso via "VERIFICAR",
+  e o selo estampa faixa/rótulo honesto (Alta×faixa), nunca 'evitar' pelo DDM.
 - ANTI-PETRÓLEO: PETR4-like (eh_concessionaria=True + setor petróleo) NÃO vira regulada.
 - DEGRADAÇÃO: CompanyData de 1 ano não levanta e popula o arquétipo.
 - FRONTEIRIÇO PELO FUNIL (ARQ-02): sinais em conflito expõem fronteirico via analisar_acao.
@@ -150,22 +151,24 @@ def test_regulada_mantem_motor_ddm_e_veredito_ddm():
     assert a.veredito  # DDM rodou e produziu veredito direcional
 
 
-# --- (b) FINANCEIRA — motor RIM plugado → veredito suspenso, selo sem 'evitar' (D-06) --- #
-def test_financeira_suspende_veredito_e_nao_estampa_evitar():
+# --- (b) FINANCEIRA — motor RIM alimenta o veredito (VER-01), selo consome o motor, nunca 'evitar' --- #
+def test_financeira_veredito_real_do_motor_nunca_evitar():
     cfg = _cfg()
     a = report.analisar_acao(_financeira(), cfg)
     assert a.arquetipo == "financeira"
-    # Fase 2: o motor RIM está PLUGADO (não mais None); a suspensão migrou de motor_pendente
-    # para motor != "ddm" (D-06) — o veredito segue "VERIFICAR", NÃO regride para "evitar".
+    # REBASELINE VER-01 (Fase 3): a suspensão D-06 foi SUBSTITUÍDA por veredito real derivado
+    # da banda do motor (ensemble). O motor RIM alimenta o veredito; o DDM é lente conservadora.
     assert a.motor == "rim"
-    assert a.veredito.startswith("VERIFICAR")
-    # O selo sobre o veredito suspenso marca verificar=True e NÃO estampa faixa/rótulo
-    # (não vira 'evitar'), via prefixo "VERIFICAR" reusado — sem tocar selo.py.
-    s = selo_mod.montar_selo(70.0, a.veredito, cfg)
-    assert s.verificar is True
-    assert s.rotulo is None
-    # A suspensão adiciona um alerta explicando o porquê (D-06).
-    assert any("suspenso" in al.lower() for al in a.alertas)
+    assert a.banda_do_motor is True
+    assert "só na Fase 3" not in a.veredito     # não mais o texto de suspensão
+    # O selo CONSOME o motor: faixa/rótulo derivados da banda do motor (Alta×faixa), NUNCA
+    # o 'evitar' (Baixa×Caro) que o DDM sozinho produziria — o erro de arquitetura do ITUB4.
+    s = selo_mod.montar_selo(70.0, a.veredito, cfg)   # bsd 70 → verde → qualidade Alta
+    assert s.rotulo != "Evitar"
+    if not a.veredito.startswith("VERIFICAR"):
+        assert s.faixa_preco == selo_mod.faixa_do_veredito(a.veredito)
+    # Alerta honesto declara o DDM como lente conservadora e nomeia o motor primário.
+    assert any("lente conservadora" in al.lower() for al in a.alertas)
 
 
 # --- (c) ANTI-PETRÓLEO — não vira regulada mesmo com eh_concessionaria=True ------ #
@@ -173,8 +176,9 @@ def test_petroleo_nao_vira_pagadora_regulada():
     a = report.analisar_acao(_petroleo_compounder(), _cfg())
     assert a.arquetipo != "pagadora_regulada"
     # Fase 2: petróleo-compounder roteia para crescimento (dcf) ou cíclica (normalizado) —
-    # em ambos o motor != "ddm", então o veredito segue suspenso (D-06).
+    # em ambos o motor != "ddm", então (VER-01) o veredito é REAL, alimentado pela banda do motor.
     assert a.motor in {"dcf", "normalizado"}
+    assert a.banda_do_motor is True
 
 
 # --- (d) DEGRADAÇÃO — 1 ano, não levanta, popula o arquétipo -------------------- #
@@ -207,8 +211,8 @@ def test_render_exibe_arquetipo_e_motor():
 # Fase 2 v2.2 — anchors e2e por motor (roteamento + intrínseco do motor, D-06)
 # =========================================================================== #
 
-# --- Financeira (RIM): motor plugado, RIM destrava vs DDM, veredito segue VERIFICAR --- #
-def test_financeira_rim_destrava_vs_ddm_e_segue_verificar():
+# --- Financeira (RIM): motor plugado, RIM destrava vs DDM, veredito REAL do motor (VER-01) --- #
+def test_financeira_rim_destrava_vs_ddm_e_alimenta_veredito():
     cfg = _cfg()
     c = _financeira()
     a = report.analisar_acao(c, cfg)
@@ -219,14 +223,16 @@ def test_financeira_rim_destrava_vs_ddm_e_segue_verificar():
     vpa = lentes.vpa(c.patrimonio_liquido.get(ult), c.num_acoes.get(ult))
     assert a.intrinseco_motor > vpa
     # (b) RIM materialmente acima da referência DDM ao vivo da PRÓPRIA fixture (comparação
-    # RELATIVA, robusta ao ke_rim real — não hardcoda piso absoluto R$25/28, checker Warning 1).
-    ddm_ref = (a.vmin + a.vmax) / 2 if (a.vmin is not None and a.vmax is not None) \
+    # RELATIVA, robusta ao ke_rim real). O contraponto DDM foi capturado em contraponto_valor
+    # ANTES de a banda do ensemble sobrescrever vmin/vmax (Fase 3, ENS-01).
+    ddm_ref = a.contraponto_valor if a.contraponto_valor is not None \
         else (a.ddm_h.valor_intrinseco if a.ddm_h else None)
     assert ddm_ref is not None
     assert a.intrinseco_motor > 1.3 * ddm_ref
-    # (c) D-06: suspenso mesmo com o motor plugado (selo não consome RIM até a Fase 3).
-    assert a.veredito.startswith("VERIFICAR")
-    assert selo_mod.montar_selo(70.0, a.veredito, cfg).rotulo is None
+    # (c) REBASELINE VER-01: o motor RIM ALIMENTA o veredito (banda do ensemble); o selo passa
+    # a consumir o motor — faixa/rótulo derivados da banda do motor, NUNCA 'evitar' pelo DDM.
+    assert a.banda_do_motor is True
+    assert selo_mod.montar_selo(70.0, a.veredito, cfg).rotulo != "Evitar"
 
 
 # --- Cíclica (lucro normalizado): motor 'normalizado', intrínseco populado ------ #
@@ -235,7 +241,7 @@ def test_ciclica_roteia_lucro_normalizado():
     a = report.analisar_acao(_ciclica(), cfg)
     assert a.motor == "normalizado"
     assert a.intrinseco_motor is not None and a.intrinseco_motor > 0
-    assert a.veredito.startswith("VERIFICAR")
+    assert a.banda_do_motor is True   # VER-01: o motor alimenta o veredito (não mais suspenso)
 
 
 # --- Crescimento (DCF): motor 'dcf', intrínseco positivo e finito (não zero/lixo) --- #
@@ -246,7 +252,7 @@ def test_crescimento_roteia_dcf_positivo_finito():
     assert a.motor == "dcf"
     assert a.intrinseco_motor is not None
     assert a.intrinseco_motor > 0 and math.isfinite(a.intrinseco_motor)
-    assert a.veredito.startswith("VERIFICAR")
+    assert a.banda_do_motor is True   # VER-01: o motor alimenta o veredito (não mais suspenso)
 
 
 # --- Holding (NAV): motor 'nav', intrínseco == VPA do ano-base (dispatch forçado) --- #
@@ -264,7 +270,7 @@ def test_holding_roteia_nav_igual_vpa(monkeypatch):
     assert a.intrinseco_motor == lentes.vpa(
         c.patrimonio_liquido.get(ult), c.num_acoes.get(ult)
     )
-    assert a.veredito.startswith("VERIFICAR")
+    assert a.banda_do_motor is True   # VER-01: o motor alimenta o veredito (não mais suspenso)
 
 
 # --- Regulada (DDM, NÃO suspenso): reafirma ENG-06 preservado ------------------- #

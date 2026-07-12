@@ -138,6 +138,43 @@ def test_ensemble_fallback_margem_seguranca(monkeypatch):
     assert a2.divergencia_ativa is False   # sem contraponto → sem bandeira espúria
 
 
+def test_ver01_financeira_veredito_real_do_motor():
+    # Task 2 (VER-01): o ramo de suspensão D-06 é substituído por veredito REAL derivado da
+    # banda do motor. A financeira (RIM), com preço acima da banda, cai em SOBREAVALIADA (não
+    # mais "VERIFICAR — arquétipo ... só na Fase 3") e o selo CONSOME o motor (faixa/rótulo).
+    cfg = _cfg_ind()
+    c = _financeira_rim()
+    a = report.analisar_acao(c, cfg)
+    assert a.motor == "rim"
+    assert a.banda_do_motor is True
+    # veredito real derivado da banda do motor — um dos prefixos casados por faixa_do_veredito.
+    assert a.veredito.startswith(("SUBAVALIADA", "NO INTERVALO", "SOBREAVALIADA", "VERIFICAR"))
+    assert "só na Fase 3" not in a.veredito
+    assert "referência primária pelo" not in a.veredito
+    # Alerta honesto: DDM rebaixado a lente conservadora, motor primário nomeado.
+    assert any("lente conservadora" in al.lower() for al in a.alertas)
+    # O selo consome o motor (não fica suspenso via VERIFICAR nesta fixture de preço alto).
+    from analista.report import selo as selo_mod
+    s = selo_mod.montar_selo(70.0, a.veredito, cfg)
+    assert s.faixa_preco == selo_mod.faixa_do_veredito(a.veredito)
+
+
+def test_ver01_motor_sem_banda_degrada_para_verificar(monkeypatch):
+    # Task 2: motor != "ddm" SEM banda (intrínseco None E DDM suprimido) → veredito degrada
+    # para o prefixo VERIFICAR (selo suprime faixa), nunca crasha nem estampa faixa falsa.
+    cfg = _cfg_ind()
+    import analista.report.report as rep
+    # Motor degrada (intrínseco None) e DDM não roda (banda None).
+    monkeypatch.setattr(rep.motores, "rim", lambda **k: None)
+    monkeypatch.setattr(rep.ddm, "matriz_sensibilidade", lambda *a, **k: [[None]])
+    monkeypatch.setattr(rep.ddm, "ddm_dois_estagios", lambda *a, **k: None)
+    a = report.analisar_acao(_financeira_rim(), cfg)
+    assert a.motor == "rim"
+    assert a.intrinseco_motor is None
+    assert a.vmin is None and a.vmax is None
+    assert a.veredito.startswith("VERIFICAR")
+
+
 def test_composite_acima_mm200_adx_fraco_eh_sem_tendencia():
     # TEST-06 / D-02: preço ACIMA da MM200 mas ADX < 20 → "sem_tendencia".
     # Crava o caso no timeframe DIÁRIO (base_temporal="diario") para não precisar de

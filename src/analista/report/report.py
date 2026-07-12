@@ -325,35 +325,20 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             a.intrinseco_motor, contraponto
         )
 
-    if a.motor != "ddm":
-        # Suspensão D-06 (migrada de motor_pendente → motor != "ddm", MESMO wave que o plug do
-        # registry): o motor primário deste arquétipo JÁ EXISTE e calculou o intrínseco
-        # (a.intrinseco_motor), mas o SELO ainda consome só o DDM até VER-01/Fase 3. Estampar
-        # aqui um veredito de preço pelo DDM de estágio único — que não serve a este perfil — é
-        # o erro de arquitetura do ITUB4 (regride para "evitar"). Então o veredito de preço
-        # segue SUSPENSO, exibindo o intrínseco do motor do arquétipo como referência primária
-        # e rebaixando o DDM a lente conservadora. Reusa o PREFIXO "VERIFICAR" (Pitfall 3):
-        # selo.montar_selo (selo.py:119) já suprime faixa/rótulo nesse prefixo → não estampa
-        # 'evitar', sem tocar selo.py. O ramo DDM abaixo só é alcançado quando motor == "ddm".
-        if a.intrinseco_motor is not None:
-            ref = f"intrínseco ≈ R$ {_br(a.intrinseco_motor)} ({a.motor_rotulo or a.motor})"
-        else:
-            ref = f"motor '{a.motor}' ({a.motor_rotulo or a.motor})"
-        a.veredito = (
-            f"VERIFICAR — arquétipo {a.arquetipo}: referência primária pelo {ref}; o DDM abaixo "
-            f"é lente conservadora, não o motor deste perfil (o selo consome o motor do "
-            f"arquétipo só na Fase 3)."
-        )
-        a.alertas.append(
-            f"Roteamento: {a.arquetipo} → motor '{a.motor}'. Veredito de preço pelo selo "
-            f"suspenso nesta fase para não estampar um selo pelo DDM, que não serve a este "
-            f"perfil (D-06); o intrínseco do motor é exibido como referência primária."
-        )
-    elif a.vmin is not None and a.vmax is not None and a.preco_atual:
+    # --- Veredito de preço (VER-01): árvore SUB/NO INTERVALO/SOBRE ÚNICA p/ ddm e não-ddm ---
+    # A suspensão D-06 (`if a.motor != "ddm": → VERIFICAR`) foi SUBSTITUÍDA: a banda do motor
+    # (ensemble, acima) já alimenta vmin/vmax, então a MESMA comparação preço×banda que o DDM
+    # usava passa a servir também os arquétipos não-DDM — o selo consome o motor CERTO, não o
+    # DDM fixo (VER-01). As flags de risco (VULC3) continuam vetando "SUBAVALIADA" e emitindo
+    # "possível divergência de modelo" TAMBÉM no caminho do motor. Ramo terminal de degradação:
+    # motor != "ddm" SEM banda (intrínseco None E DDM suprimido) → prefixo VERIFICAR (selo
+    # suprime faixa, selo.py:119), nunca faixa falsa. motor == "ddm": comportamento inalterado.
+    if a.vmin is not None and a.vmax is not None and a.preco_atual:
         if a.preco_atual < a.vmin:
             # DDM-FIX-05 (caso VULC3): não rotular "SUBAVALIADA" quando flags de risco
             # contradizem a tese de desconto. Preço abaixo do intrínseco + payout>100% ou
-            # DY>15% costuma ser divergência de modelo / armadilha, não barganha.
+            # DY>15% costuma ser divergência de modelo / armadilha, não barganha. Preservado
+            # também no caminho do motor (test_vulc3_regressao).
             if flag_payout or flag_dy or flag_div_prejuizo:
                 motivos = []
                 if flag_payout:
@@ -373,6 +358,32 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             a.veredito = f"SOBREAVALIADA — preço R$ {_br(a.preco_atual)} acima do intervalo intrínseco R$ {_br(a.vmin)}–{_br(a.vmax)}"
         else:
             a.veredito = f"NO INTERVALO — preço R$ {_br(a.preco_atual)} dentro de R$ {_br(a.vmin)}–{_br(a.vmax)}"
+        # Alerta honesto: onde o MOTOR do arquétipo alimenta o veredito, o DDM é a lente
+        # conservadora (contraponto), não o motor deste perfil (VER-01). motor == "ddm" não
+        # emite este alerta (banda_do_motor False) — TAEE11 idêntica.
+        if a.banda_do_motor:
+            a.alertas.append(
+                f"Motor primário do arquétipo = {a.motor_rotulo or a.motor}; o DDM é exibido "
+                f"como lente conservadora (contraponto), não como o motor deste perfil (VER-01)."
+            )
+    elif a.motor != "ddm":
+        # Degradação honesta: motor não-DDM sem banda de preço (intrínseco None E DDM suprimido,
+        # ou sem preço atual). Reusa o prefixo VERIFICAR — selo.montar_selo (selo.py:119) suprime
+        # faixa/rótulo → nunca estampa faixa falsa, sem tocar selo.py.
+        if a.intrinseco_motor is not None:
+            a.veredito = (
+                f"VERIFICAR — arquétipo {a.arquetipo}: referência primária pelo intrínseco ≈ "
+                f"R$ {_br(a.intrinseco_motor)} ({a.motor_rotulo or a.motor}); sem preço-alvo comparável."
+            )
+        else:
+            a.veredito = (
+                f"VERIFICAR — motor '{a.motor}' ({a.motor_rotulo or a.motor}) não pôde estimar "
+                f"preço-alvo para o arquétipo {a.arquetipo}."
+            )
+        a.alertas.append(
+            f"Roteamento: {a.arquetipo} → motor '{a.motor}'. Banda de preço indisponível "
+            f"(motor e DDM degradaram); veredito de preço suspenso sem estampar faixa falsa."
+        )
 
     # --- Alertas / armadilhas de dividendos (Cap. 6) ---
     if flag_dy:
