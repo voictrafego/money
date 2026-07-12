@@ -52,6 +52,92 @@ def _ohlc_acima_mm200_adx_fraco() -> pd.DataFrame:
     )
 
 
+# --------------------------------------------------------------------------- #
+# Fase 3 v2.2 — Ensemble motor × contraponto DDM + banda do veredito (VER-01/ENS-01)
+# --------------------------------------------------------------------------- #
+def _financeira_rim(ticker="BANK3") -> CompanyData:
+    """Banco (setor financeiro) → hard-route financeira → motor RIM. Preço alto de propósito
+    (acima da banda do motor) para o veredito cair em SOBREAVALIADA de forma honesta."""
+    anos = list(range(2015, 2025))
+    c = CompanyData(ticker=ticker, nome="Banco", setor="Bancos", anos=anos)
+    for a in anos:
+        c.lucro_liquido[a] = 1000
+        c.patrimonio_liquido[a] = 5000
+        c.dividendos[a] = 300
+        c.num_acoes[a] = 1000
+        c.vendas_liquidas[a] = 4000
+        c.fco[a] = 1200
+    c.preco_atual = 70.0
+    c.beta = 0.9
+    return c
+
+
+def _regulada_ddm(ticker="REG3") -> CompanyData:
+    """Utility regulada sólida → motor ddm (pagadora regulada). Não aciona nenhum caminho novo."""
+    anos = list(range(2015, 2025))
+    c = CompanyData(ticker=ticker, nome="Regulada Sólida", setor="Energia Elétrica",
+                    anos=anos, eh_concessionaria=True)
+    for a in anos:
+        c.lucro_liquido[a] = 1000 + (a - 2015) * 50
+        c.patrimonio_liquido[a] = 4000 + (a - 2015) * 100
+        c.dividendos[a] = 600 + (a - 2015) * 30
+        c.num_acoes[a] = 1000
+        c.vendas_liquidas[a] = 1800
+        c.fco[a] = 1200
+    c.preco_atual = 30.0
+    c.beta = 0.8
+    return c
+
+
+def test_ensemble_banda_do_motor_financeira():
+    # Task 1 (VER-01/ENS-01): motor != "ddm" com intrínseco + contraponto DDM → a banda
+    # vmin/vmax passa a vir do ENSEMBLE (min/max entre o motor e o mid do DDM), banda_do_motor
+    # True, e a divergência motor×contraponto é avaliada pelo helper puro (limiar 2×).
+    cfg = _cfg_ind()
+    a = report.analisar_acao(_financeira_rim(), cfg)
+    assert a.motor == "rim"
+    assert a.intrinseco_motor is not None and a.intrinseco_motor > 0
+    assert a.contraponto_valor is not None            # mid do DDM capturado antes de sobrescrever
+    assert a.banda_do_motor is True
+    assert a.vmin == min(a.intrinseco_motor, a.contraponto_valor)
+    assert a.vmax == max(a.intrinseco_motor, a.contraponto_valor)
+    # RIM ~3× o DDM nesta fixture → divergência ativa e razão coerente.
+    assert a.divergencia_ativa is True
+    assert a.divergencia_razao is not None and a.divergencia_razao >= 2.0
+
+
+def test_ensemble_ddm_intocado_regulada():
+    # Task 1: motor == "ddm" (pagadora regulada) — NENHUM caminho novo é acionado (TAEE11
+    # idêntica): sem banda do motor, sem divergência espúria.
+    cfg = _cfg_ind()
+    a = report.analisar_acao(_regulada_ddm(), cfg)
+    assert a.motor == "ddm"
+    assert a.banda_do_motor is False
+    assert a.divergencia_ativa is False
+
+
+def test_ensemble_fallback_margem_seguranca(monkeypatch):
+    # Task 1 (fallback D-01): motor != "ddm" com intrínseco mas SEM contraponto (DDM suprimido)
+    # → banda = intrínseco ± cfg["veredito"]["margem_seguranca"].
+    cfg = _cfg_ind()
+    margem = cfg["veredito"]["margem_seguranca"]
+    c = _financeira_rim()
+    a = report.analisar_acao(c, cfg)
+    intr = a.intrinseco_motor
+    # Reexecuta forçando o contraponto a degradar: zera a matriz de sensibilidade do DDM.
+    import analista.report.report as rep
+
+    orig = rep.ddm.matriz_sensibilidade
+    monkeypatch.setattr(rep.ddm, "matriz_sensibilidade", lambda *a, **k: [[None]])
+    monkeypatch.setattr(rep.ddm, "ddm_dois_estagios", lambda *a, **k: None)
+    a2 = report.analisar_acao(_financeira_rim(), cfg)
+    assert a2.contraponto_valor is None
+    assert a2.banda_do_motor is True
+    assert abs(a2.vmin - intr * (1 - margem)) < 1e-6
+    assert abs(a2.vmax - intr * (1 + margem)) < 1e-6
+    assert a2.divergencia_ativa is False   # sem contraponto → sem bandeira espúria
+
+
 def test_composite_acima_mm200_adx_fraco_eh_sem_tendencia():
     # TEST-06 / D-02: preço ACIMA da MM200 mas ADX < 20 → "sem_tendencia".
     # Crava o caso no timeframe DIÁRIO (base_temporal="diario") para não precisar de
