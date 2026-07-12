@@ -167,7 +167,7 @@ def cmd_rank(args, cfg):
     reg = cmp.ajustar_regressao_pl(PL, DP, ROE)
     alvos = {}            # ticker -> PrecoAlvo (regressão crua, antes do freio)
     pendentes = {}        # ticker -> motor_pendente (suspensão por arquétipo, paridade D-04)
-    ddm_mid = {}          # ticker -> mid da faixa DDM (2ª lente, p/ o aviso de divergência)
+    ensemble_mid = {}     # ticker -> mid da banda do ensemble motor×DDM (2ª lente, p/ divergência)
     for c in empresas:
         pendentes[c.ticker] = _motor_pendente(c, cfg)
         if reg:
@@ -175,11 +175,12 @@ def cmd_rank(args, cfg):
                 reg, c.payout_valuation(), c.roe_valuation(), c.lpa_valuation(), c.preco_atual)
             if pa:
                 alvos[c.ticker] = pa
-        # 2ª lente (DDM absoluto) só para SINALIZAR divergência (Achado 4) — read-only, offline
-        # (analisar_acao lê cfg["capm"]["rf_local"], já resolvido/default; não toca a rede aqui).
+        # 2ª lente só para SINALIZAR divergência (Achado 4) — read-only, offline. O mid é a banda
+        # do ENSEMBLE motor×DDM (pós-ENS-01, desde a Fase 3), não DDM puro: analisar_acao já agrega
+        # o motor do arquétipo com o DDM (lê cfg["capm"]["rf_local"] resolvido; não toca a rede aqui).
         a = report.analisar_acao(c, cfg)
         if a.vmin is not None and a.vmax is not None:
-            ddm_mid[c.ticker] = (a.vmin + a.vmax) / 2.0
+            ensemble_mid[c.ticker] = (a.vmin + a.vmax) / 2.0
 
     print(f"\n{'#':>2} {'TICKER':10} {'NOTA':>6}  {'ALVO R$':>9}  {'UPSIDE':>7}")
     avisos = []           # SINALIZAÇÃO de divergência entre lentes (Achado 4) — NÃO reconciliação
@@ -198,15 +199,15 @@ def cmd_rank(args, cfg):
             up = f"({motivo})" if motivo else "-"
         nota = f"{r['nota']:.1f}" if r["nota"] is not None else "-"
         print(f"{i:>2} {tk:10} {nota:>6}  {alvo:>9}  {up:>7}")
-        # Aviso de divergência entre lentes (Achado 4 — SINALIZAÇÃO honesta, reconciliação →
-        # Fase 3): as duas lentes crua da MESMA ação (DDM absoluto × regressão relativa) medem
-        # coisas diferentes; quando divergem além do limiar, AVISAR em vez de fingir uma verdade.
-        if pa is not None and tk in ddm_mid:
-            divergiu, razao = cmp.divergencia_entre_lentes(ddm_mid[tk], pa.preco_alvo)
+        # Aviso de divergência entre lentes (Achado 4 — SINALIZAÇÃO honesta): as duas lentes da
+        # MESMA ação (ensemble motor×DDM, valuation absoluto × regressão P/L relativa) medem coisas
+        # diferentes; quando divergem além do limiar, AVISAR em vez de fingir uma verdade.
+        if pa is not None and tk in ensemble_mid:
+            divergiu, razao = cmp.divergencia_entre_lentes(ensemble_mid[tk], pa.preco_alvo)
             if divergiu:
                 avisos.append(
-                    f"⚠ {tk}: lentes divergem ~{razao:.1f}× (DDM R$ {ddm_mid[tk]:.2f} × regressão "
-                    f"R$ {pa.preco_alvo:.2f}) — ver Analisar; reconciliação na Fase 3.")
+                    f"⚠ {tk}: lentes divergem ~{razao:.1f}× (ensemble motor×DDM R$ {ensemble_mid[tk]:.2f} "
+                    f"× regressão R$ {pa.preco_alvo:.2f}) — ver Analisar a fundo.")
     for aviso in avisos:
         print(aviso, file=sys.stderr)
     if reg:
