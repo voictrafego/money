@@ -138,7 +138,11 @@ estampar "evitar" (regra do SAN-01). E, em caso-fronteira, **assumir a dúvida e
   3. Todo veredito "evitar" passa pelos **guarda-corpos** antes de exibir: uma aberração (intrínseco < 0,5× mediana dos pares **E** ROE > 15% **E** corte de payout > 40%) é reetiquetada "DDM conservador demais para o perfil — ver motor primário do arquétipo", não "qualidade baixa/evitar".
   4. Em caso-fronteira, o veredito **assume a dúvida** (range + bandeira de divergência) em vez de estampar um selo falso.
   5. O firewall **selo↛report** é preservado e `test_selo`, `test_vulc3_regressao`, `test_guardrails_fix06` e `test_consistencia_modos` continuam verdes (prefixos/rótulos rebaseline apenas se mudados deliberadamente).
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 03-01-PLAN.md — VER-01 + ENS-01: selo consome o motor do arquétipo (banda do ensemble motor×contraponto DDM) + bandeira de divergência com hipótese curada (Wave 1)
+- [ ] 03-02-PLAN.md — SAN-01: guarda-corpo anti-aberração completo (reetiqueta "DDM conservador demais", degradável a 2 condições sem rede) antes de estampar "evitar" (Wave 2)
+- [ ] 03-03-PLAN.md — VER-02: dúvida honesta no caso-fronteira (range dos motores candidatos + bandeira "classificação incerta"), selo suprime faixa via VERIFICAR (Wave 3)
+- [ ] 03-04-PLAN.md — Render Streamlit (bandeira/range/reetiqueta + rótulo do intrínseco) + capstone e2e dos tickers-âncora + suíte de goldens (Wave 4)
 **UI hint**: yes
 
 ## Progress
@@ -150,4 +154,4 @@ Fases executam em ordem numérica: 1 → 2 → 3
 |-------|-----------|----------------|--------|-----------|
 | 1. Classificador de Arquétipo + Roteamento | v2.2 | 4/8 | Gap closure | - |
 | 2. Motores por Arquétipo | v2.2 | 0/2 | Planned | - |
-| 3. Veredito Honesto — Ensemble, Divergência, Guarda-corpos e Selo | v2.2 | 0/TBD | Not started | - |
+| 3. Veredito Honesto — Ensemble, Divergência, Guarda-corpos e Selo | v2.2 | 0/4 | Planned | - |
