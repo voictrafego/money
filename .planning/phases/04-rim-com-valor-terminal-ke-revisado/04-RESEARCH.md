@@ -304,10 +304,16 @@ Validation** — satisfeita pelo padrão **never-raise** do módulo (guardas de 
 | A4 | VPA0 live ≈ R$19 e ROE0 ≈ 19,3% (medidos 2026-07-12) refletem o ITUB4 no momento do plano | Todos os números | Se os fundamentos mudarem materialmente, os números-alvo deslocam; a faixa R$32–40 é o critério, não um ponto |
 | A5 | O fator de persistência ω (alternativa b') não é adotado | Formulação | Se o revisor preferir o canônico CFA puro, (b') exige Ke≈0.11 e reabre CAL-02 |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **`ke_teto` 0.13 vs 0.14** — Recomendação: 0.13 (move ~R$2, mantém CAL-02 secundário). Decisão do
    usuário na discuss/plan; ambos entregam alvo com o cap certo.
+   **RESOLVED (2026-07-12, no plan-phase — usuário optou por "continuar, pesquisa decide"):** adotado
+   **`ke_teto=0.13`** com a justificativa já citada (Damodaran mature ERP 4,23% + Selic-ciclo embute
+   risco-país → `erp_banco=0.045` sem double-count; beta Blume-ajustado). O valor terminal (CAL-01) é
+   a alavanca principal; a revisão do teto (CAL-02) é o ajuste fino secundário (~R$2). É um knob de
+   config, recalibrável na Fase 5 (BACKTEST-01) contra a cesta — não um ponto fixo. Alternativa
+   equivalente (manter 0.14 + `excesso_sustentavel=0.05`) também atinge R$32–40, então baixo risco.
 2. **Fair values manuais da cesta (VAL-02)** — fora do escopo da Fase 4; a Fase 5 precisa da tabela
    do usuário. Não bloqueia CAL-01/02.
 3. **Aplicar o mesmo terminal aos OUTROS motores (DCF/normalizado)?** — Explicitamente **fora de
