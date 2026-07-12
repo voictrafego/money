@@ -980,9 +980,12 @@ if modo.startswith("Analisar"):
             # DDM (RIM/normalizado/DCF/NAV), a faixa vem do motor primário — não chamar o
             # motor de "DDM" (enganaria o usuário). "Intrínseco (DDM)" só quando motor==ddm.
             _motor = a.motor or "ddm"
+            # CR-01: o rótulo do motor só é honesto quando a banda vem DE FATO do motor
+            # (banda_do_motor True). Se o motor degradou e a faixa exibida é 100% do DDM,
+            # rotular com o nome do motor enganaria o usuário → cai para "Intrínseco (DDM)".
             _label_intr = (
                 "Intrínseco (DDM)"
-                if _motor == "ddm"
+                if _motor == "ddm" or not getattr(a, "banda_do_motor", False)
                 else f"Intrínseco ({a.motor_rotulo or _motor})"
             )
             m2.metric(_label_intr, esc_md(intervalo), help=h("valor_intrinseco"))

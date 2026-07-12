@@ -218,6 +218,30 @@ def test_ver01_motor_sem_banda_degrada_para_verificar(monkeypatch):
     assert a.veredito.startswith("VERIFICAR")
 
 
+def test_cr01_motor_degrada_mas_ddm_sobrevive_rotula_ddm(monkeypatch):
+    # CR-01: motor != "ddm" degrada (intrínseco None) MAS o DDM sobrevive (banda vmin/vmax
+    # válida). A banda exibida é 100% do DDM → banda_do_motor PERMANECE False (o rótulo do
+    # app cai para "Intrínseco (DDM)"), um alerta honesto declara a degradação do motor, e o
+    # markdown NÃO chama o DDM de "lente conservadora" (é a avaliação PRIMÁRIA, não contraponto)
+    # nem estampa a seção "Valuation pelo motor" (intrínseco do motor é None).
+    cfg = _cfg_ind()
+    import analista.report.report as rep
+    monkeypatch.setattr(rep.motores, "rim", lambda **k: None)   # só o motor degrada; DDM roda
+    a = report.analisar_acao(_financeira_rim(), cfg)
+    assert a.motor == "rim"
+    assert a.intrinseco_motor is None
+    # DDM sobreviveu: a banda existe, mas NÃO é do motor.
+    assert a.vmin is not None and a.vmax is not None
+    assert a.banda_do_motor is False
+    # Alerta honesto: o motor degradou e a faixa vem do DDM (não do motor do arquétipo).
+    assert any("degradou" in al.lower() and "ddm" in al.lower() for al in a.alertas)
+    # Markdown honesto: DDM não é "lente" (é a única/primária avaliação exibida) e a seção do
+    # motor não aparece (intrínseco do motor ausente).
+    md = report.relatorio_markdown(_financeira_rim(), a, cfg)
+    assert "lente conservadora" not in md
+    assert "Valuation pelo motor do arquétipo" not in md
+
+
 def test_composite_acima_mm200_adx_fraco_eh_sem_tendencia():
     # TEST-06 / D-02: preço ACIMA da MM200 mas ADX < 20 → "sem_tendencia".
     # Crava o caso no timeframe DIÁRIO (base_temporal="diario") para não precisar de

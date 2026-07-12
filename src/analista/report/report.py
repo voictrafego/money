@@ -508,6 +508,17 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             a.divergencia_hipotese = _hipotese_divergencia(
                 a.arquetipo, a.intrinseco_motor, contraponto, a.divergencia_razao
             )
+    elif a.motor != "ddm" and a.vmin is not None and a.vmax is not None:
+        # CR-01: o motor do arquétipo degradou (intrínseco None) MAS o DDM sobreviveu.
+        # A banda vmin/vmax exibida é 100% do DDM (contraponto), não do motor — então
+        # `banda_do_motor` PERMANECE False (o rótulo cai para "Intrínseco (DDM)" e o
+        # markdown não chama o DDM de "lente", pois é a ÚNICA e primária avaliação). Sem
+        # esta ramificação o veredito/rótulo seriam DDM-derivados exibidos sob o nome do
+        # motor, sem qualquer aviso — violação direta do Core Value. Alerta honesto:
+        a.alertas.append(
+            f"Motor '{a.motor}' ({a.motor_rotulo or a.motor}) degradou; a faixa exibida "
+            "vem do DDM (contraponto), não do motor do arquétipo."
+        )
 
     # --- Veredito de preço (VER-01): árvore SUB/NO INTERVALO/SOBRE ÚNICA p/ ddm e não-ddm ---
     # A suspensão D-06 (`if a.motor != "ddm": → VERIFICAR`) foi SUBSTITUÍDA: a banda do motor
@@ -877,7 +888,10 @@ def relatorio_markdown(c: CompanyData, a: AnaliseAcao, cfg: dict) -> str:
     # Intrínseco pelo MOTOR do arquétipo (Fase 2 v2.2, D-06): onde o motor não é o DDM, o
     # intrínseco do motor certo é a referência PRIMÁRIA e o DDM abaixo vira lente conservadora.
     # Só EXIBIÇÃO (render mínimo, Open Question 2): não toca cálculo nem bandeira de divergência.
-    ddm_e_lente = a.motor != "ddm"
+    # CR-01: o DDM só é "lente conservadora" quando a banda vem de fato do motor do
+    # arquétipo (ensemble). Se o motor degradou e a banda é 100% DDM (banda_do_motor
+    # False), o DDM é a avaliação PRIMÁRIA exibida — não pode ser rotulado de "lente".
+    ddm_e_lente = a.motor != "ddm" and a.banda_do_motor
     if ddm_e_lente and a.intrinseco_motor is not None:
         L.append(f"## Valuation pelo motor do arquétipo ({a.arquetipo})")
         L.append(f"- **{a.motor_rotulo or a.motor}: R$ {_num(a.intrinseco_motor)}** (motor do arquétipo)")
