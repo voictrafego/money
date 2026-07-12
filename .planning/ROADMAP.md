@@ -67,9 +67,9 @@ certo **antes** de valuar (classificador + registry), implementar os motores que
 normalizado/DCF/SOTP), e nunca deixar o veredito final ser puxado por um modelo que não serve
 àquele perfil (ensemble + divergência + guarda-corpos + selo que consome o arquétipo).
 
-- [ ] **Phase 1: Classificador de Arquétipo + Roteamento** - Classifica o negócio antes de valuar (setor CVM + refino quantitativo), com fallback honesto, e roteia via registry arquétipo→motor (DDM já plugado para pagadora regulada)
-- [ ] **Phase 2: Motores por Arquétipo** - Implementa e pluga no registry os motores primários que faltam: RIM (banco), lucro normalizado (cíclica), DCF multi-estágio (crescimento), NAV/SOTP (holding)
-- [ ] **Phase 3: Veredito Honesto — Ensemble, Divergência, Guarda-corpos e Selo** - Selo consome o motor do arquétipo (não o DDM fixo), roda contraponto + bandeira de divergência, guarda-corpos anti-aberração, e assume a dúvida em caso-fronteira
+- [x] **Phase 1: Classificador de Arquétipo + Roteamento** - Classifica o negócio antes de valuar (setor CVM + refino quantitativo), com fallback honesto, e roteia via registry arquétipo→motor (DDM já plugado para pagadora regulada)
+- [x] **Phase 2: Motores por Arquétipo** - Implementa e pluga no registry os motores primários que faltam: RIM (banco), lucro normalizado (cíclica), DCF multi-estágio (crescimento), NAV/SOTP (holding)
+- [x] **Phase 3: Veredito Honesto — Ensemble, Divergência, Guarda-corpos e Selo** - Selo consome o motor do arquétipo (não o DDM fixo), roda contraponto + bandeira de divergência, guarda-corpos anti-aberração, e assume a dúvida em caso-fronteira
 
 ## Phase Details
 
@@ -152,6 +152,6 @@ Fases executam em ordem numérica: 1 → 2 → 3
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1. Classificador de Arquétipo + Roteamento | v2.2 | 4/8 | Gap closure | - |
-| 2. Motores por Arquétipo | v2.2 | 0/2 | Planned | - |
-| 3. Veredito Honesto — Ensemble, Divergência, Guarda-corpos e Selo | v2.2 | 1/4 | In Progress|  |
+| 1. Classificador de Arquétipo + Roteamento | v2.2 | 8/8 | Complete | 2026-07-11 |
+| 2. Motores por Arquétipo | v2.2 | 2/2 | Complete | 2026-07-11 |
+| 3. Veredito Honesto — Ensemble, Divergência, Guarda-corpos e Selo | v2.2 | 4/4 | Complete | 2026-07-12 |
