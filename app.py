@@ -1001,6 +1001,21 @@ if modo.startswith("Analisar"):
             m4.metric("ROE", fmt_pct(a.multiplos.get("ROE")), help=h("roe"))
             m5.metric("Ke (custo)", fmt_pct(a.ke), help=h("ke"))
 
+            # WR-03: a faixa do ensemble combina o motor do arquétipo E o DDM (contraponto),
+            # mas o rótulo é só o motor. Quando NÃO há divergência (< 2×) nenhuma bandeira
+            # explica isso — sem esta legenda o usuário leria um limite da faixa "RIM" que na
+            # verdade é o DDM (inconsistência de superfície que o Core Value alerta). Legenda
+            # de uma linha esclarece; no caso divergente a própria bandeira já mostra os dois.
+            if (getattr(a, "banda_do_motor", False)
+                    and not getattr(a, "divergencia_ativa", False)
+                    and a.intrinseco_motor is not None
+                    and a.contraponto_valor is not None):
+                st.caption(
+                    f"A faixa combina o motor do arquétipo ({esc_md(a.motor_rotulo or _motor)}: "
+                    f"{esc_md(fmt_rs(a.intrinseco_motor))}) e o DDM como contraponto "
+                    f"({esc_md(fmt_rs(a.contraponto_valor))}) — não é só o motor."
+                )
+
             # Guarda-corpo do DDM (Achado 2 / SAN-01): quando a faixa saiu negativa/zero a
             # engine já zerou vmin/vmax (Intrínseco cai em "—"). Aqui só a nota honesta do
             # porquê — nunca exibimos faixa negativa/degenerada como preço-alvo.

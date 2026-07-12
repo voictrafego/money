@@ -895,6 +895,14 @@ def relatorio_markdown(c: CompanyData, a: AnaliseAcao, cfg: dict) -> str:
     if ddm_e_lente and a.intrinseco_motor is not None:
         L.append(f"## Valuation pelo motor do arquétipo ({a.arquetipo})")
         L.append(f"- **{a.motor_rotulo or a.motor}: R$ {_num(a.intrinseco_motor)}** (motor do arquétipo)")
+        # WR-03: alinhar a representação do intrínseco com o app (que exibe a FAIXA do
+        # veredito, não um ponto). A faixa do ensemble combina o motor e o DDM contraponto —
+        # exibir a mesma faixa aqui elimina a inconsistência de superfície (CLI ponto × app faixa).
+        if a.banda_do_motor and a.vmin is not None and a.vmax is not None:
+            L.append(
+                f"- Faixa do veredito (motor × DDM contraponto): "
+                f"R$ {_num(a.vmin)}–{_num(a.vmax)}"
+            )
         L.append("")
 
     # DDM
