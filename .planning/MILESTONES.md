@@ -1,5 +1,22 @@
 # Milestones
 
+## v2.2 Motor de Valuation por Arquétipo (Shipped: 2026-07-12)
+
+**Phases completed:** 3 phases (01–03), 14 plans. Fases arquivadas em `.planning/milestones/v2.2-phases/`.
+
+**Key accomplishments:**
+
+- **Classificador + roteamento (Fase 01):** a ferramenta passa a decidir o **arquétipo do negócio antes de valuar** (filtro grosso por setor CVM + refino quantitativo por ROE/retenção/ciclicidade em resíduos log-lineares), com **fallback honesto** que marca casos-fronteira e guarda 2–3 lentes candidatas em vez de chutar. Escolha do motor migra de DDM hard-coded para um **registry arquétipo→motor** consumido no funil de `report.py`. (ARQ-01/02, ENG-01/06)
+- **Motores por arquétipo (Fase 02):** plugados no registry os motores que faltavam — **RIM** (banco/seguradora, destrava o ITUB4 de ~R$16 do DDM comprimido para ~R$23–40), **lucro normalizado** (cíclicas, média 7–10a), **DCF multi-estágio** (crescimento) e **NAV** (holding). O DDM puro não foi tocado; rebaixa a "lente conservadora" onde não é o primário. (ENG-02..05)
+- **Veredito honesto (Fase 03):** o selo passa a **consumir o motor do arquétipo** (não o DDM fixo), preservando o firewall testado selo↛report; **ensemble motor×contraponto DDM** com **bandeira de divergência** + hipótese curada quando maior > 2× menor (ENS-01); **guarda-corpos anti-aberração** SAN-01 (`_guarda_san01`: reetiqueta "DDM conservador demais para o perfil", número visível) antes de estampar "evitar"; e **dúvida honesta no caso-fronteira** (range dos motores candidatos + bandeira "classificação incerta", VER-02). ITUB4 deixou de ser carimbado "Evitar". (VER-01/VER-02)
+- **Consistência entre superfícies:** os 3 sinais do veredito honesto (bandeira, range, reetiqueta) e o rótulo do intrínseco por motor renderizados no CLI markdown E na aba Analisar do Streamlit, lendo o mesmo objeto `AnaliseAcao` sem recálculo — Core Value (mesma ação, mesmos números em cada menu).
+
+**Auditoria de milestone:** PASSED. A auditoria cross-fase pegou um blocker que a verificação por-fase não via — a aba **"Ranking por múltiplos" do Streamlit** ainda cravava "Cara"/"Subavaliada" por regressão de lente única, sem o freio que o CLI já aplicava (ITUB4 aparecia "Cara" no Ranking e protegido no Analisar). **Fechado antes do arquivamento** pela quick task `260712-p6r`: freio extraído para `core/freio.py` (fonte única), aplicado na aba Ranking com paridade travada por teste `is`. Suíte final **437 verde**; firewall intacto.
+
+**Known deferred items at close:** 4 quick-tasks obsoletas da era v1.x (ajuste do Ranking por múltiplos, robustez da resolução de tickers, Swing Trade MVP candlestick, auto-refresh do 4º menu) — reconhecidas e adiadas, não fazem parte do v2.2. Ver STATE.md Deferred Items.
+
+---
+
 ## v2.0 Comercialização — Lazari Capital (Shipped: 2026-07-10)
 
 **Phases completed:** 3 phases (01–03), 12 de 13 plans. Fases arquivadas em `.planning/milestones/v2.0-phases/`.

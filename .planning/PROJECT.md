@@ -24,12 +24,15 @@ Traefik forward-auth. `www.lazaricapital.com.br` + `app.lazaricapital.com.br`, c
 `money.voictech.com.br` (301) concluído. E2E pago (03-05) concluído — smoke real R$19,90 PIX
 confirmado ao vivo. Fases v2.0 arquivadas em `.planning/milestones/v2.0-phases/`.
 
-**Agora: v2.2 — Motor de Valuation por Arquétipo** (trabalho de engine) — **funcionalmente completo
-(2026-07-12).** Fase 1 (classificador + roteamento arquétipo→motor), Fase 2 (RIM/lucro normalizado/DCF/NAV
-plugados no registry) e Fase 3 (veredito honesto: selo consome o motor do arquétipo, ensemble com bandeira
-de divergência, guarda-corpos anti-aberração SAN-01, dúvida honesta no caso-fronteira) concluídas e
-verificadas. Suíte **435 testes verdes**; firewall selo↛report intacto. Pronto para
-`/gsd-complete-milestone`. Ver seção Current Milestone abaixo e `.planning/BRIEF-motor-arquetipo.md`.
+**v2.2 — Motor de Valuation por Arquétipo SHIPPED 2026-07-12 (tag `v2.2`).** Fase 1 (classificador +
+roteamento arquétipo→motor), Fase 2 (RIM/lucro normalizado/DCF/NAV plugados no registry) e Fase 3
+(veredito honesto: selo consome o motor do arquétipo, ensemble com bandeira de divergência, guarda-corpos
+anti-aberração SAN-01, dúvida honesta no caso-fronteira) concluídas e verificadas; 12/12 requisitos.
+Auditoria de milestone **passed** — blocker da aba Ranking do Streamlit (paridade de freio CLI↔UI)
+fechado por quick task `260712-p6r` antes do arquivamento. Suíte **437 testes verdes**; firewall
+selo↛report intacto. Marco arquivado em `.planning/milestones/v2.2-*`.
+
+**Agora: nenhum marco ativo.** Próximo marco via `/gsd-new-milestone`.
 
 <details>
 <summary>Histórico v1.7 (Swing Trade / Modo Trading / Home / Lentes-Selo-Comparador) — shipped 2026-07-04</summary>
@@ -229,4 +232,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-12 — v2.2 Motor de Valuation por Arquétipo FUNCIONALMENTE COMPLETO (Fases 1–3 verificadas; 435 testes verdes; veredito honesto no ar). Pronto para /gsd-complete-milestone. (v2.0 Comercialização SHIPPED 2026-07-10, 1 item deferido: 03-05 E2E pago.)*
+*Last updated: 2026-07-12 — v2.2 Motor de Valuation por Arquétipo SHIPPED (tag `v2.2`, auditoria de milestone passed, 437 testes verdes, marco arquivado). Nenhum marco ativo — próximo via /gsd-new-milestone. (v2.0 Comercialização SHIPPED 2026-07-10, 1 item deferido: 03-05 E2E pago.)*

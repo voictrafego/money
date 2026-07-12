@@ -8,10 +8,10 @@ last_updated: "2026-07-12T12:46:44.835Z"
 last_activity: 2026-07-12
 progress:
   total_phases: 3
-  completed_phases: 4
+  completed_phases: 3
   total_plans: 14
   completed_plans: 14
-  percent: 133
+  percent: 100
 ---
 
 # Project State
@@ -23,14 +23,25 @@ See: .planning/PROJECT.md (updated 2026-07-11)
 **Core value:** Cada tipo de negócio é roteado para o motor de valuation certo antes de valuar,
 e nenhum veredito final é puxado por um modelo que não serve àquele perfil — um compounder de
 qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio único não cabe nele.
-**Current focus:** Phase 03 — veredito-honesto-ensemble-diverg-ncia-guarda-corpos-e-selo
+**Current focus:** v2.2 SHIPPED (tag `v2.2`, auditoria passed). Nenhum marco ativo — próximo via `/gsd-new-milestone`.
 
 ## Current Position
 
-Phase: 03
-Plan: Not started
-Status: Milestone complete
+Phase: — (v2.2 arquivado)
+Plan: —
+Status: Milestone v2.2 shipped 2026-07-12
 Last activity: 2026-07-12
+
+## Deferred Items
+
+Itens reconhecidos e adiados no fechamento do marco v2.2 (2026-07-12):
+
+| Category | Item | Status |
+|----------|------|--------|
+| quick_task | 260620-oa9-ajustar-tela-2-ranking-por-multiplos-com | missing (era v1.x) |
+| quick_task | 260622-cg9-robustez-da-resolucao-de-tickers-retry-y | missing (era v1.x) |
+| quick_task | 260629-ig6-aba-swing-trade-mvp-candlestick-intraday | missing (era v1.x) |
+| quick_task | 260630-g0b-adicionar-auto-refresh-opcional-ao-4-men | missing (era v1.x) |
 
 Progress: [██████████] 100%
 
