@@ -1,56 +1,17 @@
 ---
 phase: 03-veredito-honesto-ensemble-diverg-ncia-guarda-corpos-e-selo
-verified: 2026-07-12T13:01:22Z
-status: gaps_found
-score: 4/6 must-haves verified (2 partial/failed on independently-confirmed defects)
+verified: 2026-07-12T13:53:43Z
+status: passed
+score: 6/6 must-haves verified
 overrides_applied: 0
-gaps:
-  - truth: "O selo/veredito nunca apresenta silenciosamente a banda do DDM sob o rótulo do motor do arquétipo, sem aviso (Core Value: números fiéis ao método e consistentes entre si)"
-    status: failed
-    reason: >
-      CR-01 do code review (03-REVIEW.md) confirmado por leitura direta do código: em
-      `report.py:495` o bloco do ensemble só roda `if a.motor != "ddm" and a.intrinseco_motor
-      is not None:`. Quando o motor do arquétipo degrada para None (RIM/DCF/NAV/normalizado
-      podem legitimamente devolver None sob dado degenerado) mas a banda DDM (vmin/vmax)
-      sobrevive, não existe ramo `else`/`elif` — o código cai direto no bloco de veredito de
-      preço em `report.py:520` (`if a.vmin is not None and a.vmax is not None and
-      a.preco_atual:`), que NÃO verifica `a.banda_do_motor`. O veredito SUB/NO INTERVALO/SOBRE
-      resultante vem 100% do DDM, mas `a.banda_do_motor` fica False, então: (1) o alerta "DDM é
-      lente conservadora" (linha 548) NÃO dispara; (2) o alerta de degradação do motor (linha
-      567) também NÃO dispara (está no `elif` que exige vmin/vmax None). Nenhum sinal informa
-      ao usuário que o motor falhou. `app.py:982-988` rotula a métrica
-      `f"Intrínseco ({a.motor_rotulo or _motor})"` usando só `a.motor` (não `a.banda_do_motor`),
-      então exibe, por exemplo, "Intrínseco (RIM)" com uma faixa que é inteiramente o DDM.
-      `report.py:880-889` também rotula o bloco DDM como "lente conservadora — não é o motor
-      deste arquétipo" mesmo quando é a ÚNICA fonte da faixa exibida. Confirmado via leitura de
-      código (não apenas a alegação do reviewer); path é alcançável e SEM disclaimer.
-    artifacts:
-      - path: "src/analista/report/report.py"
-        issue: "Linhas 495-511 (bloco ensemble) sem ramo else para motor None + banda DDM válida; linha 520 não checa a.banda_do_motor antes de montar o veredito de preço"
-      - path: "app.py"
-        issue: "Linhas 982-988: rótulo do intrínseco usa só a.motor (!= 'ddm'), não a.banda_do_motor — pode chamar uma faixa 100% DDM de 'Intrínseco (RIM)' sem aviso"
-    missing:
-      - "Ramo elif explícito em report.py: quando a.motor != 'ddm' e a.intrinseco_motor is None mas vmin/vmax (DDM) sobrevivem, marcar a.banda_do_motor=False e emitir alerta honesto de que a faixa exibida é do DDM, não do motor"
-      - "app.py e relatorio_markdown devem derivar o rótulo/nota de a.banda_do_motor (não só de a.motor) para nunca rotular uma faixa 100% DDM com o nome de outro motor"
-      - "Teste golden cobrindo motor None + DDM válido (caso hoje só coberto para motor None E DDM None simultaneamente, em test_ver01_motor_sem_banda_degrada_para_verificar)"
-  - truth: "Em caso-fronteira, TODA a superfície (CLI e UI) assume a dúvida em voz alta — nenhum número específico é exibido como se fosse certo"
-    status: partial
-    reason: >
-      WR-01 do code review confirmado por execução ao vivo: no caso fronteiriço (fixture
-      `_fronteirico`), `a.veredito`/banner mostra corretamente "classificação incerta entre
-      ciclica e crescimento... range R$ 9,08–22,68" (candidatos_intrinsecos = [9.08, 22.68]),
-      mas `a.vmin/a.vmax` (usados pelo m2.metric "Intrínseco (<motor>)" em app.py:976-988)
-      permanecem a banda do ENSEMBLE do arquétipo primário do VER-01 (4,41–9,08) — um range
-      DIFERENTE do que a bandeira de incerteza anuncia. A mesma tela mostra dois números
-      contraditórios: o metric card cravado (4,41–9,08) sob um rótulo de motor específico, e o
-      banner de dúvida (9,08–22,68). Isso é exatamente "fingir certeza" no metric card enquanto
-      o texto ao lado assume a dúvida — viola o espírito do objetivo da fase para a superfície
-      Streamlit (VER-02/03-04 delimita escopo só de leitura, mas não trata esta inconsistência).
-    artifacts:
-      - path: "app.py"
-        issue: "Linhas 976-988: m2.metric usa incondicionalmente a.vmin/a.vmax mesmo quando a.arquetipo_incerto é True, sem suprimir/substituir pelo a.veredito_range"
-    missing:
-      - "Gate no app.py: quando a.arquetipo_incerto, suprimir ou substituir o metric card do intrínseco pelo a.veredito_range (ou por '—'), evitando dois números conflitantes na mesma tela"
+re_verification:
+  previous_status: gaps_found
+  previous_score: "4/6 must-haves verified (2 partial/failed on independently-confirmed defects)"
+  gaps_closed:
+    - "O selo/veredito nunca apresenta silenciosamente a banda do DDM sob o rótulo do motor do arquétipo, sem aviso (CR-01)"
+    - "Em caso-fronteira, TODA a superfície (CLI e UI) assume a dúvida em voz alta — nenhum número específico é exibido como se fosse certo (WR-01)"
+  gaps_remaining: []
+  regressions: []
 deferred: []
 human_verification: []
 ---
@@ -64,9 +25,9 @@ menor), levantar bandeira de divergência com hipótese. Interpor guarda-corpos 
 antes de estampar "evitar" (SAN-01). Em caso-fronteira, assumir a dúvida em voz alta (range +
 bandeira) em vez de fingir certeza.
 
-**Verified:** 2026-07-12T13:01:22Z
-**Status:** gaps_found
-**Re-verification:** No — initial verification
+**Verified:** 2026-07-12T13:53:43Z
+**Status:** passed
+**Re-verification:** Yes — after code-review fix commits 5ea45ce (CR-01), eb2906a (WR-01), 69dd243 (WR-03)
 
 ## Goal Achievement
 
@@ -74,97 +35,102 @@ bandeira) em vez de fingir certeza.
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | SC#1 — ITUB4 não é mais estampado "evitar": selo consome motor RIM, DDM rebaixado a lente conservadora | ✓ VERIFIED | Executado ao vivo (não só via teste): `a.arquetipo='financeira'`, `a.motor='rim'`, `a.banda_do_motor=True`, `a.veredito='SOBREAVALIADA — ...'` (sem "Evitar"), `selo.rotulo='Boa, mas cara'`. Testes `test_capstone_itub4_sem_evitar_motor_rim_ddm_como_lente` e `test_san01_e2e_itub4_nao_estampa_evitar` verdes. |
-| 2 | SC#2 — Motor×contraponto divergem >2× → range + bandeira de divergência com hipótese, não número único | ✓ VERIFIED | Executado ao vivo: ITUB4 produz `divergencia_ativa=True`, `divergencia_razao≈3.02`, `divergencia_hipotese='compounder subvalorizado pelo DDM...'`. `_HIPOTESE_DIVERGENCIA` dict presente (report.py:742) com chaves (arquétipo,sinal); renderizado em `relatorio_markdown` e em `app.py` (st.warning). |
-| 3 | SC#3 — Todo veredito "evitar" passa por guarda-corpos; aberração (ROE>15% E corte payout>40%, pares degradável) é reetiquetada "DDM conservador demais..." mantendo o número | ✓ VERIFIED (com ressalva WR-02, ver Anti-Patterns) | `_guarda_san01` existe (report.py:107), chamado após a cadeia de veredito e antes de `montar_selo` (report.py:587). `config.yaml` tem `veredito.san01.{fator_pares,roe_min,corte_payout_min}`. Golden e2e `test_san01_e2e_itub4_nao_estampa_evitar` verde. Literal da SC#3 satisfeito — mas ver WR-02: o gate não verifica que o motor primário CONCORDA com a tese "DDM conservador demais", podendo reetiquetar uma sobreavaliação genuína (confirmado por leitura do código; ver seção Anti-Patterns). |
-| 4 | SC#4 — Em caso-fronteira, veredito assume a dúvida (range+bandeira) em vez de selo cravado | ⚠️ PARTIAL | `report.py`/CLI: VERIFIED — `_veredito_fronteirico` roda, `a.veredito` começa com VERIFICAR + "classificação incerta entre X e Y" + range; `selo.faixa_do_veredito(a.veredito) is None`. Confirmado ao vivo com fixture fronteiriça: candidatos=[9.08, 22.68], veredito_range=(9.08,22.68). **UI (app.py): FALHA PARCIAL** — o metric card "Intrínseco (<motor>)" (app.py:976-988) continua mostrando a banda do ensemble do arquétipo primário (4,41–9,08 na mesma fixture), um número DIFERENTE do range de incerteza anunciado no banner (9,08–22,68) — dois números contraditórios na mesma tela (WR-01, confirmado ao vivo). Ver gap estruturado no frontmatter. |
-| 5 | SC#5 — Firewall selo↛report preservado; test_selo/test_vulc3_regressao/test_guardrails_fix06/test_consistencia_modos verdes | ✓ VERIFIED | `grep -n "import report" src/analista/report/selo.py` vazio; `selo.py` só importa `dataclasses`/`typing`. Suíte da fase (13 módulos, 164 testes) verde; suíte completa do repo (434 testes) verde. |
-| 6 (derivada do Core Value / objetivo da fase) | O selo NUNCA apresenta a banda do DDM sob o rótulo de outro motor sem aviso (nunca "finge certeza" atribuindo autoria errada ao número) | ✗ FAILED | CR-01 do code review, CONFIRMADO por leitura direta de `report.py:495-520` e `app.py:982-988` (não é só a alegação do reviewer — reproduzi a lógica linha a linha). Path alcançável: motor do arquétipo degrada (None) mas a banda DDM sobrevive → veredito e métrica saem 100% do DDM, rotulados com o nome do motor, sem qualquer alerta. Nenhum teste cobre esse caminho especificamente (o teste existente força motor E DDM a degradarem juntos). Ver gap estruturado no frontmatter. |
+| 1 | SC#1 — ITUB4 não é mais estampado "evitar": selo consome motor RIM, DDM rebaixado a lente conservadora | ✓ VERIFIED | Executado ao vivo (não só via teste): fixture `_itub4_financeira()` → `a.arquetipo='financeira'`, `a.motor='rim'`, `a.banda_do_motor=True`, alerta "lente conservadora" presente, `"Evitar" not in a.veredito`, `selo_mod.montar_selo(...).rotulo != "Evitar"`. Golden `test_capstone_itub4_sem_evitar_motor_rim_ddm_como_lente` verde. |
+| 2 | SC#2 — Motor×contraponto divergem >2× → range + bandeira de divergência com hipótese, não número único | ✓ VERIFIED | `_HIPOTESE_DIVERGENCIA` dict presente (report.py:742), `divergencia_entre_lentes` (comparables) chamado no funil (report.py:504), populando `divergencia_ativa`/`divergencia_razao`/`divergencia_hipotese`; renderizado via `st.warning` em app.py (linhas 940-953) e no markdown CLI. Comportamento inalterado desde a verificação anterior (não tocado pelas correções). |
+| 3 | SC#3 — Todo veredito "evitar" passa por guarda-corpos; aberração (ROE>15% E corte payout>40%, pares degradável) é reetiquetada "DDM conservador demais..." mantendo o número | ✓ VERIFIED | Reexecutado ao vivo: `_company_san01()` + `analisar_acao` → `a.san01_reetiquetado=True`, `a.veredito="DDM conservador demais para este perfil — ver motor primário do arquétipo (intrínseco ≈ R$ 6,27)"`, `"Evitar" not in a.veredito`, `selo.rotulo=None` (faixa suprimida). `_guarda_san01` (report.py:107) chamado antes de `montar_selo` (report.py:587). WR-02 (checagem direcional) permanece deliberadamente não implementado — ver Anti-Patterns; não afeta o literal da SC#3. |
+| 4 | SC#4 — Em caso-fronteira, veredito assume a dúvida (range+bandeira) em vez de selo cravado | ✓ VERIFIED (gap fechado) | Reexecutado ao vivo com fixture `_fronteirico()`: `a.arquetipo_incerto=True`, `a.candidatos_intrinsecos=[('ciclica', 9.075), ('crescimento', 22.677)]`, `a.veredito_range=(9.075, 22.677)`, `a.veredito` começa com "VERIFICAR — caso-fronteira: classificação incerta...". `a.vmin/a.vmax` continuam sendo a banda antiga do ensemble primário (4,41–9,08) — mas isso não é mais exibido: `app.py` linha 976-978 agora suprime o metric card (`intervalo = "—"`) quando `getattr(a, "arquetipo_incerto", False)`, confirmado por leitura direta do código pós-fix (commit eb2906a). O único número exibido na UI é o range de candidatos do banner. |
+| 5 | SC#5 — Firewall selo↛report preservado; test_selo/test_vulc3_regressao/test_guardrails_fix06/test_consistencia_modos verdes | ✓ VERIFIED | `grep -n "^import\|^from" src/analista/report/selo.py` → só `dataclasses`/`typing`. Suíte completa: **435 passed** (`python3 -m pytest tests/ -q`). Alvo dos 4 módulos nomeados executado isoladamente: **35 passed** (`-k "test_selo or test_vulc3_regressao or test_guardrails_fix06 or test_consistencia_modos or ..."`). |
+| 6 (derivada do Core Value / objetivo da fase) | O selo NUNCA apresenta a banda do DDM sob o rótulo de outro motor sem aviso | ✓ VERIFIED (gap fechado — CR-01) | Reexecutado ao vivo (`monkeypatch.setattr(rep.motores, "rim", lambda **k: None)`): `a.motor='rim'`, `a.intrinseco_motor=None`, `a.vmin/a.vmax` sobrevivem do DDM, `a.banda_do_motor=False` (confirmado pela leitura de `report.py:511-521`, novo ramo `elif a.motor != "ddm" and a.vmin is not None and a.vmax is not None:`), alerta honesto "Motor 'rim' (RIM) degradou; a faixa exibida vem do DDM (contraponto), não do motor do arquétipo." presente em `a.alertas`. `app.py:982-988` agora rotula `"Intrínseco (DDM)"` (não mais `"Intrínseco (RIM)"`) porque a condição do rótulo passou a checar `not getattr(a, "banda_do_motor", False)`, não só `a.motor`. Markdown `relatorio_markdown` não chama o DDM de "lente conservadora" nesse caminho (`ddm_e_lente = a.motor != "ddm" and a.banda_do_motor` → False) e omite a seção "Valuation pelo motor do arquétipo". Golden `test_cr01_motor_degrada_mas_ddm_sobrevive_rotula_ddm` verde. |
 
-**Score:** 4/6 truths fully verified; 1 partial (SC#4 na UI); 1 failed (Core Value/CR-01 no caminho de degradação silenciosa)
+**Score:** 6/6 truths fully verified (both previously-blocking gaps — CR-01 critical, WR-01 warning — independently confirmed closed by live execution + code reading, not just by the SUMMARY/REVIEW-FIX narrative).
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `src/analista/report/report.py` | Banda do ensemble + campos de divergência + `_HIPOTESE_DIVERGENCIA` | ✓ VERIFIED | 5 campos em `AnaliseAcao` (contraponto_valor, banda_do_motor, divergencia_ativa, divergencia_razao, divergencia_hipotese) presentes e usados; `_HIPOTESE_DIVERGENCIA` dict presente (linha 742) |
-| `src/analista/report/report.py` | `_guarda_san01` (SAN-01) | ✓ VERIFIED | Função presente (linha 107), assinatura `(a, c, cfg, valor_pares=None)`, chamada no funil antes de `montar_selo` |
-| `src/analista/report/report.py` | `_intrinseco_por_motor` + ramo fronteiriço (VER-02) | ✓ VERIFIED | Helper presente (linha 183), reutilizado pelo dispatch principal e pelo ramo `arquetipo_fronteirico`; campos `arquetipo_incerto`/`candidatos_intrinsecos`/`veredito_range` presentes e populados |
-| `config.yaml` | Bloco `veredito.margem_seguranca` + `veredito.san01.*` | ✓ VERIFIED | Confirmado via leitura direta (linhas 101-107) |
-| `app.py` | Render da bandeira/range/reetiqueta + rótulo do intrínseco por motor | ⚠️ WIRED mas com defeito de consistência | Blocos `st.info`/`st.warning` presentes e conectados aos campos corretos (`divergencia_ativa`, `arquetipo_incerto`, `san01_reetiquetado`); rótulo do intrínseco usa `a.motor_rotulo` quando `motor != "ddm"` — mas NÃO considera `a.banda_do_motor`, produzindo o defeito CR-01/WR-01 acima |
+| `src/analista/report/report.py` | Banda do ensemble + divergência + `_HIPOTESE_DIVERGENCIA` | ✓ VERIFIED | Unchanged from prior verification, still present and wired. |
+| `src/analista/report/report.py` | `_guarda_san01` (SAN-01) | ✓ VERIFIED | Present (line 107), called before `montar_selo` (line 587). |
+| `src/analista/report/report.py` | `_intrinseco_por_motor` + ramo fronteiriço (VER-02) | ✓ VERIFIED | Present (line 183), reused by primary dispatch and `arquetipo_fronteirico` branch. |
+| `src/analista/report/report.py` | CR-01 fix: `elif` branch for motor-None + DDM-valid | ✓ VERIFIED | Lines 511-521: sets honest alert, leaves `banda_do_motor=False`. Covered by `test_cr01_motor_degrada_mas_ddm_sobrevive_rotula_ddm`. |
+| `src/analista/report/report.py` | WR-03 fix: markdown shows motor×DDM band, not just a point | ✓ VERIFIED | Lines 897-903: prints `Faixa do veredito (motor × DDM contraponto)` when `banda_do_motor` is set. |
+| `app.py` | CR-01 fix: metric label falls back to "Intrínseco (DDM)" when `banda_do_motor` is False | ✓ VERIFIED | Lines 984-988: `_label_intr` now checks `_motor == "ddm" or not getattr(a, "banda_do_motor", False)`. |
+| `app.py` | WR-01 fix: metric card suppressed on `arquetipo_incerto` | ✓ VERIFIED | Lines 975-978: `if getattr(a, "arquetipo_incerto", False): intervalo = "—"`. Confirmed live: fronteiriço fixture produces `arquetipo_incerto=True`, metric card no longer shows the stale primary-archetype band. |
+| `config.yaml` | Bloco `veredito.margem_seguranca` + `veredito.san01.*` | ✓ VERIFIED | Unchanged, present. |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|----|----|--------|---------|
-| `report.analisar_acao` (banda vmin/vmax do motor) | `selo.montar_selo` via `a.veredito` | prefixo SUB/NO INTERVALO/SOBRE reconhecido por `faixa_do_veredito` | ✓ WIRED | Confirmado ao vivo (ITUB4: SOBREAVALIADA → selo "Boa, mas cara", não "Evitar") |
-| `report.analisar_acao` | `comparables.divergencia_entre_lentes` | chamada direta no funil (linha 504) | ✓ WIRED | Confirmado ao vivo (ITUB4: divergencia_ativa=True, razao≈3.02) |
-| `report._guarda_san01` | `a.veredito` reetiquetado | troca de texto antes de `montar_selo` | ✓ WIRED | Confirmado: `_guarda_san01` chamado na linha 587, antes do bloco do selo |
-| `report.analisar_acao` (ramo fronteiriço) | dispatch de motor por candidato | `_intrinseco_por_motor` reutilizado | ✓ WIRED | Confirmado ao vivo: 2 candidatos resolvidos, range correto |
-| Veredito fronteiriço (prefixo VERIFICAR) | `selo.montar_selo` (faixa suprimida) | overlay VERIFICAR existente em `selo.py:119` | ✓ WIRED | Confirmado: `selo.faixa_do_veredito(a.veredito) is None` no caso fronteiriço |
-| `app.py` bloco veredito | campos `a.divergencia_*`/`a.veredito_range`/`a.san01_reetiquetado` | leitura read-only | ⚠️ WIRED mas INCOMPLETO | Os 3 blocos textuais estão conectados; mas o metric card do intrínseco (linha 976) NÃO está condicionado a `a.arquetipo_incerto` nem a `a.banda_do_motor`, produzindo os defeitos WR-01/CR-01 acima |
+| `report.analisar_acao` motor-degraded branch | `a.banda_do_motor` / `a.alertas` | new `elif` at report.py:511 | ✓ WIRED | Confirmed live: alert text present, `banda_do_motor` stays False. |
+| `a.banda_do_motor` | `app.py` metric label (`_label_intr`) | `not getattr(a, "banda_do_motor", False)` check | ✓ WIRED | Confirmed by code read: label falls back to "Intrínseco (DDM)" whenever the band isn't motor-sourced, regardless of `a.motor` value. |
+| `a.banda_do_motor` | `relatorio_markdown` "lente conservadora" caption | `ddm_e_lente = a.motor != "ddm" and a.banda_do_motor` | ✓ WIRED | Confirmed: golden test asserts `"lente conservadora" not in md` and `"Valuation pelo motor do arquétipo" not in md` on the degraded-motor path. |
+| `a.arquetipo_incerto` | `app.py` metric card suppression | `if getattr(a, "arquetipo_incerto", False): intervalo = "—"` | ✓ WIRED | Confirmed live: fronteiriço fixture sets `arquetipo_incerto=True`; code path unconditionally overwrites `intervalo` before rendering, eliminating the two-conflicting-numbers defect. |
+| `report._guarda_san01` | `a.veredito` reetiquetado | pre-selo funil call | ✓ WIRED | Unchanged, confirmed live again this run. |
+| `selo.py` | `report.py` | (must NOT import) | ✓ FIREWALL INTACT | `selo.py` imports only `dataclasses`/`typing`. |
 
 ### Requirements Coverage
 
 | Requirement | Source Plan | Description | Status | Evidence |
 |-------------|-------------|-------------|--------|----------|
-| VER-01 | 03-01, 03-04 | Selo consome motor do arquétipo, não DDM fixo | ✓ SATISFIED (com ressalva CR-01) | Confirmado ao vivo para os arquétipos com motor válido; falha silenciosa confirmada no caminho motor-None+DDM-válido (CR-01) |
-| ENS-01 | 03-01, 03-04 | Motor primário + contraponto DDM; divergência >2× levanta bandeira com hipótese | ✓ SATISFIED | Confirmado ao vivo |
-| SAN-01 | 03-02, 03-04 | Guarda-corpo anti-aberração antes de "evitar" | ✓ SATISFIED (com ressalva WR-02) | Guardrail existe e dispara no caso âncora; falta checagem direcional (WR-02) |
-| VER-02 | 03-03, 03-04 | Caso-fronteira assume a dúvida (range+bandeira) | ✓ SATISFIED no engine/CLI; ⚠️ PARCIAL na UI (WR-01) | Confirmado ao vivo report.py/relatorio_markdown; app.py metric card contradiz o banner |
+| VER-01 | 03-01, 03-04 | Selo consome motor do arquétipo, não DDM fixo | ✓ SATISFIED | Confirmed live for both the healthy-motor path and the motor-degraded path (CR-01 fix closes the previously-silent fallback). |
+| ENS-01 | 03-01, 03-04 | Motor primário + contraponto DDM; divergência >2× levanta bandeira com hipótese | ✓ SATISFIED | Unchanged, confirmed present and wired. |
+| SAN-01 | 03-02, 03-04 | Guarda-corpo anti-aberração antes de "evitar" | ✓ SATISFIED (literal criteria met; WR-02 directional refinement deliberately deferred as a documented design tradeoff, not part of the ROADMAP SC wording) | Reetiqueta confirmed live; `_guarda_san01` gate matches the literal SC#3 wording exactly (intrínseco < 0,5× pares E ROE>15% E corte payout>40%). Note: `.planning/REQUIREMENTS.md:33` still shows SAN-01 as `[~]` (partial) with stale text referring to "fica na Fase 3" — this is a documentation-bookkeeping lag, not a code gap (the Phase 3 portion described there is implemented and tested). |
+| VER-02 | 03-03, 03-04 | Caso-fronteira assume a dúvida (range+bandeira) | ✓ SATISFIED | Confirmed live in both CLI/engine (unchanged) and UI (WR-01 fix closes the previously-contradicting metric card). |
 
-Nenhum requisito órfão: `.planning/REQUIREMENTS.md` mapeia só ENS-01/SAN-01/VER-01/VER-02 para a Fase 3, e todos os 4 aparecem no frontmatter `requirements:` de algum plano (03-01/02/03/04).
+Nenhum requisito órfão: `.planning/REQUIREMENTS.md` mapeia só ENS-01/SAN-01/VER-01/VER-02 para a Fase 3.
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `src/analista/report/report.py` | 495-520 | Bloco condicional sem `else`/`elif` para motor-None + DDM-válido (CR-01) | 🛑 Blocker | Veredito/métrica podem ser 100% DDM sob rótulo de outro motor, sem aviso — viola diretamente o Core Value do projeto ("números fiéis ao método e consistentes entre si") e o próprio objetivo da fase |
-| `app.py` | 976-988 | Metric card do intrínseco não suprime/substitui a faixa quando `a.arquetipo_incerto` (WR-01) | ⚠️ Warning | Mesma tela mostra dois números de "intrínseco" conflitantes no caso-fronteira |
-| `src/analista/report/report.py` | 107-180 (`_guarda_san01`) | Gate SAN-01 sem checagem direcional entre motor e DDM (WR-02) | ⚠️ Warning | Pode reetiquetar uma sobreavaliação genuína (onde o próprio motor primário concorda que está cara) como "DDM conservador demais" |
-| `app.py` vs `report.py:880-889` | 976-988 / 880-889 | Representação do intrínseco do motor difere entre CLI (ponto único) e UI (banda motor×DDM) sob o mesmo rótulo (WR-03) | ℹ️ Info | Inconsistência de apresentação entre superfícies, mesmo número de base |
-| `report.py` | 274-278 | "entre X e Y" nomeia primeiro/último candidato por ordem de inserção, não necessariamente os extremos do range (IN-01) | ℹ️ Info | Prosa pode nomear um par mais estreito que o range implica com ≥3 candidatos |
+| `src/analista/report/report.py` | 107-180 (`_guarda_san01`) | Gate SAN-01 sem checagem direcional entre motor e DDM (WR-02) | ℹ️ Info (downgraded from Warning) | Documented, deliberate design tradeoff (03-REVIEW-FIX.md): a directional guard would break the intentional golden `test_san01_e2e_itub4_nao_estampa_evitar`. Left as an explicit product-design decision, not a mechanical defect. Does not violate the literal SC#3 wording. Recommend tracking as technical debt if product later wants the directional check. |
+| `src/analista/report/report.py` | 274-278 | "entre X e Y" nomeia primeiro/último candidato por ordem de inserção, não necessariamente os extremos do range (IN-01) | ℹ️ Info | Unchanged, out of fix scope. Prosa pode nomear um par mais estreito que o range implica com ≥3 candidatos. |
+| `app.py` | 696, 713 | Redundant local `import json` shadows module-level import (IN-02) | ℹ️ Info | Unchanged, out of fix scope. Harmless/cosmetic. |
+| `.planning/REQUIREMENTS.md` | 33 | SAN-01 checkbox still `[~]` (partial) with stale "fica na Fase 3" text after Phase 3 SAN-01 work is committed and tested | ℹ️ Info | Documentation bookkeeping lag, not a code defect — does not affect goal achievement, but should be updated to `[x]` in a housekeeping pass. |
 
-Nenhum marcador de dívida (TBD/FIXME/XXX) sem referência de follow-up encontrado nos arquivos da fase.
+Nenhum marcador de dívida (TBD/FIXME/XXX) sem referência de follow-up encontrado nos arquivos tocados pelos fixes (`git diff 4ce52d8..HEAD -- report.py app.py tests/test_report.py` não retorna nenhum TBD/FIXME/XXX/TODO/HACK/PLACEHOLDER).
 
 ### Human Verification Required
 
-Nenhum item requer verificação humana — todos os achados acima foram confirmados programaticamente (leitura de código + execução ao vivo), não apenas inferidos do SUMMARY.
+Nenhum item bloqueante. Nota não-bloqueante: `03-REVIEW-FIX.md` marca o fix CR-01 como
+"requires human verification (touches verdict/label logic on a previously untested degradation
+path)" — mas isso se refere apenas à confirmação de que a *redação* do alerta ("Motor '<motor>'
+degradou; a faixa exibida vem do DDM...") corresponde à intenção de produto, não a uma dúvida
+funcional. A lógica foi confirmada programaticamente (execução ao vivo + leitura de código +
+golden test cobrindo exatamente esse caminho), então isso não bloqueia o status `passed`; é uma
+sugestão de revisão de copy, não um gap.
 
 ## Gaps Summary
 
-A fase entrega e verifica corretamente 4 das 5 Success Criteria do ROADMAP de forma direta e
-demonstrável em execução ao vivo (não só via testes goldens, que também passam: 434/434 na suíte
-completa). O firewall selo↛report está intacto, e os quatro requisitos (VER-01/ENS-01/SAN-01/
-VER-02) têm artefatos e wiring reais, não stubs.
+Ambos os gaps que bloquearam a verificação anterior (`03-VERIFICATION.md` datado de
+2026-07-12T13:01:22Z, status `gaps_found`, score 4/6) foram fechados e reconfirmados de forma
+independente nesta rodada:
 
-Porém, a verificação independente confirmou (não apenas aceitou a alegação do SUMMARY) os
-achados centrais do code review (03-REVIEW.md):
+1. **CR-01 (era BLOCKER):** o novo ramo `elif a.motor != "ddm" and a.vmin is not None and
+   a.vmax is not None:` em `report.py:511` cobre exatamente o caminho antes silencioso (motor
+   degrada para `None`, banda DDM sobrevive). `banda_do_motor` permanece `False`, um alerta
+   honesto é emitido, o rótulo do app cai para "Intrínseco (DDM)", e o markdown não chama o DDM
+   de "lente conservadora" nesse caminho. Reproduzido ao vivo com `monkeypatch` no motor RIM;
+   comportamento bate 100% com o que o fix declarou. Golden test cobre o caminho especificamente.
 
-1. **CR-01 (BLOCKER):** existe um caminho real e alcançável — motor do arquétipo degrada para
-   `None` mas a banda DDM sobrevive — em que o veredito e a métrica de intrínseco são
-   inteiramente derivados do DDM, mas exibidos sob o rótulo do motor do arquétipo, sem qualquer
-   alerta. Isso é exatamente o tipo de "veredito desonesto" que a Fase 3 foi desenhada para
-   eliminar, e nenhum teste cobre esse caminho especificamente. Como o objetivo da fase e o Core
-   Value do projeto giram em torno de "números fiéis ao método e consistentes entre si", este é
-   um gap que bloqueia a alegação de que "o selo consome o motor do arquétipo" de forma
-   incondicional.
+2. **WR-01 (era gap parcial em SC#4):** `app.py` agora suprime o metric card do intrínseco
+   (`intervalo = "—"`) sempre que `a.arquetipo_incerto` é `True`, eliminando o conflito entre o
+   metric card cravado e o banner de "classificação incerta". Reproduzido ao vivo com a fixture
+   `_fronteirico()`: `arquetipo_incerto=True` confirmado, e a lógica de supressão está no lugar
+   certo do código de render.
 
-2. **WR-01 (gap parcial em SC#4, superfície Streamlit):** no caso-fronteira, o metric card
-   "Intrínseco (<motor>)" do Streamlit mostra um número diferente do range anunciado no banner de
-   incerteza — a UI não "assume a dúvida" de forma consistente na mesma tela, mesmo que o texto
-   do veredito/CLI o faça corretamente.
+WR-02 (checagem direcional do SAN-01) permanece deliberadamente não implementado — é uma decisão
+de design documentada (não um defeito mecânico), e não contradiz a redação literal da SC#3 do
+ROADMAP. WR-03/IN-01/IN-02 foram tratados ou permanecem como débito técnico info-level, sem
+impacto no objetivo da fase.
 
-3. **WR-02 (risco de qualidade, não bloqueante para as SCs literais):** o guarda-corpo SAN-01 não
-   verifica que o motor primário concorda com a tese de "DDM conservador demais" antes de
-   reetiquetar — pode mascarar uma sobreavaliação genuína.
-
-Recomendação: fechar CR-01 (obrigatório) e WR-01 (recomendado, mesma fase) antes de considerar a
-Fase 3 goal-complete; WR-02/WR-03/IN-01/IN-02 podem ser tratados via `/gsd-plan-phase --gaps` na
-mesma leva ou registrados como débito técnico explícito com override, a critério do
-desenvolvedor.
+Suíte completa: 435/435 testes passam. Os 4 módulos golden nomeados no objetivo da fase
+(test_selo, test_vulc3_regressao, test_guardrails_fix06, test_consistencia_modos) passam
+isoladamente. O firewall selo↛report permanece intacto (`selo.py` só importa
+`dataclasses`/`typing`). As 5 Success Criteria do ROADMAP estão VERIFICADAS por execução ao vivo,
+não apenas por teste golden ou pela alegação do SUMMARY/REVIEW-FIX.
 
 ---
 
-_Verified: 2026-07-12T13:01:22Z_
+_Verified: 2026-07-12T13:53:43Z_
 _Verifier: Claude (gsd-verifier)_
