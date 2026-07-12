@@ -251,3 +251,36 @@ def test_config_tem_bloco_san01():
     assert san01["fator_pares"] == 0.5
     assert san01["roe_min"] == 0.15
     assert san01["corte_payout_min"] == 0.40
+
+
+# --------------------------------------------------------------------------- #
+# SAN-01 (Plan 03-02, Task 2) — plug no funil + golden e2e ITUB4 sem "Evitar"
+# --------------------------------------------------------------------------- #
+
+def test_san01_e2e_itub4_nao_estampa_evitar():
+    """Golden e2e: analisar_acao sobre a aberração ITUB4-like (financeira SOBREAVALIADA,
+    ROE 19,3%, corte payout ~55%) reetiqueta ANTES do selo — nem o veredito nem o markdown
+    contêm 'Evitar', e faixa_do_veredito devolve None (o selo suprime o quadrante)."""
+    from analista.report import selo as selo_mod
+    c = _company_san01()
+    a = report.analisar_acao(c, _cfg())
+    assert a.motor == "rim"
+    assert a.san01_reetiquetado is True
+    assert "conservador demais" in a.veredito
+    assert "Evitar" not in a.veredito
+    md = report.relatorio_markdown(c, a, _cfg())
+    assert "Evitar" not in md
+    # A reetiqueta suprime o quadrante: nenhum prefixo SUB/NO INTERVALO/SOBRE casa.
+    assert selo_mod.faixa_do_veredito(a.veredito) is None
+    # O número segue visível no texto reetiquetado (não é supressão).
+    assert "intrínseco" in a.veredito
+
+
+def test_san01_e2e_regulada_ddm_intocada():
+    """Backstop não regride a pagadora regulada (motor==ddm, sem corte de payout): não
+    reetiqueta — o veredito e o selo seguem exatamente como o VER-01/DDM os produziu."""
+    from tests.test_report import _regulada_ddm
+    c = _regulada_ddm()
+    a = report.analisar_acao(c, _cfg())
+    assert a.motor == "ddm"
+    assert a.san01_reetiquetado is False
