@@ -54,7 +54,7 @@ class AnaliseAcao:
     motor: str = ""                                        # motor primário resolvido ("ddm" ou "pendente_fase_2")
     arquetipo_fronteirico: bool = False                    # conflito real de sinais (ARQ-02)
     arquetipo_candidatos: List[str] = field(default_factory=list)  # candidatos do funil (fallback honesto)
-    motor_pendente: bool = False                           # True quando o motor do arquétipo chega só na Fase 2 (D-04)
+    motor_pendente: bool = False                           # D-06: paridade com o predicado de suspensão (motor != "ddm"); veredito de preço pelo selo suspenso onde o motor não é o DDM
     # --- Fase 2 v2.2: intrínseco pelo motor do arquétipo (aditivo; motor CALCULA e EXIBE, D-06) ---
     intrinseco_motor: Optional[float] = None               # valor intrínseco pelo motor primário do arquétipo (None se degradou)
     motor_rotulo: str = ""                                  # rótulo humano do motor (motores.MOTOR_ROTULO)
@@ -187,7 +187,7 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     a.arquetipo_candidatos = arq.candidatos
     motor = arquetipo.ARQUETIPO_MOTOR.get(arq.chave)
     a.motor = motor or "pendente_fase_2"
-    a.motor_pendente = motor is None
+    a.motor_pendente = a.motor != "ddm"   # D-06: paridade com o predicado de suspensão (não drift)
 
     # --- Dispatch do motor do arquétipo (Fase 2 v2.2, ENG-02..05) ---
     # O motor primário resolvido CALCULA e GRAVA o intrínseco do arquétipo (D-06: motor
