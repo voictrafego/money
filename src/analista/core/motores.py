@@ -108,15 +108,17 @@ def ke_rim(beta: float, cfg: dict) -> Number:
     """
     if beta is None:
         return None
-    cap = cfg["capm"]
-    rim_cfg = cfg["motores"]["rim"]
-    rf = cap["rf_local"]
-    ke_live = rf + beta * cap["erp_local"]
-    ke = rf + beta * rim_cfg["erp_banco"]
+    # Leitura defensiva do config (paridade com classificar): um config antigo sem o bloco
+    # `motores:` não pode quebrar o never-raise na borda (WR-03). Defaults == config.yaml.
+    cap = (cfg or {}).get("capm", {})
+    rim_cfg = (cfg or {}).get("motores", {}).get("rim", {})
+    rf = cap.get("rf_local", 0.105)
+    ke_live = rf + beta * cap.get("erp_local", 0.06)
+    ke = rf + beta * rim_cfg.get("erp_banco", 0.045)
     # Clampa a [ke_piso, ke_teto] e SÓ ENTÃO aplica o teto ke_live — a trava do Ke ao vivo tem
     # de vencer mesmo o piso (D-01: o RIM nunca excede o ke_live). Se o piso viesse por fora
     # (max externo), um ke_live abaixo do ke_piso quebraria o invariante (WR-02).
-    ke_clamp = max(rim_cfg["ke_piso"], min(ke, rim_cfg["ke_teto"]))
+    ke_clamp = max(rim_cfg.get("ke_piso", 0.11), min(ke, rim_cfg.get("ke_teto", 0.14)))
     return min(ke_clamp, ke_live)
 
 

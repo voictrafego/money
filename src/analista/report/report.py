@@ -195,6 +195,9 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     # já-síntese (*_valuation / base_normalizada / lentes.vpa), NUNCA o cru (Pitfall 2/FIX-04).
     # Motores são never-raise (devolvem None sob dado degenerado). O bloco DDM abaixo continua
     # rodando SEMPRE (agora como lente conservadora onde motor != "ddm") — cálculo intocado.
+    # Leitura defensiva dos knobs do motor (paridade com classificar/ke_rim): config antigo sem
+    # o bloco `motores:` degrada para os defaults do config.yaml sem quebrar o never-raise (WR-03).
+    mot_cfg = (cfg or {}).get("motores", {})
     a.motor_rotulo = motores.MOTOR_ROTULO.get(a.motor, "")
     if a.motor == "rim":
         res_rim = motores.rim(
@@ -202,15 +205,15 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             roe0=c.roe_valuation(),
             ke=motores.ke_rim(c.beta, cfg),
             retencao=(1.0 - (c.payout_valuation() or 0.0)),
-            n=cfg["motores"]["rim"]["n_fade"],
+            n=mot_cfg.get("rim", {}).get("n_fade", 10),
         )
         a.intrinseco_motor = res_rim.valor_intrinseco if res_rim else None
     elif a.motor == "normalizado":
-        cic = cfg["motores"]["ciclica"]
+        cic = mot_cfg.get("ciclica", {})
         lpa_mid = mult.lpa(
             norm.base_normalizada(
                 c.serie("lucro_liquido"),
-                anos_media=cic["anos_media"], winsor=cic["winsor"],
+                anos_media=cic.get("anos_media", 10), winsor=cic.get("winsor", 0.10),
             ),
             c.num_acoes.get(ult),
         )
@@ -218,7 +221,7 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     elif a.motor == "dcf":
         a.intrinseco_motor = motores.dcf_crescimento(
             c.lpa_valuation(), a.g_alto, g_estavel, a.ke,
-            cfg["motores"]["crescimento"]["n_anos_explicito"],
+            mot_cfg.get("crescimento", {}).get("n_anos_explicito", 10),
         )
     elif a.motor == "nav":
         a.intrinseco_motor = motores.nav_contabil(
