@@ -226,6 +226,18 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
         )
     # motor == "ddm": o bloco DDM abaixo é o motor primário deste arquétipo (nada a fazer aqui).
 
+    # Guarda-corpo do intrínseco do motor (paridade com _guarda_faixa_ddm / SAN-01): um valor
+    # NÃO-POSITIVO (PL/lucro normalizado negativo: holding sem patrimônio, cíclica em fundo de
+    # ciclo) NÃO é preço-alvo — é ruído que o usuário leria como intrínseco negativo. Suprime na
+    # borda (None + alerta honesto) para o veredito cair no ramo "motor sem preço-alvo" e o render
+    # não estampar um intrínseco ≈ R$ negativo. A anti-aberração por mediana de pares é Fase 3.
+    if a.intrinseco_motor is not None and a.intrinseco_motor <= 0:
+        a.alertas.append(
+            f"Motor '{a.motor}' devolveu valor não-positivo (PL/lucro normalizado negativo): "
+            "não é preço-alvo — não exibido como intrínseco."
+        )
+        a.intrinseco_motor = None
+
     # --- DDM de dois estágios (Cap. 15/17) ---
     payout_proj = c.payout_valuation()  # média 3a + clamp 1.0 (função canônica única)
     n = cfg["ddm"]["n_anos_explicito"]
