@@ -1,10 +1,11 @@
-"""Golden puro por motor de valuation por arquétipo (v2.2, Fase 2 — ENG-02..05).
+"""Golden puro por motor de valuation por arquétipo (v2.2 Fase 2; v2.3 Fase 4 — ENG-02..05).
 
 Offline/síncrono (padrão do repo): inputs fixos de livro + tolerância absoluta. Um golden por
-motor. O crítico é o RIM (ENG-02): com inputs tipo-ITUB4 devolve ~R$28 (modelo honesto/
-conservador, faixa R$26–34, SEM prêmio terminal — D-02) e materialmente acima do DDM ao vivo
-(~R$16), destravando o ITUB4 do "evitar". `ke_rim` (D-01) é a alavanca: Ke estrutural MENOR que
-o CAPM ao vivo de banco.
+motor. O crítico é o RIM (ENG-02 / CAL-01): RIM híbrido com valor terminal (perpetuidade de
+Gordon sobre o RI terminal). Com inputs tipo-ITUB4 devolve ~R$32,9 (live VPA~19, ke~13%) /
+~R$39,2 (golden VPA~22, ke~12,5%), terminal ≈17% do valor — materialmente acima do DDM ao vivo
+(~R$16), destravando o ITUB4 do "evitar". `ke_rim` (CAL-02, ke_teto revisado 0.14→0.13) é o
+ajuste fino secundário; a alavanca principal é o valor terminal.
 """
 
 import math
@@ -24,22 +25,53 @@ def _cfg() -> dict:
 
 
 # --------------------------------------------------------------------------- #
-# RIM (ENG-02) — o crítico: destrava o ITUB4
+# RIM (ENG-02 / CAL-01) — o crítico: destrava o ITUB4 com valor terminal
 # --------------------------------------------------------------------------- #
 def test_rim_itub4_honesto_maior_que_ddm():
-    # Inputs tipo-ITUB4: VPA~22, ROE~19,3%, Ke estrutural~12,5%, retenção~0,53, n=10.
-    # A fórmula especificada (fade linear do excesso a zero, clean surplus, SEM prêmio
-    # terminal) rende ~R$28,20 — verificado aritmeticamente.
-    res = motores.rim(vpa0=22.0, roe0=0.193, ke=0.125, retencao=0.53, n=10)
+    # Golden fixo tipo-ITUB4: VPA~22, ROE~19,3%, Ke estrutural~12,5%, retenção~0,53, n=10.
+    # RIM híbrido com valor terminal (perpetuidade de Gordon sobre o RI terminal): fade parcial
+    # a um excesso sustentável limitado + continuing value. Rende ~R$39,2 — verificado.
+    res = motores.rim(
+        vpa0=22.0, roe0=0.193, ke=0.125, retencao=0.53, n=10,
+        excesso_sustentavel=0.045, g_terminal=0.025,
+    )
     assert res is not None
-    # Faixa honesta do modelo conservador (teto R$34 = caso no-fade).
-    assert 26.0 <= res.valor_intrinseco <= 34.0
-    # Materialmente > DDM ao vivo (~R$16). NÃO 2×16: o modelo honesto não chega a R$32 sem
-    # prêmio terminal (o que violaria D-02).
-    assert res.valor_intrinseco >= 25.0
-    # Fade completo: o Residual Income do último ano ≈ 0 (valor ancorado no VPA, D-02).
-    assert abs(res.ri_por_ano[-1]) < 0.05
+    # Faixa-alvo do golden fixo (VPA=22, ke=12,5%): R$36–42.
+    assert 36.0 <= res.valor_intrinseco <= 42.0
+    # Agora HÁ prêmio terminal: o valor terminal descontado é positivo.
+    assert res.vp_terminal > 0
+    # O Residual Income terminal deixou de ser ≈0 — alimenta a perpetuidade (é POSITIVO).
+    assert res.ri_por_ano[-1] > 0
     assert res.vpa_base == 22.0
+
+
+def test_rim_itub4_live_alvo_32_40():
+    # GATE DURO (CAL-01/CAL-02, nível UNIT): lê os knobs de config (prova parametrização, zero
+    # constante mágica) e o ke via ke_rim (prova ke_teto revisado 0.14→0.13). ITUB4 live ≈ R$32,9.
+    cfg = _cfg()
+    ke = motores.ke_rim(1.29, cfg)
+    # CAL-02: o teto revisado 0.13 é o clamp ativo (ke_live > 0.13).
+    assert abs(ke - 0.13) < 1e-9
+    rc = cfg["motores"]["rim"]
+    res = motores.rim(
+        vpa0=19.0, roe0=0.193, ke=ke, retencao=0.533, n=rc["n_fade"],
+        excesso_sustentavel=rc["excesso_sustentavel"], g_terminal=rc["g_terminal"],
+    )
+    assert res is not None
+    assert 32.0 <= res.valor_intrinseco <= 40.0
+    assert res.vp_terminal > 0
+
+
+def test_rim_bad_bank_abaixo_do_book():
+    # Guarda anti-bad-bank: banco que destrói valor (ROE < Ke) valua ABAIXO do book (P/B < 1).
+    # fade_para = ke + min(roe0−ke, cap) SEM clampar a ≥ ke → RI terminal negativo → V < VPA.
+    res = motores.rim(
+        vpa0=22.0, roe0=0.10, ke=0.125, retencao=0.53, n=10,
+        excesso_sustentavel=0.045, g_terminal=0.025,
+    )
+    assert res is not None
+    assert res.valor_intrinseco < 22.0
+    assert res.vp_terminal <= 0
 
 
 def test_rim_roe_igual_ke_ancora_no_vpa():
