@@ -150,6 +150,11 @@ def dcf_crescimento(
     """
     if lpa_valuation is None or g_alto is None or n is None or n <= 0:
         return None
+    # Trava defensiva g_alto <= ke (IN-02, espelha ddm.matriz_sensibilidade): com decrescente=False
+    # e g_alto>ke o estágio explícito infla em vez de convergir. O chamador do report já pré-trava,
+    # mas o motor é primitiva pura e independente — protege o chamador direto.
+    if ke is not None:
+        g_alto = min(g_alto, ke)
     dpa_inicial = lpa_valuation * (1 + g_alto)
     res = ddm.ddm_dois_estagios(
         dpa_inicial=dpa_inicial,
