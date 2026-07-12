@@ -13,7 +13,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 from tabulate import tabulate
 
-from ..core import arquetipo, capm, ddm, growth, indicators, lentes, lifecycle, motores, screening
+from ..core import arquetipo, capm, comparables, ddm, growth, indicators, lentes, lifecycle, motores, screening
 from ..core import multiples as mult
 from ..core import normalizacao as norm
 from ..core.fundamentals import CompanyData
@@ -60,6 +60,12 @@ class AnaliseAcao:
     motor_rotulo: str = ""                                  # rótulo humano do motor (motores.MOTOR_ROTULO)
     # --- Fase 3 v2.2 (Achado 2 / SAN-01): guarda-corpo do DDM ---
     ddm_inaplicavel: bool = False                          # True quando a faixa DDM saiu negativa/degenerada (suprimida na borda)
+    # --- Fase 3 v2.2 (VER-01/ENS-01): banda do ensemble motor×contraponto + divergência ---
+    contraponto_valor: Optional[float] = None              # mid do DDM (contraponto universal, D-02); None se o DDM degradou
+    banda_do_motor: bool = False                           # True quando vmin/vmax vêm do motor do arquétipo (ensemble), não do DDM
+    divergencia_ativa: bool = False                        # motor × contraponto divergem > limiar (comparables.LIMIAR_DIVERGENCIA = 2×)
+    divergencia_razao: Optional[float] = None              # razão maior/menor entre as duas lentes (1.0 quando não há divergência)
+    divergencia_hipotese: str = ""                          # frase curada por (arquétipo, sinal) — preenchida só quando divergencia_ativa
 
 
 def _guarda_faixa_ddm(a: AnaliseAcao) -> None:
@@ -293,6 +299,32 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     # NEGATIVA (vmax<=0) ou DEGENERADA (0–0) é ruído — não preço-alvo. Suprime aqui, read-only
     # sobre o veredito e sem tocar core/ddm.py (borda de emissão apenas).
     _guarda_faixa_ddm(a)
+
+    # --- Ensemble motor × contraponto DDM (Fase 3 v2.2, ENS-01/VER-01, D-01/D-02) ---
+    # O DDM que já rodou (banda vmin/vmax = matriz de sensibilidade) é o CONTRAPONTO universal
+    # (D-02): captura-se o seu mid ANTES de a banda ser sobrescrita. Então, SOMENTE quando o
+    # motor do arquétipo NÃO é o DDM e calculou um intrínseco, a banda do veredito passa a vir
+    # do ENSEMBLE — min/max entre o motor primário e o contraponto (D-01). Fallback D-01: se o
+    # contraponto degradou (DDM suprimido/None), a banda = intrínseco ± margem de segurança
+    # config-driven (leitura defensiva do knob, paridade WR-03 com o dispatch do motor). O
+    # helper puro `divergencia_entre_lentes` (comparables, never-raise, limiar 2×) sinaliza a
+    # divergência sem inventar número reconciliado. motor == "ddm" (TAEE11): NADA é acionado.
+    if a.vmin is not None and a.vmax is not None:
+        a.contraponto_valor = (a.vmin + a.vmax) / 2.0
+    contraponto = a.contraponto_valor
+    if a.motor != "ddm" and a.intrinseco_motor is not None:
+        if contraponto is not None:
+            a.vmin = min(a.intrinseco_motor, contraponto)
+            a.vmax = max(a.intrinseco_motor, contraponto)
+        else:
+            margem = (cfg or {}).get("veredito", {}).get("margem_seguranca", 0.15)
+            a.vmin = a.intrinseco_motor * (1.0 - margem)
+            a.vmax = a.intrinseco_motor * (1.0 + margem)
+        a.banda_do_motor = True
+        a.divergencia_ativa, a.divergencia_razao = comparables.divergencia_entre_lentes(
+            a.intrinseco_motor, contraponto
+        )
+
     if a.motor != "ddm":
         # Suspensão D-06 (migrada de motor_pendente → motor != "ddm", MESMO wave que o plug do
         # registry): o motor primário deste arquétipo JÁ EXISTE e calculou o intrínseco

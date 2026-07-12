@@ -93,6 +93,15 @@ ddm:
     delta_ke: [-0.02, -0.01, 0.0, 0.01, 0.02]
     delta_g: [-0.01, -0.005, 0.0, 0.005, 0.01]
 
+# --- Fase 3 (v2.2): borda do veredito (VER-01/ENS-01) ---
+# Bloco NOVO, irmão de `ddm:`. Knob da banda do veredito quando o motor do arquétipo alimenta
+# o selo (VER-01) e o contraponto DDM degrada (fallback D-01): a banda vira intrínseco ±
+# margem_seguranca em vez de ficar sem faixa por falta de par. Anti-rebaseline: nenhum bloco
+# pré-existente é tocado. Ajuste sem deploy.
+veredito:
+  margem_seguranca: 0.15      # fallback D-01: largura da banda (± sobre o intrínseco do motor)
+                              # quando o contraponto DDM degrada — nunca deixa o motor sem faixa
+
 # --- v1.2: indicadores técnicos (consultivos) — parâmetros canônicos ---
 indicadores:
   sma_emas: [20, 50, 200]
