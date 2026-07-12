@@ -113,7 +113,11 @@ def ke_rim(beta: float, cfg: dict) -> Number:
     rf = cap["rf_local"]
     ke_live = rf + beta * cap["erp_local"]
     ke = rf + beta * rim_cfg["erp_banco"]
-    return max(rim_cfg["ke_piso"], min(ke, rim_cfg["ke_teto"], ke_live))
+    # Clampa a [ke_piso, ke_teto] e SÓ ENTÃO aplica o teto ke_live — a trava do Ke ao vivo tem
+    # de vencer mesmo o piso (D-01: o RIM nunca excede o ke_live). Se o piso viesse por fora
+    # (max externo), um ke_live abaixo do ke_piso quebraria o invariante (WR-02).
+    ke_clamp = max(rim_cfg["ke_piso"], min(ke, rim_cfg["ke_teto"]))
+    return min(ke_clamp, ke_live)
 
 
 def lucro_normalizado(lpa_normalizado: float, ke: float, g_estavel: float) -> Number:
