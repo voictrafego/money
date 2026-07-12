@@ -4,7 +4,7 @@ milestone: v2.2
 milestone_name: Motor de Valuation por Arquétipo
 status: executing
 stopped_at: Phase 3 context gathered
-last_updated: "2026-07-12T12:19:34.623Z"
+last_updated: "2026-07-12T12:28:56.725Z"
 last_activity: 2026-07-12
 progress:
   total_phases: 3
@@ -28,7 +28,7 @@ qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio úni
 ## Current Position
 
 Phase: 03 (veredito-honesto-ensemble-diverg-ncia-guarda-corpos-e-selo) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-07-12
 
@@ -67,6 +67,7 @@ Progress: [████████░░] 79%
 | Phase 01 P06 | 0h20m | 1 tasks | 4 files |
 | Phase 02 P01 | 18min | 3 tasks | 3 files |
 | Phase 02 P02 | 16min | 3 tasks | 5 files |
+| Phase 03 P02 | 25min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,8 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - [Phase ?]: [Phase 02]: ke_rim = rf-ciclo + beta×erp_banco (0.045 sem premio small-cap), clamp [0.11,0.14] e nunca > ke_live (D-01); motores puros config-driven compoem primitivas testadas sem tocar ddm/lentes/capm/normalizacao
 - [Phase 02]: Suspensão do veredito migrada de motor_pendente → motor != 'ddm' nas 3 superfícies (report/cli/goldens) no mesmo wave do plug do registry — o motor do arquétipo já existe mas o selo só o consome na Fase 3 (VER-01); sem a migração o ITUB4 regride de VERIFICAR para 'evitar'
 - [Phase 02]: Registry ARQUETIPO_MOTOR 5/5 plugado + dispatch dos 4 motores no funil analisar_acao consumindo insumos canônicos; motor CALCULA e EXIBE intrínseco (D-06), DDM rebaixado a lente conservadora onde motor != ddm
+- [Phase ?]: [Phase 03]: SAN-01 = guarda-corpo anti-aberração na borda do veredito (_guarda_san01 à la _guarda_faixa_ddm); gatilho SOBREAVALIADA + ROE>15% E corte payout>40% reetiqueta 'DDM conservador demais para este perfil' mantendo o número; prefixo não-casado suprime a faixa do selo sem tocar selo.py
+- [Phase ?]: [Phase 03]: funil single-stock usa valor_pares=None (D-04) — condição de pares neutra, gate cai para 2 condições, sem rede (custo-zero); aberração-âncora ITUB4 capturada pelas 2
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -150,7 +153,7 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-12T12:19:34.620Z
+Last session: 2026-07-12T12:28:23.294Z
 Stopped at: Phase 3 context gathered
 Resume file: None
 

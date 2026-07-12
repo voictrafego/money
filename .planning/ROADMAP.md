@@ -154,4 +154,4 @@ Fases executam em ordem numérica: 1 → 2 → 3
 |-------|-----------|----------------|--------|-----------|
 | 1. Classificador de Arquétipo + Roteamento | v2.2 | 4/8 | Gap closure | - |
 | 2. Motores por Arquétipo | v2.2 | 0/2 | Planned | - |
-| 3. Veredito Honesto — Ensemble, Divergência, Guarda-corpos e Selo | v2.2 | 0/4 | Planned | - |
+| 3. Veredito Honesto — Ensemble, Divergência, Guarda-corpos e Selo | v2.2 | 1/4 | In Progress|  |
