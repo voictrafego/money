@@ -72,34 +72,36 @@ agregar valor de produto à ferramenta antes de cobrar. A v2.0 retoma depois.
 
 </details>
 
-## Current Milestone: v2.2 — Motor de Valuation por Arquétipo
+## Current Milestone: v2.3 — Calibração do Valuation à Realidade (RIM com Valor Terminal / BACKTEST-01)
 
-**Goal:** Corrigir o erro de **arquitetura** (não de fórmula) em que a ferramenta aplica um
-único motor primário (DDM de estágio único) para todas as ações, gerando vereditos falsos
-("qualidade baixa / evitar") em compounders de qualidade. Rotear cada tipo de negócio para o
-motor certo **antes** de valuar, e nunca deixar o veredito final ser puxado por um modelo que
-não serve àquele perfil. Meta: acertar os ~85% de casos claros e assumir honestamente a dúvida
-nos ~15% fronteiriços.
+**Goal:** Corrigir a **subestimação sistemática do motor RIM** (bancos), dando-lhe um **valor
+terminal** (perpetuidade de residual income) para que bancos de qualidade valuem coerente com
+âncoras de realidade — ITUB4 na ordem de ~R$32-40, não R$23 — validado numa cesta de bancos. É o
+BACKTEST-01 que a Fase 2 do v2.2 deixou explicitamente adiado.
+
+**Diagnóstico que originou o marco (2026-07-12):** o v2.2 roteou bancos para o RIM e removeu o
+carimbo "Evitar", mas o RIM ao vivo entrega ITUB4 a **R$23** vs o alvo ~R$40 do próprio SC#1.
+Causa raiz **não é o Ke** (varrer 10,5%→17,3% move só ~R$3): é a estrutura **fade-sem-valor-terminal
+(D-02)** que ancora o RIM perto do VPA. Um residual income COM perpetuidade (P/B justo) leva o
+ITUB4 a ~R$32-38, coerente com Graham (R$39,88)/preço (R$44,30).
 
 **Target features:**
-- **Classificador de arquétipo** (o coração, ~60% do esforço): filtro grosso por setor CVM +
-  refino quantitativo (financeira→RIM; pagadora estável→DDM; ROE alto+retenção→compounder;
-  margem/lucro oscilando→cíclica), com **fallback honesto** quando a confiança é baixa
-- **Registro de motores** arquétipo→motor primário: RIM (banco/seguradora), DDM (pagadora
-  regulada — já existe), lucro normalizado (cíclica), DCF multi-estágio (crescimento), NAV/SOTP
-  (holding — stretch)
-- **Ensemble com bandeira de divergência**: motor primário + ≥1 contraponto; se maior > 2× menor,
-  levantar bandeira com hipótese em vez de cravar número único
-- **Guarda-corpos de sanidade** anti-aberração antes de virar selo (caso ITUB4)
-- **Veredito honesto**: agregação do selo consome o motor **do arquétipo**, não o DDM fixo; em
-  caso-fronteira assume a dúvida (range + bandeira) em vez de fingir certeza
+- **RIM com valor terminal** — substituir/complementar o fade-sem-terminal por uma perpetuidade de
+  residual income (ou P/B justo (ROE−g)/(Ke−g)), parametrizada em `config.yaml`. Alavanca principal.
+- **Ke do RIM por arquétipo** — ajuste secundário/fino (rever o teto de 14% que binda hoje).
+- **Harness de validação (BACKTEST-01)** — cesta de bancos (ITUB4/BBAS3/BBSE3/BBDC4) triangulando
+  4 âncoras: Graham+Bazin, preço de mercado, tabela manual de fair values, múltiplos de pares (P/VP, P/L).
+- **Redeploy do app v2.3 na VPS** — o v2.2 nunca subiu; o app deployado ainda roda código antigo.
 
-**Natureza:** trabalho de **engine** (arquitetura do valuation), não de comercialização. Brief
-completo (Core Value, requisitos ARQ/ENG/ENS/SAN/VER, critérios de aceite, mapa de código com
-âncoras `arquivo:linha`, ordem sugerida de fases) em `.planning/BRIEF-motor-arquetipo.md`.
+**Escopo:** cirúrgico — **só RIM/bancos** neste marco. Se o mesmo viés de conservadorismo afetar
+DCF/normalizado, tratar em marco futuro.
 
-_(Marcos v1.0–v1.7 e v2.0 Comercialização arquivados em `.planning/milestones/`. v2.0 shipped
-2026-07-10 com 1 item deferido — 03-05 E2E pago, depende de pagamento real do operador.)_
+**Natureza:** trabalho de **engine** (calibração/modelagem do valuation) + operação (deploy). Não
+quebrar: firewall selo↛report, golden do DDM puro (`test_ddm`), pagadora regulada idêntica (TAEE11).
+
+_(Marcos v1.0–v2.2 arquivados em `.planning/milestones/`. v2.2 Motor de Valuation por Arquétipo
+shipped 2026-07-12, tag `v2.2` — porém não deployado; o redeploy entra neste marco. Auditoria do
+v2.2 em `.planning/v2.2-MILESTONE-AUDIT.md`.)_
 
 ## Requirements
 
@@ -139,9 +141,12 @@ _(Marcos v1.0–v1.7 e v2.0 Comercialização arquivados em `.planning/milestone
 
 ### Active
 
-<!-- Marco v2.2 — Motor de Valuation por Arquétipo: TODAS as fases (1–3) completas. Sem itens ativos. -->
+<!-- Marco v2.3 — Calibração do Valuation à Realidade (RIM com Valor Terminal / BACKTEST-01). REQ-IDs em REQUIREMENTS.md. -->
 
-_(Nenhum requisito ativo. v2.2 — Motor de Valuation por Arquétipo — funcionalmente completo: Fase 1 classificador+roteamento, Fase 2 motores, Fase 3 veredito honesto/ensemble/guarda-corpos/selo. Pronto para `/gsd-complete-milestone`.)_
+- [ ] RIM com valor terminal (perpetuidade de residual income / P/B justo) — banco de qualidade valua coerente com a realidade, não ancorado no VPA (CAL)
+- [ ] Ke do RIM por arquétipo revisado como ajuste secundário (rever teto/erp de banco) (CAL)
+- [ ] Harness de validação BACKTEST-01: cesta de bancos triangulada contra 4 âncoras (Graham+Bazin, preço, fair values manuais, múltiplos de pares) (VAL)
+- [ ] Redeploy do app v2.3 na VPS (o v2.2 nunca subiu) (OPS)
 
 <!-- v2.0 Comercialização — SHIPPED 2026-07-10 (1 item deferido: 03-05 E2E pago). -->
 
@@ -232,4 +237,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-12 — v2.2 Motor de Valuation por Arquétipo SHIPPED (tag `v2.2`, auditoria de milestone passed, 437 testes verdes, marco arquivado). Nenhum marco ativo — próximo via /gsd-new-milestone. (v2.0 Comercialização SHIPPED 2026-07-10, 1 item deferido: 03-05 E2E pago.)*
+*Last updated: 2026-07-12 — Aberto v2.3 Calibração do Valuation à Realidade (RIM com valor terminal / BACKTEST-01): RIM ao vivo dá ITUB4 R$23 vs alvo ~R$40; raiz é fade-sem-terminal (D-02), não o Ke. Escopo cirúrgico (RIM/bancos) + redeploy. (v2.2 SHIPPED/tag mas não deployado; v2.0 SHIPPED 2026-07-10.)*

@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.2
-milestone_name: Motor de Valuation por Arquétipo
-status: milestone_complete
-stopped_at: Completed 03-04-PLAN.md
-last_updated: "2026-07-12T12:46:44.835Z"
+milestone: v2.3
+milestone_name: Calibração do Valuation à Realidade (RIM com Valor Terminal)
+status: planning
+last_updated: "2026-07-12T22:12:19.526Z"
 last_activity: 2026-07-12
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 14
-  completed_plans: 14
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -23,14 +22,14 @@ See: .planning/PROJECT.md (updated 2026-07-11)
 **Core value:** Cada tipo de negócio é roteado para o motor de valuation certo antes de valuar,
 e nenhum veredito final é puxado por um modelo que não serve àquele perfil — um compounder de
 qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio único não cabe nele.
-**Current focus:** v2.2 SHIPPED (tag `v2.2`, auditoria passed). Nenhum marco ativo — próximo via `/gsd-new-milestone`.
+**Current focus:** v2.3 — Calibração do Valuation à Realidade (RIM com valor terminal / BACKTEST-01). Definindo requisitos.
 
 ## Current Position
 
-Phase: — (v2.2 arquivado)
+Phase: Not started (defining requirements)
 Plan: —
-Status: Milestone v2.2 shipped 2026-07-12
-Last activity: 2026-07-12
+Status: Defining requirements
+Last activity: 2026-07-12 — Milestone v2.3 started
 
 ## Deferred Items
 
