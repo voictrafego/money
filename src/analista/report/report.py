@@ -60,6 +60,7 @@ class AnaliseAcao:
     motor_rotulo: str = ""                                  # rótulo humano do motor (motores.MOTOR_ROTULO)
     # --- Fase 3 v2.2 (Achado 2 / SAN-01): guarda-corpo do DDM ---
     ddm_inaplicavel: bool = False                          # True quando a faixa DDM saiu negativa/degenerada (suprimida na borda)
+    san01_reetiquetado: bool = False                       # SAN-01 (03-02): veredito "evitar" reetiquetado como aberração anti-DDM (número mantido visível)
     # --- Fase 3 v2.2 (VER-01/ENS-01): banda do ensemble motor×contraponto + divergência ---
     contraponto_valor: Optional[float] = None              # mid do DDM (contraponto universal, D-02); None se o DDM degradou
     banda_do_motor: bool = False                           # True quando vmin/vmax vêm do motor do arquétipo (ensemble), não do DDM
@@ -97,6 +98,82 @@ def _guarda_faixa_ddm(a: AnaliseAcao) -> None:
             "lucro negativo): a faixa por dividendos resultou negativa ou zero e NÃO é "
             "preço-alvo — por isso não é exibida como intrínseco."
         )
+
+
+def _guarda_san01(
+    a: AnaliseAcao, c: CompanyData, cfg: dict, valor_pares: Optional[float] = None
+) -> None:
+    """Guarda-corpo anti-aberração SAN-01 (Plan 03-02) — puro e read-only sobre o veredito.
+
+    Modelado em `_guarda_faixa_ddm`: marca uma flag + mexe SÓ no veredito + alerta honesto,
+    na borda de emissão, sem tocar `core/`, `ddm.py` nem `selo.py` (firewall).
+
+    Regra literal do brief (D-05): quando o veredito montado resultaria em "evitar"
+    (quadrante Baixa×Caro, i.e. prefixo SOBREAVALIADA) E os sinais canônicos configuram uma
+    ABERRAÇÃO — `intrínseco < fator_pares × valor-dos-pares` (só quando `valor_pares` está
+    disponível) **E** `ROE_valuation > roe_min` **E** `corte de payout > corte_payout_min` —
+    troca o veredito por **"DDM conservador demais para este perfil — ver motor primário do
+    arquétipo"**, MANTENDO o número intrínseco visível (reetiqueta honesta, não supressão).
+
+    Degradação D-04 (custo-zero): no funil single-stock não há regressão de pares ajustada,
+    então `valor_pares=None` — a condição de pares NÃO é avaliada (tratada como neutra) e o
+    gate cai para as 2 restantes. NUNCA puxa rede.
+
+    Never-raise: qualquer insumo obrigatório None (ROE, payout cru/normalizado) → não dispara
+    (não inventa aberração sobre dado ausente). O prefixo do texto reetiquetado NÃO casa nenhum
+    dos prefixos que `selo.faixa_do_veredito` reconhece → `faixa=None` → o selo não estampa
+    "Evitar" (o número segue no texto). `selo.py` intocado."""
+    # Gatilho: só o quadrante Baixa×Caro ("Evitar") — que o selo cruzaria a partir de SOBREAVALIADA.
+    if not a.veredito.startswith("SOBREAVALIADA"):
+        return
+
+    san = (cfg or {}).get("veredito", {}).get("san01", {})
+    fator_pares = san.get("fator_pares", 0.5)
+    roe_min = san.get("roe_min", 0.15)
+    corte_payout_min = san.get("corte_payout_min", 0.40)
+
+    # Sinais canônicos (FIX-04): o MESMO número dos 3 modos. None → não dispara (never-raise).
+    roe = c.roe_valuation()
+    payout_norm = c.payout_valuation()
+    ult = c.ultimo_ano()
+    payout_cru = c.payout(ult) if ult is not None else None
+    if roe is None or payout_norm is None or payout_cru is None or payout_cru <= 0:
+        return
+
+    corte_payout = 1.0 - (payout_norm / payout_cru)
+
+    cond_roe = roe > roe_min
+    cond_corte = corte_payout > corte_payout_min
+    # Condição de pares (D-04): avaliada SÓ quando um valor-de-pares foi fornecido E há
+    # intrínseco do motor para comparar; ausente → neutra (não bloqueia o gate).
+    if valor_pares is not None and a.intrinseco_motor is not None:
+        cond_pares = a.intrinseco_motor < fator_pares * valor_pares
+    else:
+        cond_pares = True
+
+    if not (cond_roe and cond_corte and cond_pares):
+        return
+
+    # Número mantido visível: o intrínseco do motor primário quando existe; senão o mid da banda.
+    ref = a.intrinseco_motor
+    if ref is None and a.vmin is not None and a.vmax is not None:
+        ref = (a.vmin + a.vmax) / 2.0
+
+    a.san01_reetiquetado = True
+    sufixo = f" (intrínseco ≈ R$ {_br(ref)})" if ref is not None else ""
+    a.veredito = (
+        "DDM conservador demais para este perfil — ver motor primário do arquétipo" + sufixo
+    )
+    motivos = [f"ROE {_br(roe * 100, 1)}% > {_br(roe_min * 100, 0)}%",
+               f"corte de payout {_br(corte_payout * 100, 0)}% > {_br(corte_payout_min * 100, 0)}%"]
+    if valor_pares is not None and a.intrinseco_motor is not None:
+        motivos.append(f"intrínseco < {_br(fator_pares, 1)}× valor-dos-pares")
+    a.alertas.append(
+        "Guarda-corpo anti-aberração (SAN-01): veredito reetiquetado — "
+        + "; ".join(motivos)
+        + ". O DDM de estágio único é conservador demais para este perfil; "
+        "a referência primária é o motor do arquétipo (número acima mantido visível)."
+    )
 
 
 def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:

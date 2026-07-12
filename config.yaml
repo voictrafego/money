@@ -101,6 +101,16 @@ ddm:
 veredito:
   margem_seguranca: 0.15      # fallback D-01: largura da banda (± sobre o intrínseco do motor)
                               # quando o contraponto DDM degrada — nunca deixa o motor sem faixa
+  # --- SAN-01 (Plan 03-02): guarda-corpo anti-aberração antes de o veredito virar selo ---
+  # Regra literal do brief: SE intrínseco < fator_pares × valor-dos-pares E ROE > roe_min E
+  # corte de payout > corte_payout_min ENTÃO reetiqueta "qualidade baixa/evitar" para "DDM
+  # conservador demais para este perfil — ver motor primário do arquétipo" (mantém o número).
+  # No funil single-stock não há pares carregados (valor_pares=None) → a condição de pares
+  # degrada (D-04) e o gate cai para as 2 restantes (ROE E corte de payout) — NUNCA puxa rede.
+  san01:
+    fator_pares: 0.5          # intrínseco < 0,5×valor-dos-pares (proxy da regressão P/L; só quando disponível)
+    roe_min: 0.15             # ROE de valuation > 15% → sinal de compounder que o DDM subvaloriza
+    corte_payout_min: 0.40    # corte = 1 − (payout_valuation / payout_cru) > 40% → DDM comprimido pelo payout recente
 
 # --- v1.2: indicadores técnicos (consultivos) — parâmetros canônicos ---
 indicadores:
