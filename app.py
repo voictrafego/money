@@ -19,6 +19,7 @@ from plotly.subplots import make_subplots
 
 from analista import grafico
 from analista.core import comparables as cmp
+from analista.core import freio
 from analista.core import indicators
 from analista.core import lentes
 from analista.core import multiples as mult
@@ -1560,19 +1561,34 @@ elif modo.startswith("Ranking"):
             rows = []
             for r in ranking:
                 pa = alvos.get(r["empresa"])
+                _c_sel = next(c for c in empresas if c.ticker == r["empresa"])
+                # Freio compartilhado (quick-260712-p6r): a aba Ranking aplica o MESMO freio do
+                # CLI cmd_rank ANTES de estampar veredito/preço-alvo (fonte única core/freio.py).
+                # Fecha o BLOCKER da auditoria v2.2: ITUB4/VALE3 (motor_pendente) e alvos frágeis
+                # (R² baixo / amostra pequena / upside degenerado) deixam de aparecer "Cara" aqui
+                # e "protegida" no Analisar. A NOTA/Selo/régua de config seguem INTACTOS — o freio
+                # governa só a coluna de alvo/veredito (paridade com a NOTA intacta do CLI).
+                mp = freio.motor_pendente(_c_sel, CFG)
+                confiavel, motivo = freio.alvo_regressao_confiavel(reg, pa, mp)
                 if pa is None:
                     # RANK-01: empresa descartada da regressão (ROE/payout ausente).
                     # "indisponível" é estado neutro de dado ausente, não "cara" — distingue do "—" genérico.
                     preco_alvo_txt = "indisponível"
                     upside_txt = "indisponível"
                     veredito = "indisponível (ROE/payout ausente)"
+                elif not confiavel:
+                    # Freio ativo: NÃO estampar "Cara"/"Subavaliada" por um modelo que não serve
+                    # ao perfil (motor_pendente) ou por uma regressão frágil/degenerada. Reetiqueta
+                    # honesta apontando ao Analisar a fundo, com o motivo do freio.
+                    preco_alvo_txt = "—"
+                    upside_txt = "—"
+                    veredito = f"Ver Analisar a fundo ({motivo})" if motivo else "Ver Analisar a fundo"
                 else:
                     preco_alvo_txt = fmt_rs(pa.preco_alvo)
                     upside_txt = fmt_pct(pa.upside) if pa.upside is not None else "—"
                     veredito = "Subavaliada" if pa.subavaliada else "Cara"
                     if pa.payout_fora_faixa:  # espelha o alerta ">100%" do Analisar
                         veredito += " (payout ajustado)"
-                _c_sel = next(c for c in empresas if c.ticker == r["empresa"])
                 rows.append({
                     "Ticker": r["empresa"],
                     "Nota (0–100)": round(r["nota"], 1) if r["nota"] is not None else None,

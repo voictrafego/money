@@ -18,8 +18,10 @@ import numpy as np
 import pytest
 import yaml
 
+from analista import cli
 from analista.cli import _motor_pendente, alvo_regressao_confiavel
 from analista.core import comparables as cmp
+from analista.core import freio
 from analista.core.comparables import PrecoAlvo, RegressaoPL
 from analista.core.fundamentals import CompanyData
 
@@ -179,3 +181,28 @@ def test_limiar_divergencia_padrao():
     assert cmp.LIMIAR_DIVERGENCIA == 2.0
     # o default do helper usa a constante de módulo (sem config.yaml novo)
     assert cmp.divergencia_entre_lentes(10.0, 25.0)[0] is True
+
+
+# --------------------------------------------------------------------------- #
+# quick-260712-p6r — paridade de superfície: cli.py e app.py compartilham o MESMO freio
+# --------------------------------------------------------------------------- #
+def test_freio_fonte_unica_cli_e_core_sao_o_mesmo_objeto():
+    """O freio vive em core/freio.py; cli.py apenas re-exporta (fonte única).
+
+    Trava a paridade por construção: se uma futura edição redefinir o freio em cli.py em vez de
+    reusar core/freio.py, o `is` quebra — o mesmo freio que o CLI cmd_rank e a aba Ranking do
+    Streamlit (app.py) consomem não pode divergir sem falhar aqui.
+    """
+    assert freio.alvo_regressao_confiavel is cli.alvo_regressao_confiavel
+    assert freio.motor_pendente is cli._motor_pendente
+
+
+def test_freio_aba_ranking_suprime_motor_pendente():
+    """Documenta o caso que a aba Ranking do Streamlit reetiqueta: motor_pendente + reg sadia +
+    pa válido → freio devolve (False, "motor pendente") em vez de deixar estampar "Cara"/"Subavaliada".
+    """
+    reg = _reg(r2=0.70, n=12)
+    pa = _pa(preco_alvo=50.0, preco_corrente=40.0, upside=0.25)
+    confiavel, motivo = freio.alvo_regressao_confiavel(reg, pa, motor_pendente=True)
+    assert confiavel is False
+    assert motivo == "motor pendente"
