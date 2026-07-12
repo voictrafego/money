@@ -24,8 +24,12 @@ Traefik forward-auth. `www.lazaricapital.com.br` + `app.lazaricapital.com.br`, c
 `money.voictech.com.br` (301) concluído. E2E pago (03-05) concluído — smoke real R$19,90 PIX
 confirmado ao vivo. Fases v2.0 arquivadas em `.planning/milestones/v2.0-phases/`.
 
-**Agora: v2.2 — Motor de Valuation por Arquétipo** (trabalho de engine). Ver seção Current
-Milestone abaixo e `.planning/BRIEF-motor-arquetipo.md`.
+**Agora: v2.2 — Motor de Valuation por Arquétipo** (trabalho de engine) — **funcionalmente completo
+(2026-07-12).** Fase 1 (classificador + roteamento arquétipo→motor), Fase 2 (RIM/lucro normalizado/DCF/NAV
+plugados no registry) e Fase 3 (veredito honesto: selo consome o motor do arquétipo, ensemble com bandeira
+de divergência, guarda-corpos anti-aberração SAN-01, dúvida honesta no caso-fronteira) concluídas e
+verificadas. Suíte **435 testes verdes**; firewall selo↛report intacto. Pronto para
+`/gsd-complete-milestone`. Ver seção Current Milestone abaixo e `.planning/BRIEF-motor-arquetipo.md`.
 
 <details>
 <summary>Histórico v1.7 (Swing Trade / Modo Trading / Home / Lentes-Selo-Comparador) — shipped 2026-07-04</summary>
@@ -126,14 +130,15 @@ _(Marcos v1.0–v1.7 e v2.0 Comercialização arquivados em `.planning/milestone
 - ✓ **Degradação graciosa quando a série de preços do Yahoo falha** (GRAF-03) — Validated in Phase 3 (v1.1)
 - ✓ **Classificador de arquétipo + registry arquétipo→motor** (ARQ) — Validated in Phase 1 (v2.2)
 - ✓ **4 motores primários implementados e plugados: RIM (banco), lucro normalizado (cíclica), DCF multi-estágio (crescimento), NAV (holding)** (ENG-02..05) — Validated in Phase 2 (v2.2); consumo pelo selo/veredito é Fase 3
+- ✓ **Ensemble com bandeira de divergência** (motor primário do arquétipo × contraponto DDM; bandeira com razão + hipótese curada quando maior > 2× menor) (ENS-01) — Validated in Phase 3 (v2.2)
+- ✓ **Guarda-corpos anti-aberração** (`_guarda_san01`: intrínseco < 0,5× pares E ROE>15% E corte payout >40% → reetiqueta "DDM conservador demais para o perfil", número visível; degradável sem rede) (SAN-01) — Validated in Phase 3 (v2.2)
+- ✓ **Veredito honesto: selo consome o motor do arquétipo** (não o DDM fixo; DDM rebaixado a "lente conservadora") e **assume a dúvida em caso-fronteira** (range dos motores candidatos + bandeira "classificação incerta") (VER-01/VER-02) — Validated in Phase 3 (v2.2)
 
 ### Active
 
-<!-- Marco v2.2 — Motor de Valuation por Arquétipo. REQ-IDs em REQUIREMENTS.md. -->
+<!-- Marco v2.2 — Motor de Valuation por Arquétipo: TODAS as fases (1–3) completas. Sem itens ativos. -->
 
-- [ ] Ensemble com bandeira de divergência (motor primário + contraponto; bandeira quando maior > 2× menor) (ENS)
-- [ ] Guarda-corpos de sanidade anti-aberração antes de estampar veredito "evitar" (SAN)
-- [ ] Veredito honesto: selo consome o motor do arquétipo, não o DDM fixo; assume a dúvida em caso-fronteira (VER)
+_(Nenhum requisito ativo. v2.2 — Motor de Valuation por Arquétipo — funcionalmente completo: Fase 1 classificador+roteamento, Fase 2 motores, Fase 3 veredito honesto/ensemble/guarda-corpos/selo. Pronto para `/gsd-complete-milestone`.)_
 
 <!-- v2.0 Comercialização — SHIPPED 2026-07-10 (1 item deferido: 03-05 E2E pago). -->
 
