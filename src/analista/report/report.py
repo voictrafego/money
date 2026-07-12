@@ -938,6 +938,26 @@ def relatorio_markdown(c: CompanyData, a: AnaliseAcao, cfg: dict) -> str:
             "primária é o motor do arquétipo (número acima); o DDM de estágio único é "
             "conservador demais para este perfil._"
         )
+    # Classificação incerta (VER-02, caso-fronteira): quando a Fase 1 marcou conflito real de
+    # sinais, o veredito assume a dúvida — LISTA cada candidato e seu intrínseco + a bandeira
+    # "classificação incerta entre X e Y" + o range [menor..maior]. Conteúdo EXIBIDO, não selo
+    # cravado (o prefixo VERIFICAR já suprime a faixa). Sem fronteiriço, nenhum bloco é emitido.
+    if a.arquetipo_incerto:
+        L.append("")
+        L.append("### Classificação incerta (caso-fronteira)")
+        if a.candidatos_intrinsecos:
+            for cand, val in a.candidatos_intrinsecos:
+                L.append(f"- {cand}: R$ {_num(val)} (motor do arquétipo {cand})")
+            primeiro = a.candidatos_intrinsecos[0][0]
+            ultimo = a.candidatos_intrinsecos[-1][0]
+            L.append("")
+            L.append(f"Classificação incerta entre {primeiro} e {ultimo} — a ferramenta assume a dúvida em vez de cravar um selo.")
+            if a.veredito_range is not None:
+                menor, maior = a.veredito_range
+                L.append(f"Range do intrínseco conforme o arquétipo assumido: R$ {_num(menor)}–{_num(maior)}.")
+        else:
+            L.append("Os motores dos arquétipos candidatos não estimaram preço-alvo confiável.")
+
     # Bandeira de divergência (ENS-01): quando o motor e o contraponto DDM discordam além do
     # limiar (2×), EXIBIR os dois números + o "porquê" — divergência é informação mostrada,
     # nunca escondida cravando o pior. Sem divergência ativa, nenhum bloco é emitido (render limpo).

@@ -362,3 +362,29 @@ def test_nao_fronteirico_nao_aciona_ver02():
     assert a.arquetipo_incerto is False
     assert a.candidatos_intrinsecos == []
     assert a.veredito_range is None
+
+
+# --- Render (VER-02): markdown do fronteiriço lista candidatos + bandeira + range --- #
+def test_render_fronteirico_exibe_candidatos_e_range():
+    cfg = _cfg()
+    c = _fronteirico()
+    a = report.analisar_acao(c, cfg)
+    md = report.relatorio_markdown(c, a, cfg)
+    # Bloco de classificação incerta presente com a bandeira.
+    assert "classificação incerta" in md.lower()
+    assert "Classificação incerta (caso-fronteira)" in md
+    # Cada candidato aparece com o seu intrínseco.
+    for cand, _ in a.candidatos_intrinsecos:
+        assert cand in md
+    # O range aparece no render (formatação ptBR via _num).
+    menor, maior = a.veredito_range
+    assert f"R$ {report._num(menor)}–{report._num(maior)}" in md
+
+
+# --- Render limpo fora do fronteiriço: nenhum bloco de classificação incerta --- #
+def test_render_nao_fronteirico_sem_bloco_incerto():
+    cfg = _cfg()
+    c = _regulada_solida()
+    a = report.analisar_acao(c, cfg)
+    md = report.relatorio_markdown(c, a, cfg)
+    assert "Classificação incerta (caso-fronteira)" not in md
