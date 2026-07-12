@@ -154,7 +154,9 @@ def classificar(c: "CompanyData", cfg: dict) -> ResultadoArquetipo:
         return ResultadoArquetipo(FINANCEIRA, confianca="alta")
 
     # 2. HARD-ROUTE regulada + guarda anti-Petróleo --------------------------- #
-    if c.eh_concessionaria and not any(tok.lower() in setor for tok in regulada_excluir):
+    # Exclusão anti-Petróleo pelo MESMO casamento por limite de palavra do hard-route financeiro
+    # (IN-01): uma única estratégia consistente evita que um substring solto mis-roteie a regulada.
+    if c.eh_concessionaria and not _setor_casa_token(setor, regulada_excluir):
         return ResultadoArquetipo(PAGADORA_REGULADA, confianca="alta")
 
     # 3. REFINO quantitativo -------------------------------------------------- #
