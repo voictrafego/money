@@ -79,6 +79,9 @@ puro/never-raise sem tocar `ddm.py`/`selo.py`/`lentes.py`.
   3. O Ke do RIM de banco foi revisado (teto/erp_banco) e documentado; não produz intrínseco explosivo (clamps sãos preservados).
   4. **Não quebrou nada**: golden `test_ddm` (DDM puro) verde, pagadora regulada (TAEE11) idêntica ao v2.2, firewall selo↛report intacto, suíte completa verde.
 
+**Plans:** 1 plan
+- [ ] 04-01-PLAN.md — RIM ganha valor terminal (perpetuidade Gordon) + ke_teto 0.14->0.13; gate duro ITUB4 R$32-40
+
 ### Phase 5: BACKTEST-01 — Validação na cesta de bancos
 **Goal**: Provar que a calibração da Fase 4 **generaliza** — não é overfit no ITUB4. Construir um
 harness reproduzível (script + teste) que roda o RIM calibrado numa cesta de bancos
@@ -111,6 +114,6 @@ Fases executam em ordem numérica: 4 → 5 → 6
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 4. RIM com Valor Terminal + Ke revisado | v2.3 | 0/? | Planned | - |
+| 4. RIM com Valor Terminal + Ke revisado | v2.3 | 0/1 | Planned | - |
 | 5. BACKTEST-01 — Validação na cesta de bancos | v2.3 | 0/? | Planned | - |
 | 6. Redeploy do app v2.3 na VPS | v2.3 | 0/? | Planned | - |
