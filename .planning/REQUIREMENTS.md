@@ -30,7 +30,7 @@
 
 ### Guarda-corpo de sanidade (SAN)
 
-- [~] **SAN-01** _(PARCIAL — entregue na Fase 1 gap-closure: guarda-corpo de faixa DDM degenerada/≤0 (01-07) + freio do Ranking por R²/n/upside absurdo (01-08). A regra anti-aberração completa (intrínseco < 0,5× mediana dos pares E ROE>15% E corte de payout >40% → texto "DDM conservador demais") depende da mediana-de-pares e do motor do arquétipo, e fica na Fase 3.)_: Regras **anti-aberração** capturam o absurdo antes de virar selo. Ex.: SE `intrínseco < 0,5 × mediana dos pares` E `ROE > 15%` E `normalização de payout cortou o dividendo > 40%` ENTÃO **não estampar** "qualidade baixa / evitar" — estampar "DDM conservador demais para o perfil, ver motor primário do arquétipo". Todo veredito "evitar" passa pelos guarda-corpos antes de ser exibido.
+- [x] **SAN-01** _(COMPLETO na Fase 3 plano 02: a regra anti-aberração completa (intrínseco < 0,5× valor-dos-pares E ROE>15% E corte de payout >40% → reetiqueta "DDM conservador demais para o perfil — ver motor primário do arquétipo") entra via `_guarda_san01` antes do selo, mantendo o número visível; degradável sem rede de pares. Base da Fase 1 gap-closure: guarda-corpo de faixa DDM degenerada/≤0 (01-07) + freio do Ranking por R²/n/upside absurdo (01-08).)_: Regras **anti-aberração** capturam o absurdo antes de virar selo. Ex.: SE `intrínseco < 0,5 × mediana dos pares` E `ROE > 15%` E `normalização de payout cortou o dividendo > 40%` ENTÃO **não estampar** "qualidade baixa / evitar" — estampar "DDM conservador demais para o perfil, ver motor primário do arquétipo". Todo veredito "evitar" passa pelos guarda-corpos antes de ser exibido.
 
 ### Veredito honesto (VER)
 
@@ -71,7 +71,7 @@ Quais fases cobrem quais requisitos. Preenchido na criação do roadmap.
 | ENG-04 | Phase 2 | Complete |
 | ENG-05 | Phase 2 | Complete |
 | ENS-01 | Phase 3 | Complete (F3-01: ensemble motor×contraponto + bandeira/hipótese) |
-| SAN-01 | Phase 3 | Parcial (F1 gap: guarda-corpo DDM + freio Ranking · restante F3) |
+| SAN-01 | Phase 3 | Complete (F3-02: `_guarda_san01` anti-aberração antes do selo · base F1 gap: guarda-corpo DDM + freio Ranking) |
 | VER-01 | Phase 3 | Complete |
 | VER-02 | Phase 3 | Complete |
 
