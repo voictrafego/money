@@ -200,12 +200,16 @@ def _intrinseco_por_motor(
     mot_cfg = (cfg or {}).get("motores", {})
     try:
         if motor == "rim":
+            rim_cfg = mot_cfg.get("rim", {})
             res_rim = motores.rim(
                 vpa0=lentes.vpa(c.patrimonio_liquido.get(ult), c.num_acoes.get(ult)),
                 roe0=c.roe_valuation(),
                 ke=motores.ke_rim(c.beta, cfg),
                 retencao=(1.0 - (c.payout_valuation() or 0.0)),
-                n=mot_cfg.get("rim", {}).get("n_fade", 10),
+                n=rim_cfg.get("n_fade", 10),
+                excesso_sustentavel=rim_cfg.get("excesso_sustentavel", 0.0),
+                g_terminal=rim_cfg.get("g_terminal"),
+                ke_g_spread_min=rim_cfg.get("ke_g_spread_min", 0.03),
             )
             return res_rim.valor_intrinseco if res_rim else None
         if motor == "normalizado":

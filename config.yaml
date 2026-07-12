@@ -232,11 +232,24 @@ motores:
                                   # SEM o prêmio small-cap/iliquidez do capm.erp_local (0.06) — impróprio para
                                   # banco large-cap/líquido. É a alavanca que destrava o ITUB4 do "evitar" (D-01).
     ke_piso: 0.11                 # clamp inferior do Ke do RIM (nunca abaixo — evita intrínseco explosivo)
-    ke_teto: 0.14                 # clamp superior do Ke do RIM; o ke_rim também nunca excede o Ke ao vivo (ke_live)
-    n_fade: 10                    # horizonte de fade do excesso de ROE até o Ke (D-02, sem prêmio terminal).
-                                  # Golden ITUB4 (VPA~22, ROE~19,3%, Ke~12,5%, retenção~0,53, n=10) ancora ~R$28
-                                  # — número HONESTO do modelo conservador (faixa R$26-34), NÃO ~R$40. Materialmente
-                                  # acima do DDM ao vivo (~R$16). Calibração empírica é BACKTEST-01 (deferida).
+    ke_teto: 0.13                 # CAL-02: revisado 0.14→0.13. Banco large-cap/líquido com beta ajustado (Blume
+                                  # puxa betas para 1,0) tem Ke estrutural ~13%, não 14%. Damodaran mature ERP 4,23%
+                                  # + a Selic-ciclo (rf_local) já embute risco-país/inflação → NÃO somar country risk
+                                  # de novo (senão double-count). Move ITUB4 ~R$2. O ke_rim também nunca excede ke_live.
+    n_fade: 10                    # horizonte explícito de fade do excesso de ROE até o excesso sustentável (CAL-01).
+                                  # RIM híbrido com valor terminal: golden ITUB4 (VPA~22, ke~12,5%) → ~R$39,2 e o live
+                                  # (VPA~19, ke~13%) → ~R$32,9 (terminal ≈17% do valor). A calibração dos knobs contra
+                                  # a cesta (ITUB4/BBAS3/BBSE3/BBDC4) é a Fase 5 (BACKTEST-01), não mais "deferida".
+    excesso_sustentavel: 0.045    # CAL-01 (NOVO) — cap do excesso de ROE sobre Ke que PERSISTE na perpetuidade
+                                  # (moat durável ~4,5pp). fade_para = ke + min(roe0−ke, cap): a janela converge a
+                                  # este excesso sustentável (não a zero, não ao excesso cheio eterno). Calibrável na
+                                  # cesta em BACKTEST-01/Fase 5.
+    g_terminal: 0.025             # CAL-01 (NOVO) — g do RI na perpetuidade (espelha ddm.g_estavel ≤ PIB; declarado
+                                  # localmente por independência do motor, NÃO acopla os blocos). O RI terminal cresce
+                                  # a g_terminal, NÃO à taxa do book (evita RIM explosivo).
+    ke_g_spread_min: 0.03         # CAL-01 (NOVO) — piso de (Ke−g_terminal) p/ liberar o terminal; senão degrada para
+                                  # fade-only (never-raise). Com g=0,025 e ke_piso=0,11 o spread real é folgado; a
+                                  # guarda protege configs futuros.
   ciclica:                        # Lucro normalizado (ENG-03, cíclica) — P/L justo sobre lucro médio 7-10a
     anos_media: 10                # janela do norm.base_normalizada (média/mediana robusta a exercício atípico)
     winsor: 0.10                  # winsorização a 10% nos extremos (>=5 pontos), espelha o bloco `normalizacao`
