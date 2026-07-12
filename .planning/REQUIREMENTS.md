@@ -73,15 +73,21 @@ Quais fases cobrem quais requisitos. Preenchido na criação do roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CAL-01 | TBD | Pending |
-| CAL-02 | TBD | Pending |
-| VAL-01 | TBD | Pending |
-| VAL-02 | TBD | Pending |
-| OPS-01 | TBD | Pending |
+| CAL-01 | Phase 4 | Planned |
+| CAL-02 | Phase 4 | Planned |
+| VAL-01 | Phase 5 | Planned |
+| VAL-02 | Phase 5 | Planned |
+| OPS-01 | Phase 6 | Planned |
 
 **Coverage:**
 - v2.3 requirements: 5 total
-- Mapped to phases: 0 (roadmap pendente)
+- Mapped to phases: 5 ✓ (Phase 4: CAL-01/02 · Phase 5: VAL-01/02 · Phase 6: OPS-01)
+- Unmapped: 0
+
+**Por fase:**
+- Phase 4 (RIM com Valor Terminal + Ke): CAL-01, CAL-02 (2)
+- Phase 5 (BACKTEST-01 — Validação cesta de bancos): VAL-01, VAL-02 (2)
+- Phase 6 (Redeploy VPS): OPS-01 (1)
 
 ---
 *Requirements defined: 2026-07-12*
