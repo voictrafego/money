@@ -35,7 +35,7 @@
 ### Veredito honesto (VER)
 
 - [x] **VER-01**: A **agregação do selo final** (hoje BSD × DDM) é refatorada para **consumir o motor do arquétipo**, não o DDM fixo — quando o DDM não é o motor do perfil, ele é rebaixado a "lente conservadora".
-- [ ] **VER-02**: Em **caso-fronteira**, o veredito **assume a dúvida em voz alta** (range + bandeira de divergência) em vez de fingir certeza cravando um selo falso.
+- [x] **VER-02**: Em **caso-fronteira**, o veredito **assume a dúvida em voz alta** (range + bandeira de divergência) em vez de fingir certeza cravando um selo falso.
 
 ## v2 Requirements (deferido)
 
@@ -73,7 +73,7 @@ Quais fases cobrem quais requisitos. Preenchido na criação do roadmap.
 | ENS-01 | Phase 3 | Complete (F3-01: ensemble motor×contraponto + bandeira/hipótese) |
 | SAN-01 | Phase 3 | Parcial (F1 gap: guarda-corpo DDM + freio Ranking · restante F3) |
 | VER-01 | Phase 3 | Complete |
-| VER-02 | Phase 3 | Pending |
+| VER-02 | Phase 3 | Complete |
 
 **Coverage:**
 - v2.2 requirements: 12 total
