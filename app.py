@@ -974,6 +974,12 @@ if modo.startswith("Analisar"):
 
             # Métricas principais — intervalo intrínseco vem do cálculo único do veredito (WR-07)
             intervalo = f"{fmt_rs(a.vmin)} – {fmt_rs(a.vmax)}" if a.vmin is not None and a.vmax is not None else "—"
+            # WR-01: no caso-fronteira (VER-02) a classificação é incerta e `_veredito_fronteirico`
+            # NÃO toca vmin/vmax — a banda seria a do arquétipo primário do VER-01, contradizendo o
+            # range dos candidatos exibido no banner "Classificação incerta". Suprime a faixa aqui:
+            # a faixa honesta vive no banner de candidatos, não neste selo cravado.
+            if getattr(a, "arquetipo_incerto", False):
+                intervalo = "—"
             m1, m2, m3, m4, m5 = st.columns(5)
             m1.metric("Preço atual", esc_md(fmt_rs(a.preco_atual)), help=h("preco"))
             # Rótulo honesto do intrínseco (T-0304-01): quando o motor do arquétipo NÃO é o
