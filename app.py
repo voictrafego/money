@@ -891,6 +891,69 @@ if modo.startswith("Analisar"):
                 st.warning(esc_md(v))
 
             # ----------------------------------------------------------------- #
+            # Sinais do veredito honesto (Fase 3 — VER-01/ENS-01/SAN-01/VER-02) —
+            # READ-ONLY: só LÊ campos já derivados na engine (a.san01_reetiquetado /
+            # a.arquetipo_incerto / a.divergencia_*), zero recálculo. Paridade de copy
+            # com relatorio_markdown (report.py). Descritivo, nunca recomendação.
+            # ----------------------------------------------------------------- #
+            # Guarda-corpo anti-aberração SAN-01 (03-02): o veredito "evitar" foi
+            # reetiquetado — o número é do motor primário do arquétipo; o DDM de estágio
+            # único é conservador demais para este perfil (reetiqueta, não supressão).
+            if getattr(a, "san01_reetiquetado", False):
+                st.info(
+                    "**Guarda-corpo anti-aberração (SAN-01):** veredito reetiquetado — a "
+                    "referência primária é o motor do arquétipo (números abaixo); o DDM de "
+                    "estágio único é conservador demais para este perfil."
+                )
+
+            # Classificação incerta (VER-02 / 03-03, caso-fronteira): conflito real de
+            # sinais → roda o motor de cada arquétipo candidato e assume a dúvida (range +
+            # bandeira "classificação incerta entre X e Y"), em vez de cravar um selo.
+            if getattr(a, "arquetipo_incerto", False):
+                if a.candidatos_intrinsecos:
+                    _linhas = "\n".join(
+                        f"- {esc_md(str(cand))}: {esc_md(fmt_rs(val))} "
+                        f"(motor do arquétipo {esc_md(str(cand))})"
+                        for cand, val in a.candidatos_intrinsecos
+                    )
+                    _primeiro = a.candidatos_intrinsecos[0][0]
+                    _ultimo = a.candidatos_intrinsecos[-1][0]
+                    _txt = (
+                        "**Classificação incerta (caso-fronteira):**\n\n"
+                        f"{_linhas}\n\n"
+                        f"Classificação incerta entre {esc_md(str(_primeiro))} e "
+                        f"{esc_md(str(_ultimo))} — a ferramenta assume a dúvida em vez de "
+                        "cravar um selo."
+                    )
+                    if a.veredito_range is not None:
+                        _menor, _maior = a.veredito_range
+                        _txt += (
+                            "\n\nRange do intrínseco conforme o arquétipo assumido: "
+                            f"{esc_md(fmt_rs(_menor))} – {esc_md(fmt_rs(_maior))}."
+                        )
+                    st.warning(_txt)
+                else:
+                    st.warning(
+                        "**Classificação incerta (caso-fronteira):** os motores dos "
+                        "arquétipos candidatos não estimaram preço-alvo confiável."
+                    )
+
+            # Bandeira de divergência (ENS-01 / 03-01): motor × contraponto DDM discordam
+            # além do limiar (2×) → EXIBIR os dois números + a hipótese curada. Divergência
+            # é informação mostrada, nunca escondida cravando o pior número.
+            if getattr(a, "divergencia_ativa", False):
+                _razao = fmt_num(a.divergencia_razao, 1) if a.divergencia_razao is not None else "—"
+                _msg = (
+                    f"**Bandeira de divergência:** as lentes divergem ~{_razao}×: "
+                    f"**{esc_md(a.motor_rotulo or a.motor or '—')} "
+                    f"{esc_md(fmt_rs(a.intrinseco_motor))}** × DDM (lente conservadora) "
+                    f"{esc_md(fmt_rs(a.contraponto_valor))}."
+                )
+                if a.divergencia_hipotese:
+                    _msg += f"\n\nHipótese: {esc_md(a.divergencia_hipotese)}"
+                st.warning(_msg)
+
+            # ----------------------------------------------------------------- #
             # Selo de Sustentabilidade (Fase 20 / SELO-03) — READ-ONLY: só LÊ os
             # campos já derivados na engine (a.selo), zero fórmula/recálculo aqui.
             # Destaque perto do veredito + rótulo do quadrante (qualidade × preço).
@@ -913,7 +976,16 @@ if modo.startswith("Analisar"):
             intervalo = f"{fmt_rs(a.vmin)} – {fmt_rs(a.vmax)}" if a.vmin is not None and a.vmax is not None else "—"
             m1, m2, m3, m4, m5 = st.columns(5)
             m1.metric("Preço atual", esc_md(fmt_rs(a.preco_atual)), help=h("preco"))
-            m2.metric("Intrínseco (DDM)", esc_md(intervalo), help=h("valor_intrinseco"))
+            # Rótulo honesto do intrínseco (T-0304-01): quando o motor do arquétipo NÃO é o
+            # DDM (RIM/normalizado/DCF/NAV), a faixa vem do motor primário — não chamar o
+            # motor de "DDM" (enganaria o usuário). "Intrínseco (DDM)" só quando motor==ddm.
+            _motor = a.motor or "ddm"
+            _label_intr = (
+                "Intrínseco (DDM)"
+                if _motor == "ddm"
+                else f"Intrínseco ({a.motor_rotulo or _motor})"
+            )
+            m2.metric(_label_intr, esc_md(intervalo), help=h("valor_intrinseco"))
             hdr = presentation.header_dy(a.multiplos.get("DY rec."), a.multiplos.get("DY"))
             m3.metric(hdr["label"], hdr["value"], delta=hdr["delta"],
                       delta_color="off", help=hdr["help"])
