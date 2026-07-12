@@ -26,7 +26,7 @@
 
 ### Ensemble & divergência (ENS)
 
-- [~] **ENS-01** _(PARCIAL — entregue na Fase 1 gap-closure 01-08: a bandeira de divergência DDM×regressão com limiar 2×. O "motor primário do arquétipo + ≥1 contraponto" depende dos motores da Fase 2; a hipótese exibida e o ensemble completo ficam na Fase 3.)_: A ferramenta **nunca crava um número único quando os modelos discordam muito**: roda o motor primário do arquétipo + ≥1 contraponto e, se a divergência passar do limiar (ex.: maior modelo > 2× o menor), **levanta uma bandeira de divergência** com hipótese exibida ("compounder subvalorizado pelo DDM", "cíclica no topo do ciclo", etc.). Divergência é informação exibida, não defeito escondido.
+- [x] **ENS-01** _(COMPLETO na Fase 3 plano 01: o ensemble motor primário do arquétipo × contraponto DDM alimenta a banda do veredito; a divergência >2× levanta bandeira com razão + hipótese curada por arquétipo×sinal, reusando comparables.divergencia_entre_lentes. A parcial da Fase 1 gap-closure 01-08 era só a bandeira DDM×regressão da CLI.)_: A ferramenta **nunca crava um número único quando os modelos discordam muito**: roda o motor primário do arquétipo + ≥1 contraponto e, se a divergência passar do limiar (ex.: maior modelo > 2× o menor), **levanta uma bandeira de divergência** com hipótese exibida ("compounder subvalorizado pelo DDM", "cíclica no topo do ciclo", etc.). Divergência é informação exibida, não defeito escondido.
 
 ### Guarda-corpo de sanidade (SAN)
 
@@ -34,7 +34,7 @@
 
 ### Veredito honesto (VER)
 
-- [ ] **VER-01**: A **agregação do selo final** (hoje BSD × DDM) é refatorada para **consumir o motor do arquétipo**, não o DDM fixo — quando o DDM não é o motor do perfil, ele é rebaixado a "lente conservadora".
+- [x] **VER-01**: A **agregação do selo final** (hoje BSD × DDM) é refatorada para **consumir o motor do arquétipo**, não o DDM fixo — quando o DDM não é o motor do perfil, ele é rebaixado a "lente conservadora".
 - [ ] **VER-02**: Em **caso-fronteira**, o veredito **assume a dúvida em voz alta** (range + bandeira de divergência) em vez de fingir certeza cravando um selo falso.
 
 ## v2 Requirements (deferido)
@@ -70,9 +70,9 @@ Quais fases cobrem quais requisitos. Preenchido na criação do roadmap.
 | ENG-03 | Phase 2 | Complete |
 | ENG-04 | Phase 2 | Complete |
 | ENG-05 | Phase 2 | Complete |
-| ENS-01 | Phase 3 | Parcial (F1 gap: bandeira divergência · restante F3) |
+| ENS-01 | Phase 3 | Complete (F3-01: ensemble motor×contraponto + bandeira/hipótese) |
 | SAN-01 | Phase 3 | Parcial (F1 gap: guarda-corpo DDM + freio Ranking · restante F3) |
-| VER-01 | Phase 3 | Pending |
+| VER-01 | Phase 3 | Complete |
 | VER-02 | Phase 3 | Pending |
 
 **Coverage:**
