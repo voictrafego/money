@@ -124,13 +124,13 @@ _(Marcos v1.0–v1.7 e v2.0 Comercialização arquivados em `.planning/milestone
 - ✓ **Gráfico interativo (Plotly) de preço 5a na aba Analisar, com zoom/hover e botões de período** (GRAF-01) — Validated in Phase 3 (v1.1)
 - ✓ **Banda do valor intrínseco do DDM sobreposta ao preço** (GRAF-02) — Validated in Phase 3 (v1.1)
 - ✓ **Degradação graciosa quando a série de preços do Yahoo falha** (GRAF-03) — Validated in Phase 3 (v1.1)
+- ✓ **Classificador de arquétipo + registry arquétipo→motor** (ARQ) — Validated in Phase 1 (v2.2)
+- ✓ **4 motores primários implementados e plugados: RIM (banco), lucro normalizado (cíclica), DCF multi-estágio (crescimento), NAV (holding)** (ENG-02..05) — Validated in Phase 2 (v2.2); consumo pelo selo/veredito é Fase 3
 
 ### Active
 
 <!-- Marco v2.2 — Motor de Valuation por Arquétipo. REQ-IDs em REQUIREMENTS.md. -->
 
-- [ ] Classificador de arquétipo que roteia cada ação ao motor certo antes de valuar, com fallback honesto em casos-fronteira (ARQ)
-- [ ] Registro de motores arquétipo→motor primário (RIM/DDM/lucro normalizado/DCF/SOTP) consumido pela agregação do veredito (ENG)
 - [ ] Ensemble com bandeira de divergência (motor primário + contraponto; bandeira quando maior > 2× menor) (ENS)
 - [ ] Guarda-corpos de sanidade anti-aberração antes de estampar veredito "evitar" (SAN)
 - [ ] Veredito honesto: selo consome o motor do arquétipo, não o DDM fixo; assume a dúvida em caso-fronteira (VER)
@@ -159,10 +159,16 @@ v2.0 Comercialização/Lazari Capital — SHIPPED 2026-07-10, produto no ar, E2E
 - O que está confirmado correto (não mexer): fórmulas únicas de ROE/P-L/DY/payout/ML/EY em
   `multiples.py`/`fundamentals.py`; unidades decimais com ×100 só na borda; UI lê valores da
   engine sem recalcular Ke/Beta/g/DDM; CLI e UI compartilham a mesma engine.
-- **Estado atual: marco v1.0 completo.** Phase 1 (engine de consistência, 5/5 verificado) tornou
-  os números coerentes na origem; Phase 2 (apresentação + travas, 5/5 verificado) expôs ano-base,
-  "indisponível" e payouts rotulados na UI e travou a coerência cross-modo com pytest (47 passed).
-  Os 16 achados do `CONSISTENCY-REVIEW.md` estão endereçados.
+- **Estado atual (2026-07-12): marco v2.2 em andamento — Phase 1 e Phase 2 completas.** Phase 1
+  entregou o classificador de arquétipo (setor CVM + refino quantitativo) + registry arquétipo→motor
+  com fallback honesto (5/5 verificado). Phase 2 (5/5 verificado) implementou os 4 motores que
+  faltavam como funções puras config-driven em `core/motores.py` — RIM+Ke estrutural (destrava o
+  ITUB4 a ~R$28 honesto, materialmente > DDM ~R$16), lucro normalizado (cíclica), DCF multi-estágio
+  (crescimento), NAV contábil (holding) — plugou-os no registry e no funil, e migrou a suspensão do
+  veredito (`motor != "ddm"`) sem regredir o ITUB4 de "VERIFICAR" para "evitar". Code review pós-fase:
+  6 achados corrigidos (guarda de intrínseco não-positivo no motor, paridade com `_guarda_faixa_ddm`).
+  Suite: 406 passed. Falta a Phase 3 (selo consome o motor do arquétipo + ensemble/divergência +
+  guarda-corpos anti-aberração completos SAN-01).
 
 ## Constraints
 
