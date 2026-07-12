@@ -324,6 +324,10 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
         a.divergencia_ativa, a.divergencia_razao = comparables.divergencia_entre_lentes(
             a.intrinseco_motor, contraponto
         )
+        if a.divergencia_ativa:
+            a.divergencia_hipotese = _hipotese_divergencia(
+                a.arquetipo, a.intrinseco_motor, contraponto, a.divergencia_razao
+            )
 
     # --- Veredito de preço (VER-01): árvore SUB/NO INTERVALO/SOBRE ÚNICA p/ ddm e não-ddm ---
     # A suspensão D-06 (`if a.motor != "ddm": → VERIFICAR`) foi SUBSTITUÍDA: a banda do motor
@@ -531,6 +535,45 @@ _MATRIZ_LEITURA: Dict[tuple, str] = {
 }
 
 
+# --------------------------------------------------------------------------- #
+# Hipótese de divergência motor × contraponto DDM (Fase 3 v2.2, ENS-01/D-03)
+# --------------------------------------------------------------------------- #
+# Copy CURADA por (arquétipo, sinal da divergência) — mesmo padrão do _MATRIZ_LEITURA acima e
+# do _MATRIZ do selo.py: dicionário-curado por tupla-chave, estável e testável por golden. O
+# "porquê" da bandeira (brief ENS-01) é exibido, nunca escondido cravando o pior número. Sinal:
+# "motor_acima" quando o intrínseco do motor > contraponto DDM; "motor_abaixo" caso contrário.
+_HIPOTESE_DIVERGENCIA: Dict[tuple, str] = {
+    ("financeira", "motor_acima"):
+        "compounder subvalorizado pelo DDM (o Ke alto comprime o DDM de estágio único; o RIM "
+        "captura o excesso de ROE sobre o Ke que o DDM não enxerga).",
+    ("ciclica", "motor_abaixo"):
+        "possível topo de ciclo (o lucro do ano corrente está acima do lucro mid-cycle "
+        "normalizado, inflando o DDM acima do valor do motor).",
+    ("crescimento", "motor_acima"):
+        "crescimento subestimado pelo DDM de estágio único (o DCF multi-estágio precifica o "
+        "reinvestimento de alto ROE que o DDM não captura).",
+}
+
+
+def _hipotese_divergencia(
+    arquetipo: str,
+    intrinseco_motor: Optional[float],
+    contraponto: Optional[float],
+    razao: Optional[float],
+) -> str:
+    """Frase curada por (arquétipo, sinal da divergência); fallback genérico quando a tupla não
+    resolve (D-03). Puro/read-only — não toca a rede nem recalcula método."""
+    if intrinseco_motor is None or contraponto is None:
+        sinal = ""
+    else:
+        sinal = "motor_acima" if intrinseco_motor > contraponto else "motor_abaixo"
+    frase = _HIPOTESE_DIVERGENCIA.get((arquetipo, sinal))
+    if frase:
+        return frase
+    r = razao if razao is not None else 0.0
+    return f"modelos divergem ~{r:.1f}× — ver as duas referências (motor × DDM)."
+
+
 def _veredito_token(veredito: str) -> str:
     """Token líder do veredito DDM (read-only). '' se o DDM não calculou."""
     for t in ("SUBAVALIADA", "SOBREAVALIADA", "NO INTERVALO"):
@@ -688,6 +731,19 @@ def relatorio_markdown(c: CompanyData, a: AnaliseAcao, cfg: dict) -> str:
     # Veredito
     L.append("## Veredito")
     L.append(f"**{a.veredito or 'Indeterminado'}**")
+    # Bandeira de divergência (ENS-01): quando o motor e o contraponto DDM discordam além do
+    # limiar (2×), EXIBIR os dois números + o "porquê" — divergência é informação mostrada,
+    # nunca escondida cravando o pior. Sem divergência ativa, nenhum bloco é emitido (render limpo).
+    if a.divergencia_ativa:
+        L.append("")
+        L.append("### Bandeira de divergência")
+        L.append(
+            f"As lentes divergem ~{_num(a.divergencia_razao, 1)}×: "
+            f"**{a.motor_rotulo or a.motor} R$ {_num(a.intrinseco_motor)}** "
+            f"× DDM (lente conservadora) R$ {_num(a.contraponto_valor)}."
+        )
+        if a.divergencia_hipotese:
+            L.append(f"Hipótese: {a.divergencia_hipotese}")
     if a.alertas:
         L.append("")
         L.append("### Alertas")
