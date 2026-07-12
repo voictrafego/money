@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Motor de Valuation por Arquétipo
-status: executing
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-07-12T12:39:22.674Z"
+status: verifying
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-07-12T12:46:44.835Z"
 last_activity: 2026-07-12
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 14
-  completed_plans: 13
-  percent: 93
+  completed_plans: 14
+  percent: 100
 ---
 
 # Project State
@@ -29,10 +29,10 @@ qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio úni
 
 Phase: 03 (veredito-honesto-ensemble-diverg-ncia-guarda-corpos-e-selo) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-12
 
-Progress: [█████████░] 93%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -69,6 +69,7 @@ Progress: [█████████░] 93%
 | Phase 02 P02 | 16min | 3 tasks | 5 files |
 | Phase 03 P02 | 25min | 2 tasks | 3 files |
 | Phase 03 P03 | 0h20m | 2 tasks | 2 files |
+| Phase 03 P04 | 0h20m | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,8 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - [Phase ?]: [Phase 03]: SAN-01 = guarda-corpo anti-aberração na borda do veredito (_guarda_san01 à la _guarda_faixa_ddm); gatilho SOBREAVALIADA + ROE>15% E corte payout>40% reetiqueta 'DDM conservador demais para este perfil' mantendo o número; prefixo não-casado suprime a faixa do selo sem tocar selo.py
 - [Phase ?]: [Phase 03]: funil single-stock usa valor_pares=None (D-04) — condição de pares neutra, gate cai para 2 condições, sem rede (custo-zero); aberração-âncora ITUB4 capturada pelas 2
 - [Phase ?]: [Phase 03]: VER-02 = ramo fronteiriço na borda do veredito — roda o motor de cada arquétipo candidato (helper _intrinseco_por_motor extraído), monta range [menor..maior] + bandeira 'classificação incerta entre X e Y'; prefixo VERIFICAR suprime a faixa do selo sem tocar selo.py; degradação 1 candidato -> valor único, 0 -> VERIFICAR informativo
+- [Phase ?]: [Phase 03]: UI Streamlit (app.py) renderiza read-only os sinais do veredito honesto (bandeira de divergência ENS-01, range fronteiriço VER-02, nota da reetiqueta SAN-01) no bloco veredito+selo do Analisar — paridade CLI↔UI, zero recálculo
+- [Phase ?]: [Phase 03]: rótulo do intrínseco reflete a.motor_rotulo quando motor != ddm (T-0304-01) — a UI não chama mais RIM/DCF/NAV/normalizado de 'DDM'; 'Intrínseco (DDM)' só quando o DDM é o motor de fato (TAEE11)
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -155,8 +158,8 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-12T12:39:04.405Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-07-12T12:46:44.831Z
+Stopped at: Completed 03-04-PLAN.md
 Resume file: None
 
 ## Operator Next Steps

@@ -142,7 +142,7 @@ estampar "evitar" (regra do SAN-01). E, em caso-fronteira, **assumir a dúvida e
 - [x] 03-01-PLAN.md — VER-01 + ENS-01: selo consome o motor do arquétipo (banda do ensemble motor×contraponto DDM) + bandeira de divergência com hipótese curada (Wave 1)
 - [x] 03-02-PLAN.md — SAN-01: guarda-corpo anti-aberração completo (reetiqueta "DDM conservador demais", degradável a 2 condições sem rede) antes de estampar "evitar" (Wave 2)
 - [x] 03-03-PLAN.md — VER-02: dúvida honesta no caso-fronteira (range dos motores candidatos + bandeira "classificação incerta"), selo suprime faixa via VERIFICAR (Wave 3)
-- [ ] 03-04-PLAN.md — Render Streamlit (bandeira/range/reetiqueta + rótulo do intrínseco) + capstone e2e dos tickers-âncora + suíte de goldens (Wave 4)
+- [x] 03-04-PLAN.md — Render Streamlit (bandeira/range/reetiqueta + rótulo do intrínseco) + capstone e2e dos tickers-âncora + suíte de goldens (Wave 4)
 **UI hint**: yes
 
 ## Progress
