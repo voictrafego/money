@@ -288,3 +288,77 @@ def test_render_financeira_exibe_motor_e_ddm_como_lente():
     md = report.relatorio_markdown(c, a, cfg)
     assert "motor do arquétipo" in md          # linha do intrínseco do motor (referência primária)
     assert "lente conservadora" in md          # DDM rebaixado onde motor != "ddm"
+
+
+# =========================================================================== #
+# Fase 3 v2.2 — VER-02: caso-fronteira assume a dúvida (range + bandeira, D-06)
+# =========================================================================== #
+
+# --- Fronteiriço com >=2 candidatos resolvidos → range + bandeira, selo suprime faixa --- #
+def test_fronteirico_range_e_bandeira():
+    cfg = _cfg()
+    c = _fronteirico()
+    a = report.analisar_acao(c, cfg)
+    assert a.arquetipo_fronteirico is True
+    assert a.arquetipo_incerto is True
+    # >=2 candidatos rodaram o motor e resolveram (não-None, positivos).
+    assert len(a.candidatos_intrinsecos) >= 2
+    # Veredito assume a dúvida: prefixo VERIFICAR + range + bandeira de classificação incerta.
+    assert a.veredito.startswith("VERIFICAR")
+    assert "classificação incerta entre" in a.veredito
+    valores = [v for _, v in a.candidatos_intrinsecos]
+    assert a.veredito_range == (min(valores), max(valores))
+    # O selo NÃO estampa faixa no fronteiriço (reusa a supressão do prefixo VERIFICAR).
+    assert selo_mod.faixa_do_veredito(a.veredito) is None
+    assert selo_mod.montar_selo(70.0, a.veredito, cfg).faixa_preco is None
+
+
+# --- Degradação: só 1 motor candidato resolve → exibe o único valor, sem range de 1 ponto --- #
+def test_fronteirico_um_candidato_sem_range(monkeypatch):
+    cfg = _cfg()
+    c = _fronteirico()
+    monkeypatch.setattr(
+        arq_mod, "classificar",
+        lambda c, cfg: arq_mod.ResultadoArquetipo(
+            "ciclica", fronteirico=True, candidatos=["ciclica", "crescimento"], confianca="baixa"
+        ),
+    )
+    # Força só um dos motores candidatos a resolver (o outro degrada → None).
+    def _fake(motor, c, a, cfg):
+        return 20.0 if motor == "normalizado" else None
+    monkeypatch.setattr(report, "_intrinseco_por_motor", _fake)
+    a = report.analisar_acao(c, cfg)
+    assert a.arquetipo_incerto is True
+    assert a.veredito.startswith("VERIFICAR")
+    assert a.veredito_range is None                 # sem range de 1 ponto
+    assert len(a.candidatos_intrinsecos) == 1
+    assert selo_mod.faixa_do_veredito(a.veredito) is None
+
+
+# --- Nenhum candidato resolve → VERIFICAR informativo, sem faixa --- #
+def test_fronteirico_nenhum_candidato_resolve(monkeypatch):
+    cfg = _cfg()
+    c = _fronteirico()
+    monkeypatch.setattr(
+        arq_mod, "classificar",
+        lambda c, cfg: arq_mod.ResultadoArquetipo(
+            "ciclica", fronteirico=True, candidatos=["ciclica", "crescimento"], confianca="baixa"
+        ),
+    )
+    monkeypatch.setattr(report, "_intrinseco_por_motor", lambda motor, c, a, cfg: None)
+    a = report.analisar_acao(c, cfg)
+    assert a.arquetipo_incerto is True
+    assert a.veredito.startswith("VERIFICAR")
+    assert a.veredito_range is None
+    assert a.candidatos_intrinsecos == []
+    assert selo_mod.faixa_do_veredito(a.veredito) is None
+
+
+# --- Não-fronteiriço: o ramo VER-02 não roda (VER-01 segue mandando) --- #
+def test_nao_fronteirico_nao_aciona_ver02():
+    cfg = _cfg()
+    a = report.analisar_acao(_regulada_solida(), cfg)
+    assert a.arquetipo_fronteirico is False
+    assert a.arquetipo_incerto is False
+    assert a.candidatos_intrinsecos == []
+    assert a.veredito_range is None

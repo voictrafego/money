@@ -67,6 +67,10 @@ class AnaliseAcao:
     divergencia_ativa: bool = False                        # motor × contraponto divergem > limiar (comparables.LIMIAR_DIVERGENCIA = 2×)
     divergencia_razao: Optional[float] = None              # razão maior/menor entre as duas lentes (1.0 quando não há divergência)
     divergencia_hipotese: str = ""                          # frase curada por (arquétipo, sinal) — preenchida só quando divergencia_ativa
+    # --- Fase 3 v2.2 (VER-02): caso-fronteira → assume a dúvida (range dos candidatos + bandeira) ---
+    arquetipo_incerto: bool = False                        # ramo fronteiriço rodou (a.arquetipo_fronteirico): classificação incerta assumida
+    candidatos_intrinsecos: List[tuple] = field(default_factory=list)  # [(arquetipo, intrínseco)] dos candidatos que resolveram (não-None, positivos)
+    veredito_range: Optional[tuple] = None                 # (menor, maior) dos intrínsecos quando >=2 candidatos resolveram; None se 0/1
 
 
 def _guarda_faixa_ddm(a: AnaliseAcao) -> None:
@@ -176,6 +180,131 @@ def _guarda_san01(
     )
 
 
+def _intrinseco_por_motor(
+    motor: str, c: CompanyData, a: AnaliseAcao, cfg: dict
+) -> Optional[float]:
+    """Dispatch PURO motor→intrínseco (extraído do funil, VER-02 03-03) — reutilizável.
+
+    Devolve o valor intrínseco pelo motor dado consumindo SEMPRE os números-síntese
+    (`*_valuation`, `norm.base_normalizada`, `lentes.vpa`), NUNCA o cru (FIX-04/Pitfall 2),
+    com a MESMA lógica do dispatch do funil (rim / normalizado / dcf / nav). Caso `"ddm"`:
+    o motor primário deste perfil é o próprio bloco DDM, então devolve o mid da banda
+    (`vmin/vmax` já calculada) quando disponível, senão None. Never-raise: qualquer insumo
+    degenerado/erro → None. É consumido pelo dispatch principal (comportamento idêntico ao
+    baseline) E pelo ramo fronteiriço (um motor por candidato).
+
+    Nota: a guarda de não-positivo (`valor <= 0` não é preço-alvo) fica no chamador — o funil
+    a aplica com alerta honesto; o ramo fronteiriço a aplica ao coletar os candidatos."""
+    ult = c.ultimo_ano()
+    g_estavel = cfg["ddm"]["g_estavel"]
+    mot_cfg = (cfg or {}).get("motores", {})
+    try:
+        if motor == "rim":
+            res_rim = motores.rim(
+                vpa0=lentes.vpa(c.patrimonio_liquido.get(ult), c.num_acoes.get(ult)),
+                roe0=c.roe_valuation(),
+                ke=motores.ke_rim(c.beta, cfg),
+                retencao=(1.0 - (c.payout_valuation() or 0.0)),
+                n=mot_cfg.get("rim", {}).get("n_fade", 10),
+            )
+            return res_rim.valor_intrinseco if res_rim else None
+        if motor == "normalizado":
+            cic = mot_cfg.get("ciclica", {})
+            lpa_mid = mult.lpa(
+                norm.base_normalizada(
+                    c.serie("lucro_liquido"),
+                    anos_media=cic.get("anos_media", 10), winsor=cic.get("winsor", 0.10),
+                ),
+                c.num_acoes.get(ult),
+            )
+            return motores.lucro_normalizado(lpa_mid, a.ke, g_estavel)
+        if motor == "dcf":
+            return motores.dcf_crescimento(
+                c.lpa_valuation(), a.g_alto, g_estavel, a.ke,
+                mot_cfg.get("crescimento", {}).get("n_anos_explicito", 10),
+            )
+        if motor == "nav":
+            return motores.nav_contabil(
+                c.patrimonio_liquido.get(ult), c.num_acoes.get(ult)
+            )
+        if motor == "ddm":
+            if a.vmin is not None and a.vmax is not None:
+                return (a.vmin + a.vmax) / 2.0
+            return None
+    except Exception:
+        return None
+    return None
+
+
+def _veredito_fronteirico(a: AnaliseAcao, c: CompanyData, cfg: dict) -> None:
+    """VER-02 (03-03): caso-fronteira → a ferramenta assume a dúvida em voz alta.
+
+    Quando `a.arquetipo_fronteirico` (conflito real de sinais da Fase 1), roda o motor de CADA
+    arquétipo candidato (`a.arquetipo_candidatos`) via `_intrinseco_por_motor` (o MESMO dispatch
+    do funil, um motor por candidato), coleta os intrínsecos que resolveram (não-None, > 0) e
+    monta o range [menor..maior] + a bandeira "classificação incerta entre X e Y" (D-06). O
+    veredito recebe o prefixo `VERIFICAR`: `selo.montar_selo` (selo.py:119) já suprime faixa/
+    rótulo, então o selo NÃO estampa faixa cravada no fronteiriço (reusa a supressão do
+    VERIFICAR); o range/candidatos aparecem como CONTEÚDO exibido, não como selo.
+
+    Degradação honesta: candidato cujo motor devolve None/≤0 é filtrado; com exatamente 1
+    resolvido exibe só esse valor (sem forçar um range de 1 ponto); com 0 resolvido informa que
+    os motores candidatos não estimaram preço-alvo. Sobrescreve o veredito do VER-01 (precedência
+    no fronteiriço). NÃO toca `selo.py`."""
+    pares: List[tuple] = []
+    vistos = set()
+    for cand in a.arquetipo_candidatos:
+        if cand in vistos:
+            continue
+        vistos.add(cand)
+        motor = arquetipo.ARQUETIPO_MOTOR.get(cand)
+        if motor is None:
+            continue
+        val = _intrinseco_por_motor(motor, c, a, cfg)
+        if val is not None and val > 0:
+            pares.append((cand, val))
+
+    a.arquetipo_incerto = True
+    a.candidatos_intrinsecos = pares
+
+    if len(pares) >= 2:
+        valores = [v for _, v in pares]
+        menor, maior = min(valores), max(valores)
+        a.veredito_range = (menor, maior)
+        primeiro, ultimo = pares[0][0], pares[-1][0]
+        a.veredito = (
+            f"VERIFICAR — caso-fronteira: classificação incerta entre {primeiro} e {ultimo}. "
+            f"Intrínseco no range R$ {_br(menor)}–{_br(maior)} conforme o arquétipo assumido."
+        )
+        a.alertas.append(
+            "Caso-fronteira (VER-02): os sinais da Fase 1 conflitam — a ferramenta assume a "
+            f"dúvida. Rodou o motor de cada arquétipo candidato ({primeiro}, {ultimo}); o range "
+            f"R$ {_br(menor)}–{_br(maior)} é o span honesto da classificação incerta, não um "
+            "preço-alvo cravado."
+        )
+    elif len(pares) == 1:
+        cand, val = pares[0]
+        a.veredito_range = None
+        a.veredito = (
+            f"VERIFICAR — caso-fronteira: classificação incerta, mas só o motor do arquétipo "
+            f"{cand} estimou preço-alvo (R$ {_br(val)}); os demais candidatos degradaram."
+        )
+        a.alertas.append(
+            "Caso-fronteira (VER-02): os sinais conflitam, porém apenas um motor candidato "
+            f"resolveu preço-alvo ({cand}: R$ {_br(val)}) — exibido sem forçar um range de 1 ponto."
+        )
+    else:
+        a.veredito_range = None
+        a.veredito = (
+            "VERIFICAR — caso-fronteira: os sinais de arquétipo conflitam e nenhum motor "
+            "candidato estimou preço-alvo confiável."
+        )
+        a.alertas.append(
+            "Caso-fronteira (VER-02): classificação incerta e os motores candidatos não "
+            "estimaram preço-alvo — veredito de preço suspenso sem estampar faixa falsa."
+        )
+
+
 def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     anos = c.anos_ordenados()
     ult = c.ultimo_ano()
@@ -280,37 +409,11 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     # rodando SEMPRE (agora como lente conservadora onde motor != "ddm") — cálculo intocado.
     # Leitura defensiva dos knobs do motor (paridade com classificar/ke_rim): config antigo sem
     # o bloco `motores:` degrada para os defaults do config.yaml sem quebrar o never-raise (WR-03).
-    mot_cfg = (cfg or {}).get("motores", {})
     a.motor_rotulo = motores.MOTOR_ROTULO.get(a.motor, "")
-    if a.motor == "rim":
-        res_rim = motores.rim(
-            vpa0=lentes.vpa(c.patrimonio_liquido.get(ult), c.num_acoes.get(ult)),
-            roe0=c.roe_valuation(),
-            ke=motores.ke_rim(c.beta, cfg),
-            retencao=(1.0 - (c.payout_valuation() or 0.0)),
-            n=mot_cfg.get("rim", {}).get("n_fade", 10),
-        )
-        a.intrinseco_motor = res_rim.valor_intrinseco if res_rim else None
-    elif a.motor == "normalizado":
-        cic = mot_cfg.get("ciclica", {})
-        lpa_mid = mult.lpa(
-            norm.base_normalizada(
-                c.serie("lucro_liquido"),
-                anos_media=cic.get("anos_media", 10), winsor=cic.get("winsor", 0.10),
-            ),
-            c.num_acoes.get(ult),
-        )
-        a.intrinseco_motor = motores.lucro_normalizado(lpa_mid, a.ke, g_estavel)
-    elif a.motor == "dcf":
-        a.intrinseco_motor = motores.dcf_crescimento(
-            c.lpa_valuation(), a.g_alto, g_estavel, a.ke,
-            mot_cfg.get("crescimento", {}).get("n_anos_explicito", 10),
-        )
-    elif a.motor == "nav":
-        a.intrinseco_motor = motores.nav_contabil(
-            c.patrimonio_liquido.get(ult), c.num_acoes.get(ult)
-        )
-    # motor == "ddm": o bloco DDM abaixo é o motor primário deste arquétipo (nada a fazer aqui).
+    # Dispatch extraído em `_intrinseco_por_motor` (VER-02 03-03): mesma lógica de antes, agora
+    # reutilizada também pelo ramo fronteiriço (um motor por candidato). motor == "ddm": o helper
+    # devolve None aqui (a banda ainda não foi calculada) — o bloco DDM abaixo é o motor primário.
+    a.intrinseco_motor = _intrinseco_por_motor(a.motor, c, a, cfg)
 
     # Guarda-corpo do intrínseco do motor (paridade com _guarda_faixa_ddm / SAN-01): um valor
     # NÃO-POSITIVO (PL/lucro normalizado negativo: holding sem patrimônio, cíclica em fundo de
@@ -465,6 +568,15 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             f"Roteamento: {a.arquetipo} → motor '{a.motor}'. Banda de preço indisponível "
             f"(motor e DDM degradaram); veredito de preço suspenso sem estampar faixa falsa."
         )
+
+    # --- VER-02: caso-fronteira → assume a dúvida (range dos candidatos + bandeira) ---
+    # Precedência sobre o VER-01: quando a Fase 1 marcou conflito real de sinais
+    # (`arquetipo_fronteirico`), a classificação em si é incerta, então NÃO se crava um selo
+    # único — roda o motor de cada candidato e sobrescreve o veredito com o range [menor..maior]
+    # + a bandeira "classificação incerta entre X e Y" (prefixo VERIFICAR suprime a faixa do selo,
+    # selo.py:119). Não-fronteiriço: nada roda; o veredito do VER-01 segue mandando.
+    if a.arquetipo_fronteirico:
+        _veredito_fronteirico(a, c, cfg)
 
     # --- Guarda-corpo anti-aberração SAN-01 (Plan 03-02) ---
     # Roda DEPOIS de a cadeia de veredito estar montada e ANTES de `montar_selo` (abaixo), de
