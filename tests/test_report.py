@@ -138,6 +138,49 @@ def test_ensemble_fallback_margem_seguranca(monkeypatch):
     assert a2.divergencia_ativa is False   # sem contraponto → sem bandeira espúria
 
 
+def test_hipotese_divergencia_financeira_motor_acima():
+    # Task 3 (ENS-01/D-03): hipótese curada por (arquétipo, sinal). Financeira com motor > DDM
+    # → "compounder subvalorizado pelo DDM".
+    frase = report._hipotese_divergencia("financeira", 28.0, 16.0, 1.75)
+    assert "subvalorizado pelo DDM" in frase
+
+
+def test_hipotese_divergencia_fallback_generico():
+    # Task 3: tupla (arquétipo, sinal) que não resolve → fallback genérico "modelos divergem".
+    frase = report._hipotese_divergencia("holding", 10.0, 4.0, 2.5)
+    assert "modelos divergem" in frase
+    assert "2.5" in frase
+
+
+def test_divergencia_hipotese_preenchida_so_quando_ativa():
+    # Task 3: a.divergencia_hipotese só é preenchida quando a.divergencia_ativa é True.
+    cfg = _cfg_ind()
+    a_div = report.analisar_acao(_financeira_rim(), cfg)   # divergência ativa (RIM ~3× DDM)
+    assert a_div.divergencia_ativa is True
+    assert "subvalorizado pelo DDM" in a_div.divergencia_hipotese
+    a_ddm = report.analisar_acao(_regulada_ddm(), cfg)     # motor ddm → sem divergência
+    assert a_ddm.divergencia_ativa is False
+    assert a_ddm.divergencia_hipotese == ""
+
+
+def test_render_bandeira_divergencia_exibe_dois_numeros_e_porque():
+    # Task 3: relatorio_markdown de um caso divergente exibe AMBOS os números (motor + DDM)
+    # e o "porquê" (hipótese); um caso não-divergente NÃO emite o bloco de bandeira.
+    cfg = _cfg_ind()
+    c = _financeira_rim()
+    a = report.analisar_acao(c, cfg)
+    md = report.relatorio_markdown(c, a, cfg)
+    assert "Bandeira de divergência" in md
+    assert report._num(a.intrinseco_motor) in md      # número do motor
+    assert report._num(a.contraponto_valor) in md     # número do contraponto DDM
+    assert "subvalorizado pelo DDM" in md             # o porquê
+    # Caso não-divergente (regulada, motor ddm): sem bloco de bandeira.
+    c2 = _regulada_ddm()
+    a2 = report.analisar_acao(c2, cfg)
+    md2 = report.relatorio_markdown(c2, a2, cfg)
+    assert "Bandeira de divergência" not in md2
+
+
 def test_ver01_financeira_veredito_real_do_motor():
     # Task 2 (VER-01): o ramo de suspensão D-06 é substituído por veredito REAL derivado da
     # banda do motor. A financeira (RIM), com preço acima da banda, cai em SOBREAVALIADA (não
