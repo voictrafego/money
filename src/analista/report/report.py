@@ -466,6 +466,14 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             f"(motor e DDM degradaram); veredito de preço suspenso sem estampar faixa falsa."
         )
 
+    # --- Guarda-corpo anti-aberração SAN-01 (Plan 03-02) ---
+    # Roda DEPOIS de a cadeia de veredito estar montada e ANTES de `montar_selo` (abaixo), de
+    # modo que o selo consuma o veredito JÁ reetiquetado. No funil single-stock não há regressão
+    # de pares ajustada → `valor_pares=None` (degradação D-04): o gate cai para as 2 condições
+    # (ROE E corte de payout) e NUNCA puxa rede (custo-zero). Se disparar, o prefixo do veredito
+    # reetiquetado não casa `selo.faixa_do_veredito` → o selo não estampa "Evitar".
+    _guarda_san01(a, c, cfg, valor_pares=None)
+
     # --- Alertas / armadilhas de dividendos (Cap. 6) ---
     if flag_dy:
         a.alertas.append("DY > 15%: possível armadilha de dividendos (Cap. 6) — verificar sustentabilidade.")
@@ -808,6 +816,16 @@ def relatorio_markdown(c: CompanyData, a: AnaliseAcao, cfg: dict) -> str:
     # Veredito
     L.append("## Veredito")
     L.append(f"**{a.veredito or 'Indeterminado'}**")
+    # Guarda-corpo anti-aberração SAN-01 (Plan 03-02): nota honesta quando o veredito "evitar"
+    # foi reetiquetado — o número acima é do motor primário do arquétipo; o DDM de estágio único
+    # é conservador demais para este perfil (reetiqueta, não supressão).
+    if a.san01_reetiquetado:
+        L.append("")
+        L.append(
+            "_Guarda-corpo anti-aberração (SAN-01): veredito reetiquetado — a referência "
+            "primária é o motor do arquétipo (número acima); o DDM de estágio único é "
+            "conservador demais para este perfil._"
+        )
     # Bandeira de divergência (ENS-01): quando o motor e o contraponto DDM discordam além do
     # limiar (2×), EXIBIR os dois números + o "porquê" — divergência é informação mostrada,
     # nunca escondida cravando o pior. Sem divergência ativa, nenhum bloco é emitido (render limpo).
