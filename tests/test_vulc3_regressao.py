@@ -17,12 +17,14 @@ config.yaml shipado (capm.abordagem=local + rf_local=0,105 de fallback ⇒ Ke de
 offline, sem chamar o BCB).
 """
 
+import math
 import os
 
 import yaml
 
 from analista.core.fundamentals import CompanyData
 from analista.report import report
+from analista.report import selo as selo_mod
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ANO_EXTRAORDINARIO = 2023
@@ -125,3 +127,155 @@ def test_vulc3_normalizacao_doma_roe_e_dy():
     assert roe_val < roe_cru_extraord
     # DY recorrente (sobre provento normalizado) ≤ DY trailing — leitura sustentável.
     assert c.dy_recorrente() <= c.dy_atual()
+
+
+# =========================================================================== #
+# CAPSTONE e2e da FASE 3 (v2.2) — tickers-âncora sobre o VEREDITO FINAL da fase
+# (VER-01/ENS-01/SAN-01/VER-02). Cada âncora prova que o selo consome o motor do
+# ARQUÉTIPO, não o DDM fixo. Fixtures sintéticas OFFLINE (nenhuma chamada de rede),
+# espelhando os padrões já provados em test_arquetipo_roteamento.py.
+# =========================================================================== #
+
+def _anos():
+    return list(range(2015, 2025))
+
+
+def _itub4_financeira() -> CompanyData:
+    """ITUB4-âncora: banco (setor 'Bancos') → hard-route financeira → motor RIM. O RIM
+    alimenta o veredito (banda do ensemble) e o DDM é rebaixado a lente conservadora; o
+    compounder de qualidade NUNCA mais é carimbado 'Evitar' pelo DDM de estágio único."""
+    c = CompanyData(ticker="ITUB4", nome="Itaú (sintética)", setor="Bancos", anos=_anos())
+    for a in _anos():
+        c.lucro_liquido[a] = 1000
+        c.patrimonio_liquido[a] = 5000
+        c.dividendos[a] = 300
+        c.num_acoes[a] = 1000
+        c.vendas_liquidas[a] = 4000
+        c.fco[a] = 1200
+    c.preco_atual = 70.0
+    c.beta = 0.9
+    return c
+
+
+def _taee11_regulada() -> CompanyData:
+    """TAEE11-âncora: utility regulada (Energia Elétrica, eh_concessionaria) → pagadora
+    regulada → motor DDM. É o baseline que NÃO pode mexer: veredito DDM, sem suspensão,
+    sem reetiqueta, sem fronteiriço — determinístico e idêntico entre execuções."""
+    c = CompanyData(ticker="TAEE11", nome="Taesa (sintética)", setor="Energia Elétrica",
+                    anos=_anos(), eh_concessionaria=True)
+    for a in _anos():
+        c.lucro_liquido[a] = 1000 + (a - 2015) * 50
+        c.patrimonio_liquido[a] = 4000 + (a - 2015) * 100
+        c.dividendos[a] = 600 + (a - 2015) * 30
+        c.num_acoes[a] = 1000
+        c.vendas_liquidas[a] = 1800
+        c.fco[a] = 1200
+    c.preco_atual = 30.0
+    c.beta = 0.8
+    return c
+
+
+def _vale3_ciclica() -> CompanyData:
+    """VALE3-âncora: cíclica (lucro oscilando com anos de prejuízo → cíclica, ROE baixo →
+    retenção baixa, sem crescimento) → motor 'normalizado' (lucro médio), não DDM."""
+    lucros = [800, -200, 900, 300, 1000, -100, 850, 400, 950, 500]
+    c = CompanyData(ticker="VALE3", nome="Vale (sintética)", setor="Extração Mineral", anos=_anos())
+    for a, lucro in zip(_anos(), lucros):
+        c.lucro_liquido[a] = float(lucro)
+        c.patrimonio_liquido[a] = 5000.0
+        c.dividendos[a] = 0.30 * abs(float(lucro))
+        c.num_acoes[a] = 1000.0
+        c.vendas_liquidas[a] = abs(float(lucro)) * 4
+    c.preco_atual = 15.0
+    c.beta = 1.0
+    return c
+
+
+def _wege3_crescimento() -> CompanyData:
+    """WEGE3-âncora: compounder de qualidade (lucro cresce suave sem prejuízo → crescimento,
+    ROE alto + retenção alta) → motor 'dcf'. A banda vem do motor, sem faixa-lixo."""
+    c = CompanyData(ticker="WEGE3", nome="WEG (sintética)", setor="Máquinas e Equipamentos",
+                    anos=_anos())
+    for i, a in enumerate(_anos()):
+        lucro = round(1000 * (1.12 ** i))   # ~12%/ano, suave (não cíclica)
+        c.lucro_liquido[a] = float(lucro)
+        c.patrimonio_liquido[a] = 4000.0
+        c.dividendos[a] = round(0.25 * lucro)   # payout 25% → retenção 75%
+        c.num_acoes[a] = 1000.0
+        c.vendas_liquidas[a] = lucro * 4
+        c.fco[a] = lucro * 1.2
+    c.preco_atual = 40.0
+    c.beta = 0.9
+    return c
+
+
+def test_capstone_itub4_sem_evitar_motor_rim_ddm_como_lente():
+    """ITUB4 (SC#1): financeira → motor RIM alimenta o veredito, DDM é lente conservadora,
+    e o selo NUNCA estampa 'Evitar' (o erro de arquitetura domado)."""
+    cfg = _cfg()
+    a = report.analisar_acao(_itub4_financeira(), cfg)
+    assert a.arquetipo == "financeira"
+    assert a.motor == "rim"
+    assert a.banda_do_motor is True
+    # O motor RIM referenciado (intrínseco do motor populado e positivo).
+    assert a.intrinseco_motor is not None and a.intrinseco_motor > 0
+    # DDM rebaixado a lente conservadora (contraponto capturado ANTES da banda do ensemble).
+    assert a.contraponto_valor is not None
+    assert any("lente conservadora" in al.lower() for al in a.alertas)
+    # NUNCA 'Evitar': nem o texto do veredito nem o selo (bsd alto → qualidade Alta).
+    assert "Evitar" not in a.veredito
+    assert selo_mod.montar_selo(70.0, a.veredito, cfg).rotulo != "Evitar"
+
+
+def test_capstone_taee11_baseline_ddm_identico():
+    """TAEE11 (baseline intocado): motor DDM, sem suspensão/reetiqueta/fronteiriço, e o
+    veredito/banda determinísticos (idênticos entre duas execuções)."""
+    cfg = _cfg()
+    a1 = report.analisar_acao(_taee11_regulada(), cfg)
+    assert a1.arquetipo == "pagadora_regulada"
+    assert a1.motor == "ddm"
+    assert a1.banda_do_motor is False
+    assert a1.san01_reetiquetado is False
+    assert a1.arquetipo_fronteirico is False
+    assert a1.arquetipo_incerto is False
+    assert not a1.veredito.startswith("VERIFICAR")
+    # Idêntica ao baseline: reexecutar a MESMA fixture dá o MESMO veredito/banda (sem deriva).
+    a2 = report.analisar_acao(_taee11_regulada(), cfg)
+    assert a2.veredito == a1.veredito
+    assert (a2.vmin, a2.vmax) == (a1.vmin, a1.vmax)
+
+
+def test_capstone_vale3_motor_normalizado():
+    """VALE3 (SC#2): cíclica → motor 'normalizado' (não DDM), banda do motor, sem fronteiriço."""
+    cfg = _cfg()
+    a = report.analisar_acao(_vale3_ciclica(), cfg)
+    assert a.arquetipo == "ciclica"
+    assert a.motor == "normalizado"
+    assert a.banda_do_motor is True
+    assert a.intrinseco_motor is not None and a.intrinseco_motor > 0
+    assert selo_mod.montar_selo(70.0, a.veredito, cfg).rotulo != "Evitar"
+
+
+def test_capstone_wege3_motor_dcf_sem_faixa_lixo():
+    """WEGE3 (SC#2): crescimento → motor 'dcf', intrínseco positivo e FINITO, banda do motor
+    saudável (0 < vmin ≤ vmax, sem faixa-lixo)."""
+    cfg = _cfg()
+    a = report.analisar_acao(_wege3_crescimento(), cfg)
+    assert a.arquetipo == "crescimento"
+    assert a.motor == "dcf"
+    assert a.banda_do_motor is True
+    assert a.intrinseco_motor is not None
+    assert a.intrinseco_motor > 0 and math.isfinite(a.intrinseco_motor)
+    # Banda do motor saudável: sem faixa negativa/degenerada/infinita.
+    assert a.vmin is not None and a.vmax is not None
+    assert 0 < a.vmin <= a.vmax
+    assert math.isfinite(a.vmax)
+
+
+def test_capstone_vulc3_verifica_por_risco_real():
+    """VULC3 (invariante): payout > 100% (risco REAL) → veredito começa com 'VERIFICAR'
+    mesmo após toda a Fase 3 — o veredito honesto não maquia armadilha de dividendos."""
+    cfg = _cfg()
+    a = report.analisar_acao(_vulc3_sintetica(), cfg)
+    assert a.veredito.startswith("VERIFICAR")
+    assert not a.veredito.startswith("SUBAVALIADA")
