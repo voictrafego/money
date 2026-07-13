@@ -58,9 +58,9 @@ comportamento antigo ("Evitar"/DDM).
 
 ## Phases
 
-- [x] **Phase 4: RIM com Valor Terminal + Ke revisado** - o RIM ganha uma perpetuidade de residual income (fim do fade-sem-terminal); ITUB4 sai de R$23 para ~R$32-40; Ke de banco revisado como ajuste secundário. ⚠️ **REABERTA pelo loop D-12** (Fase 5 provou que a calibração não generaliza no cesto — 1/4; precisa de nova iteração de recalibração antes da Fase 6).
+- [x] **Phase 4: RIM com Valor Terminal + Ke revisado** - o RIM ganha uma perpetuidade de residual income (fim do fade-sem-terminal); ITUB4 sai de R$23 para ~R$32-40; Ke de banco revisado como ajuste secundário. ✅ **RECALIBRADA (it.2, loop D-12 FECHADO 2026-07-13):** Alavanca 2 (ROE terminal through-cycle) + Alavanca 3 (rota de seguradora Gordon-franquia) levaram a cesta a **4/4 na banda ±15%** (ITUB4 32,88 · BBAS3 43,89 · BBDC4 13,37 · BBSE3 39,87) sem afrouxar o gate.
 - [x] **Phase 5: BACKTEST-01 — Validação na cesta de bancos** - harness reproduzível que roda o RIM calibrado em ITUB4/BBAS3/BBSE3/BBDC4 e triangula 4 âncoras (Graham+Bazin, preço, fair values manuais, múltiplos de pares). ✅ Harness entregue e verificado (VAL-01/VAL-02); **achado: a calibração NÃO generaliza (1/4)** → loop D-12 reabre a Fase 4.
-- [ ] **Phase 6: Redeploy do app v2.3 na VPS** - subir o código v2.3 para produção; ITUB4 no app ao vivo mostra arquétipo→RIM calibrado, não mais "Evitar"/DDM R$12,93-19,32. 🔒 **BLOQUEADA pelo loop D-12** (não subir com o cesto reprovando 3/4 do backtest).
+- [ ] **Phase 6: Redeploy do app v2.3 na VPS** - subir o código v2.3 para produção; ITUB4 no app ao vivo mostra arquétipo→RIM calibrado, não mais "Evitar"/DDM R$12,93-19,32. 🟢 **DESTRAVADA (loop D-12 fechado 2026-07-13):** o backtest da cesta agora passa 4/4; pronta para redeploy.
 
 ## Phase Details
 
