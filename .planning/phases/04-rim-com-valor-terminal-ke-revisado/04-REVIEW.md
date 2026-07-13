@@ -1,150 +1,166 @@
 ---
 phase: 04-rim-com-valor-terminal-ke-revisado
-reviewed: 2026-07-12T00:00:00Z
+reviewed: 2026-07-13T13:33:34Z
 depth: standard
-files_reviewed: 5
+files_reviewed: 6
 files_reviewed_list:
-  - config.yaml
   - src/analista/core/motores.py
   - src/analista/report/report.py
+  - config.yaml
   - tests/test_motores.py
-  - tests/test_vulc3_regressao.py
+  - tests/test_backtest_bancos.py
+  - tests/fixtures/fair_values_bancos.yaml
 findings:
-  critical: 0
-  warning: 3
+  critical: 1
+  warning: 2
   info: 2
   total: 5
 status: issues_found
 ---
 
-# Phase 04: Code Review Report
+# Phase 4: Code Review Report
 
-**Reviewed:** 2026-07-12
+**Reviewed:** 2026-07-13T13:33:34Z
 **Depth:** standard
-**Files Reviewed:** 5
+**Files Reviewed:** 6
 **Status:** issues_found
 
 ## Summary
 
-Phase 04 adds a terminal (continuing) value to the RIM motor (Gordon perpetuity over the
-last-window residual income), introduces three config knobs (`excesso_sustentavel`,
-`g_terminal`, `ke_g_spread_min`), revises `ke_teto` 0.14→0.13 (CAL-02), and wires the new knobs
-through the `report._intrinseco_por_motor` dispatch. The math is sound in the discounting
-mechanics (no off-by-one in the terminal exponent; `RI_{n+1}=RI_n·(1+g)`; discount by
-`(1+ke)^n` is correct), the never-raise contract holds, and the full suite (440 tests) passes.
+Reviewed the iteration-2 (loop D-12) recalibration: the `roe_terminal` lever in
+`motores.rim` (through-cycle normalization of the Gordon-perpetuity terminal, capped by
+`excesso_sustentavel`) and the new "seguradora" routing branch in
+`report._intrinseco_por_motor`.
 
-No BLOCKER-level defects (no crash, injection, or data-loss path). However, three robustness/
-correctness concerns stand out. The most material: the module documents a guard against "RIM
-explosivo", but that guard only protects the **terminal** perpetuity growth — it does **not**
-protect the **explicit window**, which diverges without bound as `n` grows whenever
-`fade_para × retenção ≥ ke`. This condition is reached at realistic bank retention (~0.75+,
-i.e. payout ≤ ~25%), so raising `n_fade` silently inflates the intrinsic. Secondary: the
-"backward-safe" docstring claim is objectively false for the value-destroying-bank
-(`roe0 < ke`) legacy path, and the `ke_rim` fallback default still hardcodes the rejected
-0.14 `ke_teto`.
+**The numeric engine is sound.** I traced the terminal-normalization branch line by line:
+`b_base_ri_final` correctly tracks `B_{n-1}` (the book base of the last window RI), the
+`excesso_t = min(roe_terminal − ke, excesso_sustentavel)` cap saturates identically to the
+legacy `RI_n` when `roe0 − ke ≥ cap` (so ITUB4 stays bit-identical, as claimed), and the
+anti-bad-bank sign is preserved (`roe_terminal < ke` → negative terminal). Never-raise and
+degradation paths hold: `roe_terminal=None` reproduces the legacy `RI_n`; `<3` valid ROE
+points → `None` → legacy; `ke − g ≤ 0` degrades via `ddm.valor_gordon` returning `None`; the
+seguradora route falls back to RIM on any `None` insumo. Backward-safety verified — the
+function-default `roe_terminal=None` and all existing `motores.rim(...)` callers in tests
+retain legacy behavior. The fronteiriço/candidate dispatch does **not** leak in practice (a
+"seguradora"-token setor hard-routes to `financeira` with `fronteirico=False`, so the
+candidate loop never re-enters the seguradora branch).
+
+**However**, the seguradora lever introduces a user-facing methodology-label inconsistency
+that directly violates the project's Core Value (numbers/labels must be faithful to the
+method and self-consistent). One BLOCKER, two WARNINGs, two INFO.
+
+## Critical Issues
+
+### CR-01: Seguradora route mislabels its number as "RIM" — self-contradicting report
+
+**File:** `src/analista/report/report.py:454` (in tandem with `:236` and `:458`)
+**Issue:**
+`a.motor_rotulo` is computed **before** the dispatch mutates `a.motor`:
+
+```python
+a.motor_rotulo = motores.MOTOR_ROTULO.get(a.motor, "")   # line 454: a.motor == "rim" here
+a.intrinseco_motor = _intrinseco_por_motor(a.motor, c, a, cfg)  # line 458: sets a.motor = "seguradora" inside
+```
+
+For BBSE3 the seguradora branch (`report.py:236`) sets `a.motor = "seguradora"` and returns
+the Gordon-franquia value (≈R$39,87). But `a.motor_rotulo` is never recomputed, so it keeps
+the **RIM** label `"RIM — VPA + VP do excesso de ROE sobre Ke (banco/seguradora)"`.
+Compounding this, `motores.MOTOR_ROTULO` (`motores.py:32`) has **no `"seguradora"` key**, so
+even a recompute would need a new entry.
+
+Result — the same report contradicts itself:
+- header line (`report.py:888`): `... → motor seguradora`
+- valuation section (`report.py:939` / `:1033` / alert `:603`): renders
+  `a.motor_rotulo or a.motor` → **"RIM — VPA + VP do excesso de ROE sobre Ke …: R$ 39,87"**
+
+The number 39,87 is correct, but it is attributed to a residual-income model when it was
+produced by a single-stage dividend Gordon. For a tool whose entire value proposition is
+method fidelity ("os números precisam ser fiéis ao método e consistentes entre si"),
+labeling a DDM-franquia figure as "RIM — VPA + VP do excesso de ROE sobre Ke" is materially
+misleading methodology. No test covers `motor_rotulo`, so the golden suite passes while the
+render lies.
+
+**Fix:** add the missing rótulo and recompute the label after the dispatch resolves the real
+motor.
+
+```python
+# motores.py — MOTOR_ROTULO
+"seguradora": "DDM-franquia — Gordon sobre o dividendo sustentável (seguradora capital-light)",
+
+# report.py — after line 458, once _intrinseco_por_motor has resolved a.motor
+a.intrinseco_motor = _intrinseco_por_motor(a.motor, c, a, cfg)
+a.motor_rotulo = motores.MOTOR_ROTULO.get(a.motor, "")   # re-derive: dispatch may have re-routed to "seguradora"
+```
+
+This is safe for every other path: only the seguradora branch mutates `a.motor`, so for
+rim/normalizado/dcf/nav/ddm the recomputed label is identical.
 
 ## Warnings
 
-### WR-01: Window residual income diverges with `n` — the advertised anti-explosion guard misses the real explosion source
+### WR-01: `_intrinseco_por_motor` documented "PURO" but mutates shared `a.motor`
 
-**File:** `src/analista/core/motores.py:104-116` (loop + terminal); config `config.yaml:239` (`n_fade`)
-**Issue:** The docstring (`motores.py:89-93`) and `config.yaml:250-252` claim `ke_g_spread_min`
-protects against "perpetuidade explosiva". That guard only bounds the **terminal** growth
-(`ke − g_terminal ≥ 0.03`). It does nothing for the **explicit window**: the book compounds via
-`b_t = b_{t-1}·(1 + roe_t·retencao)`, and each discounted residual income term is
-`(roe_t − ke)·b_{t-1}/(1+ke)^t`. When `fade_para·retenção ≥ ke`, the book grows faster than the
-discount rate, so the term sequence grows geometrically and the sum increases without bound as
-`n` rises. For the shipped config (`ke_teto=0.13`, `roe0≈0.19` → `fade_para≈0.175`), this is
-crossed at retention ≥ ~0.75 (payout ≤ ~25%), a realistic bank profile. Measured (VPA=19,
-roe0=0.19, ke=0.13, excesso=0.045, g=0.025):
+**File:** `src/analista/report/report.py:236` (docstring at `:204`)
+**Issue:** The helper's docstring says *"Dispatch PURO motor→intrínseco … reutilizável … é
+consumido pelo dispatch principal … E pelo ramo fronteiriço (um motor por candidato)."* The
+seguradora branch breaks that contract by writing `a.motor = "seguradora"` on the shared
+`AnaliseAcao`. Today the fronteiriço reuse (`_veredito_fronteirico`, `:305`) is safe only by
+accident: a setor containing "seguradora" hard-routes to `financeira` with
+`fronteirico=False`, so the candidate loop never triggers the branch. That invariant lives in
+a different module (`arquetipo.classificar`); any future change that lets a seguradora-token
+ticker be fronteiriço, or that emits a "financeira" candidate for such a ticker, would
+silently overwrite `a.motor` for every candidate iterated after it. A dispatch advertised as
+pure and reused per-candidate should not mutate caller state.
 
-```
-retencao=0.75:  n=10 → R$36.0 ,  n=20 → R$46.3   (fade_para·ret = 0.131 > ke = 0.13)
-retencao=0.85:  n=10 → R$37.9 ,  n=20 → R$52.4
-retencao=1.00,roe0=0.20: n=10 → 51.6, n=20 → 86.7, n=30 → 145.7  (monotonic, unbounded)
-```
+**Fix:** stop mutating shared state inside the dispatch. Either return the resolved motor
+alongside the value, or in `_veredito_fronteirico` probe candidates against a throwaway
+`AnaliseAcao` (or snapshot/restore `a.motor` around the loop) so per-candidate dispatch
+cannot leak into the committed `a`.
 
-`n_fade` is presented as a freely-tunable "ajuste sem deploy" knob, but for high-retention names
-it is a value amplifier with no convergence bound — a direct threat to the project Core Value
-("números fiéis ao método e consistentes"). Config default `n=10` keeps the calibration basket
-(retention ~0.53) bounded, so this is latent rather than active, hence WARNING not BLOCKER.
-**Fix:** Either (a) add an explicit convergence guard — clamp/warn when
-`fade_para·retenção ≥ ke − ε` before running the window, or (b) correct the docstring/config
-comments to state that the guard covers only the terminal and that `n_fade` must stay small for
-high-retention inputs, and pin a max `n_fade` in review. Minimum acceptable fix is (b);
-(a) is the durable fix:
+### WR-02: seguradora branch treats a zero Gordon value as success (no RIM fallback)
+
+**File:** `src/analista/report/report.py:233-238`
+**Issue:** The never-raise guard degrades to the legacy RIM only when `valor_gordon` returns
+`None` (i.e. `ke − g ≤ 0`). But `dpa_recorrente()` can legitimately return `0.0` for a
+seguradora with no sustainable dividend, and `ddm.valor_gordon(0*(1+g), ke, g)` returns
+`0.0` (not `None`). The check `if v_seg is not None` is `True` for `0.0`, so the route
+commits `a.motor = "seguradora"` and returns `0.0` instead of falling through to the RIM.
+Downstream (`report.py:465`) then suppresses the non-positive value to `None` with an alert —
+so the ticker ends up as "seguradora, sem preço-alvo" even though the book-anchored RIM could
+have produced a real number. The comment on `:238` ("dado degenerado → cai para o RIM
+legado") does not actually cover the `dpa=0`/`v_seg=0` case.
+
+**Fix:** require a positive value before committing the route:
+
 ```python
-# after computing fade_para, before the loop:
-if fade_para * retencao >= ke:
-    # window residual income does not converge in n — cap growth to keep RI bounded
-    ...  # e.g. cap effective book-growth at ke, or degrade to a shorter n
-```
-
-### WR-02: "Backward-safe" claim is false for the value-destroying-bank (`roe0 < ke`) legacy path
-
-**File:** `src/analista/core/motores.py:95-96, 102-103`
-**Issue:** The docstring asserts the legacy 5-arg call `rim(vpa0, roe0, ke, retencao, n)`
-"reproduz o comportamento D-02 (excesso_sustentavel=0.0 → fade a Ke)". That holds only when
-`roe0 ≥ ke`. The old code was `fade_para = ke` unconditionally; the new default is
-`fade_para = ke + min(roe0 − ke, excesso_sustentavel)`. With `excesso_sustentavel=0.0` and
-`roe0 < ke`, `min(roe0−ke, 0.0) = roe0−ke < 0`, so `fade_para = roe0` (ROE stays flat, RI stays
-negative) instead of the old fade-up to `ke` (RI → 0). Measured divergence for
-`rim(22, 0.10, 0.125, 0.53, 10)`: new = **18.30**, old-behaviour = **19.92** (Δ R$1.61). No repo
-caller hits this (the dispatch always passes `excesso_sustentavel`; the only legacy test call
-uses `roe0 = ke`), so impact is contained to the documented API contract — but the claim is
-objectively wrong and would mislead any future 5-arg caller.
-**Fix:** Correct the docstring to scope the backward-safe claim to `roe0 ≥ ke`, or make the
-legacy default truly equivalent:
-```python
-if fade_para is None:
-    # legacy (excesso_sustentavel==0.0) must fade to ke even when roe0 < ke
-    fade_para = ke + max(0.0, min(roe0 - ke, excesso_sustentavel)) if excesso_sustentavel else ke
-```
-(Only if preserving the exact D-02 legacy result is intended; otherwise just fix the docstring.)
-
-### WR-03: `ke_rim` fallback `ke_teto` default is still the rejected 0.14 (contradicts CAL-02)
-
-**File:** `src/analista/core/motores.py:149`
-**Issue:** CAL-02 revised `ke_teto` 0.14→0.13 (`config.yaml:235`), with the phase rationale that
-0.14 double-counts country risk and is wrong for a large-cap bank. But the defensive fallback in
-`ke_rim` still reads `rim_cfg.get("ke_teto", 0.14)`. A config missing the `motores.rim` block
-(the exact scenario this defensive `.get(...)` exists to survive, per the line-140 comment)
-would silently clamp to the **rejected** 0.14 rather than the intended 0.13 — producing a higher
-Ke and a materially lower intrinsic than the calibrated method, with no signal. `ke_piso` (0.11),
-`ke_g_spread_min` (0.03), and `erp_banco` (0.045) fallbacks all match config; only `ke_teto`
-drifted.
-**Fix:**
-```python
-ke_clamp = max(rim_cfg.get("ke_piso", 0.11), min(ke, rim_cfg.get("ke_teto", 0.13)))
+if v_seg is not None and v_seg > 0:
+    a.motor = "seguradora"
+    return v_seg
+# else fall through to the RIM (never-raise, não força a rota)
 ```
 
 ## Info
 
-### IN-01: Unit test upper bound not tightened after CAL-02 (0.14→0.13)
+### IN-01: cross-module access to a private helper
 
-**File:** `tests/test_motores.py:98`
-**Issue:** `test_ke_rim_menor_que_ke_live_de_banco` still asserts `0.11 <= kr <= 0.14`. With the
-revised `ke_teto=0.13`, this bound no longer catches a regression that re-introduced 0.14 — the
-test would stay green even if CAL-02 were reverted. The sibling test
-`test_rim_itub4_live_alvo_32_40` does pin `abs(ke - 0.13) < 1e-9` for beta=1.29, so the value is
-covered elsewhere, but the generic ke_rim test is now loose.
-**Fix:** Tighten the upper bound to `0.13` (the active clamp) so the test guards the CAL-02
-revision directly: `assert 0.11 <= kr <= 0.13`.
+**File:** `src/analista/report/report.py:229`
+**Issue:** The branch reaches into `arquetipo._setor_casa_token` (leading underscore →
+module-private). It is intentional and mirrored in tests, but it couples `report` to an
+internal of `arquetipo`; a rename there breaks `report` silently.
+**Fix:** promote `_setor_casa_token` to a public helper (e.g. `arquetipo.setor_casa_token`)
+if it is meant to be a shared detection primitive.
 
-### IN-02: Effectively-unreachable defensive branch in terminal value
+### IN-02: seguradora label absent from `MOTOR_ROTULO` map
 
-**File:** `src/analista/core/motores.py:113-116`
-**Issue:** `vp_terminal = tv / (1 + ke) ** n if tv is not None else 0.0`. The `else 0.0` is
-unreachable in practice: the terminal branch only runs when `ke − g_terminal ≥ ke_g_spread_min`
-(> 0), and `ddm.valor_gordon` returns `None` only when `ke − g ≤ 0` or an input is `None` — but
-`ri_terminal` is always a float here. So `tv` is never `None` on this path. Harmless, but the
-guard reads as if the terminal can silently zero out when it cannot, which slightly obscures the
-real "terminal not released" path (the outer `if g_terminal is not None and ...`).
-**Fix:** Either drop the dead `else 0.0` (rely on the outer guard) or add a comment noting the
-branch is defensive-only. No functional change required.
+**File:** `src/analista/core/motores.py:32-38`
+**Issue:** `MOTOR_ROTULO` enumerates rim/normalizado/dcf/nav/ddm but the new
+`a.motor="seguradora"` value has no entry, so `MOTOR_ROTULO.get("seguradora", "")` yields
+`""`. This is the second half of CR-01's root cause and should be fixed together with it (add
+the "seguradora" key). Flagged separately because the missing map entry is a standalone
+completeness gap in `motores.py`.
+**Fix:** add the `"seguradora"` key (see CR-01 snippet).
 
 ---
 
-_Reviewed: 2026-07-12_
+_Reviewed: 2026-07-13T13:33:34Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
