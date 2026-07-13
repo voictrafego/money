@@ -1,93 +1,220 @@
-# Requirements — v2.3 Calibração do Valuation à Realidade (RIM com Valor Terminal / BACKTEST-01)
+# Requirements — v2.4 Fidelidade do Valuation
 
-**Milestone goal:** Corrigir a subestimação sistemática do motor RIM (bancos) dando-lhe um **valor
-terminal**, para que bancos de qualidade valuem coerente com âncoras de realidade — validado numa
-cesta de bancos. Escopo cirúrgico: **só RIM/bancos** neste marco.
+**Milestone goal:** Fazer os números do app servirem de **guia real de decisão**. Hoje ele
+subvaloriza quase toda a B3 (mediana intrínseco/preço do motor exibido: **0,68**) e carimba "caro"
+em 4 de cada 5 ações. Corrigir as **duas doenças independentes** na única ordem que a simulação
+provou segura.
 
-**Contexto (diagnóstico 2026-07-12):** RIM ao vivo dá ITUB4 = R$23,01 vs alvo ~R$40 do SC#1 do
-v2.2. Causa raiz é a estrutura **fade-sem-valor-terminal (D-02)** que ancora o RIM no VPA (~R$19),
-NÃO o Ke (que move só ~R$3 no range 10,5%–17,3%). Um residual income COM perpetuidade / P/B justo
-((ROE−g)/(Ke−g)) leva o ITUB4 a ~R$32-38. Ver `.planning/v2.2-MILESTONE-AUDIT.md`.
+> ## Critério de aceite soberano
+>
+> **O app reproduz o caso-exemplo do próprio livro.** ITUB4, Cap. 17 (Tabelas 41 e 43):
+> `g` = 10,24% · `Ke` = 12,48% → **`V` = R$ 37,22** (região R$ 35 – R$ 39, MS ±5%).
+> **Hoje o app entrega R$ 16,13 para o mesmo ativo.**
+>
+> O `g` do livro é praticamente o `g` por fundamentos que o app **calcula e descarta** (10,29%),
+> adotando o histórico de 6,94%. O Core Value do projeto é fidelidade ao método — e o app falha no
+> caso-teste do próprio método. Qualquer requisito abaixo que conflite com o livro **perde**.
+> _(O PDF foi lido diretamente em 2026-07-13. "preço-teto": 0 ocorrências. "Bazin": 0. "valor
+> intrínseco": 39.)_
 
----
+**Diagnóstico (auditoria forense de 2026-07-13 — 5 agentes, 104 tickers, engine ao vivo):**
 
-## v2.3 Requirements
+- **Doença 1 — VIÉS (erro de unidade).** `Ke` é **nominal** (rf = Selic-ciclo 9,58%); `g_estavel` é
+  **2,5% de PIB real**. O modelo trata inflação como destruição de valor. Teto de P/L = `1/(Ke−g)`
+  = **7,8x** contra P/L mediano de mercado de **9,9x** → o motor é *matematicamente incapaz* de
+  justificar a ação mediana da bolsa. Único parâmetro que os **quatro** motores compartilham.
+- **Doença 2 — DISPERSÃO (dados).** `num_acoes` com escala quebrada em **41 dos 104 tickers**; JCP
+  perdido em 13 empresas; split ajustado duas vezes; **zero reconciliação** no pipeline.
 
-### Calibração do modelo (CAL)
-
-- [x] **CAL-01**: O motor **RIM ganha um valor terminal** — uma perpetuidade de residual income (ou
-  P/B justo `(ROE−g)/(Ke−g)` equivalente) que substitui/complementa o fade-para-zero-sem-terminal
-  atual (D-02), de forma que o valor deixe de ancorar no VPA para um banco que sustenta ROE > Ke. A
-  formulação tem **fundamento teórico** (não um fator de fudge), é **parametrizada em `config.yaml`**
-  (nada hard-coded), e o motor permanece puro/never-raise, sem tocar `ddm.py`/`selo.py`/`lentes.py`.
-  **Critério de aceite:** ITUB4 (roteado para RIM) produz intrínseco na faixa **~R$32–40** — na mesma
-  ordem de grandeza de Graham (R$39,88) e do preço (R$44,30), NÃO os ~R$23 atuais. *(Este é o alvo
-  quantitativo que o v2.2 não cobrou; verificação deve cobrar o NÚMERO, não só "não é Evitar".)*
-
-- [x] **CAL-02**: O **Ke do RIM por arquétipo (banco)** é revisado como ajuste secundário — rever o
-  teto de 14% que hoje binda o `ke_rim` (e o `erp_banco`), documentando a escolha. É a alavanca fina
-  (≈R$3), aplicada **por cima** do valor terminal do CAL-01, não como conserto principal. Não pode
-  produzir intrínseco explosivo (manter clamps sãos).
-
-### Validação / Backtest (VAL)
-
-- [x] **VAL-01**: Existe um **harness de validação (BACKTEST-01)** que roda o RIM calibrado numa
-  **cesta de bancos** (ITUB4, BBAS3, BBSE3, BBDC4) e reporta o intrínseco de cada um contra âncoras
-  de realidade, para provar que a calibração generaliza (não só ITUB4). Reproduzível (script + teste).
-
-- [x] **VAL-02**: A validação **triangula 4 âncoras** por ticker: (a) Graham + Bazin (já calculados);
-  (b) preço de mercado atual; (c) **tabela manual de fair values** (valores-alvo por ticker, fornecidos
-  pelo usuário ou pesquisados de consenso — a definir na fase); (d) múltiplos de pares (P/VP, P/L do
-  setor bancário). **Critério de aceite:** para a cesta, o intrínseco do RIM não fica cronicamente
-  ~40-50% abaixo das âncoras (o sintoma "descolado da verdade"); desvios remanescentes são explicados,
-  não escondidos.
-
-### Operação (OPS)
-
-- [x] **OPS-01**: O **app é redeployado na VPS** com o código v2.3 (o v2.2 nunca subiu — o app em
-  produção ainda roda comportamento pré-arquétipo). **Critério de aceite:** ITUB4 no app ao vivo mostra
-  o arquétipo (financeira→RIM), o intrínseco calibrado do RIM e o veredito "ver motor primário" —
-  **não** mais "Evitar" com faixa DDM R$12,93–19,32. Suíte verde e firewall intacto antes do deploy.
+Mapa completo: https://claude.ai/code/artifact/cfdb3a4f-fffe-4465-b98a-bf3e9d4aa679
 
 ---
 
-## Future Requirements (deferidas)
+## Blindagem processual (BLIND) — precede tudo
 
-- **Valor terminal / conservadorismo nos OUTROS motores** (DCF de crescimento, lucro normalizado de
-  cíclica): o mesmo viés fade-sem-terminal pode subestimar compounders e cíclicas. Fora do escopo
-  cirúrgico deste marco; auditar/tratar em marco futuro se a cesta de validação sugerir o padrão.
-- **Backtest histórico com preços realizados** (calibração empírica out-of-sample, não só snapshot vs
-  âncoras) — evolução natural do BACKTEST-01.
+Sem isto, os consertos das fases seguintes são revertidos por um knob e ninguém nota. É a lição
+direta do post-mortem do v2.3.
 
-## Out of Scope (v2.3)
+- [ ] **BLIND-01**: Os 448 testes estão classificados num arquivo commitado em três categorias —
+  **INVARIANTE** (verdade algébrica que knob nenhum satisfaz), **GOLDEN-DE-NÍVEL** (trava um número,
+  logo trava o método atual) e **CONTRATO** (formato/borda). Os GOLDEN-DE-NÍVEL entram em quarentena
+  em vez de bloquear o marco.
+- [ ] **BLIND-02**: Existe teste de **invariância à inflação** — `V` varia menos de 2% sob choque de
+  **+300 bps** aplicado *simultaneamente* a `rf` e `g_cap`. Escrito como `xfail(strict=True)`: ele
+  **é a definição da Doença 1**, e vira verde sozinho na fase do `g`.
+- [ ] **BLIND-03**: Existe teste de que a normalização **não pune crescimento** — série de lucro de
+  +10%/ano *pura* (zero outlier) não pode produzir base normalizada abaixo do último ano menos
+  inflação. Hoje produz haircut medido de **−9,1%**.
+- [ ] **BLIND-04**: **Nenhum teste de calibração afirma `ticker == valor em reais`.** A validação é
+  por **distribuição** (mediana + IQR) mais **jackknife**: `test_nenhum_ticker_e_load_bearing` falha
+  se remover um único ticker mover a mediana além do limiar.
+- [ ] **BLIND-05**: Um hook de pre-commit **bloqueia** commit que altere `config.yaml` e um
+  golden/fixture ao mesmo tempo — é a assinatura exata de "calibrei o knob até o teste passar".
+- [ ] **BLIND-06**: Orçamento de knobs explícito e travado por teste: **exatamente 3 graus de
+  liberdade** (`ERP`, `n_fade`, `PIB_real`). Regra escrita: *"uma justificativa legítima de knob
+  nunca menciona um ticker"* — compare `config.yaml:237` ("Move ITUB4 ~R$2").
 
-- **Reescrever DDM/Graham/Bazin** — estão matematicamente corretos; o alvo é só o RIM (bancos).
-- **Novos arquétipos ou motores** — o registry do v2.2 fica intocado; só a fórmula interna do RIM muda.
-- **Mudança na filosofia do selo/veredito** (ensemble, SAN-01, fronteiriço do v2.2) — permanecem.
+## Sanidade dos dados (SAN)
+
+Os asserts vêm **antes** dos consertos, de propósito: eles **são** o teste de regressão do bloco DATA.
+
+- [ ] **SAN-01**: A ingestão reconcilia `num_acoes × preço ≈ market cap` e rebaixa a confiança do
+  ticker quando diverge. Pega GOAU4 (3× errado) e CGRA4 (escala de 1000×).
+- [ ] **SAN-02**: Detecta salto de `num_acoes` ano-a-ano sem evento societário. Pega ITUB4 2019
+  (1.131×) e BRSR6 (205.000×).
+- [ ] **SAN-03**: Reconcilia `dividendos_CVM ≈ DPA_yahoo × num_acoes`. Pega o JCP perdido.
+- [ ] **SAN-04**: Verifica que `PL` e `lucro` estão na **mesma base**. Pega MRFG3, CSNA3, ALUP11, EQTL3.
+- [ ] **SAN-05**: Verifica **clean surplus** (`ΔB ≈ LL − DIV`) e reporta a violação como **dado**, não
+  exceção. É detector de bug **e** pré-condição de validade do RIM — o mais valioso dos asserts.
+- [ ] **SAN-06**: Nenhum assert levanta exceção — todos degradam para aviso + confiança rebaixada
+  (contrato `never-raise` que o ingest já tem).
+- [ ] **SAN-07**: *(spike, ANTES de calibrar qualquer coisa)* Verificar se IHCD/AT1 entram no PL dos
+  bancos (`2.03`) e se o dirty surplus por IFRS 9 FVOCI é material. Se for, `B0` está deprimido e o
+  RIM subvaloriza banco de qualidade — **um terceiro bug de dados que os knobs do v2.3 mascaravam**.
+
+## Ingestão correta (DATA)
+
+- [ ] **DATA-01**: JCP capturado nas 13 empresas que hoje o perdem (`cvm.py:169` filtra só
+  "dividendo"). BRSR6 sai de payout 10,3% para 55,9%.
+- [ ] **DATA-02**: `lucro` e `PL` usam a base do **controlador**, não o consolidado com minoritários.
+- [ ] **DATA-03**: `num_acoes` deixa de ser derivado de `lucro/LPA` com bases cruzadas
+  (`build.py:87`); o fallback usa `impliedSharesOutstanding` (ON+PN), não `sharesOutstanding` (só a
+  classe).
+- [ ] **DATA-04**: O duplo ajuste de split é removido (`prices.py:71-111` — o `Close` do Yahoo já vem
+  ajustado; a engine **cria** um degrau artificial de 13% no ITUB4).
+- [ ] **DATA-05**: O DY reflete o **IRRF de 17,5% sobre JCP** (Lei 15.270/2025, desde 01/01/2026) ou
+  declara explicitamente que é bruto.
+- [ ] **DATA-06**: O snapshot de teste é regenerado — o atual tem ITUB4 com **10 milhões de ações** em
+  2019 e dá verde nos 448 testes.
+
+## Primitivas sem viés (PRIM)
+
+Maior alavancagem por linha do repositório: atinge todos os motores, todos os múltiplos, todas as telas.
+
+- [ ] **PRIM-01**: A base de lucro do valuation deixa de descartar o ano mais recente
+  (`normalizacao.py:73-75`: `anos_media=3` cai em `median()` de 3 = **o ano do meio**).
+- [ ] **PRIM-02**: `roe_valuation` deixa de cruzar bases temporais (lucro de 2023 ÷ PL de 2024). Passa
+  a ser a **mediana da série de ROEs anuais**. ITUB4: 16,1% → 18,0%.
+- [ ] **PRIM-03**: A winsorização não é aplicada a série **temporal** — ela clampa a tendência e
+  **ressuscita ano de prejuízo**, fabricando `g` de 36% (VULC3) e 47% (CYRE3), exibidos no app.
+- [ ] **PRIM-04**: A base do motor cíclico é **deflacionada** (hoje soma reais de 2015 com reais de
+  2024; IPCA acumulado de 58%; CSNA3 sai 31,8% subvalorizada só por isso).
+- [ ] **PRIM-05**: **CRITÉRIO DE SAÍDA — o golden `ITUB4: 32.88 ± 0.20` QUEBRA e é DELETADO, não
+  atualizado.** Atualizar mantém vivo o reflexo que causou o overfit. Vai parecer errado no momento;
+  é o conserto funcionando.
+
+## Crescimento (GROW)
+
+- [ ] **GROW-01**: `g_cap` é derivado, não digitado: `(1 + π_ciclo) × (1 + PIB_real) − 1` = **7,28%**
+  (π_ciclo = 5,18%, IPCA médio 10a, BCB SGS 13522 — medido).
+- [ ] **GROW-02**: A janela do IPCA é **a mesma** do `rf`. É isso que torna o valuation invariante à
+  inflação — e faz BLIND-02 virar verde.
+- [ ] **GROW-03**: `g_T = min(ROE_T × retenção, g_cap)` — identidade fechada, não constante.
+- [ ] **GROW-04**: O `g` da fase explícita é reconciliado com o **livro**, que usa o `g` por
+  fundamentos (10,24% no Itaú) — o app calcula 10,29% e **descarta**, adotando o histórico de 6,94%.
+- [ ] **GROW-05**: A **Armadilha 5 é endereçada aqui**: com `g` = 7,28%, o spread `Ke − g` cai de
+  10,5 pp para ~5,5 pp e **o peso do valor terminal quase dobra**. `excesso_sustentavel` e
+  `ke_g_spread_min`, hoje decorativos, viram load-bearing. Prever, não descobrir depois.
+
+## Custo de capital (KE)
+
+**Bloco separado do GROW de propósito.** Fundir dá um número e zero diagnóstico — e a Armadilha 1
+prova que a ordem importa: consertar o `Ke` antes do `g` **piora** (ITUB4 0,75 → 0,64).
+
+- [ ] **KE-01**: Um único `Ke` no sistema. Hoje há dois simultâneos (17,3% no DDM, 13,0% no RIM) e **o
+  que produz o número da manchete nunca é exibido**.
+- [ ] **KE-02**: ERP de 4,5% (Damodaran mature market), **sem** o prêmio small-cap de 1,5% —
+  injustificável num universo filtrado por liquidez de R$ 15M/dia.
+- [ ] **KE-03**: Beta **setorial + Blume** (`0,33 + 0,67 × β`), não individual bruto. BB e Bradesco têm
+  o mesmo risco de negócio e hoje recebem `Ke` com 1,7 pp de diferença — ruído que produz **2,7× de
+  espalhamento** no valor final.
+- [ ] **KE-04**: `ke_piso` e `ke_teto` são **removidos**. Com `Ke_min` = 11,07% (piso estrutural do
+  Blume) > `g_cap` = 7,28%, nenhuma perpetuidade pode explodir — **por aritmética, não por clamp**.
+  (O `config.yaml:235` justifica o teto com "Blume" e isso é *aritmeticamente falso*: Blume daria 15,9%.)
+- [ ] **KE-05**: O `Ke` exibido é **o mesmo** que produziu o número exibido, e a matriz de
+  sensibilidade é construída em torno dele.
+
+## Motores e contrato de saída (ENG)
+
+- [ ] **ENG-01**: Um único motor de valor (**RIM**). Sob clean surplus, os 4 motores não são 4
+  opiniões — são **4 implementações do mesmo modelo com inputs inconsistentes**. A dispersão
+  (0,81/0,63/0,63/0,48) é a assinatura dos bugs.
+- [ ] **ENG-02**: O **ensemble morre junto** — ele mede os próprios bugs do projeto e chama isso de
+  "divergência de método". Idem `_guarda_san01` e `_guarda_faixa_ddm`: são **cicatrizes do viés, não
+  features**. Removidos, não portados.
+- [ ] **ENG-03**: O classificador de arquétipo **sobrevive e melhora** — deixa de escolher um *modelo*
+  (erro ilimitado) e passa a escolher uma *âncora de ROE* (erro limitado).
+- [ ] **ENG-04**: `PAGADORA_REGULADA` é separada em `PAGADORA_MADURA` + `CONCESSAO_FINITA`. Hoje ela é
+  **também o default por eliminação** (`arquetipo.py:176`) — empresa sem sinal cai no balde da
+  transmissora. E transmissoras sob ICPC 01 usam **modelo de ativo financeiro**: o book **já é** o VP
+  da RAP e o ROE dispara em ano de IPCA alto → consertar o `g` causaria **double-count de inflação**.
+- [ ] **ENG-05**: **O contrato de saída é o do livro** — valor intrínseco + **região de valor** +
+  tríade **SUBAVALIADA / NO INTERVALO / SOBREAVALIADA**. Sai apenas o que nunca veio do livro:
+  **"Evitar"** e **"Qualidade Baixa"**.
+- [ ] **ENG-06**: A **margem de segurança é controle do usuário**, simétrica, default 5-10%
+  (*"se 5%, 10% ou qualquer outro valor, é você quem decide"* — Cap. 17). **Nunca calibrada** contra
+  dispersão, preço ou taxa de "compra" — é assim que a Armadilha 4 morre por construção.
+- [ ] **ENG-07**: A **matriz de sensibilidade `Ke × g` vive** — o livro a chama de *"a que mais
+  gostamos"*, é a estratégia **preferida** dele para a região de valor. Construída sobre `Ke` e `g`
+  **corretos**.
+- [ ] **ENG-08**: A **ponte auditável** é exibida: `P/B justo = 1 + (ROE_T − Ke)/(Ke − g)` × VPA = `V`,
+  com o **payout terminal implícito** (`payout_T = 1 − g/ROE_T`). É um **teste de correção**, não
+  decoração: payout terminal negativo ou > 100% **é bug** e vira assert.
+- [ ] **ENG-09**: Guarda-corpo sobre a **razão implícita**, não sobre o resultado: `0 < P/B justo < 6`.
+  (O RIM **não** impede sozinho o CGRA4 a 921× — `VPA = PL/num_acoes` infla junto e o motor herda o
+  erro 1:1, com P/B justo de 1,4×.)
+- [ ] **ENG-10**: O bloco `motores:` do `config.yaml` vai de **~20 chaves para ≤ 5**. A deleção é
+  **contada** — senão não acontece.
+- [ ] **ENG-11**: O Ranking é **rebaixado e re-rotulado**, não deletado (deletar jogaria fora os
+  Cap. 11-12 do livro). Vira **screener comparativo por múltiplos**; as colunas
+  preço-alvo/upside/veredito saem. A regressão de pares é *matematicamente cega ao nível de preço*:
+  multiplicando o preço de todas as elétricas por 1,5, os upsides saem **bit a bit idênticos**.
+
+## Validação (VAL)
+
+- [ ] **VAL-01**: **O caso do livro passa.** ITUB4 com os inputs do Cap. 17 reproduz `V` ≈ R$ 37,22.
+  Critério de aceite soberano do marco.
+- [ ] **VAL-02**: Cesta estratificada (≥ 6 por arquétipo + **10 "difíceis" deliberados**: P/B < 1,
+  prejuízo recente, payout > 100%, book pequeno). Sem os difíceis, valida-se só o meio da
+  distribuição — que é onde o modelo já funcionava.
+- [ ] **VAL-03**: Fair values **commitados ANTES** de rodar o modelo. O `git log` prova a ordem.
+  Hoje não prova.
+- [ ] **VAL-04**: Hold-out roda **uma única vez**. Se falhar, **re-arquiteta-se — não recalibra**.
+- [ ] **VAL-05**: A métrica é `V/FairValue`, **nunca** `V/preço`. Um modelo com mediana `V/preço` = 1,00
+  é um espelho do mercado e não serve para nada.
+- [ ] **VAL-06**: **Nenhuma regra de exceção pode salvar um ticker.** O `excecao_nota` do v2.3 é uma
+  *lavanderia de overfit*: com quórum 3/4 + "exceção documentada passa", **o gate não pode reprovar**.
+  (Recontagem: o v2.3 gastou **~8 graus de liberdade sobre 4 observações**, e o "4/4 PASS" real é
+  **2/4** — BBAS3 e BBDC4 estão fora do consenso e passam só pelo acolchoamento de ±15%.)
+- [ ] **VAL-07**: Backtest temporal **só com point-in-time real** (a DFP de 2022 só existiu em
+  mar/2023). **Se não der para fazer PIT direito, NÃO fazer** — um backtest ingênuo produz um número
+  confiante e falso, pior que nenhum.
+
+---
+
+## Future Requirements (deferidos)
+
+- **Motor `nav`/SOTP real para holdings.** ITSA4 e B3SA3 hoje caem em RIM de banco por hard-route de
+  setor. A afirmação "`nav` é o 1º termo do RIM" é **meia-verdade** — vale para o NAV contábil e é
+  falsa justamente para holdings (participações por equivalência patrimonial, não a mercado).
+- **Score BSD por arquétipo.** Hoje `cobertura_juros` é a constante 50 para **todo** o universo
+  (`despesa_juros` nunca é ingerido), e FCO de banco é captação, não qualidade de lucro. 20% do peso
+  do selo é placeholder ou ruído — e o selo do ITUB4 é decidido por 0,63 ponto.
+- **Deflator no `dpa_recorrente`** e nas séries longas de dividendo.
+
+## Out of Scope (com razão)
+
+- **Preço-teto à la Bazin** — **não é o método do livro** (zero ocorrências no PDF). Se um teto
+  existir, é derivado do `V` (`V × (1 − MS)`), nunca substituto dele.
+- **Margem de segurança escalonada por incerteza (Morningstar)** — o livro tem regra própria (MS
+  simétrica, escolhida pelo usuário) e ela tem **precedência** por fidelidade ao método.
+- **Viés binário Comprar/Aguardar** — destrói a categoria "valor justo", que o livro tem.
+- **Bibliotecas de validação de dados** (`pandera`, `great-expectations`) — peso e indireção para 4
+  asserts aritméticos, num projeto cujo constraint declarado é custo zero.
+- **Provedor pago de dados** — viola o posicionamento do produto.
 
 ---
 
 ## Traceability
 
-Quais fases cobrem quais requisitos. Preenchido na criação do roadmap.
-
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| CAL-01 | Phase 4 | Planned |
-| CAL-02 | Phase 4 | Planned |
-| VAL-01 | Phase 5 | Planned |
-| VAL-02 | Phase 5 | Planned |
-| OPS-01 | Phase 6 | Planned |
-
-**Coverage:**
-- v2.3 requirements: 5 total
-- Mapped to phases: 5 ✓ (Phase 4: CAL-01/02 · Phase 5: VAL-01/02 · Phase 6: OPS-01)
-- Unmapped: 0
-
-**Por fase:**
-- Phase 4 (RIM com Valor Terminal + Ke): CAL-01, CAL-02 (2)
-- Phase 5 (BACKTEST-01 — Validação cesta de bancos): VAL-01, VAL-02 (2)
-- Phase 6 (Redeploy VPS): OPS-01 (1)
-
----
-*Requirements defined: 2026-07-12*
+_(preenchido pelo roadmapper)_
