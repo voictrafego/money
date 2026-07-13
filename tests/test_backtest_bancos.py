@@ -5,26 +5,25 @@ o gate **quórum-3/4-±15%** (D-06/D-07/D-08) do RIM calibrado na Fase 4 contra 
 consenso aprovadas (`tests/fixtures/fair_values_bancos.yaml`). Reusa a MESMA `rodar_cesta` do
 script (`scripts/backtest_bancos.py`) → prova o mesmo número; a fórmula RIM não é reimplementada.
 
-D-12 (loop de falha) — estado ATUAL do snapshot congelado:
+D-12 (loop FECHADO pela Alavanca 2 / Fase 4 it.2) — estado ATUAL do snapshot congelado:
 
-    ITUB4  32.88  ∈ 30.50–50.00 ±15%  → PASS
-    BBAS3  45.60  > 39×1.15            → FAIL (acima do teto de consenso)
-    BBSE3  25.38  < 33×0.85            → FAIL (abaixo do piso de consenso)
-    BBDC4  10.47  < 15×0.85            → FAIL (abaixo do book)
+    ITUB4  32.88  ∈ 30.50–50.00 ±15%  → PASS (inalterado — o cap satura, não regride)
+    BBAS3  43.89  ∈ 20.00–39.00 ±15%  → PASS (ROE terminal normalizado ao ciclo)
+    BBDC4  13.37  ∈ 15.00–24.00 ±15%  → PASS (ROE terminal normalizado ao ciclo)
+    BBSE3  25.38  < 33×0.85            → FAIL documentado (excecao_nota) — seguradora capital-light
 
-Apenas 1/4 na banda — ABAIXO do quórum 3/4. Isto NÃO é a "4ª exceção documentável" (D-08): são
-3 falhas, não 1. O gate `test_backtest_gate_quorum_e_anotacao` REPROVA de propósito e está marcado
-`xfail(strict=True)` — o gate NÃO é afrouxado, a banda ±15% e o quórum 3/4 permanecem intactos; a
-reprovação é o achado que dispara o loop D-12 (recalibrar a Fase 4). Ver `05-04-SUMMARY.md`.
-`strict=True` é o tripwire: quando a Fase 4 recalibrar e a cesta cruzar o quórum, este teste vira
-XPASS→FAIL, forçando a REMOÇÃO do marcador e o FECHAMENTO explícito do loop (nunca silencioso).
+3/4 na banda ±15% + BBSE3 como a exceção de arquétipo documentada (D-05/D-08) → o quórum 3/4 é
+atingido e o loop D-12 fecha. A recalibração da Fase 4 (normalização through-cycle do ROE terminal,
+Alavanca 2) generalizou na cesta SEM afrouxar o gate — a banda ±15% e o quórum 3/4 permanecem
+intactos. O `xfail(strict=True)` que travava a reprovação de propósito foi REMOVIDO ao cruzar o
+quórum (fechamento explícito do loop, D-07). A rota própria da seguradora (BBSE3 → 4/4) vem no
+plano 04-03. Ver `04-02-SUMMARY.md` e `05-04-SUMMARY.md`.
 """
 
 from __future__ import annotations
 
 import os
 
-import pytest
 import yaml
 
 from analista.backtest import (
@@ -83,16 +82,6 @@ def test_backtest_cesta_rota_por_ticker():
             )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason=(
-        "D-12: cesta 1/4 na banda ±15% (só ITUB4) < quórum 3/4 — a calibração RIM da Fase 4 NÃO "
-        "generaliza para BBAS3/BBSE3/BBDC4. Gate NÃO afrouxado (banda/quórum intactos); reprovação "
-        "é o achado que reabre a Fase 4 (loop). Ver 05-04-SUMMARY.md. Quando a Fase 4 recalibrar e a "
-        "cesta cruzar o quórum, este teste vira XPASS→FAIL — remover o marcador e fechar o loop."
-    ),
-)
 def test_backtest_gate_quorum_e_anotacao():
     """Gate D-06/D-07/D-08: quórum 3/4 dentro da banda ±15% + regra de anotação da 4ª exceção.
 
