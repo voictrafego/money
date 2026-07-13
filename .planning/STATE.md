@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.3
 milestone_name: Calibração do Valuation à Realidade (RIM com Valor Terminal)
-status: executing
-stopped_at: Completed 05-04-PLAN.md (loop D-12 aberto)
-last_updated: "2026-07-13T13:15:26.236Z"
+status: Fase 04 completa; próximo é a Fase 06 (redeploy do app v2.3 na VPS)
+stopped_at: Completed 04-03-PLAN.md (cesta 4/4, rota seguradora, loop D-12 fechado)
+last_updated: "2026-07-13T13:26:57.960Z"
 last_activity: 2026-07-13
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
-  percent: 86
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
@@ -28,8 +28,8 @@ qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio úni
 ## Current Position
 
 Phase: 04 (rim-com-valor-terminal-ke-revisado) — EXECUTING
-Plan: 2 of 3
-Status: Ready to execute
+Plan: 3 of 3 (04-03 concluído — cesta 4/4, loop D-12 fechado)
+Status: Fase 04 completa; próximo é a Fase 06 (redeploy do app v2.3 na VPS)
 Last activity: 2026-07-13
 
 ## Deferred Items
@@ -43,7 +43,7 @@ Itens reconhecidos e adiados no fechamento do marco v2.2 (2026-07-12):
 | quick_task | 260629-ig6-aba-swing-trade-mvp-candlestick-intraday | missing (era v1.x) |
 | quick_task | 260630-g0b-adicionar-auto-refresh-opcional-ao-4-men | missing (era v1.x) |
 
-Progress: [█████████░] 86%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -89,6 +89,7 @@ Progress: [█████████░] 86%
 | Phase 05 P03 | 0h18m | 2 tasks | 2 files |
 | Phase 05 P04 | 0h14m | 2 tasks | 1 files |
 | Phase 04 P02 | 0h18m | 3 tasks | 6 files |
+| Phase 04 P03 | 0h20m | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -132,6 +133,7 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - [Phase 05]: backtest da cesta REPROVA o quórum (1/4 na banda ±15% < 3/4) — calibração RIM da Fase 4 nao generaliza; gate encoda a regra verbatim + xfail(strict), NAO afrouxa banda/quorum; achado registrado, loop D-12 reabre a Fase 04 (05-04)
 - [Phase 04]: Alavanca 2 (loop D-12) — normalização through-cycle do ROE aplicada SÓ no RI terminal (mediana histórica do ticker, capada por excesso_sustentavel); cesta cruza 3/4 (BBAS3 45,60→43,89, BBDC4 10,47→13,37) e ITUB4 fica bit-idêntico (32,88, cap satura)
 - [Phase 04]: roe_terminal é o último param de motores.rim (default None=legado); anchor sai da série via report._roe_through_cycle (never-raise <3 pts→None); único knob novo roe_terminal_stat (D-08); loop D-12 fechado com xfail(strict) removido do gate
+- [Phase 04]: Alavanca 3 (loop D-12) — rota de seguradora capital-light (BBSE3) via Gordon-franquia em report._intrinseco_por_motor ANTES do bank-RIM: reuso PURO de ddm.valor_gordon sobre dpa_recorrente, ke=CAPM ao vivo (a.ke, não ke_rim; Pitfall 3), g=g_estavel 2,5%; casa o token 'seguradora' por _setor_casa_token, seta a.motor='seguradora', never-raise degrada p/ RIM. BBSE3 25,38→39,87; cesta 4/4 na banda ±15% (zero knob numérico novo; ddm/fundamentals/arquetipo intocados)
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -152,19 +154,15 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 
 [Issues that affect future work]
 
-- **🔴 LOOP D-12 ABERTO — recalibrar a Fase 4 antes de qualquer deploy (bloqueia a Fase 6).**
-  O backtest da Fase 5 (BACKTEST-01) provou que a calibração RIM da Fase 4 **não generaliza**: sobre o
-  snapshot congelado (`tests/fixtures/snapshot_bancos_2026-07-12.yaml`) cruzado com as faixas de consenso
-  ao vivo aprovadas (`tests/fixtures/fair_values_bancos.yaml`), só **1/4 (ITUB4)** cai na banda ±15% —
-  abaixo do quórum 3/4. Falha em **dois sentidos opostos** (não é viés uniforme):
-
-  - **BBAS3 RIM 45,60 (+54,6%, acima de todo target ≤39)** → super-avalia. Hipótese: `num_acoes` dobrado / lucro por ação inflado.
-  - **BBSE3 RIM 25,38 (−35,7%, abaixo do piso ≥33)** → sub-avalia a seguradora capital-light. Hipótese: RIM ancorado em book penaliza alto-ROE/baixo-capital.
-  - **BBDC4 RIM 10,47 (−46,3%, abaixo do book)** → sub-avalia no vale de ROE. Hipótese: guarda anti-bad-bank apertando demais.
-  O gate **não foi afrouxado**: a reprovação está travada como `xfail(strict=True, raises=AssertionError)`
-  em `tests/test_backtest_bancos.py` — vira `XPASS→FAIL` automaticamente quando a Fase 4 recalibrar e o
-  cesto cruzar 3/4, fechando o loop. Evidência completa: `05-04-SUMMARY.md` + `out/backtest_bancos.md`.
-  **Fase 4 precisa reabrir; Fase 6 (redeploy) fica bloqueada até o cesto passar.**
+- **🟢 LOOP D-12 FECHADO (2026-07-13) — Fase 4 recalibrada, cesta 4/4; a Fase 6 (redeploy) fica destravada.**
+  A Fase 4 it.2 fechou o loop em duas alavancas: **Alavanca 2** (04-02, normalização through-cycle do ROE
+  terminal) levou a cesta a 3/4 (BBAS3 45,60→43,89, BBDC4 10,47→13,37, ITUB4 32,88 inalterado); **Alavanca 3**
+  (04-03, rota de seguradora capital-light via Gordon-franquia) fechou a BBSE3 (25,38→**39,87**) → **4/4 na
+  banda ±15%**. Sobre o snapshot congelado (`snapshot_bancos_2026-07-12.yaml`) × faixas de consenso
+  (`fair_values_bancos.yaml`): ITUB4 32,88 · BBAS3 43,89 · BBDC4 13,37 (rim) · BBSE3 39,87 (motor='seguradora',
+  excecao_nota documentada). O gate **não foi afrouxado** (banda ±15% e quórum 3/4 intactos); o `xfail(strict)`
+  já havia sido removido em 04-02 e a suíte segue verde (447 passed). Evidência: `04-02-SUMMARY.md`,
+  `04-03-SUMMARY.md`. **Próximo:** a Fase 6 (redeploy do app v2.3 na VPS) está destravada.
 
 - **Não quebrar os golden do valuation sem intenção:** `test_ddm.py` (DDM Itaú R$37,22 input fixo),
   `test_selo.py` (cortes de cor + rótulos da matriz + firewall selo↛report), `test_vulc3_regressao.py`
@@ -178,7 +176,7 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - **Consistência cross-modo:** métodos canônicos `*_valuation()` em `fundamentals.py` são fonte única
   — mexer neles reverbera nos 3 modos (Analisar/Garimpo/Ranking).
 
-- LOOP D-12 ABERTO (05-04): backtest da cesta reprovou (1/4 na banda ±15% < quórum 3/4). Calibração RIM da Fase 4 NÃO generaliza — BBAS3 super-avaliado +54.6%, BBSE3 −35.7%, BBDC4 −46.3%. Reabrir Fase 04 para recalibrar; Fase 06 (deploy) bloqueada até fechar. Gate xfail(strict) vira XPASS→FAIL ao recalibrar.
+- LOOP D-12 FECHADO (Fase 04 it.2): cesta 4/4 na banda ±15% (ITUB4 32,88 · BBAS3 43,89 · BBDC4 13,37 · BBSE3 39,87 rota seguradora). Alavanca 2 (ROE terminal) + Alavanca 3 (Gordon-franquia da seguradora). Gate verde sem afrouxar banda/quórum (xfail removido em 04-02). Fase 06 (deploy) destravada.
 
 ### Quick Tasks Completed
 
@@ -205,8 +203,8 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-13T13:15:26.233Z
-Stopped at: Completed 05-04-PLAN.md (loop D-12 aberto)
+Last session: 2026-07-13T13:23:26.236Z
+Stopped at: Completed 04-03-PLAN.md (cesta 4/4, rota seguradora, loop D-12 fechado)
 Resume file: None
 
 ## Operator Next Steps
