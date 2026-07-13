@@ -4,7 +4,7 @@ milestone: v2.3
 milestone_name: Calibração do Valuation à Realidade (RIM com Valor Terminal)
 status: executing
 stopped_at: Phase 5 context gathered
-last_updated: "2026-07-13T07:43:48.047Z"
+last_updated: "2026-07-13T07:50:26.652Z"
 last_activity: 2026-07-13
 progress:
   total_phases: 3
@@ -28,7 +28,7 @@ qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio úni
 ## Current Position
 
 Phase: 05 (backtest-01-valida-o-na-cesta-de-bancos) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-07-13
 
@@ -85,6 +85,7 @@ Progress: [██████░░░░] 60%
 | Phase 03 P04 | 0h20m | 2 tasks | 2 files |
 | Phase 04 P01 | 0h04m | 3 tasks | 5 files |
 | Phase 05 P02 | 12min | 3 tasks | 1 files |
+| Phase 05 P03 | 0h18m | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -122,6 +123,9 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - [Phase ?]: [Phase 04]: guarda anti-bad-bank fade_para=ke+min(roe0-ke,cap) sem clampar a >=ke; banco ROE<Ke valua <book; knobs config-driven recalibraveis na Fase 5
 - [Phase ?]: [Phase 05]: fair_values_bancos.yaml aprovado pelo usuario ANTES de versionar (D-01) — faixas de consenso de target prices (jul/2026), independentes de Graham/Bazin/RIM; ancora-verdade do gate vive em tests/fixtures/ nao em config.yaml (D-03)
 - [Phase ?]: [Phase 05]: cruzando as faixas aprovadas com o RIM congelado, apenas ITUB4 cai na banda +-15% (1/4, abaixo do quorum 3/4) — sinal legitimo, nao bug; tratamento e do gate/loop D-12 no Plan 05-04, nao se afrouxam as faixas
+- [Phase ?]: [Phase 05]: rodar_cesta pura em src/analista/backtest.py CONSOME report.analisar_acao (intrinseco_motor) — nunca reimplementa RIM; teste 05-04 e script compartilham a MESMA funcao e provam o mesmo numero
+- [Phase ?]: [Phase 05]: harness roda 100% offline injetando rf_local congelado do snapshot em cfg[capm][rf_local]; medianas P/VP e P/L da propria cesta (D-11) como ancora setorial, zero fonte externa
+- [Phase ?]: [Phase 05]: reproduz o snapshot exatamente (ITUB4 32.88 PASS in-band; BBAS3/BBDC4/BBSE3 FAIL) — desvios reportados no out/backtest_bancos.md nao mascarados (D-12); quorum/loop e do Plan 05-04
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -179,7 +183,7 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-13T07:43:29.925Z
+Last session: 2026-07-13T07:50:12.304Z
 Stopped at: Phase 5 context gathered
 Resume file: None
 
