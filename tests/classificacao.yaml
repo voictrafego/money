@@ -470,3 +470,7 @@
 'tests/test_invariantes_v24.py::test_invariancia_inflacao_identidade_pb_justo': invariante
 'tests/test_invariantes_v24.py::test_invariancia_inflacao_engine_itub4': invariante
 'tests/test_invariantes_v24.py::test_normalizacao_nao_pune_crescimento': invariante
+
+# --- Fase 7 / plano 07-03: BLIND-04. Meta-testes (testam OS TESTES, nao a engine) + harness
+# do jackknife. Nenhum deles crava nivel: rodam no default, para sempre.
+'tests/test_blindagem_meta.py::test_nenhum_teste_de_calibracao_crava_ticker_em_reais': contrato

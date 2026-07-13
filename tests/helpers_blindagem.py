@@ -215,6 +215,51 @@ def quarentenados() -> set[str]:
     }
 
 
+def _e_xfail_estrito(decorador: ast.AST) -> bool:
+    """True se o decorador e' `@...mark.xfail(..., strict=True)` com literal True."""
+    if not isinstance(decorador, ast.Call):
+        return False
+    alvo = decorador.func
+    if not (isinstance(alvo, ast.Attribute) and alvo.attr == "xfail"):
+        return False
+    return any(
+        kw.arg == "strict"
+        and isinstance(kw.value, ast.Constant)
+        and kw.value.value is True
+        for kw in decorador.keywords
+    )
+
+
+def xfail_estritos(raiz: pathlib.Path | None = None) -> set[str]:
+    """Testes marcados `xfail(strict=True)` — os que FALHAM DE PROPOSITO (BLIND-04a).
+
+    Por que existem, e por que NAO sao uma brecha do BLIND-04a:
+
+    Um golden de calibracao existe para ficar VERDE — e' assim que ele trava o numero.
+    Um `xfail(strict=True)` esta VERMELHO por contrato: ele nao trava nada, ele DENUNCIA.
+    E o pytest o auto-policia (`xfail_strict = true`): no dia em que ele passar, a suite
+    QUEBRA por XPASS. Logo um teste nesta lista nao pode virar um golden em silencio —
+    o unico jeito de ele "ficar verde" e' a doenca ser curada, e nesse dia a suite grita.
+
+    Esta lista NAO e' um allowlist por nome (que cresceria em silencio): e' uma propriedade
+    ESTRUTURAL, medida no AST. Nao ha como se auto-incluir sem declarar o teste como
+    falho-hoje-de-proposito, o que e' o oposto de calibrar.
+    """
+    raiz = raiz if raiz is not None else RAIZ_REPO / "tests"
+    achados: set[str] = set()
+    for caminho in _arquivos_de_teste(raiz):
+        arvore = ast.parse(caminho.read_text(encoding="utf-8"), filename=str(caminho))
+        rel = f"tests/{caminho.name}"
+        for fn in ast.walk(arvore):
+            if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            if not fn.name.startswith("test_"):
+                continue
+            if any(_e_xfail_estrito(d) for d in fn.decorator_list):
+                achados.add(f"{rel}::{fn.name}")
+    return achados
+
+
 # --------------------------------------------------------------------------- #
 # BLIND-02 — o choque de inflacao (plano 07-02).
 #
