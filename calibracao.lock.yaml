@@ -1,0 +1,202 @@
+# calibracao.lock.yaml — BLIND-06. O ORCAMENTO DE KNOBS DO SISTEMA.
+#
+#   EXATAMENTE 3 GRAUS DE LIBERDADE:  ERP  ·  n_fade  ·  PIB_real
+#
+# REGRA ESCRITA (ROADMAP v2.4), agora EXECUTAVEL:
+#
+#     "Uma justificativa legitima de knob NUNCA menciona um ticker."
+#
+# Se voce esta escrevendo "para o ITUB4 sair do 'evitar'", voce nao esta calibrando um
+# modelo — esta ajustando um numero ate uma acao dizer o que voce quer ouvir. E' a
+# assinatura exata do overfit do v2.3, e ela e' barrada em tres lugares:
+#   1. `tests/test_blindagem_orcamento.py::test_nenhuma_justificativa_de_knob_menciona_ticker`
+#   2. `.githooks/commit-msg` (BLIND-05) — bloqueia o commit
+#   3. este arquivo — a mudanca de knob deixa de ser invisivel no diff
+#
+# POR QUE ESTE ARQUIVO EXISTE (o post-mortem, em uma linha): o v2.3 gastou ~8 graus de
+# liberdade sobre 4 observacoes (uma cesta de 4 bancos) e NINGUEM CONTOU. Um modelo com
+# mais knobs do que observacoes nao e' um modelo — e' uma interpolacao. "3 graus de
+# liberdade" so' e' testavel contra um escopo DECLARADO. Este e' o escopo declarado.
+#
+# COMO MUDAR UM KNOB (o caminho SANCIONADO, nao ha versao silenciosa):
+#   `config.yaml` + `calibracao.lock.yaml` no MESMO commit. O hook do BLIND-05 permite
+#   este par de proposito (ele bloqueia `config.yaml` + golden/fixture, nao isto) — e' por
+#   isso que este arquivo mora na RAIZ e nao em `tests/`. A mudanca fica VISIVEL E
+#   REVISAVEL no diff, que e' o unico ponto de todo o mecanismo.
+#
+# ESTE ARQUIVO REGISTRA O ESTADO DE HOJE (2026-07-13), NAO O ALVO. Os alvos das Fases
+# 10-13 estao anotados como comentario ao lado de cada folha. Escrever o alvo aqui deixaria
+# a suite vermelha e convidaria a "corrigir" o config.yaml — ou seja, a MOVER UM NUMERO.
+
+# --------------------------------------------------------------------------- #
+# ESCOPO — os blocos do config.yaml que afetam o valor intrinseco `V`.
+# --------------------------------------------------------------------------- #
+# 30 folhas (motores 11 + capm 12 + ddm 5 + normalizacao 2). O orcamento se aplica a ELAS.
+#
+# Os outros 8 blocos do config.yaml (80 folhas: screening 33, indicadores 16, score 11,
+# padroes 6, arquetipo 5, veredito 4, selo 3, universo 2) ficam FORA do escopo porque
+# NAO ENTRAM NO CALCULO DE `V`: sao filtros de garimpo (Cap. 8), sinais tecnicos
+# consultivos, cortes de cor do selo e limiares de roteamento. Errar um deles muda o que
+# o app MOSTRA ou RANQUEIA; errar um dos 30 abaixo muda QUANTO A ACAO VALE.
+#
+# EXCECAO CONHECIDA E FECHADA: `veredito.margem_seguranca` esta fora do escopo por bloco,
+# mas MULTIPLICA o `V` -> esta declarada em `user_control` abaixo, explicitamente. Ela era
+# o 4o grau de liberdade escondido do sistema.
+escopo:
+  - motores
+  - capm
+  - ddm
+  - normalizacao
+
+# --------------------------------------------------------------------------- #
+# GRAUS DE LIBERDADE — os UNICOS 3 valores calibraveis do sistema.
+# --------------------------------------------------------------------------- #
+# Um 4o grau aqui deixa `test_orcamento_de_knobs_e_exatamente_3` VERMELHO. Se um knob
+# PRECISA virar calibravel, OUTRO PRECISA MORRER. E' um orcamento, nao uma lista de desejos.
+graus_de_liberdade:
+
+  ERP:
+    caminho: capm.erp_local
+    valor: 0.06
+    fonte: >-
+      Premio de risco de equity sobre a Selic: ~4,5% de mercado maduro (Damodaran) + ~1,5%
+      de premio small-cap/iliquidez. A Selic ja' precifica risco-pais e inflacao, entao o
+      ERP e' so' o premio de equity.
+    # HOJE EXISTEM DOIS ERPs SIMULTANEOS NO SISTEMA: `capm.erp_local` (0.06) e
+    # `motores.rim.erp_banco` (0.045). Dois premios de risco no mesmo modelo e' um sintoma,
+    # nao um design: o segundo nasceu para baixar o Ke dos bancos. Ele esta em `congelados`.
+    # KE-02 (Fase 12) UNIFICA — sobra UM ERP. Ate la', o grau de liberdade e' este.
+    # Alvo do KE-02: 0.045 (mercado maduro puro). NAO escrever o alvo aqui hoje.
+
+  n_fade:
+    caminho: motores.rim.n_fade
+    valor: 10
+    fonte: >-
+      Horizonte explicito (anos) do fade do excesso de ROE ate o excesso sustentavel, no RIM
+      hibrido com valor terminal (CAL-01).
+    # E' ESTE KNOB que impoe o PISO ESTRUTURAL DE -4,68% do BLIND-02(b): a janela explicita
+    # FINITA nao e' invariante a inflacao (ela desconta RI nominal a Ke nominal sobre um book
+    # a custo historico, que a inflacao nao reexpressa). So' a PERPETUIDADE e' invariante.
+    # Daqui vem o limiar de 5% do `test_invariancia_inflacao_engine_itub4` — e e' por isso
+    # que o `n_fade` PRECISA ser um grau de liberdade: um teste que so' pode ficar verde
+    # matando um knob nao e' um teste, e' um knob disfarcado.
+
+  PIB_real:
+    caminho: ddm.g_estavel
+    valor: 0.025
+    fonte: >-
+      Crescimento na perpetuidade <= PIB (Focus/BCB ~2,5%).
+    # ATENCAO — O CAMINHO DE HOJE NAO E' O CAMINHO FINAL, E ISSO E' PROPOSITAL:
+    #
+    # Hoje o PIB REAL esta digitado DIRETO em `ddm.g_estavel`: 2,5% REAL descontado por um
+    # `Ke` NOMINAL (que embute ~5,2% de IPCA). E' A DOENCA 1 — o vies de inflacao — e ela
+    # esta versionada como teste em `test_invariancia_inflacao_engine_itub4` (xfail).
+    # NAO existe `ddm.pib_real` no config.yaml. Registrar aqui um caminho que nao existe
+    # deixaria a suite vermelha e convidaria a inventar a chave.
+    #
+    # GROW-01 (Fase 11) troca isto por um `g_cap` DERIVADO:
+    #     g_cap = (1 + pi_ciclo) x (1 + PIB_real) - 1 = 7,28%
+    # QUANDO ISSO ACONTECER, ATUALIZE O `caminho` AQUI, NO MESMO COMMIT.
+    # Isso NAO e' afrouxar o orcamento — e' o orcamento SENDO MANTIDO. O grau de liberdade
+    # continua sendo UM (o PIB real); o que muda e' onde ele mora e como e' consumido.
+
+# --------------------------------------------------------------------------- #
+# USER_CONTROL — D-04: o 4o grau de liberdade ESCONDIDO, fechado por declaracao.
+# --------------------------------------------------------------------------- #
+user_control:
+
+  veredito.margem_seguranca:
+    valor: 0.15
+    # ELA MULTIPLICA O `V`. De fato, seria um 4o grau de liberdade — e o mais perigoso de
+    # todos, porque nao mora em nenhum bloco de valuation e por isso escaparia do escopo.
+    #
+    # NAO E' UM GRAU DE LIBERDADE, E' UM CONTROLE DO USUARIO. O livro e' explicito:
+    # "se 5%, 10% ou qualquer outro valor, e' VOCE quem decide". ENG-06 (Fase 13) a
+    # transforma em controle explicito na UI. Ate la', fica CONGELADA aqui.
+    #
+    # NUNCA calibrar contra dispersao, contra preco de mercado ou contra taxa de compra.
+    # Uma margem de seguranca calibrada para produzir mais recomendacoes de compra nao e'
+    # uma margem de seguranca — e' uma alavanca de marketing. E' assim que a Armadilha 4
+    # morre POR CONSTRUCAO: ela esta escrita aqui, com nome e valor, e o teste a le.
+    ate: "ENG-06 (Fase 13) — vira controle do usuario"
+
+# --------------------------------------------------------------------------- #
+# CONGELADOS — as outras 27 folhas do escopo (30 - 3 graus de liberdade).
+# --------------------------------------------------------------------------- #
+# Valor de HOJE, lido do `config.yaml` (nunca digitado de memoria). Se qualquer um destes
+# divergir do config, `test_knobs_batem_com_o_lock` fica VERMELHO — e a mudanca precisa
+# aparecer NESTE arquivo, no MESMO diff. E' o que a torna revisavel.
+congelados:
+
+  # --- motores.rim (8) — a superficie exata do overfit v2.3 ---
+  motores.rim.erp_banco: 0.045
+    # KE-02, Fase 12: o 2o ERP do sistema MORRE; sobra um so' (`capm.erp_local`).
+  motores.rim.ke_piso: 0.11
+    # KE-04, Fase 12: REMOVIDO.
+  motores.rim.ke_teto: 0.13
+    # KE-04, Fase 12: REMOVIDO. Hoje ele SATURA (3 de 4 bancos da cesta ja' estao no teto) e
+    # absorve integralmente a perna do `rf` do BLIND-02(b) — e' por isso que aquele teste so'
+    # pode virar verde na Fase 12, e nao na 11. A justificativa "Blume" do config.yaml e'
+    # aritmeticamente FALSA: Blume (beta -> 1,0) daria Ke ~15,9%, nao 13%.
+  # (`motores.rim.n_fade` NAO aparece aqui de proposito: e' GRAU DE LIBERDADE. Os 3 graus e
+  #  os 27 congelados sao uma PARTICAO das 30 folhas do escopo — nenhuma folha nos dois lados,
+  #  nenhuma folha de fora. O teste verifica a particao, nao so' a contagem.)
+  motores.rim.excesso_sustentavel: 0.045
+    # GROW-05, Fase 11: hoje DECORATIVO (o cap satura), vira LOAD-BEARING quando o spread
+    # `Ke - g` cair de 10,5pp para ~5,5pp. Um knob decorativo que vira load-bearing sem
+    # ninguem notar e' exatamente como um modelo passa a ser governado por um numero que
+    # ninguem revisou.
+  motores.rim.g_terminal: 0.025
+    # GROW-01, Fase 11: espelha o `ddm.g_estavel` (mesma Doenca 1, mesma cura).
+  motores.rim.ke_g_spread_min: 0.03
+    # GROW-05, Fase 11: hoje DECORATIVO, vira LOAD-BEARING junto com `excesso_sustentavel`.
+  motores.rim.roe_terminal_stat: mediana
+    # Estatistica (mediana|media) do ROE through-cycle no RI terminal. Nao e' um nivel.
+
+  # --- motores.ciclica + motores.crescimento (3) ---
+  motores.ciclica.anos_media: 10
+  motores.ciclica.winsor: 0.1
+  motores.crescimento.n_anos_explicito: 10
+    # ENG-10, Fase 13: o bloco `motores:` inteiro vai de 11 chaves para <=5.
+    # (O ROADMAP diz "~20 -> <=5"; sao 11, medidas. O corte e' real: 11 -> 5.)
+
+  # --- capm (11 = 12 - 1 grau de liberdade) ---
+  capm.abordagem: local
+  capm.selic_fallback: 0.105
+  capm.rf_ciclo_anos: 10
+    # `rf` = Selic MEDIA de 10 anos (through-the-cycle). A janela do `rf` e a do deflator do
+    # lucro (`pi_ciclo`) PRECISAM ser a mesma — e' essa simetria que o GROW-02 formaliza.
+  capm.rf_local: 0.105
+    # Default offline. Os entry points (cli/app) SOBRESCREVEM com a Selic-ciclo do BCB, e o
+    # snapshot dos testes carimba o `rf` no fixture. Nao e' um knob calibravel: e' um default.
+  capm.rf_us: 0.0192
+  capm.embi_brasil: 0.0214
+  capm.erp_us: 0.062
+  capm.inflacao_br: 0.044
+  capm.inflacao_us: 0.0252
+    # As 5 acima sao os literais do LIVRO (fim de 2019), da abordagem "eua_ajustada"
+    # (legado/fallback de metodo). Nao estao no caminho ativo (`abordagem: local`).
+    # Sao REFERENCIA PUBLICADA, nao knobs: mexer nelas e' falsificar a citacao do livro.
+  capm.beta_meses: 60
+  capm.indice_mercado: ^BVSP
+
+  # --- ddm (4 = 5 - 1 grau de liberdade) ---
+  ddm.n_anos_explicito: 10
+  ddm.tributacao_dividendos: 0.0
+    # Toggle do usuario (ex.: 0.15 se voltar a tributacao de dividendos). Nao e' calibravel.
+  ddm.sensibilidade.delta_ke: [-0.02, -0.01, 0.0, 0.01, 0.02]
+  ddm.sensibilidade.delta_g: [-0.01, -0.005, 0.0, 0.005, 0.01]
+    # As duas acima sao a GRADE DA TABELA DE SENSIBILIDADE (apresentacao). Nao entram no `V`
+    # do caso base — entram no escopo por estarem no bloco `ddm`, e ficam congeladas aqui
+    # para que a particao do escopo seja COMPLETA (nenhuma folha orfa). Lista = UMA folha.
+
+  # --- normalizacao (2) ---
+  normalizacao.anos_media: 3
+    # PRIM-01, Fase 10. **NAO E' GRAU DE LIBERDADE — E' A TRAVA DO BLIND-03.**
+    # `test_normalizacao_nao_pune_crescimento` le este knob do config de PRODUCAO. Mudar
+    # para 1 faria aquele teste passar SEM CONSERTAR `normalizacao.py` (com n=1 nao ha
+    # mediana a puxar a base para baixo). E' a fuga do Pitfall 5, e ela esta fechada aqui:
+    # o teste de orcamento pega a alteracao porque `anos_media` NAO esta em
+    # `graus_de_liberdade`. O intertravamento BLIND-03 x BLIND-06 E' ESTA LINHA.
+  normalizacao.winsor: 0.1
+    # PRIM-01, Fase 10: idem — a winsorizacao e' parte da primitiva que sera' reescrita.
