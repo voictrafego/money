@@ -58,9 +58,9 @@ comportamento antigo ("Evitar"/DDM).
 
 ## Phases
 
-- [ ] **Phase 4: RIM com Valor Terminal + Ke revisado** - o RIM ganha uma perpetuidade de residual income (fim do fade-sem-terminal); ITUB4 sai de R$23 para ~R$32-40; Ke de banco revisado como ajuste secundário
-- [ ] **Phase 5: BACKTEST-01 — Validação na cesta de bancos** - harness reproduzível que roda o RIM calibrado em ITUB4/BBAS3/BBSE3/BBDC4 e triangula 4 âncoras (Graham+Bazin, preço, fair values manuais, múltiplos de pares); calibração generaliza, não só ITUB4
-- [ ] **Phase 6: Redeploy do app v2.3 na VPS** - subir o código v2.3 para produção; ITUB4 no app ao vivo mostra arquétipo→RIM calibrado, não mais "Evitar"/DDM R$12,93-19,32
+- [x] **Phase 4: RIM com Valor Terminal + Ke revisado** - o RIM ganha uma perpetuidade de residual income (fim do fade-sem-terminal); ITUB4 sai de R$23 para ~R$32-40; Ke de banco revisado como ajuste secundário. ⚠️ **REABERTA pelo loop D-12** (Fase 5 provou que a calibração não generaliza no cesto — 1/4; precisa de nova iteração de recalibração antes da Fase 6).
+- [x] **Phase 5: BACKTEST-01 — Validação na cesta de bancos** - harness reproduzível que roda o RIM calibrado em ITUB4/BBAS3/BBSE3/BBDC4 e triangula 4 âncoras (Graham+Bazin, preço, fair values manuais, múltiplos de pares). ✅ Harness entregue e verificado (VAL-01/VAL-02); **achado: a calibração NÃO generaliza (1/4)** → loop D-12 reabre a Fase 4.
+- [ ] **Phase 6: Redeploy do app v2.3 na VPS** - subir o código v2.3 para produção; ITUB4 no app ao vivo mostra arquétipo→RIM calibrado, não mais "Evitar"/DDM R$12,93-19,32. 🔒 **BLOQUEADA pelo loop D-12** (não subir com o cesto reprovando 3/4 do backtest).
 
 ## Phase Details
 
@@ -120,6 +120,6 @@ Fases executam em ordem numérica: 4 → 5 → 6
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 4. RIM com Valor Terminal + Ke revisado | v2.3 | 0/1 | Planned | - |
-| 5. BACKTEST-01 — Validação na cesta de bancos | v2.3 | 2/4 | In Progress|  |
-| 6. Redeploy do app v2.3 na VPS | v2.3 | 0/? | Planned | - |
+| 4. RIM com Valor Terminal + Ke revisado | v2.3 | 1/1 | Complete (🔁 reaberta — loop D-12) | 2026-07-12 |
+| 5. BACKTEST-01 — Validação na cesta de bancos | v2.3 | 4/4 | Complete (achado: calibração não generaliza) | 2026-07-13 |
+| 6. Redeploy do app v2.3 na VPS | v2.3 | 0/? | 🔒 Blocked (loop D-12) | - |

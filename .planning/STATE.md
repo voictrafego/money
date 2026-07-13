@@ -149,6 +149,19 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 
 [Issues that affect future work]
 
+- **🔴 LOOP D-12 ABERTO — recalibrar a Fase 4 antes de qualquer deploy (bloqueia a Fase 6).**
+  O backtest da Fase 5 (BACKTEST-01) provou que a calibração RIM da Fase 4 **não generaliza**: sobre o
+  snapshot congelado (`tests/fixtures/snapshot_bancos_2026-07-12.yaml`) cruzado com as faixas de consenso
+  ao vivo aprovadas (`tests/fixtures/fair_values_bancos.yaml`), só **1/4 (ITUB4)** cai na banda ±15% —
+  abaixo do quórum 3/4. Falha em **dois sentidos opostos** (não é viés uniforme):
+  - **BBAS3 RIM 45,60 (+54,6%, acima de todo target ≤39)** → super-avalia. Hipótese: `num_acoes` dobrado / lucro por ação inflado.
+  - **BBSE3 RIM 25,38 (−35,7%, abaixo do piso ≥33)** → sub-avalia a seguradora capital-light. Hipótese: RIM ancorado em book penaliza alto-ROE/baixo-capital.
+  - **BBDC4 RIM 10,47 (−46,3%, abaixo do book)** → sub-avalia no vale de ROE. Hipótese: guarda anti-bad-bank apertando demais.
+  O gate **não foi afrouxado**: a reprovação está travada como `xfail(strict=True, raises=AssertionError)`
+  em `tests/test_backtest_bancos.py` — vira `XPASS→FAIL` automaticamente quando a Fase 4 recalibrar e o
+  cesto cruzar 3/4, fechando o loop. Evidência completa: `05-04-SUMMARY.md` + `out/backtest_bancos.md`.
+  **Fase 4 precisa reabrir; Fase 6 (redeploy) fica bloqueada até o cesto passar.**
+
 - **Não quebrar os golden do valuation sem intenção:** `test_ddm.py` (DDM Itaú R$37,22 input fixo),
   `test_selo.py` (cortes de cor + rótulos da matriz + firewall selo↛report), `test_vulc3_regressao.py`
   (capstone e2e; veredito começa com "VERIFICAR"), `test_guardrails_fix06.py`, `test_consistencia_modos.py`
