@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.3
 milestone_name: Calibração do Valuation à Realidade (RIM com Valor Terminal)
-status: executing
-stopped_at: Phase 5 context gathered
-last_updated: "2026-07-13T07:50:26.652Z"
+status: verifying
+stopped_at: Completed 05-04-PLAN.md (loop D-12 aberto)
+last_updated: "2026-07-13T08:00:49.684Z"
 last_activity: 2026-07-13
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 3
-  percent: 60
+  completed_plans: 5
+  percent: 100
 ---
 
 # Project State
@@ -29,7 +29,7 @@ qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio úni
 
 Phase: 05 (backtest-01-valida-o-na-cesta-de-bancos) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-13
 
 ## Deferred Items
@@ -43,7 +43,7 @@ Itens reconhecidos e adiados no fechamento do marco v2.2 (2026-07-12):
 | quick_task | 260629-ig6-aba-swing-trade-mvp-candlestick-intraday | missing (era v1.x) |
 | quick_task | 260630-g0b-adicionar-auto-refresh-opcional-ao-4-men | missing (era v1.x) |
 
-Progress: [██████░░░░] 60%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -86,6 +86,7 @@ Progress: [██████░░░░] 60%
 | Phase 04 P01 | 0h04m | 3 tasks | 5 files |
 | Phase 05 P02 | 12min | 3 tasks | 1 files |
 | Phase 05 P03 | 0h18m | 2 tasks | 2 files |
+| Phase 05 P04 | 0h14m | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -126,6 +127,7 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - [Phase ?]: [Phase 05]: rodar_cesta pura em src/analista/backtest.py CONSOME report.analisar_acao (intrinseco_motor) — nunca reimplementa RIM; teste 05-04 e script compartilham a MESMA funcao e provam o mesmo numero
 - [Phase ?]: [Phase 05]: harness roda 100% offline injetando rf_local congelado do snapshot em cfg[capm][rf_local]; medianas P/VP e P/L da propria cesta (D-11) como ancora setorial, zero fonte externa
 - [Phase ?]: [Phase 05]: reproduz o snapshot exatamente (ITUB4 32.88 PASS in-band; BBAS3/BBDC4/BBSE3 FAIL) — desvios reportados no out/backtest_bancos.md nao mascarados (D-12); quorum/loop e do Plan 05-04
+- [Phase 05]: backtest da cesta REPROVA o quórum (1/4 na banda ±15% < 3/4) — calibração RIM da Fase 4 nao generaliza; gate encoda a regra verbatim + xfail(strict), NAO afrouxa banda/quorum; achado registrado, loop D-12 reabre a Fase 04 (05-04)
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -158,6 +160,8 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - **Consistência cross-modo:** métodos canônicos `*_valuation()` em `fundamentals.py` são fonte única
   — mexer neles reverbera nos 3 modos (Analisar/Garimpo/Ranking).
 
+- LOOP D-12 ABERTO (05-04): backtest da cesta reprovou (1/4 na banda ±15% < quórum 3/4). Calibração RIM da Fase 4 NÃO generaliza — BBAS3 super-avaliado +54.6%, BBSE3 −35.7%, BBDC4 −46.3%. Reabrir Fase 04 para recalibrar; Fase 06 (deploy) bloqueada até fechar. Gate xfail(strict) vira XPASS→FAIL ao recalibrar.
+
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |
@@ -183,8 +187,8 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-13T07:50:12.304Z
-Stopped at: Phase 5 context gathered
+Last session: 2026-07-13T08:00:33.390Z
+Stopped at: Completed 05-04-PLAN.md (loop D-12 aberto)
 Resume file: None
 
 ## Operator Next Steps

@@ -100,8 +100,8 @@ harness reproduzível (script + teste) que roda o RIM calibrado numa cesta de ba
 **Plans:** 2/4 plans executed
 - [x] 05-01-PLAN.md — Captura ao vivo (one-time) + snapshot congelado dos 4 bancos (VAL-01, reprodutibilidade)
 - [x] 05-02-PLAN.md — Pesquisa de consenso de fair values + aprovação do usuário + fixture YAML (VAL-02)
-- [ ] 05-03-PLAN.md — Harness compartilhado rodar_cesta + script standalone → out/backtest_bancos.md (VAL-01/VAL-02)
-- [ ] 05-04-PLAN.md — Gate pytest determinístico (quórum 3/4 ±15% + anotação) + suíte verde + loop D-12 (VAL-01/VAL-02)
+- [x] 05-03-PLAN.md — Harness compartilhado rodar_cesta + script standalone → out/backtest_bancos.md (VAL-01/VAL-02)
+- [x] 05-04-PLAN.md — Gate pytest determinístico (quórum 3/4 ±15% + anotação) + suíte verde + loop D-12 (VAL-01/VAL-02)
 
 ### Phase 6: Redeploy do app v2.3 na VPS
 **Goal**: Fechar o loop até produção. O v2.2 (e agora v2.3) nunca subiu — o app deployado na VPS
