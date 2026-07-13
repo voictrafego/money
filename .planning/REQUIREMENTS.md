@@ -217,4 +217,74 @@ prova que a ordem importa: consertar o `Ke` antes do `g` **piora** (ITUB4 0,75 �
 
 ## Traceability
 
-_(preenchido pelo roadmapper)_
+**Cobertura: 52/52 requisitos mapeados (100%). Zero órfãos. Zero duplicatas.**
+Cada requisito pertence a **exatamente uma** fase. A ordem das fases (7→14) é obrigatória e foi
+provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| BLIND-01 | Phase 7 | Pending |
+| BLIND-02 | Phase 7 | Pending |
+| BLIND-03 | Phase 7 | Pending |
+| BLIND-04 | Phase 7 | Pending |
+| BLIND-05 | Phase 7 | Pending |
+| BLIND-06 | Phase 7 | Pending |
+| SAN-01 | Phase 8 | Pending |
+| SAN-02 | Phase 8 | Pending |
+| SAN-03 | Phase 8 | Pending |
+| SAN-04 | Phase 8 | Pending |
+| SAN-05 | Phase 8 | Pending |
+| SAN-06 | Phase 8 | Pending |
+| SAN-07 | Phase 8 | Pending |
+| DATA-01 | Phase 9 | Pending |
+| DATA-02 | Phase 9 | Pending |
+| DATA-03 | Phase 9 | Pending |
+| DATA-04 | Phase 9 | Pending |
+| DATA-05 | Phase 9 | Pending |
+| DATA-06 | Phase 9 | Pending |
+| PRIM-01 | Phase 10 | Pending |
+| PRIM-02 | Phase 10 | Pending |
+| PRIM-03 | Phase 10 | Pending |
+| PRIM-04 | Phase 10 | Pending |
+| PRIM-05 | Phase 10 | Pending |
+| GROW-01 | Phase 11 | Pending |
+| GROW-02 | Phase 11 | Pending |
+| GROW-03 | Phase 11 | Pending |
+| GROW-04 | Phase 11 | Pending |
+| GROW-05 | Phase 11 | Pending |
+| KE-01 | Phase 12 | Pending |
+| KE-02 | Phase 12 | Pending |
+| KE-03 | Phase 12 | Pending |
+| KE-04 | Phase 12 | Pending |
+| KE-05 | Phase 12 | Pending |
+| ENG-01 | Phase 13 | Pending |
+| ENG-02 | Phase 13 | Pending |
+| ENG-03 | Phase 13 | Pending |
+| ENG-04 | Phase 13 | Pending |
+| ENG-05 | Phase 13 | Pending |
+| ENG-06 | Phase 13 | Pending |
+| ENG-07 | Phase 13 | Pending |
+| ENG-08 | Phase 13 | Pending |
+| ENG-09 | Phase 13 | Pending |
+| ENG-10 | Phase 13 | Pending |
+| ENG-11 | Phase 13 | Pending |
+| VAL-01 | Phase 14 | Pending |
+| VAL-02 | Phase 14 | Pending |
+| VAL-03 | Phase 14 | Pending |
+| VAL-04 | Phase 14 | Pending |
+| VAL-05 | Phase 14 | Pending |
+| VAL-06 | Phase 14 | Pending |
+| VAL-07 | Phase 14 | Pending |
+
+### Resumo por fase
+
+| Fase | Categoria | Requisitos | Qtd | Papel na ordem obrigatória |
+|------|-----------|------------|-----|----------------------------|
+| 7 | BLIND | BLIND-01..06 | 6 | Redefine "suíte verde" ANTES de tocar código |
+| 8 | SAN | SAN-01..07 | 7 | Os asserts SÃO o teste de regressão da Fase 9 |
+| 9 | DATA | DATA-01..06 | 6 | Cura a Doença 2 (dispersão); os asserts viram verde |
+| 10 | PRIM | PRIM-01..05 | 5 | **Critério de saída: o golden ITUB4 32.88 quebra e é DELETADO** |
+| 11 | GROW | GROW-01..05 | 5 | Metade da Doença 1; BLIND-02 vira verde AQUI |
+| 12 | KE | KE-01..05 | 5 | **Separada do GROW de propósito** (regra dura A) |
+| 13 | ENG | ENG-01..11 | 11 | 4 motores → RIM único; `motores:` ~20 → ≤5 chaves (contado) |
+| 14 | VAL | VAL-01..07 | 7 | **Critério soberano: ITUB4 = R$ 37,22 (o caso do livro)** |
