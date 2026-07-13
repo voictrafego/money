@@ -71,6 +71,7 @@ def rim(
     g_terminal: Optional[float] = None,
     ke_g_spread_min: float = 0.03,
     fade_para: Optional[float] = None,
+    roe_terminal: Optional[float] = None,
 ) -> Optional[ResultadoRIM]:
     """RIM híbrido multiestágio (CFA L2 / Ohlson): janela explícita de residual income + valor
     terminal (continuing value) via perpetuidade de Gordon sobre o RI terminal (CAL-01).
@@ -92,8 +93,19 @@ def rim(
     reinvestimento a excesso-de-ROE eterno, a fonte clássica de RIM explosivo. Reusa a primitiva
     testada `ddm.valor_gordon` (que já devolve None em `Ke − g ≤ 0`), sem reimplementar.
 
+    TERMINAL NORMALIZADO (CAL-01/Alavanca 2/D-01): `roe_terminal` (opcional) ancora o excesso do RI
+    da perpetuidade no ROE through-cycle do próprio ticker (mediana histórica, computada pelo
+    `report`), aplicado SÓ na base do RI terminal — a janela explícita (`roe0`/`fade_para`) fica
+    INTOCADA (Pitfall 1). O excesso terminal continua CAPADO pelo `excesso_sustentavel`:
+    `excesso_t = min(roe_terminal − Ke, excesso_sustentavel)`, sobre a MESMA base de book do último
+    RI da janela (`B_{n-1}`). Quando `roe_terminal − Ke ≥ excesso_sustentavel` o `min(...)` satura no
+    cap — IDÊNTICO ao RI terminal legado (que também satura) → o valor não regride (protege o ITUB4
+    por construção). `roe_terminal=None` ⇒ comportamento legado (`RI_n`). Pode ser negativo (ROE de
+    ciclo < Ke) → RI terminal negativo (anti-bad-bank preservado no terminal).
+
     Backward-safe: chamada legada `rim(vpa0, roe0, ke, retencao, n)` reproduz o comportamento D-02
-    (excesso_sustentavel=0.0 → fade a Ke; g_terminal=None → sem terminal; vp_terminal == 0).
+    (excesso_sustentavel=0.0 → fade a Ke; g_terminal=None → sem terminal; vp_terminal == 0;
+    roe_terminal=None → RI terminal = RI_n, bit-idêntico à it.1).
 
     Never-raise: input None, `n <= 0`, `ke <= 0` ou `vpa0 <= 0` → None.
     """
@@ -102,16 +114,25 @@ def rim(
     if fade_para is None:
         fade_para = ke + min(roe0 - ke, excesso_sustentavel)
     b_prev, vp, ris = vpa0, 0.0, []
+    b_base_ri_final = vpa0  # base de book do ÚLTIMO RI da janela (B_{n-1}) p/ o terminal normalizado
     for t in range(1, n + 1):
         frac = (t - 1) / (n - 1) if n > 1 else 1.0
         roe_t = roe0 + (fade_para - roe0) * frac
         ri = (roe_t - ke) * b_prev
         vp += ri / (1 + ke) ** t
         ris.append(ri)
+        b_base_ri_final = b_prev
         b_prev = b_prev * (1 + roe_t * retencao)
     vp_terminal = 0.0
     if g_terminal is not None and ke - g_terminal >= ke_g_spread_min:
-        ri_terminal = ris[-1] * (1 + g_terminal)
+        if roe_terminal is not None:
+            # Normalização through-cycle no terminal: excesso capado sobre a MESMA base de book do
+            # RI legado (B_{n-1}). Satura no cap ⇒ idêntico ao legado (não regride o ITUB4).
+            excesso_t = min(roe_terminal - ke, excesso_sustentavel)
+            ri_terminal_base = excesso_t * b_base_ri_final
+        else:
+            ri_terminal_base = ris[-1]
+        ri_terminal = ri_terminal_base * (1 + g_terminal)
         tv = ddm.valor_gordon(dpa1=ri_terminal, ke=ke, g=g_terminal)
         vp_terminal = tv / (1 + ke) ** n if tv is not None else 0.0
     return ResultadoRIM(
