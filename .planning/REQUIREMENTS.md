@@ -39,7 +39,7 @@ direta do post-mortem do v2.3.
   **INVARIANTE** (verdade algébrica que knob nenhum satisfaz), **GOLDEN-DE-NÍVEL** (trava um número,
   logo trava o método atual) e **CONTRATO** (formato/borda). Os GOLDEN-DE-NÍVEL entram em quarentena
   em vez de bloquear o marco.
-- [ ] **BLIND-02**: Existem **dois** testes de **invariância à inflação**, e o choque é aplicado a
+- [x] **BLIND-02**: Existem **dois** testes de **invariância à inflação**, e o choque é aplicado a
   **`rf`, `g_cap` E `ROE` simultaneamente** (+300 bps):
   - **(a) invariante algébrico** sobre a identidade fechada `P/B justo = 1 + (ROE−Ke)/(Ke−g)` —
     exato (< 1e-9), knob-proof, **passa hoje**; guarda a ponte auditável do ENG-08.
@@ -65,7 +65,7 @@ direta do post-mortem do v2.3.
 
   ⚠️ **NÃO escrever este teste sobre BBDC4** — ele passa hoje **por acidente** (+1,96%) e daria XPASS
   → suíte vermelha na hora.
-- [ ] **BLIND-03**: Existe teste de que a normalização **não pune crescimento** — série de lucro de
+- [x] **BLIND-03**: Existe teste de que a normalização **não pune crescimento** — série de lucro de
   +10%/ano *pura* (zero outlier) não pode produzir base normalizada abaixo do último ano menos
   inflação. Hoje produz haircut medido de **−9,1%**.
 - [ ] **BLIND-04**: **Nenhum teste de calibração afirma `ticker == valor em reais`.** A validação é
@@ -249,8 +249,8 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | BLIND-01 | Phase 7 | Complete |
-| BLIND-02 | Phase 7 | Pending |
-| BLIND-03 | Phase 7 | Pending |
+| BLIND-02 | Phase 7 | Complete |
+| BLIND-03 | Phase 7 | Complete |
 | BLIND-04 | Phase 7 | Pending |
 | BLIND-05 | Phase 7 | Pending |
 | BLIND-06 | Phase 7 | Pending |

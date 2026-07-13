@@ -107,7 +107,7 @@ por um knob e **ninguém nota** (é a lição literal do post-mortem do v2.3).
 **Plans**: 5 plans (5 waves — serializados: todos escrevem em `tests/classificacao.yaml`)
 Plans:
 - [x] 07-01-PLAN.md — BLIND-01: quarentena dos goldens (448 testes classificados via YAML + `conftest.py`; zero edição nos testes existentes)
-- [ ] 07-02-PLAN.md — BLIND-02 + BLIND-03: as duas doenças escritas como código (invariante algébrico exato + 2 `xfail(strict)`)
+- [x] 07-02-PLAN.md — BLIND-02 + BLIND-03: as duas doenças escritas como código (invariante algébrico exato + 2 `xfail(strict)`)
 - [ ] 07-03-PLAN.md — BLIND-04: meta-teste AST (`ticker == R$` proibido) + harness do jackknife (veredito adiado p/ a Fase 14)
 - [ ] 07-04-PLAN.md — BLIND-05: hook versionado (`.githooks/commit-msg` + `core.hooksPath`) + backstop contra `--no-verify`
 - [ ] 07-05-PLAN.md — BLIND-06: `calibracao.lock.yaml` (3 graus de liberdade) + limpeza dos comentários com ticker + **canário**
@@ -257,7 +257,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 7. Blindagem processual (BLIND) | v2.4 | 1/5 | In Progress|  |
+| 7. Blindagem processual (BLIND) | v2.4 | 2/5 | In Progress|  |
 | 8. Sanidade dos dados (SAN) | v2.4 | 0/? | Not started | - |
 | 9. Ingestão correta (DATA) | v2.4 | 0/? | Not started | - |
 | 10. Primitivas sem viés (PRIM) | v2.4 | 0/? | Not started | - |
