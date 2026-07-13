@@ -476,3 +476,10 @@
 'tests/test_blindagem_meta.py::test_nenhum_teste_de_calibracao_crava_ticker_em_reais': contrato
 'tests/test_blindagem_meta.py::test_mediana_jackknife_e_robusta_por_construcao': invariante
 'tests/test_blindagem_meta.py::test_nenhum_ticker_e_load_bearing': contrato  # SKIPa ate a Fase 14 (VAL-02) criar o holdout_v24.yaml
+
+# --- Fase 7 / plano 07-04: BLIND-05. Backstop do hook (.githooks/commit-msg).
+# Nao testam a engine: testam a PROTECAO. Rodam no default, para sempre — se sairem daqui,
+# o hook vira protecao fantasma (core.hooksPath e' estado local, nao versionado).
+'tests/test_blindagem_hook.py::test_hook_do_blind05_esta_instalado': contrato
+'tests/test_blindagem_hook.py::test_hook_do_blind05_e_versionado_e_executavel': contrato
+'tests/test_blindagem_hook.py::test_historico_do_v24_sem_co_change_knob_e_golden': contrato
