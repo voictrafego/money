@@ -1,0 +1,79 @@
+#!/bin/sh
+# BLIND-05 — bloqueio do co-change `config.yaml` + golden/fixture no MESMO commit.
+#
+# Por que este hook existe: um commit que mexe num KNOB e num GOLDEN ao mesmo tempo e' a
+# assinatura exata de "calibrei o knob ate o teste passar" — o post-mortem do v2.3
+# (commit 5cd3b61, "ROE through-cycle ... via roe_terminal + knob"). A varredura dos 676
+# commits do repo achou 5 co-changes; 2 deles sao LEGITIMOS (primitiva nova + knob + teste
+# nascendo juntos) -> a escapatoria existe, mas e' BARULHENTA: o trailer
+# `Knob-Change-Justification:` fica no `git log` para sempre e e' revisavel.
+#
+# E' o hook `commit-msg` (nao `pre-commit`) porque so' ele recebe o arquivo da mensagem
+# em `$1` — e ele tambem le o indice via `git diff --cached`. Um hook so'.
+#
+# Instalacao (estado LOCAL por clone, NAO versionado):
+#     git config core.hooksPath .githooks
+# `tests/test_blindagem_hook.py` deixa a suite VERMELHA se isto estiver desinstalado.
+#
+# SEGURANCA (T-07-07): a mensagem de commit e' texto livre entrando num interpretador.
+# Ela e' tratada so' com `printf '%s' "$msg" | grep|sed`. Nunca ha expansao de comando
+# sobre ela. `--no-verify` burla este hook — por isso existe o backstop em teste.
+#
+# Bypass legitimo: NAO existe "desligar". Ou separa em dois commits, ou declara o trailer.
+
+set -u
+
+RAIZ=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+MAPA="$RAIZ/data/ticker_map.json"
+
+staged=$(git diff --cached --name-only)
+
+# So' o CO-CHANGE interessa. Mexer so' no knob, ou so' no teste, passa reto.
+printf '%s\n' "$staged" | grep -qx 'config.yaml' || exit 0
+printf '%s\n' "$staged" | grep -qE '^tests/(fixtures/|test_)' || exit 0
+
+# NOTA: `calibracao.lock.yaml` (BLIND-06) fica na RAIZ, fora de `tests/` — de proposito.
+# `config.yaml` + lock no mesmo commit e' o caminho SANCIONADO (a mudanca de knob fica
+# visivel e revisavel no diff) e nao pode cair neste bloqueio.
+
+msg=$(cat "$1" 2>/dev/null || true)
+just=$(printf '%s\n' "$msg" | sed -n 's/^Knob-Change-Justification:[[:space:]]*//p' | head -1)
+
+if [ -z "$just" ]; then
+  echo "BLOQUEADO (BLIND-05): config.yaml + teste/fixture no MESMO commit." >&2
+  echo >&2
+  echo "  E' a assinatura de 'calibrei o knob ate o golden passar' (post-mortem do v2.3)." >&2
+  echo "  O caminho normal e' SEPARAR EM DOIS COMMITS: o knob de um lado, o teste do outro." >&2
+  echo >&2
+  echo "  Se for o caso legitimo (primitiva nova + knob + teste nascendo juntos), declare" >&2
+  echo "  no corpo da mensagem de commit:" >&2
+  echo >&2
+  echo "      Knob-Change-Justification: <razao ECONOMICA, sem citar ticker>" >&2
+  echo >&2
+  echo "  O trailer fica no git log para sempre. Nao ha versao silenciosa disto." >&2
+  exit 1
+fi
+
+# A regra escrita do ROADMAP, agora EXECUTAVEL:
+# "uma justificativa legitima de knob nunca menciona um ticker".
+#
+# A regex `[A-Z]{4}[0-9]{1,2}` sozinha e' um FALSO POSITIVO ambulante (ela casa `MACD12`,
+# que existe no proprio config.yaml). Ela e' so' o PRIMEIRO FILTRO: o candidato so' vira
+# bloqueio se for chave de `data/ticker_map.json` — a lista dos 104 tickers reais.
+candidatos=$(printf '%s\n' "$just" | grep -oE '[A-Z]{4}[0-9]{1,2}' || true)
+for cand in $candidatos; do
+  if grep -qF "\"$cand\"" "$MAPA" 2>/dev/null; then
+    echo "BLOQUEADO (BLIND-05): a justificativa do knob menciona um TICKER ($cand)." >&2
+    echo >&2
+    echo "      Knob-Change-Justification: $just" >&2
+    echo >&2
+    echo "  Uma justificativa legitima de knob NUNCA menciona um ticker: um knob e' uma" >&2
+    echo "  premissa ECONOMICA (premio de risco, horizonte de fade, PIB real), nao um" >&2
+    echo "  ajuste para um papel especifico." >&2
+    echo "  Contra-exemplo canonico, dentro deste repo — config.yaml:238:" >&2
+    echo "      'Move ITUB4 ~R\$2'  <- e' isto que o marco v2.4 existe para nao repetir." >&2
+    exit 1
+  fi
+done
+
+exit 0
