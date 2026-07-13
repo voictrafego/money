@@ -81,7 +81,7 @@ puro/never-raise sem tocar `ddm.py`/`selo.py`/`lentes.py`.
 
 **Plans:** 3 plans
 - [x] 04-01-PLAN.md — RIM ganha valor terminal (perpetuidade Gordon) + ke_teto 0.14->0.13; gate duro ITUB4 R$32-40
-- [ ] 04-02-PLAN.md — Alavanca 2: normalização through-cycle do ROE terminal (D-01) → cesta 3/4+1, remove xfail (fecha loop D-12)
+- [x] 04-02-PLAN.md — Alavanca 2: normalização through-cycle do ROE terminal (D-01) → cesta 3/4+1, remove xfail (fecha loop D-12)
 - [ ] 04-03-PLAN.md — Alavanca 3: rota seguradora Gordon-franquia p/ BBSE3 (D-03) → cesta 4/4
 
 ### Phase 5: BACKTEST-01 — Validação na cesta de bancos

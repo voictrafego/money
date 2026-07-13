@@ -4,14 +4,14 @@ milestone: v2.3
 milestone_name: Calibração do Valuation à Realidade (RIM com Valor Terminal)
 status: executing
 stopped_at: Completed 05-04-PLAN.md (loop D-12 aberto)
-last_updated: "2026-07-13T12:36:05.089Z"
-last_activity: 2026-07-13 -- Phase 04 planning complete
+last_updated: "2026-07-13T13:15:26.236Z"
+last_activity: 2026-07-13
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
-  percent: 71
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
@@ -23,14 +23,14 @@ See: .planning/PROJECT.md (updated 2026-07-11)
 **Core value:** Cada tipo de negócio é roteado para o motor de valuation certo antes de valuar,
 e nenhum veredito final é puxado por um modelo que não serve àquele perfil — um compounder de
 qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio único não cabe nele.
-**Current focus:** Phase 04 — RIM recalibração (iteração 2 / loop D-12) — CONTEXT capturado, pronto p/ planejar
+**Current focus:** Phase 04 — rim-com-valor-terminal-ke-revisado
 
 ## Current Position
 
-Phase: 4 (reaberta pelo loop D-12; Fase 6 bloqueada até fechar)
-Plan: Not started (recalibração — iteração 2)
+Phase: 04 (rim-com-valor-terminal-ke-revisado) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-07-13 -- Phase 04 planning complete
+Last activity: 2026-07-13
 
 ## Deferred Items
 
@@ -43,7 +43,7 @@ Itens reconhecidos e adiados no fechamento do marco v2.2 (2026-07-12):
 | quick_task | 260629-ig6-aba-swing-trade-mvp-candlestick-intraday | missing (era v1.x) |
 | quick_task | 260630-g0b-adicionar-auto-refresh-opcional-ao-4-men | missing (era v1.x) |
 
-Progress: [██████████] 100%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -88,6 +88,7 @@ Progress: [██████████] 100%
 | Phase 05 P02 | 12min | 3 tasks | 1 files |
 | Phase 05 P03 | 0h18m | 2 tasks | 2 files |
 | Phase 05 P04 | 0h14m | 2 tasks | 1 files |
+| Phase 04 P02 | 0h18m | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -129,6 +130,8 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - [Phase ?]: [Phase 05]: harness roda 100% offline injetando rf_local congelado do snapshot em cfg[capm][rf_local]; medianas P/VP e P/L da propria cesta (D-11) como ancora setorial, zero fonte externa
 - [Phase ?]: [Phase 05]: reproduz o snapshot exatamente (ITUB4 32.88 PASS in-band; BBAS3/BBDC4/BBSE3 FAIL) — desvios reportados no out/backtest_bancos.md nao mascarados (D-12); quorum/loop e do Plan 05-04
 - [Phase 05]: backtest da cesta REPROVA o quórum (1/4 na banda ±15% < 3/4) — calibração RIM da Fase 4 nao generaliza; gate encoda a regra verbatim + xfail(strict), NAO afrouxa banda/quorum; achado registrado, loop D-12 reabre a Fase 04 (05-04)
+- [Phase 04]: Alavanca 2 (loop D-12) — normalização through-cycle do ROE aplicada SÓ no RI terminal (mediana histórica do ticker, capada por excesso_sustentavel); cesta cruza 3/4 (BBAS3 45,60→43,89, BBDC4 10,47→13,37) e ITUB4 fica bit-idêntico (32,88, cap satura)
+- [Phase 04]: roe_terminal é o último param de motores.rim (default None=legado); anchor sai da série via report._roe_through_cycle (never-raise <3 pts→None); único knob novo roe_terminal_stat (D-08); loop D-12 fechado com xfail(strict) removido do gate
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -202,7 +205,7 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-13T08:00:33.390Z
+Last session: 2026-07-13T13:15:26.233Z
 Stopped at: Completed 05-04-PLAN.md (loop D-12 aberto)
 Resume file: None
 
