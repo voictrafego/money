@@ -895,7 +895,17 @@ def test_a_suite_reage_a_um_knob():
 
 ---
 
-## Open Questions
+## Open Questions — **TODAS RESOLVIDAS** (2026-07-13, decisão do usuário)
+
+| # | Resolução | Onde vive agora |
+|---|---|---|
+| **Q1** | **Opção (a) + (b)** — invariante algébrico exato **mais** o `xfail(strict)` sobre a engine com limiar **5%**, choque em `rf`+`g_cap`+**`ROE`**. | `REQUIREMENTS.md` BLIND-02 · `ROADMAP.md` Fase 7 crit. 2 · plano `07-02` |
+| **Q2** | **Sim, o ROADMAP estava errado.** BLIND-02 vira verde na **Fase 12**, não na 11 (o `ke_teto` satura até lá). Regra dura (A) intacta. | `ROADMAP.md` Fase 11 crit. 1 · `REQUIREMENTS.md` GROW-02 |
+| **Q3** | **Fora do escopo da Fase 7.** O golden master dos 104 tickers não é requisito BLIND — é **pré-requisito das Fases 8/9**. Handoff registrado. | SUMMARY dos planos `07-01` e `07-05` |
+| **Q4** | **Sim, é um 4º grau de liberdade escondido.** `veredito.margem_seguranca` é congelada no lock como **`user_control`**, não como `grau_de_liberdade`. Morre por construção no ENG-06. | plano `07-05` (`calibracao.lock.yaml`) |
+
+<details>
+<summary>Texto original das perguntas (mantido para rastreabilidade)</summary>
 
 ### Q1 🚨 — BLIND-02: a spec literal é insatisfazível. Qual formulação vale?
 **O que sabemos (medido):** chocar só `rf` e `g_cap` → **−27,67%** mesmo com `Ke`/`g` perfeitos e
@@ -940,6 +950,8 @@ Está fora dos 3 (`ERP`, `n_fade`, `PIB_real`) mas **multiplica o `V`** — é e
 O ENG-06 a transforma em **controle do usuário** (morre por construção). **Até lá, ela é um knob
 livre de fato.** O teste do BLIND-06 deve **congelá-la explicitamente** (no lock, marcada como
 `user_control`, não `grau_de_liberdade`), senão há um 4º grau de liberdade escondido.
+
+</details>
 
 ---
 

@@ -138,11 +138,18 @@ regra própria e ela tem precedência.
 construída sobre o `Ke` e o `g` **corretos**, não sobre os errados de hoje.
 
 **Target features (a ordem é obrigatória — cada passo depende do anterior):**
-0. **Blindagem processual** — quarentenar os ~150 goldens pinados e escrever os **INVARIANTES** no
-   lugar (deriváveis da teoria, escrevíveis hoje). O principal: **`V` invariante a um choque de
-   +300bps de inflação (deslocando `rf` e `g_cap` juntos) — variação < 2%**. Isso É a definição da
-   Doença 1, escrito como `xfail(strict=True)` que vira verde na fase do `g`. Sem isso, os consertos
-   das fases seguintes são revertidos por um knob e ninguém nota.
+0. **Blindagem processual** — quarentenar os goldens pinados e escrever os **INVARIANTES** no lugar
+   (deriváveis da teoria, escrevíveis hoje). O principal: **`V` invariante a um choque de +300bps de
+   inflação — deslocando `rf`, `g_cap` E `ROE` juntos — com variação < 5%**, escrito como
+   `xfail(strict=True)` que vira verde na fase do **`Ke` (Fase 12)**. Isso É a definição da Doença 1.
+   Sem isso, os consertos das fases seguintes são revertidos por um knob e ninguém nota.
+
+   > **O `ROE` entra no choque, e o limiar é 5% — ambos medidos, não escolhidos.** Chocar só `rf` e
+   > `g_cap` derruba `V` em **−27,67%** *mesmo com o motor perfeito*: o choque preserva `(Ke−g)` mas
+   > comprime `(ROE−Ke)`. Inflação levanta o **lucro nominal**, não só a taxa de desconto — um `ROE`
+   > congelado é a Doença 1 uma camada abaixo. E com `n_fade = 10` o piso estrutural da janela
+   > explícita é **−4,68%**, o que torna os 2% originais inalcançáveis. Detalhes em
+   > `.planning/phases/07-blindagem-processual-blind/07-RESEARCH.md`.
 1. **Reconciliação de sanidade na ingestão** — os asserts que teriam pego os bugs de dados.
    Incluir o **assert de clean surplus** (`ΔB = LL − DIV`): é simultaneamente detector de bug **e**
    pré-condição de validade do RIM.
@@ -297,7 +304,11 @@ v2.0 Comercialização/Lazari Capital — SHIPPED 2026-07-10, produto no ar, E2E
 ## Constraints
 
 - **Tech stack**: Python 3 + Streamlit; sem backend próprio; custo zero (só dados gratuitos)
-- **Compatibility**: testes golden existentes em `tests/` devem continuar passando após as correções
+- **Compatibility** (REVISTO no v2.4 — a regra antiga era o próprio bug): os testes de **CONTRATO** e
+  de **INVARIANTE** devem continuar passando. Os **GOLDEN-DE-NÍVEL** (que travam um número, logo travam
+  o método atual) **devem quebrar** conforme cada fase os alcança — e são **DELETADOS, nunca
+  atualizados**. A regra antiga ("todos os goldens devem continuar passando") era literalmente a
+  instrução de preservar o método errado; é o reflexo que produziu o overfit do v2.3.
 - **Infra/git**: este projeto agora é um **repositório git dedicado** (`git init` próprio),
   desacoplado do repositório do `$HOME`. `.planning/` vive dentro do projeto.
 

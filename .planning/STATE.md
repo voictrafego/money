@@ -2,13 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
-status: roadmap_complete
-last_updated: "2026-07-13T17:20:00.000Z"
-last_activity: 2026-07-13
+status: executing
+stopped_at: ROADMAP v2.4 criado (8 fases, 52/52 requisitos)
+last_updated: "2026-07-13T22:00:13.014Z"
+last_activity: 2026-07-13 -- Phase 7 planning complete
 progress:
   total_phases: 8
   completed_phases: 0
-  total_plans: 0
+  total_plans: 5
   completed_plans: 0
   percent: 0
 ---
@@ -33,8 +34,8 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 7 — Blindagem processual (BLIND) — not started
 Plan: —
-Status: Roadmap criado, aguardando planejamento da Fase 7
-Last activity: 2026-07-13 — ROADMAP v2.4 criado (8 fases, 52/52 requisitos mapeados)
+Status: Ready to execute
+Last activity: 2026-07-13 -- Phase 7 planning complete
 
 Progress: [░░░░░░░░░░] 0% (0/8 fases)
 
@@ -85,6 +86,7 @@ Progress: [░░░░░░░░░░] 0% (0/8 fases)
 
 - Último marco enviado: v2.3 Calibração do Valuation (2026-07-13, tag `v2.3`, deployado) — **auditado
   como overfit**: ~8 graus de liberdade sobre 4 observações; o "4/4 PASS" real é **2/4**.
+
 - Trend: o v2.4 corrige a causa que os knobs do v2.3 mascaravam.
 
 ## Accumulated Context
@@ -98,8 +100,10 @@ Progress: [░░░░░░░░░░] 0% (0/8 fases)
   **Doença 2 — DISPERSÃO (dados):** `num_acoes = lucro/LPA` com bases cruzadas (`build.py:87`) quebra
   a escala em **41 dos 104 tickers**; JCP perdido em 13 empresas (`cvm.py:169`); split ajustado duas
   vezes (`prices.py:71-111`); zero reconciliação. Não move a mediana — move cada ticker de −48% a +193%.
+
 - **A ordem das 8 fases é obrigatória** (provada por simulação, não deduzida). A separação `g`/`Ke` é
   a única que *parece* redundante e **não é** — é a regra dura A.
+
 - **O contrato de saída já é o do livro — não inventar outro.** O PDF foi lido em 2026-07-13:
   "preço-teto" = **0 ocorrências**, "Bazin" = **0**, "valor intrínseco" = **39**. O livro prescreve
   valor intrínseco + região de valor + tríade `SUBAVALIADA / NO INTERVALO / SOBREAVALIADA` (Cap. 17),
@@ -107,14 +111,17 @@ Progress: [░░░░░░░░░░] 0% (0/8 fases)
   e a **matriz de sensibilidade Ke×g** (*"a que mais gostamos"*). Sai só o que nunca veio do livro:
   `"Evitar"` e `"Qualidade Baixa"`. **Descartados:** preço-teto à la Bazin, viés binário
   Comprar/Aguardar, MS escalonada da Morningstar.
+
 - **Sob clean surplus (Ohlson 1995), RIM ≡ DDM ≡ DCF-equity** — logo os 4 motores **não são 4
   opiniões: são 4 implementações do mesmo modelo com inputs inconsistentes**, e a dispersão
   (0,81/0,63/0,63/0,48) **é a assinatura dos bugs**. O ensemble (ENS-01) estava **medindo os próprios
   bugs do projeto** e chamando isso de "divergência de método" — morre junto (Fase 13). O
   classificador **sobrevive e melhora**: deixa de escolher um *modelo* (erro ilimitado) e passa a
   escolher uma *âncora de ROE* (erro limitado).
+
 - **A MS morre como armadilha por construção** — sendo escolha explícita do usuário, ela não pode ser
   calibrada para maquiar resultado (Armadilha 4).
+
 - **Nenhuma dependência nova.** Único componente novo: `macro.ipca_ciclo(anos=10)` (BCB SGS 13522,
   **mesma janela do `rf`** — é essa simetria que torna o valuation invariante à inflação).
   `pandera`/`great-expectations` **rejeitados** (peso/indireção para 4 asserts aritméticos; custo zero).
@@ -124,14 +131,18 @@ Progress: [░░░░░░░░░░] 0% (0/8 fases)
 1. **Remover `ke_teto: 0.13` antes de consertar o `g`** → ITUB4 0,75→0,64; BBDC4 0,71→**0,52**. O clamp
    é indefensável (a justificativa "Blume" do `config.yaml:235` é *aritmeticamente falsa* — Blume daria
    15,9%, não 13%) **mas é uma muleta que compensa o viés do `g`**. → Fase 12, **nunca antes**.
+
 2. **"Consertar" `dcf_crescimento` com FCFE (`lpa × payout`)** → vira DDM (teorema, não bug).
    WEGE3 0,58 → **0,26**. → proibido na Fase 13.
+
 3. **Reajustar knobs quando o golden `ITUB4: 32.88 ± 0.20` quebrar.** Ele **VAI** quebrar e **isso é o
    conserto funcionando** — critério de saída da Fase 10, não regressão. **Deletar, não atualizar.**
    Regra escrita: *"uma justificativa legítima de knob nunca menciona um ticker"* (compare
    `config.yaml:237` — "Move ITUB4 ~R$2").
+
 4. **A margem de segurança virar o novo `ke_teto`.** Se calibrada até os resultados ficarem bonitos, é
    o post-mortem do v2.3 num endereço novo. **Neutralizada pelo livro:** MS é do usuário.
+
 5. **O conserto do `g` cria a própria fragilidade.** Com `g` = 7,28%, o spread `Ke−g` cai de 10,5pp
    para ~5,5pp e **o peso do valor terminal quase DOBRA**. `excesso_sustentavel` e `ke_g_spread_min`,
    hoje decorativos, viram **load-bearing**. → prever na Fase 11, não descobrir depois.
@@ -143,10 +154,12 @@ Progress: [░░░░░░░░░░] 0% (0/8 fases)
   o banco de qualidade** — que é *exatamente o sintoma que o v2.3 combateu com knobs*. Se confirmado, os
   knobs mascaravam um **terceiro bug de dados**. Idem IHCD/AT1 dentro do PL (`2.03`). Correção sem knob:
   usar o **resultado abrangente** (DRA).
+
 - **Research flags** (podem exigir `/gsd-research-phase` no planejamento fino): prazo remanescente `T`
   das concessões (Fase 13, não confirmado como disponível de graça); escolha de `ROE_T` terminal
   (through-cycle vs. histórico vs. setorial — a premissa que mais move o valor terminal); viabilidade
   de PIT real (Fase 14 — decidir **na Fase 13**, não descobrir na 14).
+
 - **Backlog v2.1 (polish de UX) — deferido.** Achados 6–18 do review de 2026-07-10.
 
 ### Blockers/Concerns
@@ -155,8 +168,10 @@ Progress: [░░░░░░░░░░] 0% (0/8 fases)
   sobre um snapshot em que o **ITUB4 tem 10 milhões de ações em 2019**. ~150 deles são goldens de um
   método errado. **Isso é o que a Fase 7 existe para consertar — e nenhuma outra fase pode começar
   antes dela.**
+
 - **O repo contém a instrução escrita de cometer a Armadilha 3.** `config.yaml:237` ("Move ITUB4 ~R$2")
   e `config.yaml:258` ("NÃO mexer... mudariam o ITUB4"). O executor vai encontrar isso e vai ser tentado.
+
 - **Firewall selo↛report:** `selo.py` NÃO importa `report.py` — preservar ao refatorar a Fase 13.
 - **Consistência cross-modo:** métodos canônicos `*_valuation()` em `fundamentals.py` são fonte única —
   mexer neles reverbera nos 3 modos (Analisar/Garimpo/Ranking). É o Core Value.
@@ -189,5 +204,6 @@ Resume file: None
 
 - Aprovar o roadmap e rodar `/gsd-plan-phase 7` — **Blindagem processual**. Ela **não move nenhum
   número**; ela redefine o que "suíte verde" significa. É a única fase que pode começar.
+
 - **NÃO pular para a Fase 11/12** ("é só trocar o `g` e o `Ke`") — foi exatamente essa a tentação que
   produziu o v2.3.
