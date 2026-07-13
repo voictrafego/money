@@ -118,6 +118,21 @@ def test_backtest_gate_quorum_e_anotacao():
         )
 
 
+def test_backtest_alvos_recalibrados():
+    """Alavanca 2 (CAL-01/D-01): a normalização through-cycle do ROE terminal crava os alvos.
+
+    Sobre o snapshot congelado, via o MESMO harness `rodar_cesta`, o RIM recalibrado aterrissa em
+    ITUB4 ≈ 32,88 (INALTERADO — o cap satura, não regride), BBAS3 ≈ 43,89 (dentro de 17,00–44,85) e
+    BBDC4 ≈ 13,37 (dentro de 12,75–27,60). Bounds absolutos ±R$0,20 (convenção do repo, NÃO approx).
+    """
+    por_ticker = {r["ticker"]: r for r in _rodar()}
+    alvos = {"ITUB4": 32.88, "BBAS3": 43.89, "BBDC4": 13.37}
+    for tk, alvo in alvos.items():
+        rim = por_ticker[tk]["rim"]
+        assert rim is not None, f"{tk}: RIM None"
+        assert abs(rim - alvo) <= 0.20, f"{tk}: RIM {rim:.2f} != alvo {alvo:.2f} (±0,20)"
+
+
 def test_backtest_determinismo():
     """O snapshot congelado não deriva: duas execuções do harness dão o MESMO RIM por ticker.
 

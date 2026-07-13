@@ -7,6 +7,7 @@ pois exige um conjunto de pares; aqui o foco é o valuation por desconto de divi
 
 from __future__ import annotations
 
+import statistics
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
@@ -180,6 +181,23 @@ def _guarda_san01(
     )
 
 
+def _roe_through_cycle(c: CompanyData, rim_cfg: dict) -> Optional[float]:
+    """ROE normalizado through-cycle (Alavanca 2/D-01) — anchor do RI TERMINAL do RIM.
+
+    Ancora o excesso da perpetuidade no poder de lucro através do ciclo do PRÓPRIO ticker
+    (mediana|média dos `c.roe(ano)` da série), fiel ao método do livro (lucro sustentável, não
+    pontual). O anchor sai da SÉRIE (fronteira FIX-04), não é constante mágica — o motor só recebe
+    o número. Never-raise: série com <3 pontos válidos → None (degrada para o legado; o 1º ano é
+    None por falta de PL−1). Estatística lida do knob `roe_terminal_stat` (mediana é robusta ao
+    ROE-colapso de 1 ano — agro 2025 do BBAS3)."""
+    serie = [c.roe(a) for a in c.anos_ordenados()]
+    validos = [r for r in serie if r is not None]
+    if len(validos) < 3:
+        return None
+    stat = (rim_cfg or {}).get("roe_terminal_stat", "mediana")
+    return statistics.mean(validos) if stat == "media" else statistics.median(validos)
+
+
 def _intrinseco_por_motor(
     motor: str, c: CompanyData, a: AnaliseAcao, cfg: dict
 ) -> Optional[float]:
@@ -210,6 +228,7 @@ def _intrinseco_por_motor(
                 excesso_sustentavel=rim_cfg.get("excesso_sustentavel", 0.0),
                 g_terminal=rim_cfg.get("g_terminal"),
                 ke_g_spread_min=rim_cfg.get("ke_g_spread_min", 0.03),
+                roe_terminal=_roe_through_cycle(c, rim_cfg),
             )
             return res_rim.valor_intrinseco if res_rim else None
         if motor == "normalizado":

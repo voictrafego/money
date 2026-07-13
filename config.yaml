@@ -250,6 +250,13 @@ motores:
     ke_g_spread_min: 0.03         # CAL-01 (NOVO) — piso de (Ke−g_terminal) p/ liberar o terminal; senão degrada para
                                   # fade-only (never-raise). Com g=0,025 e ke_piso=0,11 o spread real é folgado; a
                                   # guarda protege configs futuros.
+    roe_terminal_stat: "mediana"  # CAL-01 (NOVO, Alavanca 2/D-01) — estatística do ROE through-cycle usado SÓ no RI
+                                  # terminal (mediana|media). O excesso terminal é ancorado no poder de lucro through-
+                                  # cycle do PRÓPRIO ticker e ainda capado por excesso_sustentavel: cobre BBAS3 (ROE
+                                  # caindo) e BBDC4 (ROE recuperando) e deixa o ITUB4 bit-idêntico (o cap satura). Mediana
+                                  # é robusta ao colapso de ROE de 1 ano (agro 2025 do BBAS3). ÚNICO knob novo desta
+                                  # alavanca — o anchor sai da SÉRIE histórica, não é constante (D-08). NÃO mexer nos
+                                  # knobs acima (excesso_sustentavel/g_terminal/ke_teto): mudariam o ITUB4.
   ciclica:                        # Lucro normalizado (ENG-03, cíclica) — P/L justo sobre lucro médio 7-10a
     anos_media: 10                # janela do norm.base_normalizada (média/mediana robusta a exercício atípico)
     winsor: 0.10                  # winsorização a 10% nos extremos (>=5 pontos), espelha o bloco `normalizacao`
