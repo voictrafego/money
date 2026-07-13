@@ -191,6 +191,7 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 | 260710-u3g | Glossário de siglas (tabelas transpostas) + legenda de selos e triângulos | 2026-07-10 | fa1cc4f | [260710-u3g-glossario-siglas-legenda-selos-e-triangulos](./quick/260710-u3g-glossario-siglas-legenda-selos-e-triangulos/) |
 | 260710-u5c | Renomeia menus/termos (Garimpar ações, Selic piso DY, Análise técnica) + corrige contagem | 2026-07-10 | 7d8d70b | [260710-u5c-consistencia-de-copia-contagem-menus](./quick/260710-u5c-consistencia-de-copia-contagem-menus/) |
 | 260712-p6r | Freio do Ranking no Streamlit (paridade CLI↔UI: ITUB4 deixa de ser "Cara") + label ENS-01 em cmd_rank | 2026-07-12 | f9ace2d | [260712-p6r-freio-ranking-streamlit](./quick/260712-p6r-freio-ranking-streamlit/) |
+| 260713-hoo | Limpar tela de análise: card intrínseco lidera com o motor primário (ITUB4 → "RIM R$ 32,88") + 3 banners consolidados em veredito + 1 expander | 2026-07-13 | 9897bd9 | [260713-hoo-limpar-tela-de-analise-card-intrinseco-m](./quick/260713-hoo-limpar-tela-de-analise-card-intrinseco-m/) |
 
 ## Deferred Items
 
