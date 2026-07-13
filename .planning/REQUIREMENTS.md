@@ -35,7 +35,7 @@ Mapa completo: https://claude.ai/code/artifact/cfdb3a4f-fffe-4465-b98a-bf3e9d4aa
 Sem isto, os consertos das fases seguintes são revertidos por um knob e ninguém nota. É a lição
 direta do post-mortem do v2.3.
 
-- [ ] **BLIND-01**: Os 448 testes estão classificados num arquivo commitado em três categorias —
+- [x] **BLIND-01**: Os 448 testes estão classificados num arquivo commitado em três categorias —
   **INVARIANTE** (verdade algébrica que knob nenhum satisfaz), **GOLDEN-DE-NÍVEL** (trava um número,
   logo trava o método atual) e **CONTRATO** (formato/borda). Os GOLDEN-DE-NÍVEL entram em quarentena
   em vez de bloquear o marco.
@@ -248,7 +248,7 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BLIND-01 | Phase 7 | Pending |
+| BLIND-01 | Phase 7 | Complete |
 | BLIND-02 | Phase 7 | Pending |
 | BLIND-03 | Phase 7 | Pending |
 | BLIND-04 | Phase 7 | Pending |
