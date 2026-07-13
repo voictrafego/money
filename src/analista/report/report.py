@@ -217,6 +217,25 @@ def _intrinseco_por_motor(
     g_estavel = cfg["ddm"]["g_estavel"]
     mot_cfg = (cfg or {}).get("motores", {})
     try:
+        # Alavanca 3 (D-03/D-04): rota de SEGURADORA capital-light — ANTES do bank-RIM.
+        # A seguradora (BBSE3, setor CVM "...Seguradoras...") tem o valor na FRANQUIA/fluxo de
+        # dividendo, não no book minúsculo (VPA≈5,35) que o RIM ancora — o RIM a subvaloriza.
+        # Rota mínima e reusável (D-08, zero knob numérico novo): Gordon de estágio único sobre o
+        # dividendo SUSTENTÁVEL (`dpa_recorrente`, NÃO trailing — Pitfall 4) com o Ke do CAPM ao
+        # vivo (`a.ke`, NÃO o ke_rim de balanço large-cap — Pitfall 3) e g = g_estavel (2,5%).
+        # Detecção reusa `arquetipo._setor_casa_token` (limite de palavra), NÃO reimplementa match.
+        # Never-raise: dpa/ke None ou valor_gordon None (ke−g ≤ 0) → NÃO força a rota, degrada para
+        # o RIM legado. Rótulo honesto `a.motor="seguradora"` (exige `excecao_nota` no gate, D-05).
+        if motor == "rim" and arquetipo._setor_casa_token(
+            (c.setor or "").lower(), ["seguradora"]
+        ):
+            dpa_sust = c.dpa_recorrente()
+            if dpa_sust is not None and a.ke is not None:
+                v_seg = ddm.valor_gordon(dpa_sust * (1 + g_estavel), a.ke, g_estavel)
+                if v_seg is not None:
+                    a.motor = "seguradora"
+                    return v_seg
+            # dado degenerado → cai para o RIM legado (never-raise, não força a rota).
         if motor == "rim":
             rim_cfg = mot_cfg.get("rim", {})
             res_rim = motores.rim(
