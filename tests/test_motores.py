@@ -13,8 +13,10 @@ import os
 
 import yaml
 
-from analista.core import capm, motores
+from analista.backtest import carregar_snapshot
+from analista.core import arquetipo, capm, ddm, motores
 from analista.core import normalizacao as norm
+from analista.report import report
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -186,3 +188,51 @@ def test_nav_contabil_igual_vpa():
 def test_nav_contabil_never_raise():
     assert motores.nav_contabil(None, 1000.0) is None
     assert motores.nav_contabil(5000.0, 0.0) is None
+
+
+# --------------------------------------------------------------------------- #
+# Rota de seguradora (Alavanca 3 / D-03/D-04) — Gordon-franquia, reuso PURO
+# --------------------------------------------------------------------------- #
+_SNAPSHOT = os.path.join(ROOT, "tests", "fixtures", "snapshot_bancos_2026-07-12.yaml")
+
+
+def _cesta_congelada():
+    """CompanyData da cesta congelada + cfg com o rf_local carimbado (offline, determinístico)."""
+    empresas, rf_local = carregar_snapshot(_SNAPSHOT)
+    cfg = _cfg()
+    cfg = {**cfg, "capm": {**cfg["capm"], "rf_local": rf_local}}
+    return {c.ticker: c for c in empresas}, cfg
+
+
+def test_rota_seguradora_bbse3_gordon_franquia():
+    # Alavanca 3 (D-03/D-04): a seguradora capital-light (BBSE3, setor CVM casa o token
+    # "seguradora") roteia para a rota Gordon-franquia sobre o dividendo SUSTENTÁVEL
+    # (dpa_recorrente), fora do bank-RIM ancorado no book minúsculo. Com os inputs congelados
+    # (dpa_recorrente≈3,83, ke_live≈12,36%, g=2,5%) devolve V_seguradora ≈ R$39,87 (em cima do
+    # mid de consenso 39,5). RED antes da implementação: o ramo não existe → BBSE3 sai R$25,38 (RIM).
+    por_ticker, cfg = _cesta_congelada()
+    c = por_ticker["BBSE3"]
+    a = report.analisar_acao(c, cfg)
+
+    # rótulo honesto: a rota assume a seguradora, não mais 'rim'.
+    assert a.motor == "seguradora"
+    assert a.intrinseco_motor is not None
+    assert abs(a.intrinseco_motor - 39.87) <= 1.0
+
+    # auto-consistência: o número é EXATAMENTE o Gordon-franquia dos insumos congelados
+    # (dpa_recorrente×(1+g), ke_live=a.ke, g=g_estavel) — reuso PURO de ddm.valor_gordon.
+    g = cfg["ddm"]["g_estavel"]
+    esperado = ddm.valor_gordon(c.dpa_recorrente() * (1 + g), a.ke, g)
+    assert abs(a.intrinseco_motor - esperado) < 1e-9
+
+
+def test_rota_seguradora_nao_pega_banco():
+    # Regressão negativa: um banco (ITUB4, setor "Bancos") NÃO casa o token "seguradora" →
+    # segue pelo RIM inalterado (≈R$32,88, dentro da faixa 30–40).
+    por_ticker, cfg = _cesta_congelada()
+    c = por_ticker["ITUB4"]
+    assert not arquetipo._setor_casa_token((c.setor or "").lower(), ["seguradora"])
+    a = report.analisar_acao(c, cfg)
+    assert a.motor == "rim"
+    assert a.intrinseco_motor is not None
+    assert 30.0 <= a.intrinseco_motor <= 40.0
