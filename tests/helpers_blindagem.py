@@ -11,6 +11,7 @@ e pelos meta-testes dos planos 07-03 (BLIND-04a) e 07-05 (BLIND-06).
 from __future__ import annotations
 
 import ast
+import copy
 import json
 import pathlib
 from functools import lru_cache
@@ -21,6 +22,8 @@ import yaml
 RAIZ_REPO = pathlib.Path(__file__).resolve().parent.parent
 TICKER_MAP = RAIZ_REPO / "data" / "ticker_map.json"
 CLASSIFICACAO = RAIZ_REPO / "tests" / "classificacao.yaml"
+CONFIG_PROD = RAIZ_REPO / "config.yaml"
+SNAPSHOT_BANCOS = RAIZ_REPO / "tests" / "fixtures" / "snapshot_bancos_2026-07-12.yaml"
 
 CATEGORIAS = {"invariante", "golden_nivel", "contrato"}
 
@@ -210,3 +213,85 @@ def quarentenados() -> set[str]:
         for k, v in carregar_classificacao().items()
         if v == "golden_nivel"
     }
+
+
+# --------------------------------------------------------------------------- #
+# BLIND-02 — o choque de inflacao (plano 07-02).
+#
+# O config e' INJETADO POR DEPENDENCIA (`report.analisar_acao(c, cfg)` recebe um
+# dict puro) -> perturbar o config num teste e' `deepcopy` + mutar chave. Nenhum
+# monkeypatch, nenhum singleton global.
+# --------------------------------------------------------------------------- #
+
+
+def carregar_config_producao() -> dict:
+    """Le o `config.yaml` de PRODUCAO. `safe_load`, NUNCA `load` (T-07-04).
+
+    Ler o config de producao (em vez de hardcodar knobs no teste) e' metade (a) da
+    defesa contra o Pitfall 5: uma fuga por knob (ex. `normalizacao.anos_media: 1`)
+    vira uma alteracao VISIVEL de config — que o teste de orcamento do BLIND-06
+    (plano 07-05) pega, porque `anos_media` NAO e' um dos 3 graus de liberdade.
+    """
+    return yaml.safe_load(CONFIG_PROD.read_text(encoding="utf-8"))
+
+
+def cfg_e_empresas_do_snapshot():
+    """`(empresas, cfg)` do snapshot congelado dos bancos + config de producao.
+
+    Injeta `cfg["capm"]["rf_local"] = rf_local` do snapshot — espelha o que
+    `backtest.rodar_cesta` faz (o rf fica carimbado no fixture, nao no config).
+    """
+    from analista.backtest import carregar_snapshot  # import tardio: precisa de src/ no path
+
+    empresas, rf_local = carregar_snapshot(str(SNAPSHOT_BANCOS))
+    cfg = carregar_config_producao()
+    cfg["capm"]["rf_local"] = rf_local
+    return empresas, cfg
+
+
+def choque_nominal(empresas, cfg: dict, bps: int):
+    """Choque de inflacao COMPLETO de `+bps`: a perna da TAXA e a perna do LUCRO NOMINAL.
+
+    Devolve `(empresas_chocadas, cfg_chocado)` em `copy.deepcopy` — NUNCA muta os
+    originais (T-07-03).
+
+    Perna da TAXA (cfg): `capm.rf_local`, `ddm.g_estavel` e `motores.rim.g_terminal`
+    sobem `δ = bps/10_000`.
+
+    Perna do LUCRO NOMINAL (dado): a inflacao levanta o lucro NOMINAL, nao a taxa de
+    desconto sozinha. Chocar so' `rf`/`g` deixaria o `ROE` (real, congelado no snapshot)
+    ser comparado com um `Ke` nominal — comprimindo `(ROE−Ke)` em exatamente δ e
+    derrubando o `V`. Isso e' a propria Doenca 1 uma camada abaixo, e torna a spec
+    literal do BLIND-02 insatisfazivel POR ALGEBRA (`P/B justo = 1 + (ROE−Ke)/(Ke−g)`).
+
+    Como o ROE sobe: NAO existe knob de ROE no config. O ROE vem do DADO —
+    `roe_valuation() = base_lucro_normalizada(lucro) / PL_medio`. `base_normalizada` e'
+    HOMOGENEA DE GRAU 1 na serie (mediana/media/winsor escalam linearmente) -> multiplicar
+    toda a serie `lucro_liquido` por `k` multiplica o `roe_valuation` por `k`. Logo, para
+    elevar o ROE em exatamente `+δ`:  `k = (roe0 + δ) / roe0`.
+
+    O que NAO e' tocado: `patrimonio_liquido` e `num_acoes` — o book esta a CUSTO
+    HISTORICO, e a inflacao nao o reexpressa. O VPA fica intacto (e' a historia economica
+    correta). `dividendos` escala pelo MESMO `k` -> o payout (e a retencao) fica invariante;
+    so' o NIVEL do ROE se move, que e' o objetivo.
+    """
+    delta = bps / 10_000
+
+    cfg2 = copy.deepcopy(cfg)
+    cfg2["capm"]["rf_local"] += delta
+    cfg2["ddm"]["g_estavel"] += delta
+    cfg2["motores"]["rim"]["g_terminal"] += delta
+
+    empresas2 = copy.deepcopy(list(empresas))
+    for c in empresas2:
+        roe0 = c.roe_valuation()
+        if roe0 is None or roe0 <= 0:
+            continue  # perna do lucro nao aplicavel (sem base de ROE positiva)
+        k = (roe0 + delta) / roe0
+        for serie in ("lucro_liquido", "dividendos"):
+            destino = getattr(c, serie)
+            for ano in list(destino):
+                if destino[ano] is not None:
+                    destino[ano] = destino[ano] * k
+
+    return empresas2, cfg2
