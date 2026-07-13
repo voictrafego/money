@@ -97,9 +97,9 @@ harness reproduzível (script + teste) que roda o RIM calibrado numa cesta de ba
   3. A tabela manual de fair values existe (valores por ticker definidos com o usuário) e está versionada como âncora do backtest.
   4. Se a validação revelar que a calibração da Fase 4 falha para algum banco, o achado é registrado e a Fase 4 é ajustada (loop), não ignorado.
 
-**Plans:** 4 plans
+**Plans:** 2/4 plans executed
 - [x] 05-01-PLAN.md — Captura ao vivo (one-time) + snapshot congelado dos 4 bancos (VAL-01, reprodutibilidade)
-- [ ] 05-02-PLAN.md — Pesquisa de consenso de fair values + aprovação do usuário + fixture YAML (VAL-02)
+- [x] 05-02-PLAN.md — Pesquisa de consenso de fair values + aprovação do usuário + fixture YAML (VAL-02)
 - [ ] 05-03-PLAN.md — Harness compartilhado rodar_cesta + script standalone → out/backtest_bancos.md (VAL-01/VAL-02)
 - [ ] 05-04-PLAN.md — Gate pytest determinístico (quórum 3/4 ±15% + anotação) + suíte verde + loop D-12 (VAL-01/VAL-02)
 
@@ -121,5 +121,5 @@ Fases executam em ordem numérica: 4 → 5 → 6
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 4. RIM com Valor Terminal + Ke revisado | v2.3 | 0/1 | Planned | - |
-| 5. BACKTEST-01 — Validação na cesta de bancos | v2.3 | 0/4 | Planned | - |
+| 5. BACKTEST-01 — Validação na cesta de bancos | v2.3 | 2/4 | In Progress|  |
 | 6. Redeploy do app v2.3 na VPS | v2.3 | 0/? | Planned | - |

@@ -35,7 +35,7 @@ NÃO o Ke (que move só ~R$3 no range 10,5%–17,3%). Um residual income COM per
   **cesta de bancos** (ITUB4, BBAS3, BBSE3, BBDC4) e reporta o intrínseco de cada um contra âncoras
   de realidade, para provar que a calibração generaliza (não só ITUB4). Reproduzível (script + teste).
 
-- [ ] **VAL-02**: A validação **triangula 4 âncoras** por ticker: (a) Graham + Bazin (já calculados);
+- [x] **VAL-02**: A validação **triangula 4 âncoras** por ticker: (a) Graham + Bazin (já calculados);
   (b) preço de mercado atual; (c) **tabela manual de fair values** (valores-alvo por ticker, fornecidos
   pelo usuário ou pesquisados de consenso — a definir na fase); (d) múltiplos de pares (P/VP, P/L do
   setor bancário). **Critério de aceite:** para a cesta, o intrínseco do RIM não fica cronicamente
