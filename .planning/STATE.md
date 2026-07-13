@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.3
 milestone_name: Calibração do Valuation à Realidade (RIM com Valor Terminal)
 status: ready_to_plan
-stopped_at: Completed 05-04-PLAN.md (loop D-12 aberto)
+stopped_at: Fase 4 CONTEXT capturado (recalibração it.2, loop D-12)
 last_updated: "2026-07-13T08:00:49.684Z"
 last_activity: 2026-07-13
 progress:
@@ -23,12 +23,12 @@ See: .planning/PROJECT.md (updated 2026-07-11)
 **Core value:** Cada tipo de negócio é roteado para o motor de valuation certo antes de valuar,
 e nenhum veredito final é puxado por um modelo que não serve àquele perfil — um compounder de
 qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio único não cabe nele.
-**Current focus:** Phase 05 — backtest-01-valida-o-na-cesta-de-bancos
+**Current focus:** Phase 04 — RIM recalibração (iteração 2 / loop D-12) — CONTEXT capturado, pronto p/ planejar
 
 ## Current Position
 
-Phase: 6
-Plan: Not started
+Phase: 4 (reaberta pelo loop D-12; Fase 6 bloqueada até fechar)
+Plan: Not started (recalibração — iteração 2)
 Status: Ready to plan
 Last activity: 2026-07-13
 
