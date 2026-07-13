@@ -53,7 +53,8 @@ engine/valuation (feito nas Fases 4-5), mudança de arquitetura do gate/Traefik,
   arquétipo→RIM + intrínseco calibrado + veredito "ver motor primário". É o critério "smoke visual"
   do roadmap. (Sem criar usuário de teste em prod.)
 - **D-08:** **`docker exec` CLI** — rodar a CLI dentro do container `money`
-  (`docker exec <cid> python cli.py analisar ITUB4`, PYTHONPATH=/app/src) para confirmar que o código
+  (`docker exec <cid> python -m analista analyze ITUB4`; PYTHONPATH=/app/src já embutido na imagem —
+  não há `cli.py` na raiz, o arquivo é `src/analista/cli.py` e o subcomando é `analyze`) para confirmar que o código
   **servido** é v2.3, independente do gate/render da UI.
 - **D-09:** **Healthcheck + infra** — confirmar o service `1/1` healthy, gate forwardAuth (2xx libera +
   promove `X-User-Email`) e websocket `101` atrás do gate — que o redeploy não quebrou a infra.
