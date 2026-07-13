@@ -5,19 +5,20 @@ o gate **quórum-3/4-±15%** (D-06/D-07/D-08) do RIM calibrado na Fase 4 contra 
 consenso aprovadas (`tests/fixtures/fair_values_bancos.yaml`). Reusa a MESMA `rodar_cesta` do
 script (`scripts/backtest_bancos.py`) → prova o mesmo número; a fórmula RIM não é reimplementada.
 
-D-12 (loop FECHADO pela Alavanca 2 / Fase 4 it.2) — estado ATUAL do snapshot congelado:
+D-12 (loop FECHADO pela Alavanca 2 + rota de seguradora / Fase 4 it.2) — estado ATUAL do snapshot:
 
     ITUB4  32.88  ∈ 30.50–50.00 ±15%  → PASS (inalterado — o cap satura, não regride)
     BBAS3  43.89  ∈ 20.00–39.00 ±15%  → PASS (ROE terminal normalizado ao ciclo)
     BBDC4  13.37  ∈ 15.00–24.00 ±15%  → PASS (ROE terminal normalizado ao ciclo)
-    BBSE3  25.38  < 33×0.85            → FAIL documentado (excecao_nota) — seguradora capital-light
+    BBSE3  39.87  ∈ 33.00–46.00 ±15%  → PASS (rota de seguradora — Gordon-franquia, motor≠rim)
 
-3/4 na banda ±15% + BBSE3 como a exceção de arquétipo documentada (D-05/D-08) → o quórum 3/4 é
-atingido e o loop D-12 fecha. A recalibração da Fase 4 (normalização through-cycle do ROE terminal,
-Alavanca 2) generalizou na cesta SEM afrouxar o gate — a banda ±15% e o quórum 3/4 permanecem
-intactos. O `xfail(strict=True)` que travava a reprovação de propósito foi REMOVIDO ao cruzar o
-quórum (fechamento explícito do loop, D-07). A rota própria da seguradora (BBSE3 → 4/4) vem no
-plano 04-03. Ver `04-02-SUMMARY.md` e `05-04-SUMMARY.md`.
+4/4 na banda ±15% → o quórum 3/4 é atingido com folga e o loop D-12 fecha. A recalibração da Fase 4
+(normalização through-cycle do ROE terminal, Alavanca 2) generalizou na cesta de bancos SEM afrouxar
+o gate — a banda ±15% e o quórum 3/4 permanecem intactos. A BBSE3 (única não-banco) roteia por uma
+rota própria de seguradora capital-light (Gordon-franquia sobre o dividendo sustentável, 04-03), com
+`excecao_nota` documentando a rota (motor≠rim exige nota, D-08). O `xfail(strict=True)` que travava a
+reprovação de propósito foi REMOVIDO ao cruzar o quórum (fechamento explícito do loop, D-07). Ver
+`04-02-SUMMARY.md`, `04-03-SUMMARY.md` e `05-04-SUMMARY.md`.
 """
 
 from __future__ import annotations
@@ -26,12 +27,14 @@ import os
 
 import yaml
 
+from analista.report import report
 from analista.backtest import (
     BANDA_PASS,  # D-07: reusa a MESMA banda do harness (fonte única, zero número solto)
     carregar_fair_values,
     carregar_snapshot,
     rodar_cesta,
 )
+from analista.core import motores
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -131,3 +134,33 @@ def test_backtest_determinismo():
     rim_1 = {r["ticker"]: r["rim"] for r in _rodar()}
     rim_2 = {r["ticker"]: r["rim"] for r in _rodar()}
     assert rim_1 == rim_2
+
+
+def _analises_por_ticker() -> dict:
+    """ResultadoAnalise completo por ticker — expõe `motor_rotulo`, que `rodar_cesta` não retorna."""
+    empresas, rf_local = carregar_snapshot(_SNAPSHOT)
+    cfg = _cfg()
+    cfg = {**cfg, "capm": {**cfg.get("capm", {}), "rf_local": rf_local}}  # espelha rodar_cesta
+    return {c.ticker: report.analisar_acao(c, cfg) for c in empresas}
+
+
+def test_backtest_rotulo_do_motor_consistente():
+    """CR-01 (fidelidade de método = Core Value): o rótulo exibido do motor casa com o motor real.
+
+    A BBSE3 roteia para o ramo de seguradora (Gordon-franquia), que MUTA `a.motor` DENTRO do
+    dispatch. O `motor_rotulo` precisa refletir esse motor — não pode exibir o número da seguradora
+    sob o rótulo do RIM (book-anchored). Trava a ordem correta (rótulo computado APÓS o dispatch) e
+    a presença da chave `seguradora` em MOTOR_ROTULO.
+    """
+    analises = _analises_por_ticker()
+
+    bbse = analises["BBSE3"]
+    assert bbse.motor == "seguradora"
+    assert bbse.motor_rotulo == motores.MOTOR_ROTULO["seguradora"]
+    assert "RIM" not in bbse.motor_rotulo  # não atribuir o número Gordon-franquia ao RIM
+
+    # Os bancos seguem RIM: o rótulo do motor casa com o motor primário do arquétipo.
+    for tk in ("ITUB4", "BBAS3", "BBDC4"):
+        a = analises[tk]
+        assert a.motor == "rim"
+        assert a.motor_rotulo == motores.MOTOR_ROTULO["rim"]

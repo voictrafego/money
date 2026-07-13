@@ -31,6 +31,7 @@ Number = Optional[float]
 # Rótulos humanos de cada motor — exibidos no render (o Plan 02 consome no funil).
 MOTOR_ROTULO = {
     "rim": "RIM — VPA + VP do excesso de ROE sobre Ke (banco/seguradora)",
+    "seguradora": "DDM-franquia — Gordon sobre o dividendo sustentável (seguradora capital-light)",
     "normalizado": "P/L justo sobre lucro normalizado (média 7–10a)",
     "dcf": "DCF sobre lucro, aproximação capital-light",
     "nav": "NAV contábil (piso patrimonial), não SOTP por segmento",

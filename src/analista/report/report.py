@@ -451,11 +451,15 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     # rodando SEMPRE (agora como lente conservadora onde motor != "ddm") — cálculo intocado.
     # Leitura defensiva dos knobs do motor (paridade com classificar/ke_rim): config antigo sem
     # o bloco `motores:` degrada para os defaults do config.yaml sem quebrar o never-raise (WR-03).
-    a.motor_rotulo = motores.MOTOR_ROTULO.get(a.motor, "")
     # Dispatch extraído em `_intrinseco_por_motor` (VER-02 03-03): mesma lógica de antes, agora
     # reutilizada também pelo ramo fronteiriço (um motor por candidato). motor == "ddm": o helper
     # devolve None aqui (a banda ainda não foi calculada) — o bloco DDM abaixo é o motor primário.
     a.intrinseco_motor = _intrinseco_por_motor(a.motor, c, a, cfg)
+    # Rótulo do motor computado APÓS o dispatch: o ramo de seguradora (04-03) muta `a.motor` para
+    # "seguradora" DENTRO de `_intrinseco_por_motor`. Computar antes gravaria o rótulo do RIM sobre o
+    # número Gordon-franquia — atribuição de método auto-contraditória na tela (CR-01, fidelidade de
+    # método = Core Value).
+    a.motor_rotulo = motores.MOTOR_ROTULO.get(a.motor, "")
 
     # Guarda-corpo do intrínseco do motor (paridade com _guarda_faixa_ddm / SAN-01): um valor
     # NÃO-POSITIVO (PL/lucro normalizado negativo: holding sem patrimônio, cíclica em fundo de
