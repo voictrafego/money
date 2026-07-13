@@ -14,3 +14,15 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+# BLIND-02: XPASS vira FAIL, globalmente. Defesa contra o precedente registrado em
+# tests/test_backtest_bancos.py:19 — "o xfail(strict=True) que travava a reprovacao foi
+# REMOVIDO ao cruzar o quorum". Este repo ja' projetou um teste para deixar de reprovar.
+xfail_strict = true
+# BLIND-01: quarentena dos goldens de nivel + marcador desconhecido = erro.
+# `pytest -m golden_nivel` roda os quarentenados; `pytest -m ""` roda tudo.
+addopts = "-m 'not golden_nivel' --strict-markers"
+markers = [
+  "invariante: verdade algebrica/estrutural que knob nenhum satisfaz (v2.4/BLIND-01).",
+  "golden_nivel: trava um NUMERO -> trava o metodo atual. QUARENTENADO no v2.4. DELETAR na fase que corrige o metodo — NUNCA atualizar para o valor novo (atualizar mantem o reflexo vivo: o golden ITUB4 32,88 existe para cancelar um haircut de -9,1% da normalizacao).",
+  "contrato: formato/borda/never-raise/roteamento. Independe do NIVEL dos numeros.",
+]
