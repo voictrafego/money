@@ -897,15 +897,30 @@ if modo.startswith("Analisar"):
             # a.arquetipo_incerto / a.divergencia_*), zero recálculo. Paridade de copy
             # com relatorio_markdown (report.py). Descritivo, nunca recomendação.
             # ----------------------------------------------------------------- #
-            # Guarda-corpo anti-aberração SAN-01 (03-02): o veredito "evitar" foi
-            # reetiquetado — o número é do motor primário do arquétipo; o DDM de estágio
-            # único é conservador demais para este perfil (reetiqueta, não supressão).
-            if getattr(a, "san01_reetiquetado", False):
-                st.info(
-                    "**Guarda-corpo anti-aberração (SAN-01):** veredito reetiquetado — a "
-                    "referência primária é o motor do arquétipo (números abaixo); o DDM de "
-                    "estágio único é conservador demais para este perfil."
-                )
+            # Quick 260713-hoo: SAN-01 (03-02) e a bandeira de divergência (ENS-01 / 03-01)
+            # explicam a MESMA coisa — "a referência é o motor do arquétipo, não o DDM". Em vez
+            # de duas caixas empilhadas repetindo o veredito, consolidamos num único expander
+            # OPCIONAL (fechado por padrão) que guarda o "porquê". READ-ONLY: só LÊ campos já
+            # derivados na engine; conteúdo/valores idênticos aos banners antigos, só muda o container.
+            if getattr(a, "san01_reetiquetado", False) or getattr(a, "divergencia_ativa", False):
+                with st.expander(f"Por que {a.motor_rotulo or 'o motor do arquétipo'} e não DDM?"):
+                    if getattr(a, "san01_reetiquetado", False):
+                        st.markdown(
+                            "**Guarda-corpo anti-aberração (SAN-01):** veredito reetiquetado — a "
+                            "referência primária é o motor do arquétipo (números abaixo); o DDM de "
+                            "estágio único é conservador demais para este perfil."
+                        )
+                    if getattr(a, "divergencia_ativa", False):
+                        _razao = fmt_num(a.divergencia_razao, 1) if a.divergencia_razao is not None else "—"
+                        _msg = (
+                            f"**Bandeira de divergência:** as lentes divergem ~{_razao}×: "
+                            f"**{esc_md(a.motor_rotulo or a.motor or '—')} "
+                            f"{esc_md(fmt_rs(a.intrinseco_motor))}** × DDM (lente conservadora) "
+                            f"{esc_md(fmt_rs(a.contraponto_valor))}."
+                        )
+                        if a.divergencia_hipotese:
+                            _msg += f"\n\nHipótese: {esc_md(a.divergencia_hipotese)}"
+                        st.markdown(_msg)
 
             # Classificação incerta (VER-02 / 03-03, caso-fronteira): conflito real de
             # sinais → roda o motor de cada arquétipo candidato e assume a dúvida (range +
@@ -938,21 +953,6 @@ if modo.startswith("Analisar"):
                         "**Classificação incerta (caso-fronteira):** os motores dos "
                         "arquétipos candidatos não estimaram preço-alvo confiável."
                     )
-
-            # Bandeira de divergência (ENS-01 / 03-01): motor × contraponto DDM discordam
-            # além do limiar (2×) → EXIBIR os dois números + a hipótese curada. Divergência
-            # é informação mostrada, nunca escondida cravando o pior número.
-            if getattr(a, "divergencia_ativa", False):
-                _razao = fmt_num(a.divergencia_razao, 1) if a.divergencia_razao is not None else "—"
-                _msg = (
-                    f"**Bandeira de divergência:** as lentes divergem ~{_razao}×: "
-                    f"**{esc_md(a.motor_rotulo or a.motor or '—')} "
-                    f"{esc_md(fmt_rs(a.intrinseco_motor))}** × DDM (lente conservadora) "
-                    f"{esc_md(fmt_rs(a.contraponto_valor))}."
-                )
-                if a.divergencia_hipotese:
-                    _msg += f"\n\nHipótese: {esc_md(a.divergencia_hipotese)}"
-                st.warning(_msg)
 
             # ----------------------------------------------------------------- #
             # Selo de Sustentabilidade (Fase 20 / SELO-03) — READ-ONLY: só LÊ os
