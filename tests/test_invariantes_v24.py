@@ -24,7 +24,13 @@ from __future__ import annotations
 import pytest
 
 import helpers_blindagem as h
+from analista.core import normalizacao
 from analista.report import report
+
+# Inflacao do ciclo: IPCA medio de 10 anos (Banco Central, serie SGS 13522). MESMA JANELA do
+# `rf` (Selic through-the-cycle) — e' essa simetria (deflator do lucro = deflator da taxa) que
+# o GROW-02 vai formalizar. Usada como piso do BLIND-03.
+PI_CICLO = 0.0518
 
 # --------------------------------------------------------------------------- #
 # BLIND-02 — invariancia a inflacao.
@@ -141,4 +147,60 @@ def test_invariancia_inflacao_engine_itub4():
         f"(rf, g, ROE) movem o V de R$ {v_base:.2f} para R$ {v_chocado:.2f} "
         f"({v_chocado / v_base - 1:+.2%}), acima do limiar de {LIMIAR_INFLACAO:.0%}. "
         f"E' a Doenca 1: Ke nominal descontando g real."
+    )
+
+
+# --------------------------------------------------------------------------- #
+# BLIND-03 — a normalizacao pune crescimento.
+# --------------------------------------------------------------------------- #
+
+G_SERIE = 0.10  # crescimento da serie de teste: +10%/ano, PURA (zero outlier a suavizar)
+
+
+@pytest.mark.invariante
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "Doenca da normalizacao: haircut de -9,09% = -g/(1+g). Vira VERDE sozinho na "
+        "FASE 10 (PRIM-01)."
+    ),
+)
+def test_normalizacao_nao_pune_crescimento():
+    """BLIND-03: uma serie de lucro de +10%/ano PURA nao pode virar uma base ABAIXO do
+    ultimo ano menos inflacao. FALHA HOJE — o modelo pune o crescedor por crescer.
+
+    Mecanica exata (nao e' estimativa): com a janela de producao (3 anos hoje), `n < 5` e
+    `normalizacao.base_normalizada` cai em `median()` (`normalizacao.py:73-75`). Em 3 pontos
+    a mediana E' O PONTO DO MEIO. Numa serie geometrica pura de razao `(1+g)` o ponto do
+    meio e' `ultimo / (1+g)` -> o haircut tem FORMA FECHADA:
+
+        base/ultimo - 1 = -g/(1+g)  ->  -9,09% em g = 10%   (-4,76% em 5%, -13,04% em 15%)
+
+    Nao ha outlier nenhum para suavizar aqui: a "normalizacao robusta" esta descontando
+    CRESCIMENTO, nao ruido. E' metade do par de erros que se anulam no v2.3 (o golden
+    ITUB4 32,88 existe, em parte, para cancelar exatamente este -9,1%).
+
+    `anos_media` e `winsor` sao LIDOS DO `config.yaml` DE PRODUCAO, nunca hardcoded. E' a
+    metade (a) da defesa contra o Pitfall 5: setar `anos_media: 1` faria este teste passar
+    SEM CONSERTAR `normalizacao.py`. Lendo o config de producao, a fuga vira uma alteracao
+    de knob VISIVEL — e a metade (b) da defesa (o teste de orcamento do BLIND-06, plano
+    07-05) a pega, porque `anos_media` NAO e' um dos 3 graus de liberdade.
+    """
+    cfg = h.carregar_config_producao()
+    anos_media = cfg["normalizacao"]["anos_media"]
+    winsor = cfg["normalizacao"]["winsor"]
+
+    serie = [100.0 * ((1 + G_SERIE) ** i) for i in range(5)]  # +10%/ano, zero outlier
+    ultimo = serie[-1]
+
+    base = normalizacao.base_normalizada(serie, anos_media, winsor)
+    assert base is not None, "base_normalizada devolveu None numa serie limpa de 5 pontos"
+
+    piso = ultimo * (1 - PI_CICLO)  # o ultimo ano deflacionado pela inflacao do ciclo
+    assert base >= piso, (
+        f"a normalizacao PUNE CRESCIMENTO: serie pura de +{G_SERIE:.0%}/ano "
+        f"(anos_media={anos_media}, winsor={winsor} — knobs de PRODUCAO) produz base "
+        f"{base:.2f} < piso {piso:.2f} (ultimo {ultimo:.2f} menos pi_ciclo {PI_CICLO:.2%}). "
+        f"Haircut medido: {base / ultimo - 1:+.2%} — forma fechada -g/(1+g) = "
+        f"{-G_SERIE / (1 + G_SERIE):+.2%}."
     )

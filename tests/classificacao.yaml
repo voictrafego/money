@@ -469,3 +469,4 @@
 # Os dois com xfail(strict) NAO sao golden_nivel: nenhum knob os satisfaz. Rodam no default.
 'tests/test_invariantes_v24.py::test_invariancia_inflacao_identidade_pb_justo': invariante
 'tests/test_invariantes_v24.py::test_invariancia_inflacao_engine_itub4': invariante
+'tests/test_invariantes_v24.py::test_normalizacao_nao_pune_crescimento': invariante
