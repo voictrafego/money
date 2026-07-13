@@ -14,6 +14,7 @@ import ast
 import copy
 import json
 import pathlib
+import re
 import statistics
 from collections.abc import Sequence
 from functools import lru_cache
@@ -25,6 +26,7 @@ RAIZ_REPO = pathlib.Path(__file__).resolve().parent.parent
 TICKER_MAP = RAIZ_REPO / "data" / "ticker_map.json"
 CLASSIFICACAO = RAIZ_REPO / "tests" / "classificacao.yaml"
 CONFIG_PROD = RAIZ_REPO / "config.yaml"
+LOCK_CALIBRACAO = RAIZ_REPO / "calibracao.lock.yaml"  # BLIND-06: na RAIZ, nao em tests/
 SNAPSHOT_BANCOS = RAIZ_REPO / "tests" / "fixtures" / "snapshot_bancos_2026-07-12.yaml"
 
 # NAO EXISTE HOJE — nasce na FASE 14 (VAL-02): cesta estratificada, >= 6 por arquetipo + 10
@@ -331,6 +333,92 @@ def cfg_e_empresas_do_snapshot():
     cfg = carregar_config_producao()
     cfg["capm"]["rf_local"] = rf_local
     return empresas, cfg
+
+
+def carregar_lock() -> dict:
+    """Le o `calibracao.lock.yaml` da RAIZ. `safe_load`, NUNCA `load` (T-07-11).
+
+    Ele mora na raiz, e NAO em `tests/`, de proposito: o hook do BLIND-05 bloqueia
+    `config.yaml` + `tests/*` no mesmo commit, e `config.yaml` + lock e' o caminho
+    SANCIONADO de mudanca de knob (a mudanca fica visivel e revisavel no diff).
+    """
+    return yaml.safe_load(LOCK_CALIBRACAO.read_text(encoding="utf-8"))
+
+
+def folhas_do_escopo(cfg: dict, escopo: Sequence[str]) -> dict[str, object]:
+    """`{caminho_pontilhado: valor}` de todas as FOLHAS dos blocos do escopo.
+
+    Uma LISTA e' UMA FOLHA (`ddm.sensibilidade.delta_ke` e' um knob so', nao cinco):
+    caminhar dentro dela produziria caminhos indexados que nada significam como knob.
+    """
+    def _walk(no: dict, prefixo: str) -> dict[str, object]:
+        saida: dict[str, object] = {}
+        for chave, valor in no.items():
+            caminho = f"{prefixo}.{chave}" if prefixo else str(chave)
+            if isinstance(valor, dict):
+                saida.update(_walk(valor, caminho))
+            else:
+                saida[caminho] = valor
+        return saida
+
+    total: dict[str, object] = {}
+    for bloco in escopo:
+        total.update(_walk(cfg[bloco], bloco))
+    return total
+
+
+def valor_em(cfg: dict, caminho: str):
+    """Resolve um caminho pontilhado (`motores.rim.n_fade`) no config."""
+    no = cfg
+    for chave in caminho.split("."):
+        no = no[chave]
+    return no
+
+
+# Primeiro filtro, NUNCA o veredito: `[A-Z]{4}\d{1,2}` casa `MACD12` (falso positivo REAL,
+# medido em `config.yaml:134`). O candidato so' vira ofensor depois de validado contra
+# `tickers_conhecidos()` — RESEARCH § Pitfall 7.
+_CANDIDATO_TICKER = re.compile(r"\b[A-Z]{4}\d{1,2}\b")
+
+
+def comentarios_com_ticker(escopo: Sequence[str]) -> list[tuple[int, str, list[str]]]:
+    """Comentarios do `config.yaml` que mencionam um TICKER, dentro dos blocos do escopo.
+
+    A regra escrita do ROADMAP, executavel:
+
+        "Uma justificativa legitima de knob NUNCA menciona um ticker."
+
+    Uma justificativa que cita um ticker nao explica POR QUE o numero e' aquele — ela
+    confessa CONTRA O QUE ele foi ajustado. E' a assinatura do overfit do v2.3, escrita
+    no proprio arquivo que a produziu (`# Move ITUB4 ~R$2`).
+
+    Escopo: so' os blocos que afetam o `V`. As chaves de topo do YAML estao na coluna 0,
+    entao um bloco vai da sua chave ate a proxima chave de coluna 0.
+
+    Devolve `[(numero_da_linha_1based, comentario, tickers)]`.
+    """
+    linhas = CONFIG_PROD.read_text(encoding="utf-8").splitlines()
+    tickers = tickers_conhecidos()
+    bloco_atual: str | None = None
+    ofensores: list[tuple[int, str, list[str]]] = []
+
+    for n, linha in enumerate(linhas, start=1):
+        sem_comentario = linha.split("#", 1)[0]
+        # Chave de topo (coluna 0, nao comentario, nao linha em branco) -> troca de bloco.
+        if sem_comentario.strip() and not linha[:1].isspace():
+            bloco_atual = sem_comentario.split(":", 1)[0].strip()
+
+        if bloco_atual not in escopo or "#" not in linha:
+            continue
+
+        comentario = linha.split("#", 1)[1].strip()
+        achados = sorted(
+            {c for c in _CANDIDATO_TICKER.findall(comentario) if c in tickers}
+        )
+        if achados:
+            ofensores.append((n, comentario, achados))
+
+    return ofensores
 
 
 def choque_nominal(empresas, cfg: dict, bps: int):

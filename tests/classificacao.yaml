@@ -483,3 +483,10 @@
 'tests/test_blindagem_hook.py::test_hook_do_blind05_esta_instalado': contrato
 'tests/test_blindagem_hook.py::test_hook_do_blind05_e_versionado_e_executavel': contrato
 'tests/test_blindagem_hook.py::test_historico_do_v24_sem_co_change_knob_e_golden': contrato
+
+# --- Fase 7 / plano 07-05: BLIND-06. O ORCAMENTO DE KNOBS (3 graus de liberdade).
+# Testam o CONFIG e o LOCK, nao a engine. Nenhum crava nivel: rodam no default, para sempre.
+# Se sairem daqui, mexer num knob volta a ser invisivel.
+'tests/test_blindagem_orcamento.py::test_orcamento_de_knobs_e_exatamente_3': contrato
+'tests/test_blindagem_orcamento.py::test_knobs_batem_com_o_lock': contrato
+'tests/test_blindagem_orcamento.py::test_nenhuma_justificativa_de_knob_menciona_ticker': contrato
