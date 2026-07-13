@@ -104,7 +104,13 @@ por um knob e **ninguém nota** (é a lição literal do post-mortem do v2.3).
   - **NÃO consertar nenhum número.** Esta fase não move `V` de ticker nenhum. Se o intrínseco de alguma ação mudar aqui, algo saiu do escopo.
   - **NÃO "atualizar" golden de nível para o valor novo** — a operação é *quarentenar agora, deletar quando a fase chegar*. Atualizar mantém vivo o reflexo que causou o overfit.
   - **NÃO afrouxar tolerância, marcar `xfail` casual ou deletar assert** para a suíte ficar verde (Pitfall 5 — "o executor conserta o teste em vez do código").
-**Plans**: TBD
+**Plans**: 5 plans (5 waves — serializados: todos escrevem em `tests/classificacao.yaml`)
+Plans:
+- [ ] 07-01-PLAN.md — BLIND-01: quarentena dos goldens (448 testes classificados via YAML + `conftest.py`; zero edição nos testes existentes)
+- [ ] 07-02-PLAN.md — BLIND-02 + BLIND-03: as duas doenças escritas como código (invariante algébrico exato + 2 `xfail(strict)`)
+- [ ] 07-03-PLAN.md — BLIND-04: meta-teste AST (`ticker == R$` proibido) + harness do jackknife (veredito adiado p/ a Fase 14)
+- [ ] 07-04-PLAN.md — BLIND-05: hook versionado (`.githooks/commit-msg` + `core.hooksPath`) + backstop contra `--no-verify`
+- [ ] 07-05-PLAN.md — BLIND-06: `calibracao.lock.yaml` (3 graus de liberdade) + limpeza dos comentários com ticker + **canário**
 
 ### Phase 8: Sanidade dos dados (SAN)
 **Goal**: Fazer o pipeline **saber quando o dado está errado**. Os asserts vêm **antes** dos
