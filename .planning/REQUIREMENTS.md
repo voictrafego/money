@@ -71,7 +71,7 @@ direta do post-mortem do v2.3.
 - [x] **BLIND-04**: **Nenhum teste de calibração afirma `ticker == valor em reais`.** A validação é
   por **distribuição** (mediana + IQR) mais **jackknife**: `test_nenhum_ticker_e_load_bearing` falha
   se remover um único ticker mover a mediana além do limiar.
-- [ ] **BLIND-05**: Um hook de pre-commit **bloqueia** commit que altere `config.yaml` e um
+- [x] **BLIND-05**: Um hook de pre-commit **bloqueia** commit que altere `config.yaml` e um
   golden/fixture ao mesmo tempo — é a assinatura exata de "calibrei o knob até o teste passar".
 - [ ] **BLIND-06**: Orçamento de knobs explícito e travado por teste: **exatamente 3 graus de
   liberdade** (`ERP`, `n_fade`, `PIB_real`). Regra escrita: *"uma justificativa legítima de knob
@@ -252,7 +252,7 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | BLIND-02 | Phase 7 | Complete |
 | BLIND-03 | Phase 7 | Complete |
 | BLIND-04 | Phase 7 | Complete |
-| BLIND-05 | Phase 7 | Pending |
+| BLIND-05 | Phase 7 | Complete |
 | BLIND-06 | Phase 7 | Pending |
 | SAN-01 | Phase 8 | Pending |
 | SAN-02 | Phase 8 | Pending |

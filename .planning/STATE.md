@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
-stopped_at: ROADMAP v2.4 criado (8 fases, 52/52 requisitos)
-last_updated: "2026-07-13T23:10:10.394Z"
+stopped_at: "Completado 07-04-PLAN.md (BLIND-05: hook + backstop)"
+last_updated: "2026-07-13T23:17:08.232Z"
 last_activity: 2026-07-13
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 5
-  completed_plans: 3
-  percent: 60
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State
@@ -33,11 +33,11 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 07 (blindagem-processual-blind) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-07-13
 
-Progress: [██████░░░░] 60%
+Progress: [████████░░] 80%
 
 ## A ordem é a decisão de arquitetura mais importante do marco
 
@@ -89,9 +89,25 @@ Progress: [██████░░░░] 60%
 
 - Trend: o v2.4 corrige a causa que os knobs do v2.3 mascaravam.
 
+| Phase 7 P04 | 25min | 2 tasks | 3 files |
+
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **BLIND-05 (Fase 7 / plano 07-04) — o co-change knob+golden agora é rejeitado pelo git.**
+  `.githooks/commit-msg` (versionado, `sh` puro, zero dep) bloqueia `config.yaml` + `tests/(fixtures|test_)`
+  no MESMO commit — a assinatura exata do overfit do v2.3. A escapatória é **obrigatória** (2 dos 5
+  co-changes históricos são legítimos) e **auditável**: o trailer `Knob-Change-Justification:` fica no
+  `git log` para sempre. A regra escrita do ROADMAP (*"uma justificativa legítima de knob nunca menciona
+  um ticker"*) virou **executável** — e o candidato da regex é validado contra `ticker_map.json`, porque
+  a regex nua casa `MACD12` (que existe no próprio `config.yaml`).
+
+- **⚠️ `core.hooksPath` é estado LOCAL, por clone.** É o único item da Fase 7 que **não vive em arquivo
+  versionado**: todo `git clone` novo nasce **SEM** a proteção do BLIND-05. Rode
+  `git config core.hooksPath .githooks`. O `test_hook_do_blind05_esta_instalado` deixa a suíte
+  **vermelha** se ela sumir — sem ele, é proteção fantasma. O `--no-verify` tem backstop próprio:
+  `test_historico_do_v24_sem_co_change_knob_e_golden` varre `955e73d..HEAD` (este repo **não tem CI**).
 
 - **São duas doenças independentes, não uma calibração.** **Doença 1 — VIÉS (erro de unidade):** `Ke`
   nominal (rf = Selic-ciclo 9,58%, embute ~5,2pp de inflação) contra `g_estavel` de 2,5% **real** — o
@@ -196,8 +212,8 @@ Progress: [██████░░░░] 60%
 
 ## Session Continuity
 
-Last session: 2026-07-13T23:10:10.390Z
-Stopped at: ROADMAP v2.4 criado (8 fases, 52/52 requisitos)
+Last session: 2026-07-13T23:17:08.228Z
+Stopped at: Completado 07-04-PLAN.md (BLIND-05: hook + backstop)
 Resume file: None
 
 ## Operator Next Steps
