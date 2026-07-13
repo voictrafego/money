@@ -31,7 +31,7 @@ NÃO o Ke (que move só ~R$3 no range 10,5%–17,3%). Um residual income COM per
 
 ### Validação / Backtest (VAL)
 
-- [ ] **VAL-01**: Existe um **harness de validação (BACKTEST-01)** que roda o RIM calibrado numa
+- [x] **VAL-01**: Existe um **harness de validação (BACKTEST-01)** que roda o RIM calibrado numa
   **cesta de bancos** (ITUB4, BBAS3, BBSE3, BBDC4) e reporta o intrínseco de cada um contra âncoras
   de realidade, para provar que a calibração generaliza (não só ITUB4). Reproduzível (script + teste).
 

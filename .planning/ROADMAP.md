@@ -98,7 +98,7 @@ harness reproduzível (script + teste) que roda o RIM calibrado numa cesta de ba
   4. Se a validação revelar que a calibração da Fase 4 falha para algum banco, o achado é registrado e a Fase 4 é ajustada (loop), não ignorado.
 
 **Plans:** 4 plans
-- [ ] 05-01-PLAN.md — Captura ao vivo (one-time) + snapshot congelado dos 4 bancos (VAL-01, reprodutibilidade)
+- [x] 05-01-PLAN.md — Captura ao vivo (one-time) + snapshot congelado dos 4 bancos (VAL-01, reprodutibilidade)
 - [ ] 05-02-PLAN.md — Pesquisa de consenso de fair values + aprovação do usuário + fixture YAML (VAL-02)
 - [ ] 05-03-PLAN.md — Harness compartilhado rodar_cesta + script standalone → out/backtest_bancos.md (VAL-01/VAL-02)
 - [ ] 05-04-PLAN.md — Gate pytest determinístico (quórum 3/4 ±15% + anotação) + suíte verde + loop D-12 (VAL-01/VAL-02)

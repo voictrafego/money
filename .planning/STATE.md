@@ -4,14 +4,14 @@ milestone: v2.3
 milestone_name: Calibração do Valuation à Realidade (RIM com Valor Terminal)
 status: executing
 stopped_at: Phase 5 context gathered
-last_updated: "2026-07-13T00:44:16.810Z"
-last_activity: 2026-07-13 -- Phase 05 planning complete
+last_updated: "2026-07-13T01:08:04.622Z"
+last_activity: 2026-07-13
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 5
-  completed_plans: 1
-  percent: 20
+  completed_plans: 2
+  percent: 40
 ---
 
 # Project State
@@ -23,14 +23,14 @@ See: .planning/PROJECT.md (updated 2026-07-11)
 **Core value:** Cada tipo de negócio é roteado para o motor de valuation certo antes de valuar,
 e nenhum veredito final é puxado por um modelo que não serve àquele perfil — um compounder de
 qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio único não cabe nele.
-**Current focus:** Phase 04 — rim-com-valor-terminal-ke-revisado
+**Current focus:** Phase 05 — backtest-01-valida-o-na-cesta-de-bancos
 
 ## Current Position
 
-Phase: 5
-Plan: Not started
+Phase: 05 (backtest-01-valida-o-na-cesta-de-bancos) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-07-13 -- Phase 05 planning complete
+Last activity: 2026-07-13
 
 ## Deferred Items
 
@@ -43,7 +43,7 @@ Itens reconhecidos e adiados no fechamento do marco v2.2 (2026-07-12):
 | quick_task | 260629-ig6-aba-swing-trade-mvp-candlestick-intraday | missing (era v1.x) |
 | quick_task | 260630-g0b-adicionar-auto-refresh-opcional-ao-4-men | missing (era v1.x) |
 
-Progress: [██████████] 100%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
@@ -176,9 +176,9 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-13T00:09:40.963Z
+Last session: 2026-07-13T01:08:04.618Z
 Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-backtest-01-valida-o-na-cesta-de-bancos/05-CONTEXT.md
+Resume file: None
 
 ## Operator Next Steps
 
