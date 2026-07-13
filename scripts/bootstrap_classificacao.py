@@ -141,7 +141,11 @@ def main() -> int:
     for nodeid in nodeids:
         # Decisao ja' tomada e' preservada; so' as novas usam a proposta do AST.
         valor = existente.get(nodeid) or proposta[nodeid]
-        linhas.append(f'"{nodeid}": {valor}')
+        # ASPAS SIMPLES, obrigatorio: o pytest ASCII-escapa acentos nos ids de parametrize
+        # (`Petr\xf3leo`). Em aspas DUPLAS o YAML reinterpretaria `\xf3` como escape e a
+        # chave deixaria de casar com o nodeid real -> teste "nao classificado" + entrada
+        # "orfa" ao mesmo tempo. Aspas simples nao processam escapes.
+        linhas.append(f"'{nodeid}': {valor}")
     DESTINO.write_text("\n".join(linhas) + "\n", encoding="utf-8")
     print(f"\nescrito: {DESTINO.relative_to(RAIZ)} ({len(nodeids)} entradas)")
     return 0
