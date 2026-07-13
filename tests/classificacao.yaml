@@ -490,3 +490,4 @@
 'tests/test_blindagem_orcamento.py::test_orcamento_de_knobs_e_exatamente_3': contrato
 'tests/test_blindagem_orcamento.py::test_knobs_batem_com_o_lock': contrato
 'tests/test_blindagem_orcamento.py::test_nenhuma_justificativa_de_knob_menciona_ticker': contrato
+'tests/test_blindagem_orcamento.py::test_a_suite_reage_a_um_knob_grosseiramente_errado': contrato  # o CANARIO (P5.4): sem ele, "448 verdes" pode ser "448 deselecionados"

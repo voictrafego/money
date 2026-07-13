@@ -4,7 +4,7 @@ O post-mortem, em uma linha: o v2.3 gastou ~8 graus de liberdade sobre 4 observa
 cesta de 4 bancos) e NINGUEM CONTOU. Um modelo com mais knobs do que observacoes nao e' um
 modelo — e' uma interpolacao. Este arquivo faz a contagem virar um teste.
 
-Os testes deste arquivo, e o que cada um impede:
+Os quatro testes, e o que cada um impede:
 
   1. test_orcamento_de_knobs_e_exatamente_3
      Impede que um 4o grau de liberdade APARECA. E impede o furo mais silencioso: um knob
@@ -19,15 +19,21 @@ Os testes deste arquivo, e o que cada um impede:
      A regra escrita do ROADMAP, EXECUTAVEL. Uma justificativa que cita um ticker nao
      explica por que o numero e' aquele — ela confessa CONTRA O QUE ele foi ajustado.
 
+  4. test_a_suite_reage_a_um_knob_grosseiramente_errado
+     O CANARIO (PITFALLS P5.4): a prova de que a suite nova CONSEGUE REPROVAR.
+
 PROIBIDO: "consertar" qualquer um destes afrouxando o assert, ou mexendo num VALOR do
 `config.yaml`. Se um destes ficar vermelho, o que mudou foi o SISTEMA, nao o teste.
 """
 
 from __future__ import annotations
 
+import copy
+
 import pytest
 
 import helpers_blindagem as h
+from analista.report import report
 
 # --------------------------------------------------------------------------- #
 # 1. O orcamento: exatamente 3 — e a particao do escopo e' completa.
@@ -167,4 +173,78 @@ def test_nenhuma_justificativa_de_knob_menciona_ticker():
         "em termos do efeito que ele tem sobre uma acao especifica. Se a unica justificativa "
         "honesta para o numero e' 'e' o que faz o ticker X sair do evitar', entao o numero "
         "nao tem justificativa — tem um alvo."
+    )
+
+
+# --------------------------------------------------------------------------- #
+# 4. O CANARIO — a suite CONSEGUE reprovar.
+# --------------------------------------------------------------------------- #
+
+# Um erro GROSSEIRO de metodo: o ERP dobrado (6% -> 12%). Nenhum modelo defensavel sobrevive
+# a isso sem se mover. Se a engine nao reagir, ela parou de ler o custo de capital.
+LIMIAR_CANARIO = 0.05
+
+
+@pytest.mark.contrato
+def test_a_suite_reage_a_um_knob_grosseiramente_errado():
+    """CANARIO (PITFALLS P5.4): a blindagem CONSTRANGE alguma coisa.
+
+    Sem este teste, "448 verdes" pode significar "448 DESELECIONADOS". Ele prova que a suite
+    nova nao e' MAIS DECORATIVA que a velha: dobrar o ERP (6% -> 12%, um erro grosseiro de
+    metodo) MOVE o valor intrinseco. Se ele um dia falhar, e' porque a engine parou de reagir
+    ao custo de capital — e NENHUM OUTRO TESTE VAI TE CONTAR ISSO.
+
+    POR QUE O ASSERT E' SOBRE A CESTA, E NAO SOBRE UM TICKER (medido em 2026-07-13, antes de
+    escrever o assert — este teste NAO foi calibrado depois de ficar vermelho):
+
+        dobrar `capm.erp_local` move o V da seguradora da cesta em -15,85%
+        e move os TRES BANCOS em EXATAMENTE 0,00%.
+
+    Os bancos NAO estao mortos: eles estao SATURADOS. O `ke_teto = 0,13` clampa o Ke do RIM,
+    e o `erp_local` so' entra por `ke_live` — que ja' esta acima do teto. O clamp ENGOLE o
+    choque inteiro. E' a MESMA saturacao que o `test_invariancia_inflacao_engine_itub4`
+    (BLIND-02b) denuncia como a Doenca 3, uma camada acima: um knob que absorve as pernas do
+    modelo e as impede de chegar ao numero.
+
+    Um canario escrito sobre UM ticker saturado ficaria VERMELHO HOJE — e a "correcao" obvia
+    seria afrouxar o limiar ou trocar o ticker ate passar, que e' o Pitfall 5 pela porta dos
+    fundos. Um canario escrito sobre a CESTA afirma a coisa certa ("a engine reage ao custo
+    de capital") e e' MONOTONICO NA DIRECAO DA CURA: quando o KE-04 (Fase 12) remover o
+    `ke_teto`, os 4 tickers passarao a reagir e o `max` so' CRESCE. Este teste continuara
+    verde no dia da cura — e' assim que se escreve um alarme que nao precisa ser "consertado".
+
+    Nao ha ticker literal neste corpo de proposito: os tickers vem do DADO (o snapshot). Nao
+    ha nivel em reais cravado — a afirmacao e' RELATIVA (|dV/V|). Nao ha, portanto, nada que
+    o BLIND-04a possa confundir com um golden de calibracao.
+    """
+    empresas, cfg = h.cfg_e_empresas_do_snapshot()
+
+    sabotado = copy.deepcopy(cfg)
+    sabotado["capm"]["erp_local"] *= 2
+
+    assert sabotado["capm"]["erp_local"] != cfg["capm"]["erp_local"], (
+        "o deepcopy vazou: a sabotagem mutou o config original."
+    )
+
+    variacoes: dict[str, float] = {}
+    for empresa in empresas:
+        v_base = report.analisar_acao(empresa, cfg).intrinseco_motor
+        v_sabotado = report.analisar_acao(empresa, sabotado).intrinseco_motor
+        if v_base and v_sabotado:
+            variacoes[empresa.ticker] = abs(v_sabotado / v_base - 1)
+
+    assert variacoes, (
+        "nenhum intrinseco saiu da engine — o canario nao pode nem medir. Isto NAO e' "
+        "'a engine nao reagiu': e' a engine quebrada, ou o snapshot vazio."
+    )
+
+    maior = max(variacoes.values())
+    assert maior > LIMIAR_CANARIO, (
+        f"A ENGINE NAO REAGIU AO CUSTO DE CAPITAL DOBRADO.\n"
+        f"  ERP {cfg['capm']['erp_local']:.1%} -> {sabotado['capm']['erp_local']:.1%} "
+        f"moveu o V de TODA a cesta em menos de {LIMIAR_CANARIO:.0%}:\n"
+        + "\n".join(f"    {t}: {v:+.2%}" for t, v in sorted(variacoes.items()))
+        + "\n\nUm erro GROSSEIRO de metodo passou despercebido. Se nem isto a suite pega, "
+        "'suite verde' nao significa nada — e nenhum outro teste vai te contar. NAO afrouxe "
+        "este limiar: procure o knob que esta engolindo o choque (hoje, o `ke_teto`)."
     )
