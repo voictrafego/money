@@ -39,9 +39,32 @@ direta do post-mortem do v2.3.
   **INVARIANTE** (verdade algébrica que knob nenhum satisfaz), **GOLDEN-DE-NÍVEL** (trava um número,
   logo trava o método atual) e **CONTRATO** (formato/borda). Os GOLDEN-DE-NÍVEL entram em quarentena
   em vez de bloquear o marco.
-- [ ] **BLIND-02**: Existe teste de **invariância à inflação** — `V` varia menos de 2% sob choque de
-  **+300 bps** aplicado *simultaneamente* a `rf` e `g_cap`. Escrito como `xfail(strict=True)`: ele
-  **é a definição da Doença 1**, e vira verde sozinho na fase do `g`.
+- [ ] **BLIND-02**: Existem **dois** testes de **invariância à inflação**, e o choque é aplicado a
+  **`rf`, `g_cap` E `ROE` simultaneamente** (+300 bps):
+  - **(a) invariante algébrico** sobre a identidade fechada `P/B justo = 1 + (ROE−Ke)/(Ke−g)` —
+    exato (< 1e-9), knob-proof, **passa hoje**; guarda a ponte auditável do ENG-08.
+  - **(b) o `xfail(strict=True)`** — choque completo na **engine**, limiar **5%**. Ele **é a Doença 1
+    escrita como código** e vira verde sozinho na **Fase 12**.
+
+  **Por que o `ROE` entra no choque** (medido, 2026-07-13): chocar só `rf` e `g_cap` derruba `V` em
+  **−27,67%** *mesmo com o `Ke`/`g` exatos do livro e zero clamps* — o choque preserva `(Ke−g)` mas
+  **comprime `(ROE−Ke)`** em exatamente δ. Inflação levanta o **lucro nominal**, não só a taxa de
+  desconto; um `ROE` congelado no snapshot é um `ROE` **real** comparado com um `Ke` **nominal** — ou
+  seja, **é a própria Doença 1 uma camada abaixo**. A spec original era insatisfazível por álgebra.
+
+  **Por que 5% e não 2%**: com `n_fade = 10` o resíduo estrutural da janela explícita é **−4,68%**
+  (a perpetuidade é exatamente invariante; a janela finita não é) — os 2% eram **inalcançáveis** sem
+  amarrar o `n_fade`, que é 1 dos 3 graus de liberdade. Isto **não é afrouxar tolerância** (Pitfall
+  5): é fixar um limiar alcançável **na primeira escrita**, com a medição na mão. O proibido é mexer
+  no limiar **depois** que o teste fica vermelho.
+
+  **Por que Fase 12 e não 11**: até a Fase 12 o `ke_teto = 0,13` **satura** sob o choque — o `Ke` não
+  se move 1 bp e o `V` **sobe**. A perna do `rf` só passa a existir quando o clamp sai. A **regra dura
+  (A)** (não fundir 11 e 12) continua válida: ela é sobre a **ordem do conserto**, provada por
+  simulação, não sobre onde um teste fica verde.
+
+  ⚠️ **NÃO escrever este teste sobre BBDC4** — ele passa hoje **por acidente** (+1,96%) e daria XPASS
+  → suíte vermelha na hora.
 - [ ] **BLIND-03**: Existe teste de que a normalização **não pune crescimento** — série de lucro de
   +10%/ano *pura* (zero outlier) não pode produzir base normalizada abaixo do último ano menos
   inflação. Hoje produz haircut medido de **−9,1%**.
@@ -108,7 +131,9 @@ Maior alavancagem por linha do repositório: atinge todos os motores, todos os m
 - [ ] **GROW-01**: `g_cap` é derivado, não digitado: `(1 + π_ciclo) × (1 + PIB_real) − 1` = **7,28%**
   (π_ciclo = 5,18%, IPCA médio 10a, BCB SGS 13522 — medido).
 - [ ] **GROW-02**: A janela do IPCA é **a mesma** do `rf`. É isso que torna o valuation invariante à
-  inflação — e faz BLIND-02 virar verde.
+  inflação. **BLIND-02 NÃO vira verde aqui** — vira na **Fase 12**, quando o `ke_teto` (que satura
+  sob o choque e absorve a perna do `rf`) é removido. Esta fase entrega a **metade `g`** da cura;
+  esperar o teste verde aqui faria o executor "consertar" o teste em vez do código.
 - [ ] **GROW-03**: `g_T = min(ROE_T × retenção, g_cap)` — identidade fechada, não constante.
 - [ ] **GROW-04**: O `g` da fase explícita é reconciliado com o **livro**, que usa o `g` por
   fundamentos (10,24% no Itaú) — o app calcula 10,29% e **descarta**, adotando o histórico de 6,94%.
@@ -284,7 +309,7 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | 8 | SAN | SAN-01..07 | 7 | Os asserts SÃO o teste de regressão da Fase 9 |
 | 9 | DATA | DATA-01..06 | 6 | Cura a Doença 2 (dispersão); os asserts viram verde |
 | 10 | PRIM | PRIM-01..05 | 5 | **Critério de saída: o golden ITUB4 32.88 quebra e é DELETADO** |
-| 11 | GROW | GROW-01..05 | 5 | Metade da Doença 1; BLIND-02 vira verde AQUI |
+| 11 | GROW | GROW-01..05 | 5 | Metade da Doença 1 (o `g`); BLIND-02 **NÃO** vira verde aqui — vira na 12 |
 | 12 | KE | KE-01..05 | 5 | **Separada do GROW de propósito** (regra dura A) |
 | 13 | ENG | ENG-01..11 | 11 | 4 motores → RIM único; `motores:` ~20 → ≤5 chaves (contado) |
 | 14 | VAL | VAL-01..07 | 7 | **Critério soberano: ITUB4 = R$ 37,22 (o caso do livro)** |
