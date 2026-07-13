@@ -13,7 +13,7 @@ BBSE3:
   max: 46.00
   data: "2026-07-12"
   fonte: "Consenso de casas de análise (faixa de target prices, jul/2026) — agregadores investing.com corroborados por XP, BTG, Itaú BBA, Bradesco BBI, Genial, UBS BB, HSBC, Safra"
-  excecao_nota: "Exceção de arquétipo (D-05, loop D-12): seguradora capital-light — o valor está na franquia/fluxo de dividendo, não no book minúsculo (VPA≈5,35). O RIM ancorado em book a subvaloriza (RIM≈25,38 < piso ±15%). Fica fora do quórum como a exceção documentada desta iteração; a rota própria de seguradora (Gordon-franquia sobre dpa_recorrente) vem no plano 04-03. Não é falha de calibração de banco."
+  excecao_nota: "Exceção de arquétipo (D-03/D-05, loop D-12): seguradora capital-light → rota DDM-franquia (Gordon sobre o dividendo sustentável, dpa_recorrente), fora do bank-RIM ancorado em book — arquétipo documentado. O valor está na franquia/fluxo de dividendo, não no book minúsculo (VPA≈5,35) que o RIM subvaloriza. Roteia motor='seguradora' (≠ rim) e aterrissa em ≈R$39,87 (em cima do mid de consenso 39,5, dentro da banda ±15%). A nota é o que impede a rota silenciosa (Pitfall 5); não é falha de calibração de banco."
 BBDC4:
   min: 15.00
   max: 24.00
