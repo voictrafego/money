@@ -85,6 +85,7 @@ def test_backtest_cesta_rota_por_ticker():
 
 @pytest.mark.xfail(
     strict=True,
+    raises=AssertionError,
     reason=(
         "D-12: cesta 1/4 na banda ±15% (só ITUB4) < quórum 3/4 — a calibração RIM da Fase 4 NÃO "
         "generaliza para BBAS3/BBSE3/BBDC4. Gate NÃO afrouxado (banda/quórum intactos); reprovação "

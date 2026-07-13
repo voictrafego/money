@@ -109,12 +109,12 @@ def rodar_cesta(
 ) -> List[dict]:
     """Roda o RIM calibrado nos bancos (offline) e triangula as 4 âncoras — 1 dict por ticker.
 
-    Injeta `rf_local` congelado em `cfg["capm"]["rf_local"]` ANTES do loop; `analisar_acao`
-    NÃO muta o cfg, então é seguro rodar os 4 bancos com o MESMO dict. O intrínseco RIM vem
-    de `analisar_acao(...).intrinseco_motor` (never-raise: None → tratado como fora-da-banda).
+    Injeta `rf_local` congelado em `cfg["capm"]["rf_local"]` numa CÓPIA local do cfg (não muta o
+    dict do chamador — função pura); `analisar_acao` NÃO muta o cfg, então é seguro rodar os 4
+    bancos com o MESMO dict. O intrínseco RIM vem de `analisar_acao(...).intrinseco_motor`
+    (never-raise: None → tratado como fora-da-banda).
     """
-    cfg.setdefault("capm", {})
-    cfg["capm"]["rf_local"] = rf_local
+    cfg = {**cfg, "capm": {**cfg.get("capm", {}), "rf_local": rf_local}}
 
     # âncora (d): medianas de P/VP e P/L da PRÓPRIA cesta (D-11), agregação do harness.
     pares = [lentes.metricas_par(c) for c in empresas]
