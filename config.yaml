@@ -230,33 +230,38 @@ motores:
   rim:                            # RIM (ENG-02, banco/seguradora) — Ke ESTRUTURAL, menor que o CAPM ao vivo (D-01)
     erp_banco: 0.045              # ERP aplicado sobre a Selic-ciclo no ke_rim: ~4,5% de mercado maduro (Damodaran)
                                   # SEM o prêmio small-cap/iliquidez do capm.erp_local (0.06) — impróprio para
-                                  # banco large-cap/líquido. É a alavanca que destrava o ITUB4 do "evitar" (D-01).
+                                  # banco large-cap/líquido (D-01). SEGUNDO ERP do sistema: o KE-02 (Fase 12)
+                                  # unifica com capm.erp_local — dois prêmios de risco no mesmo modelo é sintoma.
     ke_piso: 0.11                 # clamp inferior do Ke do RIM (nunca abaixo — evita intrínseco explosivo)
     ke_teto: 0.13                 # CAL-02: revisado 0.14→0.13. Banco large-cap/líquido com beta ajustado (Blume
                                   # puxa betas para 1,0) tem Ke estrutural ~13%, não 14%. Damodaran mature ERP 4,23%
                                   # + a Selic-ciclo (rf_local) já embute risco-país/inflação → NÃO somar country risk
-                                  # de novo (senão double-count). Move ITUB4 ~R$2. O ke_rim também nunca excede ke_live.
-    n_fade: 10                    # horizonte explícito de fade do excesso de ROE até o excesso sustentável (CAL-01).
-                                  # RIM híbrido com valor terminal: golden ITUB4 (VPA~22, ke~12,5%) → ~R$39,2 e o live
-                                  # (VPA~19, ke~13%) → ~R$32,9 (terminal ≈17% do valor). A calibração dos knobs contra
-                                  # a cesta (ITUB4/BBAS3/BBSE3/BBDC4) é a Fase 5 (BACKTEST-01), não mais "deferida".
-    excesso_sustentavel: 0.045    # CAL-01 (NOVO) — cap do excesso de ROE sobre Ke que PERSISTE na perpetuidade
+                                  # de novo (senão double-count). O ke_rim também nunca excede ke_live.
+                                  # ⚠ CLAMP QUE SATURA: com a Selic-ciclo de hoje, o Ke estrutural de um banco
+                                  # grande bate no teto e o Ke PARA de reagir ao rf — é a Doença 3 (BLIND-02b).
+                                  # KE-04 (Fase 12): este knob é REMOVIDO, não recalibrado.
+    n_fade: 10                    # horizonte explícito (anos) de fade do excesso de ROE até o excesso sustentável
+                                  # (CAL-01). RIM híbrido com valor terminal: o terminal responde por ~17% do valor
+                                  # num banco grande típico. É UM DOS 3 GRAUS DE LIBERDADE do sistema
+                                  # (calibracao.lock.yaml) — e é ele que impõe o piso estrutural de −4,68% do
+                                  # BLIND-02(b): a janela explícita FINITA não é invariante à inflação; só a
+                                  # perpetuidade é.
+    excesso_sustentavel: 0.045    # CAL-01 — cap do excesso de ROE sobre Ke que PERSISTE na perpetuidade
                                   # (moat durável ~4,5pp). fade_para = ke + min(roe0−ke, cap): a janela converge a
-                                  # este excesso sustentável (não a zero, não ao excesso cheio eterno). Calibrável na
-                                  # cesta em BACKTEST-01/Fase 5.
+                                  # este excesso sustentável (não a zero, não ao excesso cheio eterno). CONGELADO
+                                  # (calibracao.lock.yaml): hoje decorativo (o cap satura), vira LOAD-BEARING no
+                                  # GROW-05 (Fase 11), quando o spread Ke−g cair de ~10,5pp para ~5,5pp.
     g_terminal: 0.025             # CAL-01 (NOVO) — g do RI na perpetuidade (espelha ddm.g_estavel ≤ PIB; declarado
                                   # localmente por independência do motor, NÃO acopla os blocos). O RI terminal cresce
                                   # a g_terminal, NÃO à taxa do book (evita RIM explosivo).
     ke_g_spread_min: 0.03         # CAL-01 (NOVO) — piso de (Ke−g_terminal) p/ liberar o terminal; senão degrada para
                                   # fade-only (never-raise). Com g=0,025 e ke_piso=0,11 o spread real é folgado; a
                                   # guarda protege configs futuros.
-    roe_terminal_stat: "mediana"  # CAL-01 (NOVO, Alavanca 2/D-01) — estatística do ROE through-cycle usado SÓ no RI
+    roe_terminal_stat: "mediana"  # CAL-01 (Alavanca 2/D-01) — estatística do ROE through-cycle usada SÓ no RI
                                   # terminal (mediana|media). O excesso terminal é ancorado no poder de lucro through-
-                                  # cycle do PRÓPRIO ticker e ainda capado por excesso_sustentavel: cobre BBAS3 (ROE
-                                  # caindo) e BBDC4 (ROE recuperando) e deixa o ITUB4 bit-idêntico (o cap satura). Mediana
-                                  # é robusta ao colapso de ROE de 1 ano (agro 2025 do BBAS3). ÚNICO knob novo desta
-                                  # alavanca — o anchor sai da SÉRIE histórica, não é constante (D-08). NÃO mexer nos
-                                  # knobs acima (excesso_sustentavel/g_terminal/ke_teto): mudariam o ITUB4.
+                                  # cycle da PRÓPRIA empresa (a série histórica dela, não uma constante — D-08) e
+                                  # ainda capado por excesso_sustentavel. A mediana é robusta a um ano de colapso de
+                                  # ROE (um exercício ruim isolado não redefine o poder de lucro de longo prazo).
   ciclica:                        # Lucro normalizado (ENG-03, cíclica) — P/L justo sobre lucro médio 7-10a
     anos_media: 10                # janela do norm.base_normalizada (média/mediana robusta a exercício atípico)
     winsor: 0.10                  # winsorização a 10% nos extremos (>=5 pontos), espelha o bloco `normalizacao`
