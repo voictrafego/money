@@ -1,545 +1,596 @@
-# Pitfalls Research
+# Domain Pitfalls — v2.4 Fidelidade do Valuation
 
-**Domain:** Análise técnica / swing-trade setups sobre dados B3 gratuitos e atrasados (yfinance), adicionados a um app Streamlit fundamentalista existente
-**Researched:** 2026-06-29
-**Confidence:** HIGH (no-repaint/timezone/intraday limits verificados contra o código existente e a doc do yfinance; fidelidade de método e fronteira legal ancoradas no método Murphy e na Res. CVM 19/20 já citada no app)
+**Domain:** engine de valuation fundamentalista sobre dados públicos brasileiros (CVM + Yahoo + BCB)
+**Researched:** 2026-07-13
+**Overall confidence:** MEDIUM-HIGH (a maior parte é verificada no próprio código deste repo + execução real; 2 fatos externos verificados em fonte oficial)
 
-> Numeração de fases: v1.4 começa na **Fase 12** (continua a partir da 11). A estrutura de
-> fases assumida abaixo (e usada no mapeamento) é:
-> - **Fase 12 — Ingestão intraday / camada de dados** (fetch multi-timeframe, split-adjust,
->   timezone, aviso de atraso, cache separado do diário)
-> - **Fase 13 — Contexto de tendência + níveis** (Dow + MMs, S/R, alinhamento multi-timeframe)
-> - **Fase 14 — Padrões gráficos + Fibonacci** (OCO, topos/fundos duplos, triângulos, bandeiras)
-> - **Fase 15 — Montagem do setup** (zona de entrada, stop técnico, alvo, R:R, score de qualidade)
-> - **Fase 16 — Página Streamlit + gráfico do momento** (overlays, botão Atualizar, avisos, "não recomendação")
->
-> Se a estrutura final divergir, re-mapear pelo tema, não pelo número.
+> **Como ler este documento.** Cada pitfall tem **Sinal de alerta**, **Prevenção** (um assert, um teste ou uma regra de commit — nunca "tome cuidado") e **Fase**. O Pitfall 1 é o mais importante: é o único que, se falhar, faz todos os outros consertos serem revertidos silenciosamente.
 
 ---
 
-## Critical Pitfalls
+## Achados de execução (medidos, não teorizados)
 
-### Pitfall 1: Repaint pela barra intraday em formação ("barra viva")
+Rodei o código deste repo antes de escrever. Três números que mudam o enquadramento do marco:
 
-**What goes wrong:**
-O gráfico "do momento" e o checklist de sinais usam a ÚLTIMA barra intraday, que ainda está se
-formando (a vela das 14:37 num timeframe de 30m representa o intervalo 14:30–15:00 incompleto).
-Um sinal (rompimento de Donchian, cruzamento de MACD, toque de Bollinger) aparece "ligado", o
-usuário aperta **Atualizar** dois minutos depois e o sinal sumiu — porque o fechamento da barra
-mudou. Isso é repaint clássico: o setup do passado se reescreve.
+**(a) O haircut da `base_normalizada` é real e proporcional ao crescimento.**
+`normalizacao.py:69-75` — com `anos_media=3`, `n=3 < 5` → retorna `median(janela)` = **o ano do MEIO**. Numa série de crescimento constante:
 
-**Why it happens:**
-`core/indicators.py` já é no-repaint POR BARRA FECHADA (Donchian com `.shift(1)`,
-`min_periods=janela`, regressão trailing causal). Mas no diário a "última barra" só fecha às 18h;
-no intraday ela está sempre viva durante o pregão. O código atual lê `close.iloc[-1]` em todos os
-rótulos discretos (`posicao_mm200`, `rompimento_donchian`, `toque_bollinger`, `cruzamento_macd`) —
-correto para barra fechada, traiçoeiro para barra parcial.
+| crescimento do lucro | base normalizada vs. último ano |
+|---|---|
+| 5% a.a. | **−4,8%** |
+| 10% a.a. | **−9,1%** |
+| 15% a.a. | **−13,0%** |
 
-**How to avoid:**
-- Na camada intraday, **descartar (ou marcar como provisória) a última barra não-fechada** antes de
-  passar o frame para `indicadores.calcular()`. Regra: barra fechada = `now_saopaulo >= fim_do_intervalo`.
-- Para sinais discretos (checklist, score), avaliar SEMPRE sobre a penúltima barra (última fechada);
-  para o desenho do gráfico, pintar a barra viva com aparência distinta + legenda "barra em formação".
-- O `.shift(1)` do Donchian já protege o CANAL; o que falta proteger é o COMPARADO (`close.iloc[-1]`).
+O haircut é **exatamente o crescimento de um ano**. O modelo penaliza a empresa por crescer. Ele entra em `roe_valuation`, `lpa_valuation`, `margem_valuation` e (via ROE) no âncora terminal do RIM — o mesmo erro aplicado 4 vezes.
 
-**Warning signs:**
-Sinais que piscam entre dois cliques de Atualizar no mesmo minuto; score que oscila ±20 pontos sem o
-preço andar; "nova_maxima" às 10h05 que vira "nenhum" às 10h06.
+**(b) O gate `BACKTEST-01` que declarou "4/4 PASS, a calibração generalizou" é na verdade 2/4.**
 
-**Phase to address:** Fase 12 (descartar barra viva na ingestão) + Fase 15 (score/checklist sobre barra fechada) + Fase 16 (render distinta da barra viva)
+| ticker | faixa de consenso | banda efetiva (±15%) | largura | valor do motor | dentro do **consenso**? |
+|---|---|---|---|---|---|
+| ITUB4 | 30,50–50,00 | 25,93–57,50 | **2,22×** | 32,88 | sim |
+| BBAS3 | 20,00–39,00 | 17,00–44,85 | **2,64×** | 43,89 | **NÃO** (acima do teto) |
+| BBDC4 | 15,00–24,00 | 12,75–27,60 | **2,16×** | 13,37 | **NÃO** (abaixo do piso) |
+| BBSE3 | 33,00–46,00 | 28,05–52,90 | 1,89× | 39,87 | sim (via rota criada *ad hoc*) |
+
+Um gate cuja banda de aprovação tem 2,2× de largura não é um gate — é um carimbo. E BBAS3/BBDC4 **falham o consenso** e passam só pelo acolchoamento. A frase do docstring de `test_backtest_bancos.py:16` ("4/4 na banda ±15% → o quórum 3/4 é atingido com folga") é literalmente verdadeira e substantivamente falsa.
+
+**(c) O teto de P/L do modelo é 9,5×, não 7,8×** (com `ke_teto=0,13` e `g=0,025`), contra P/L mediano de mercado ~9,9×. Com o `g_cap` nominal de 7,3% proposto e um Ke coerente, o teto vai para ~12,1×. O diagnóstico do marco está direcionalmente certo; o número exato no PROJECT.md está um pouco off. Não muda a conclusão.
 
 ---
 
-### Pitfall 2: Lookahead bias na detecção de padrões e no S/R (pivôs que "veem o futuro")
+## CRÍTICOS
 
-**What goes wrong:**
-Detecção de topo/fundo duplo, OCO, triângulos e S/R por pivôs costuma usar `scipy.signal.argrelextrema`
-ou "máximo local numa janela centrada" — que olha N barras à DIREITA do pivô. Num backtest visual isso
-parece perfeito; ao vivo, o pivô "confirmado" só existe N barras DEPOIS, então o app mostra um padrão/nível
-que um trader não poderia ter visto naquele instante. O alvo projetado e o score herdam o viés.
+### Pitfall 1 — Reajustar o knob para o golden voltar a passar (o pitfall META)
 
-**Why it happens:**
-Janela centrada (`order=k` no argrelextrema, ou `rolling(center=True)`) é o jeito intuitivo de achar
-extremos "limpos", e em dados históricos não dói. É a mesma armadilha que o `.shift(1)` do Donchian já
-evita no canal — mas a detecção de padrões é código NOVO (Fase 14), sem essa proteção embutida.
+**O que dá errado.** Você conserta `build.py:87` (num_acoes), o ITUB4 sai de 32,88 para 27,40, `test_backtest_alvos_recalibrados` fica vermelho, e a saída de menor resistência — a que o próprio repo já ensinou, por escrito — é mexer em `excesso_sustentavel` até voltar a 32,88. Aí você trocou um bug de dados por um knob, e o overfit sobrevive ao conserto que existia para matá-lo.
 
-**How to avoid:**
-- Pivô só é válido quando **confirmado por barras já fechadas à esquerda E à direita**; ao reportar "padrão
-  detectado", marcar a data de CONFIRMAÇÃO (não a do ápice) e nunca antecipar.
-- Para qualquer série derivada (linha de pescoço da OCO, neckline, projeção), garantir que todos os pontos
-  usados têm índice ≤ barra atual fechada.
-- Escrever um teste no espírito dos goldens: alimentar o detector com a série truncada em t e em t+1; o
-  rótulo emitido para as barras ≤ t NÃO pode mudar quando chega t+1 (estabilidade no-repaint do padrão).
+**Por que acontece aqui, especificamente.** O repo já **codificou a instrução de fazer isso**:
+- `config.yaml:237` — *"Move ITUB4 ~R$2."* (um knob descrito pelo seu efeito num ticker, não pela sua economia)
+- `config.yaml:258` — *"NÃO mexer nos knobs acima (excesso_sustentavel/g_terminal/ke_teto): mudariam o ITUB4."*
+- `tests/test_backtest_bancos.py:121` — `alvos = {"ITUB4": 32.88, ...}`, `± 0,20`
 
-**Warning signs:**
-Padrão aparece "centrado" no último topo sem barras de confirmação à direita; alvos que mudam quando você
-adiciona uma barra ao fim da série; testes de no-repaint inexistentes na Fase 14.
+Um agente executor lendo isso conclui, corretamente pelo texto, que **o trabalho dele é preservar 32,88**. O overfit não está no config; está no *contrato implícito* do repositório.
 
-**Phase to address:** Fase 14 (detector causal + teste de estabilidade) — também guardar contra na Fase 13 (pivôs de S/R)
+**Consequência.** O v2.4 produz números novos com o mesmo viés antigo e ninguém consegue provar o contrário — porque o único teste de nível que existe é o que trava o viés.
 
----
+**Prevenção — 6 mecanismos, do mais forte ao mais fraco. Implemente ao menos os 4 primeiros.**
 
-### Pitfall 3: Misturar base nominal × split-adjusted × Adj Close no intraday
+**P1.1 — DELETAR o golden, não atualizá-lo. Fase 0, primeiro commit do marco.**
+`test_backtest_alvos_recalibrados` (linhas 113-125) é um *characterization test de um método que sabemos errado*. Atualizar `32.88 → <novo número>` mantém o mecanismo vivo (o próximo bug vai bater no novo número e o reflexo volta). Deletar remove o incentivo. O commit de deleção carrega a justificativa:
 
-**What goes wrong:**
-O diário já resolve isso com cuidado cirúrgico: `ohlc` nominal (`auto_adjust=False`) para o gráfico/banda
-DDM, `ohlc_ajustado` split-only (`_ajustar_por_split`) para os indicadores, e `Adj Close` só para
-beta/retorno. No intraday a tentação é chamar `tk.history(interval="30m")` com defaults — e o default do
-yfinance é `auto_adjust=True`, que devolve preço dividend-adjusted. Resultado: níveis de S/R, stop e alvo
-calculados numa base diferente do preço que o usuário vê, e indicadores rodando sobre uma série que mistura
-proventos (o anti-pattern explicitamente proibido no docstring de `_ajustar_por_split`).
+```
+test(backtest): deleta goldens de nível da cesta de bancos (v2.3)
 
-**Why it happens:**
-Defaults silenciosos do yfinance (`auto_adjust` mudou de False→True como default em versões recentes), e a
-janela intraday é curta (≤60d), então raramente cai um split/dividendo DENTRO da janela — o bug fica latente
-e só morde quando há provento no período.
+Os alvos ITUB4 32,88 / BBAS3 43,89 / BBDC4 13,37 foram calibrados contra
+4 observações com >=4 graus de liberdade, sobre um pipeline com escala de
+num_acoes quebrada. São goldens de um método errado. Substituídos por
+testes de distribuição (P1.2) e de invariante (P1.3), que não podem ser
+satisfeitos mexendo num knob.
+```
 
-**How to avoid:**
-- Reusar EXATAMENTE a convenção do diário: buscar intraday com `auto_adjust=False` e passar pela mesma
-  `_ajustar_por_split` (split-only) antes dos indicadores; gráfico/níveis em nominal.
-- Centralizar a busca intraday numa única função em `ingest/prices.py` que devolve o mesmo contrato
-  (`ohlc` nominal + `ohlc_ajustado` split-only), espelhando `coletar_mercado`. Nunca chamar `tk.history`
-  solto na página.
-- Stop/alvo/entrada/R:R devem ser calculados na MESMA base do eixo do gráfico (nominal), senão o R:R exibido
-  não bate com o que o usuário lê na tela.
+**P1.2 — Trocar assert-de-ticker por assert-de-distribuição.** Nenhum teste do v2.4 pode conter o nome de um ticker ao lado de um número de reais. O que substitui:
 
-**Warning signs:**
-Preço do gráfico intraday diferente do `preco_atual`; níveis de Fibonacci que não encostam nas velas;
-`auto_adjust` ausente da chamada intraday; um salto no preço intraday na data de um JCP/dividendo.
+```python
+# tests/test_holdout_distribuicao.py
+def test_sem_vies_sistematico():
+    r = rodar_cesta(HOLDOUT)                      # 40-60 tickers
+    ratios = [x.v / x.fair_value for x in r]
+    assert 0.85 <= median(ratios) <= 1.15,  "viés sistemático de nível"
 
-**Phase to address:** Fase 12 (contrato de ingestão intraday espelhando o diário)
+def test_dispersao_sob_controle():
+    ratios = [...]
+    dentro = sum(0.75 <= x <= 1.33 for x in ratios) / len(ratios)
+    assert dentro >= 0.60,  "o motor não concorda com nada em particular"
 
----
+def test_nenhum_ticker_e_load_bearing():
+    """Nenhuma observação isolada pode carregar o resultado (anti-ITUB4)."""
+    ratios = [...]
+    for i in range(len(ratios)):
+        m = median(ratios[:i] + ratios[i+1:])     # jackknife
+        assert 0.85 <= m <= 1.15
+```
 
-### Pitfall 4: Setup lido como ORDEM — a fronteira "exibe, nunca recomenda" quebra no detalhe
+O último é o antídoto direto ao pecado original: se o resultado depende de um ticker, o teste diz.
 
-**What goes wrong:**
-"Zona de entrada R$ 28,40–28,70 · stop R$ 27,90 · alvo R$ 31,20 · R:R 1:3,1 · score 82/100" é
-**operacionalmente indistinguível de uma recomendação de compra**, por mais disclaimer que tenha no rodapé.
-Um score alto + setas verdes + a palavra "entrada" é lido como "compre agora". Isso colide com o
-posicionamento de software educacional e com a CVM Res. 19/20 (análise/consultoria de valores mobiliários)
-já citada no disclaimer do app — e é o risco mais caro do marco (regulatório + de marca).
+**P1.3 — Testes de INVARIANTE, que nenhum knob pode satisfazer.** Um knob move um *nível*; ele não conserta uma *identidade*. Estes são os testes que o executor não consegue burlar tunando:
 
-**Why it happens:**
-O método Murphy É operacional por natureza (ele ensina a montar a operação). Traduzir Murphy fielmente para
-a tela produz, sem querer, algo que parece sinal de corretora. O disclaimer global na sidebar não cobre cada
-número individual.
+```python
+def test_valuation_invariante_a_inflacao():
+    """Doença 1. Somar inflação ao rf E ao g não pode mudar o P/L justo."""
+    pl_a = teto_pl(rf=0.04, erp=0.06, g_real=0.025, ipca=0.00)
+    pl_b = teto_pl(rf=0.04, erp=0.06, g_real=0.025, ipca=0.05)
+    assert abs(pl_a - pl_b) / pl_a < 0.02   # HOJE: falha (o modelo cobra 5% pela inflação)
 
-**How to avoid:**
-- **Linguagem condicional e impessoal, sempre:** "o método de Murphy posicionaria o stop técnico abaixo do
-  suporte em R$ 27,90" / "PROJEÇÃO do padrão" — nunca "entre", "compre", "alvo de lucro". Reusar o registro
-  já validado nas Key Decisions ("EXIBE sinais, nunca recomenda").
-- Rotular tudo como **leitura do método, não opinião do app**: "o que o método de Murphy aponta", não "o que
-  recomendamos".
-- Disclaimer **contextual** na própria página de swing (não só na sidebar): aviso de que são níveis técnicos
-  educacionais, atraso de ~15min, e que score ≠ sinal de compra. Repetir o aviso CVM Res. 19/20 local.
-- Score apresentado como **"qualidade técnica do desenho do setup" (0–100)**, com legenda explícita "não é
-  probabilidade de alta nem sinal de compra".
-- Revisão de copy dedicada antes do deploy (mesma régua do disclaimer adicionado em 2026-06-28).
+def test_base_normalizada_nao_pune_crescimento():
+    """Doença 'primitivas'. Série 10% a.a.: a base não pode dar haircut."""
+    s = [100.0 * 1.10**i for i in range(10)]
+    assert normalizacao.base_normalizada(s, anos_media=3) >= 0.98 * s[-1]
+    # HOJE: retorna s[-2] (mediana de 3 = o do meio) -> 214,36 vs 235,79 = -9,1%
 
-**Warning signs:**
-Qualquer texto no imperativo ("compre/venda/entre/saia"); score sem legenda de ressalva; setas verdes/vermelhas
-sem rótulo de "sinal técnico, não ordem"; ausência de disclaimer NA página (só na sidebar).
+def test_teto_de_pl_cobre_o_mercado():
+    """O motor precisa ser capaz de justificar a ação mediana da bolsa."""
+    assert 1.0 / (ke_tipico() - g_cap()) >= 10.0   # P/L mediano da B3 ~9,9x
 
-**Phase to address:** Fase 15 (linguagem do setup/score) + Fase 16 (disclaimer contextual + copy review). É um **gate de aceite do marco**, não um detalhe de UI.
+def test_rim_equivale_a_dcf_equity_sob_clean_surplus():
+    """Identidade algébrica. Se quebrar, o motor está errado — não é calibração."""
+```
 
----
+**P1.4 — Regra de commit: knob e golden nunca no mesmo commit.** É a assinatura exata da fraude ("afrouxei o parâmetro e movi o alvo"). Hook em `.git/hooks/pre-commit` (e espelhado no CI):
 
-### Pitfall 5: Over-promising "tempo real" quando o dado tem ~15min de atraso
+```bash
+#!/bin/sh
+staged=$(git diff --cached --name-only)
+tocou_cfg=$(echo "$staged" | grep -c '^config.yaml$')
+tocou_gold=$(echo "$staged" | grep -cE '^tests/(fixtures/|.*golden|test_holdout)')
+if [ "$tocou_cfg" -gt 0 ] && [ "$tocou_gold" -gt 0 ]; then
+  echo "BLOQUEADO: config.yaml + fixture/golden no mesmo commit."
+  echo "Separe: (1) o conserto do código/dado, (2) o número novo com a razão econômica."
+  exit 1
+fi
+```
 
-**What goes wrong:**
-Botão "Atualizar" + gráfico "do momento" cria a expectativa de cotação ao vivo. O dado do Yahoo para B3 é
-**atrasado ~15min** (e a última barra pode estar incompleta — Pitfall 1). Se um sinal "rompeu agora" estiver
-15min defasado, o usuário age sobre informação velha achando que é live. Isso é tanto UX ruim quanto exposição
-legal ("prometeu tempo real e entregou atraso").
+**P1.5 — `calibracao.lock.yaml` + orçamento de knobs travado por teste.** Exatamente 3 knobs livres. Um teste falha se alguém criar o 4º, ou mudar o valor de um sem registrar o porquê:
 
-**Why it happens:**
-"Atualizar" sugere live; o atraso do Yahoo é invisível na resposta da API (vem um timestamp, mas não um
-selo de "delayed"). O PROJECT.md já reconhece o atraso, mas é fácil a UI não comunicá-lo em cada refresh.
+```python
+KNOBS_LIVRES = {"valuation.g_cap", "valuation.erp", "motores.rim.excesso_sustentavel"}  # 3. Ponto.
 
-**How to avoid:**
-- Selo permanente e visível: **"Dados atrasados ~15min (Yahoo) · não é cotação em tempo real"**, e mostrar o
-  **timestamp da última barra** ("dados até 14:25") ao lado do botão Atualizar.
-- Nunca usar a palavra "tempo real" / "ao vivo" na UI; preferir "dados mais recentes disponíveis".
-- Streaming real é explicitamente fora de escopo (custo zero) — manter assim.
+def test_orcamento_de_knobs():
+    marcados = {k for k in flatten(cfg) if "# CALIBRAVEL" in comentario(k)}
+    assert marcados == KNOBS_LIVRES, "grau de liberdade novo sem passar pela porta da frente"
 
-**Warning signs:**
-Texto "ao vivo/tempo real" na página; ausência do timestamp da última barra; usuário não consegue saber se o
-gráfico é de agora ou de 20min atrás.
+def test_knobs_batem_com_o_lock():
+    lock = yaml.safe_load(open("calibracao.lock.yaml"))
+    for k in KNOBS_LIVRES:
+        assert valor(cfg, k) == lock[k]["valor"], (
+            f"{k} mudou de {lock[k]['valor']} para {valor(cfg,k)}.\n"
+            f"Para mudar: edite calibracao.lock.yaml com (a) razão ECONÔMICA, "
+            f"(b) o resultado do hold-out DEPOIS da mudança, (c) sua assinatura.\n"
+            f"Nunca é válido justificar com 'para o teste X voltar a passar'."
+        )
+```
 
-**Phase to address:** Fase 16 (selo de atraso + timestamp por refresh); origem do timestamp vem da Fase 12
+O lock exige que a mudança seja um ato deliberado, escrito e revisável. Não impede o tuning — torna impossível fazê-lo *em silêncio*, que é como ele acontece.
 
----
+**P1.6 — Regra de direção de causalidade (escreva no CLAUDE.md do projeto).**
+> Quando um número muda depois de um conserto de dado/primitiva, existem **exatamente duas** respostas permitidas: (1) aceitar o número novo e registrar *por que ele se moveu, em termos econômicos*; (2) reverter o conserto porque ele está errado. **Reajustar um knob NUNCA é uma resposta permitida.** Os knobs ficam CONGELADOS (P1.5) durante as Fases 1-5; só a fase de calibração pode tocá-los, e ela roda uma vez.
 
-### Pitfall 6: Quebrar os 191 testes golden / violar o read-only de app.py
+**Detecção (o sinal de alerta a caçar em code review).** Qualquer justificativa da forma *"ajustei X porque o ticker Y estava em Z"*. Compare `config.yaml:237` ("Move ITUB4 ~R$2") — é o formato canônico do erro. Uma justificativa legítima de knob **nunca menciona um ticker**.
 
-**What goes wrong:**
-A camada de swing toca `ingest/prices.py` (novo fetch intraday) e reusa `core/indicators.py`. Um refactor
-descuidado — mudar a assinatura de `coletar_mercado`, alterar `_ajustar_por_split`, mexer no contrato
-`SinaisTecnicos`/`DadosMercado`, ou recalcular método dentro de `app.py` — derruba os goldens ou reintroduz
-a divergência que o read-only de app.py foi criado para evitar.
-
-**Why it happens:**
-Pressão de "só adicionar um parâmetro" em funções compartilhadas; tentação de calcular stop/alvo/score na
-própria página Streamlit (mais rápido de prototipar) em vez de numa função pura testável da engine.
-
-**How to avoid:**
-- **Aditividade obrigatória**: novos campos com default (o padrão já usado em `SinaisTecnicos.close` e
-  `Canais.donchian_sup_55 = None`), nova FUNÇÃO de fetch intraday em vez de alterar `coletar_mercado`. Não
-  mudar assinaturas existentes.
-- **Toda lógica de setup (S/R, padrões, stop, alvo, R:R, score) vive na engine** (`core/`), pura e
-  golden-testada; `app.py` só LÊ campos e desenha — mantendo a Key Decision "app.py é read-only".
-- Rodar a suíte completa (191) ANTES e DEPOIS de cada fase; adicionar goldens NOVOS para a camada técnica
-  (incl. testes de no-repaint dos Pitfalls 1 e 2).
-- Não tocar nos números/contratos fundamentalistas (v1.0–v1.3) — a página é produto separado.
-
-**Warning signs:**
-Diff em assinaturas de funções existentes; cálculo de método dentro de `app.py`; queda em qualquer um dos
-191 goldens; novos campos sem default no dataclass.
-
-**Phase to address:** Todas as fases (gate de regressão por fase); explicitamente Fase 15 (lógica na engine, não na página) e Fase 16 (read-only)
+**Fase:** 0 (deleção do golden + lock + hook, ANTES de qualquer código) e 6 (calibração).
 
 ---
 
-### Pitfall 7: Ingestão intraday contaminando o pipeline diário e o cache
+### Pitfall 2 — A "nota de exceção" é uma lavanderia de overfit
 
-**What goes wrong:**
-Os caches atuais (`montar`, `selic_atual`, `rf_capm`) usam `@st.cache_data(ttl=3600)` — 1h é perfeito para
-fundamentos/diário e **errado para intraday** (uma barra de 5m envelhece em minutos; ttl=3600 serviria dados
-de 1h atrás como "atualizados"). Pior: se a busca intraday for enfiada dentro de `montar()` ou compartilhar
-chave de cache com o diário, o botão Atualizar não invalida nada (cache hit) OU a recoleta intraday dispara
-recoleta de CVM/fundamentos desnecessária, estourando rate-limit do Yahoo.
+**O que dá errado.** O gate atual (`test_backtest_bancos.py:88-110`) tem uma regra: um ticker fora da banda passa **se tiver `excecao_nota`**. Combinada com o quórum de 3/4, isso torna o gate **infalsificável**: qualquer reprovação vira aprovação escrevendo um parágrafo. Foi exatamente o que aconteceu com a BBSE3 — ela falhou o RIM, então foi **criada uma rota nova de motor** ("seguradora capital-light → Gordon-franquia") e o `excecao_nota` do fixture a documenta como arquétipo, não como falha. O texto da nota é honesto e bem-escrito; o mecanismo é o problema.
 
-**Why it happens:**
-Reuso preguiçoso da função `montar` cacheada; não perceber que intraday e diário têm cadências de frescor
-opostas; o `ttl=3600` herdado por copiar-colar o decorator.
+Uma rota criada *depois* de ver qual ticker falhou é um grau de liberdade, mesmo que não tenha número nenhum. **Graus de liberdade não se contam só em floats.**
 
-**How to avoid:**
-- **Função e cache SEPARADOS para intraday**, com `ttl` curto (ex.: 60–300s) coerente com o timeframe; chave
-  de cache incluindo `(ticker, interval, period)`.
-- Botão **Atualizar** = `st.cache_data.clear()` seletivo da função intraday (ou `ttl` curto + rerun), nunca
-  recoletar fundamentos.
-- Intraday NÃO entra em `montar()`/`build.montar_empresa`; vive na nova função de `ingest/prices.py`. O
-  pipeline diário/fundamentalista fica intocado.
-- Respeitar o retry/backoff já existente (`_MAX_TENTATIVAS`/`_BACKOFF_SEG`) para o rate-limit intermitente do
-  Yahoo — intraday repetido é mais propenso a 429.
+**Consequência.** "4 knobs sobre 4 observações" subestima. O DoF efetivo do v2.3 é: 4 números + 1 mecanismo novo (valor terminal) + 1 escolha de estatística (`roe_terminal_stat: mediana|media`) + 1 rota nova (seguradora) + 1 regra de exceção ≈ **8 graus de liberdade sobre 4 observações**. Isso não é calibração, é interpolação.
 
-**Warning signs:**
-Atualizar não muda nada (cache de 1h); recoleta de CVM ao trocar timeframe; `ttl=3600` numa função intraday;
-rate-limit/empty frames do Yahoo após cliques repetidos.
+**Prevenção.**
+- Toda escolha estrutural (rota, carve-out, motor, estatística robusta) conta como **1 grau de liberdade** no orçamento, igual a um float.
+- **Carve-outs são declarados ANTES de rodar**, com base no domínio de validade do modelo (transmissora = concessão de prazo finito → perpetuidade é inválida; seguradora capital-light → book não é a base de capital), num arquivo commitado antes do primeiro run. Um carve-out declarado depois é um overfit com boa redação.
+- No hold-out, **zero exceções permitidas**. `assert not any(r.excecao_nota for r in holdout)`. Uma exceção no hold-out = hold-out reprovado.
+- Aposentar o par quórum+nota. Substituir pelos testes de distribuição do P1.2 (que não têm porta dos fundos).
 
-**Phase to address:** Fase 12 (cache/fetch intraday isolado) + Fase 16 (semântica do botão Atualizar)
+**Fase:** 6 (revalidação), com o arquivo de carve-outs escrito na Fase 5.
 
 ---
 
-## Moderate Pitfalls
+### Pitfall 3 — Validação circular: "consenso de casas de análise" é preço com um chapéu
 
-### Pitfall 8: Limites de período/intervalo do yfinance estourando silenciosamente
+**O que dá errado.** `tests/fixtures/fair_values_bancos.yaml` ancora o modelo em *target prices* de sell-side. Um target price é ≈ preço atual × (1 + upside que o analista defende), com o *upside* mediano da indústria estruturalmente positivo e a dispersão entre casas refletindo, em boa parte, o próprio preço de mercado. Validar V contra ele é validar V contra o preço com passos extras — e o marco inteiro nasceu da constatação de que o modelo **discorda do preço em 80% da bolsa**. Você não pode usar como juiz aquilo que está sendo julgado.
 
-**What goes wrong:**
-Pedir histórico além do que o Yahoo dá para cada intervalo retorna **frame vazio ou erro**, não um aviso
-amigável. Limites (HIGH confidence, derivados do source do yfinance):
+Pior: as faixas foram coletadas em 2026-07-12, **depois** de já se saber que o ITUB4 "estava errado". Fair values colhidos com conhecimento do alvo não são âncora, são espelho.
 
-| Intervalo | Histórico máximo |
-|-----------|------------------|
-| 1m | ~7 dias por request (~30d total) |
-| 2m / 5m / 15m / 30m / 90m | ~60 dias |
-| 60m / 1h | ~730 dias |
-| 1d e maiores | "max" |
+**Qual é a âncora não-circular.** Não existe uma. Existem quatro parciais, e a validação honesta usa as quatro para coisas *diferentes*:
 
-Um SMA200 ou squeeze126 no frame de 5m (≤60d ≈ poucas centenas de barras, mas com buracos) frequentemente
-não tem barras suficientes → tudo "indisponivel". Pior, pedir 5m com `period="1y"` simplesmente volta vazio.
+| Âncora | O que ela pode provar | O que ela NÃO pode provar |
+|---|---|---|
+| **1. Invariantes algébricos** (RIM ≡ DCF-equity sob clean surplus; NAV = 1º termo; invariância à inflação) | Que o motor não tem erro de unidade nem de fórmula. **É a única prova dura, e é grátis** (sem dado externo). | Que o número é "certo". |
+| **2. Centro da seção transversal** (mediana de V/P ≈ 1 no universo) | **Ausência de viés de unidade.** Um modelo que diz que 80% da bolsa está errada *na mesma direção* está diagnosticando a si mesmo. Condição **necessária**. | Acurácia. É um detector de viés, jamais um teste de acerto. **Nunca calibrar para maximizar isso** — é assim que se constrói uma máquina de reproduzir o preço. |
+| **3. Ordenação vs. retorno futuro realizado** (backtest temporal: decis de V/P em *t* vs. retorno total em *t+3a*) | **A única evidência não-circular de que o modelo informa alguma coisa.** O output realizado não sabe o que o modelo previu. | Que o *nível* de V está certo (só a ordenação). |
+| **4. Expectativas implícitas reversas** (dado o preço, qual `g`/ROE o mercado embute? é plausível vs. o histórico?) | Que o modelo é uma **lente auditável** — "para pagar esse preço você precisa acreditar em ROE de 22% para sempre". | Nada, sozinha. Mas é o output mais honesto que um valuation gratuito pode entregar, e casa com a "ponte auditável" do marco. |
 
-**Why it happens:**
-Reuso do `period="5y"` do diário em qualquer intervalo; desconhecimento da matriz de limites; a degradação
-graciosa do código (NaN → "indisponivel") MASCARA o problema em vez de explicá-lo.
+**Recomendação opinativa.** A métrica primária de aceitação do v2.4 deve ser **(1) + (2)**: invariantes duros + ausência de viés no centro da distribuição. (3) é o desempate e a evidência de valor real, com as ressalvas do Pitfall 4. **Descontinue o consenso de sell-side como âncora de aprovação** — mantenha-o, se quiser, como *sanity display*, nunca como gate.
 
-**How to avoid:**
-- Tabela de `period` válido por `interval` na camada de ingestão; clamp automático + aviso na UI ("5m: só
-  ~60 dias de histórico disponível").
-- Avisar quando o histórico é curto demais para os indicadores de janela longa (SMA200/squeeze126): ou ocultar
-  esses indicadores no timeframe curto, ou rotular "histórico insuficiente" explicitamente (não só
-  "indisponivel" mudo).
-- Validar `len(frame)` contra a maior janela ANTES de prometer o indicador.
+E aceite o corolário desconfortável: **um valuation gratuito não tem como provar que acerta o nível.** O produto honesto não é "o preço justo é R$32,88" — é "a este preço, o mercado embute X; seu histórico diz Y; a diferença é seu edge ou seu erro". Isso é o que o "preço-teto + viés binário + ponte auditável" do marco já quer ser. Vá até o fim: **pare de prometer um número de precisão que o dado não sustenta.**
 
-**Warning signs:**
-Frame vazio em 5m com period longo; indicadores todos "indisponivel" no intraday; SMA200 ausente sem explicação.
-
-**Phase to address:** Fase 12 (matriz period×interval + clamp) + Fase 13 (gate de janela longa)
+**Fase:** 6 (contrato de validação) + 5 (contrato de saída).
 
 ---
 
-### Pitfall 9: Timezone — intraday tz-aware (America/Sao_Paulo) × diário tz-naive
+### Pitfall 4 — Look-ahead bias na CVM (invalida o backtest temporal ingênuo)
 
-**What goes wrong:**
-yfinance devolve timestamps intraday **tz-aware no fuso da bolsa (America/Sao_Paulo, -03)**, mas barras
-diárias vêm como datas **tz-naive**. Comparar/concatenar/alinhar as duas (multi-timeframe, marcar evento no
-diário a partir de um pivô intraday) levanta `TypeError: tz-aware vs tz-naive` ou desalinha por 3h. Se o
-servidor da VPS estiver em UTC, "hoje" e "barra fechada" calculados com `datetime.now()` ingênuo erram por 3h
-— podendo tratar uma barra viva como fechada (realimenta Pitfall 1).
+**O que dá errado.** A DFP do exercício *N* só existe em **até 3 meses após o encerramento do exercício social** (Resolução CVM 80/2022, art. 22, IV — emissor nacional; 4 meses para estrangeiro) — na prática, DFP de 2022 disponível a partir de ~mar/2023, com retardatários depois disso. Um backtest que, em 01/jan/2023, usa o lucro de 2022 está negociando com informação que ninguém tinha. Em séries de dividendos isso infla o resultado brutalmente, porque o que você "sabia" é justamente o que moveu o preço em março.
 
-**Why it happens:**
-Defaults inconsistentes do yfinance entre diário e intraday; cálculo de "agora" sem fuso explícito; a VPS roda
-em UTC.
+**Segundo look-ahead, mais sutil e que a maioria ignora:** os ZIPs de Dados Abertos da CVM são **regenerados**. `dfp_cia_aberta_2019.zip` baixado hoje contém a versão **atual** das demonstrações de 2019 — incluindo **reapresentações** (restatements) feitas em 2021, 2022. Você lê números que só passaram a existir depois. `cvm.py:51-70` cacheia o ZIP mas **não registra quando foi baixado nem qual versão é** — então nem dá para medir a contaminação.
 
-**How to avoid:**
-- Normalizar o fuso na borda: **tudo em `America/Sao_Paulo`** ao decidir "barra fechada" e "última atualização";
-  usar `pd.Timestamp.now(tz="America/Sao_Paulo")`, nunca `datetime.now()` naive.
-- Ao alinhar timeframes, converter explicitamente (localizar o diário ou remover tz do intraday de forma
-  consciente) — decisão única e documentada, não ad-hoc por call-site.
-- B3 não tem DST desde 2019 (-03 fixo), o que simplifica, mas NÃO assumir o fuso do host.
+**Terceiro:** `universe.py`/`ticker_map` é o universo **de hoje** → **survivorship bias**. Rodar um backtest 2022→2025 sobre os tickers que existem em 2026 exclui, por construção, tudo que quebrou, foi deslistado ou incorporado (AMER3, OIBR, etc.) — as exatas empresas que um modelo de dividendos precisa provar que evita. Um backtest survivorship-contaminado **sempre parece bom**.
 
-**Warning signs:**
-`TypeError` tz-aware/naive nos logs; "barra fechada" errada quando rodando na VPS (UTC) vs local; horário do
-"dados até HH:MM" 3h adiantado.
+**Prevenção.**
+```python
+# ingest/pit.py
+def disponivel_em(ano_exerc: int) -> date:
+    """DFP do exercício N vira pública em até 3 meses (Res. CVM 80). +1 mês de folga
+    para retardatário/reapresentação inicial."""
+    return date(ano_exerc + 1, 4, 30)
 
-**Phase to address:** Fase 12 (normalização de fuso na ingestão) + Fase 13 (alinhamento multi-timeframe)
+def assert_point_in_time(anos_usados: list[int], as_of: date) -> None:
+    for a in anos_usados:
+        assert disponivel_em(a) <= as_of, (
+            f"LOOK-AHEAD: exercício {a} só é público em {disponivel_em(a)}, "
+            f"mas o backtest está em {as_of}"
+        )
+```
+- O harness de backtest temporal **chama `assert_point_in_time` obrigatoriamente**; sem `as_of` explícito ele se recusa a rodar (`raise`, não default).
+- Carimbe a proveniência: gravar `data_download` + `ETag`/`Last-Modified` do ZIP num sidecar por arquivo em `data/cvm/`. Não elimina a contaminação por reapresentação (impossível sem dado PIT pago), mas **torna-a mensurável e declarável**.
+- **Declare a limitação no relatório do backtest**, com esta frase: *"restatement-contaminated — o backtest usa as demonstrações como estão hoje, não como estavam então; isso favorece o modelo."* Um viés declarado é honesto; um viés escondido é fraude.
+- Survivorship: monte o universo do ano *t* a partir do **FCA daquele ano** (a CVM publica o FCA por ano, e o repo já usa FCA em `universe.py`) — não do `ticker_map` atual. Se não der: **não rode o backtest de retorno**, ou reporte-o como enviesado-para-cima e não o use como gate.
+- Regime único: 2022→2025 é **uma** amostra macro (ciclo de Selic). Não afirme generalidade. Reporte por coorte de ano de entrada.
 
----
+**Veredito sobre a pergunta "backtest temporal resolve a circularidade?":** resolve **a circularidade** (o retorno futuro não conhece o modelo), mas **importa quatro vieses novos** (look-ahead, restatement, survivorship, regime único). Ele é uma boa **âncora secundária de ordenação** e um **péssimo gate de nível**. Se o custo de fazê-lo direito (universo PIT do FCA + trava de disponibilidade) for alto demais para o orçamento do marco, **prefira não fazê-lo a fazê-lo mal** — um backtest ingênuo produz um número confiante e falso, que é pior que nenhum número.
 
-### Pitfall 10: Tickers B3 ilíquidos — gaps, barras de volume zero e leilão
-
-**What goes wrong:**
-Small caps da B3 negociam pouco: barras intraday faltando, `Volume=0`, e os **leilões de abertura/fechamento
-(e o after de fração)** produzem velas com preço estranho ou spread enorme. Indicadores de volume (confirmação
-de rompimento, OBV) e padrões (bandeira/triângulo dependem de contração de volume) ficam ruidosos ou falsos.
-Donchian/Bollinger sobre uma série esburacada geram "rompimentos" que são só ausência de negócio.
-
-**Why it happens:**
-O método assume liquidez contínua; a B3 fora dos blue chips não tem. O Yahoo preenche/omite barras de forma
-inconsistente.
-
-**How to avoid:**
-- Reusar o `volume_financeiro_diario` já calculado para **avisar/bloquear setups em tickers de baixa
-  liquidez** ("liquidez baixa — sinais técnicos pouco confiáveis"); o app já tem `volume_min_diario` no
-  screening como referência.
-- Tratar `Volume=0` como barra suspeita (não confirmar rompimento por volume nessas barras); não interpolar
-  preço em buracos.
-- Considerar excluir as barras de leilão de abertura/fechamento dos cálculos intraday, ou ao menos sinalizá-las.
-
-**Warning signs:**
-Setups "perfeitos" em tickers que mal negociam; rompimentos com volume 0; velas de leilão distorcendo S/R.
-
-**Phase to address:** Fase 12 (limpeza/flag de barras) + Fase 15 (gate de liquidez no score)
+**Fase:** 6, com a decisão explícita de escopo ("fazer PIT direito" vs. "não fazer") tomada na Fase 5.
 
 ---
 
-### Pitfall 11: Over-fitting de padrões → enxurrada de falsos positivos
+### Pitfall 5 — O executor "conserta" os ~150 testes em vez de consertar o código
 
-**What goes wrong:**
-Detectores de OCO/triângulo/bandeira frouxos disparam em quase qualquer série (todo zigue-zague "parece" um
-triângulo). O usuário vê 5 padrões num gráfico e perde a confiança — ou pior, age sobre ruído. Calibrar o
-detector para bater num gráfico-exemplo (over-fit a 1 caso) explode em falsos positivos no resto.
+**O que dá errado.** Suíte vermelha em 150 testes é uma pressão enorme. Os caminhos de menor resistência, em ordem de frequência: afrouxar tolerância (`± 0,20` → `± 2,00`), trocar por `pytest.approx(rel=0.5)`, adicionar `xfail`/`skip`, deletar o assert, ou "atualizar o golden" copiando a saída atual sem olhar. Todos deixam a suíte verde. Todos destroem a capacidade da suíte de detectar o próximo erro. Este repo já tem o precedente: o `xfail(strict=True)` do backtest foi *removido* quando o quórum passou (docstring, linha 19) — ou seja, o teste foi projetado para deixar de reprovar.
 
-**Why it happens:**
-Padrões gráficos são subjetivos; sem limiares geométricos rígidos (tolerância de simetria, proporção mínima,
-nº mínimo de toques), o detector vira gerador de pareidolia. Mesma armadilha do "generalizar, não tunar por
-ticker" já aprendida no valuation (memória do projeto).
+**Prevenção — 4 mecanismos.**
 
-**How to avoid:**
-- Limiares geométricos explícitos e conservadores no `config.yaml` (igual aos params dos indicadores): ex.
-  topo/fundo duplo exige 2 toques dentro de X% e um vale/pico intermediário de ≥Y%; triângulo exige ≥N toques
-  em cada linha. **Preferir poucos padrões de alta confiança a muitos frouxos.**
-- Validar o detector contra um conjunto de tickers variados (não 1) — não recalibrar para acertar um gráfico
-  específico.
-- Exigir **confirmação** (rompimento + volume) antes de marcar o padrão como "ativo"; antes disso, "em
-  formação".
+**P5.1 — Classificar os 448 testes ANTES de escrever uma linha de código (Fase 0), num arquivo commitado.**
 
-**Warning signs:**
-Múltiplos padrões sobrepostos no mesmo gráfico; detector calibrado contra um único exemplo; padrão sem
-critério numérico de aceite.
+| Bucket | Definição | O que pode acontecer com ele |
+|---|---|---|
+| **INVARIANTE** | Identidade algébrica, degradação graciosa, tratamento de `None`, determinismo, "não puxa rede", escala/unidade | **Deve continuar passando bit-a-bit.** Qualquer quebra aqui é regressão real. **NUNCA reclassificar.** |
+| **GOLDEN DE NÍVEL** | Um número produzido pelo método antigo | **DELETADO** (não editado), com uma linha de razão |
+| **CONTRATO** | Forma da saída, nomes de campo, tipos | Reescrito deliberadamente para o contrato novo |
 
-**Phase to address:** Fase 14 (limiares geométricos + validação multi-ticker)
+O arquivo `tests/CLASSIFICACAO-v2.4.md` é commitado **antes** do primeiro conserto. Sem ele, o executor decide bucket na hora — e um invariante que quebrou vira "ah, era só um golden".
 
----
+**P5.2 — Golden master + diff aprovado, em vez de golden por teste.** Antes de tocar no código, congele a saída completa do universo (104 tickers × todos os campos) em `tests/fixtures/baseline_v2.3.json`. O teste não é *"a saída == o golden"*; o teste é *"o diff é exatamente o diff aprovado"*:
 
-### Pitfall 12: S/R e Fibonacci arbitrários (ancoragem subjetiva)
+```python
+def test_diff_e_o_aprovado():
+    atual = rodar_universo(SNAPSHOT_CONGELADO)
+    diff = diffar(carregar("baseline_v2.3.json"), atual)
+    aprovado = carregar("tests/fixtures/diff_aprovado_v2.4.json")
+    assert diff == aprovado, (
+        "A saída mudou de um jeito que ninguém aprovou. Rode `make aprovar-diff`, "
+        "que exige uma linha em .planning/DIFF-LOG.md explicando a MUDANÇA ECONÔMICA."
+    )
+```
+Cada número que se move fica **visível, contável e assinado**, em escala, sem congelar o valor errado. É o oposto exato de "atualizar o golden": o *delta* é o artefato revisado, não o nível.
 
-**What goes wrong:**
-Suporte/resistência e retração de Fibonacci dependem de QUAIS pivôs (swing high/low) você ancora. Escolha
-implícita ou instável → níveis que mudam a cada refresh ou parecem chutados. Dois usuários (ou dois refreshes)
-veem Fibos diferentes para o mesmo ticker. Sem regra determinística, o "alvo por Fibonacci" vira número
-mágico — e alimenta a leitura de recomendação (Pitfall 4).
+**P5.3 — CI que barra o afrouxamento.** Um script de ~20 linhas sobre `git diff` da PR:
+- proibir `xfail`, `skip`, `pytest.approx` **novos** sem `# JUSTIFICATIVA:` na linha anterior;
+- proibir aumento de tolerância numérica (regex em `<= 0.20` → `<= 2.00`) sem `# JUSTIFICATIVA:`;
+- proibir queda na contagem de testes sem uma entrada correspondente em `DIFF-LOG.md`.
 
-**Why it happens:**
-Fibonacci/S/R não têm definição canônica única; o trader escolhe o swing "a olho". Em software isso vira uma
-heurística implícita não-documentada e não-reproduzível.
+**P5.4 — Meta-teste de sensibilidade (o "canário").** Depois da migração, prove que a suíte nova **consegue** reprovar:
+```python
+def test_a_suite_reage_a_um_knob():
+    """Se eu piorar o g_cap em 1pp e a suíte ficar verde, a suíte não restringe nada."""
+    with cfg_perturbado("valuation.g_cap", delta=+0.01):
+        falhas = rodar_suite_de_valuation()
+    assert len(falhas) >= 3, "a suíte é decorativa"
+```
+Sem isso, você pode terminar o marco com 448 testes verdes que não constrangem o modelo — que é, essencialmente, o estado de hoje.
 
-**How to avoid:**
-- **Regra determinística e documentada** para ancoragem: ex. Fibo ancorado no maior swing significativo das
-  últimas N barras com amplitude ≥ X%; S/R por clustering de pivôs confirmados (Pitfall 2) com nº mínimo de
-  toques. Mesmos dados → mesmos níveis (reproduzível, como o BSD de referência fixa do projeto).
-- Mostrar de ONDE o nível veio ("ancorado no topo de 12/05 e fundo de 03/06") — transparência, não caixa-preta.
-- Tornar a janela de look-back um parâmetro de `config.yaml`, não um literal escondido.
-
-**Warning signs:**
-Fibos que mudam entre refreshes sem o preço mudar; S/R sem justificativa de origem; ancoragem hard-coded.
-
-**Phase to address:** Fase 13 (S/R determinístico) + Fase 14 (ancoragem de Fibonacci documentada)
+**Fase:** 0 (classificação + baseline + CI), contínua até a 6.
 
 ---
 
-### Pitfall 13: Erros de alinhamento multi-timeframe (Dow + MMs)
+## MODERADOS — dados financeiros brasileiros
 
-**What goes wrong:**
-O contexto de tendência cruza timeframes (tendência maior no diário/semanal, gatilho no menor). Erros comuns:
-(a) resample inconsistente (semanal W-FRI vs W-SUN muda as barras), (b) comparar uma MM200 diária com preço de
-5m como se fossem o mesmo eixo temporal, (c) "lookahead" no resample (a barra semanal corrente inclui o futuro
-da semana). O resultado é um "alinhado/desalinhado" errado, e o score herda.
+### Pitfall 6 — Minoritários: lucro consolidado ÷ LPA do controlador (a raiz de `build.py:87`)
 
-**Why it happens:**
-Resample tem muitas convenções; o projeto já apanhou disso (config `base_temporal` "diario" porque rodar os
-params diários no frame semanal dava "RSI em onda quadrada"). Multi-timeframe multiplica essas escolhas.
+**O que dá errado.** `build.py:87`: `contagem_cvm[ano] = abs(f["lucro_liquido"] / lpa_cvm)`. As duas pontas vêm de bases **diferentes**:
+- `lucro_liquido` ← CD_CONTA `3.11` = *"Lucro/Prejuízo **Consolidado** do Período"* → **inclui** os não-controladores.
+- `lpa` ← `3.99.01.01` → é calculado sobre o lucro **atribuído aos controladores** (`3.11.01`).
 
-**How to avoid:**
-- Convenção de resample única e documentada (o app já usa W-FRI); a barra do timeframe maior usada para
-  "contexto" deve ser **fechada** (não a semana corrente em formação) — mesmo princípio do Pitfall 1.
-- Os parâmetros de indicador são calibrados para a barra diária (AUD-IND-01 no config); ao usar timeframe maior
-  para contexto, usar leitura grosseira (direção da MM, posição vs MM) e não os mesmos limiares finos.
-- Testar o alinhamento com séries truncadas (no-repaint do contexto).
+`num_acoes = lucro_com_minoritários / LPA_sem_minoritários` → **inflado pela proporção de minoritários**. Em holdings e empresas com subsidiárias parcialmente detidas o erro é enorme; em empresa 100% detida é zero — o que explica por que só 41 de 104 tickers estouram.
 
-**Warning signs:**
-"Tendência de alta" no semanal que muda na sexta quando a barra fecha; mistura de eixos temporais num mesmo
-julgamento; RSI/MACD esquisitos no timeframe maior (sinal de params fora de calibração).
+E como `num_acoes` está inflado, `lpa_valuation = base/num_acoes` fica **deprimido** → **P/L parece alto** → "está caro". É um dos motores independentes do "80% da bolsa está cara".
 
-**Phase to address:** Fase 13 (contexto de tendência multi-timeframe)
+**A regra correta, sem exceção:** o acionista compra o **controlador**. Todo o valuation roda na base do controlador:
+- lucro = `3.11.01` (Atribuído a Sócios da Empresa Controladora)
+- PL = `2.03` − `2.03.09` (Participação dos Não Controladores)
+- num_acoes = **de uma fonte de contagem real**, nunca de uma razão.
 
----
+Isso conserta ROE, LPA e o RIM (que precisa de book *do controlador*) num único movimento.
 
-### Pitfall 14: R:R e stop produzindo divisão por zero / números absurdos
+**Prevenção — o assert de reconciliação nº 1 (teria pego CGRA4 1018× e ITUB4 10M-vs-10B):**
+```python
+def assert_lpa_reconcilia(lucro_controlador, num_acoes, lpa_cvm, ticker, ano):
+    if not (lpa_cvm and num_acoes): return
+    implicito = lucro_controlador / num_acoes
+    erro = abs(implicito - lpa_cvm) / abs(lpa_cvm)
+    assert erro < 0.05, (
+        f"{ticker}/{ano}: LPA implícito {implicito:.4f} vs CVM {lpa_cvm:.4f} "
+        f"(erro {erro:.0%}). Escala ou base (controlador/consolidado) quebrada."
+    )
+```
+Rode-o para **todo ticker × todo ano** na ingestão. Não deixe passar com warning: **falhe o ticker** (o v2.4 inteiro existe porque falhar silencioso é pior que não ter o ticker).
 
-**What goes wrong:**
-R:R = (alvo − entrada)/(entrada − stop). Se stop == entrada (preço colado no suporte) → divisão por zero/inf
-vazando para a UI. Stop "técnico" longe demais → R:R lindo mas irreal; alvo de Fibonacci abaixo da entrada num
-setup de alta → R:R negativo exibido como se fosse válido.
-
-**Why it happens:**
-Aritmética de borda não protegida; o código já teve esse tipo de bug em indicadores (daí os `np.errstate` por
-toda parte). A camada de setup é nova e precisa da mesma disciplina.
-
-**How to avoid:**
-- Proteger todas as divisões (espelhar o padrão `np.errstate`/guards já onipresente em `indicators.py`):
-  stop==entrada → "indisponivel", não inf; R:R negativo → setup inválido, não exibir score.
-- Validar coerência geométrica: num setup de alta, exigir stop < entrada < alvo; senão marcar "setup
-  incoerente" e não pontuar.
-- Nunca propagar inf/NaN para `st.metric` (já há precedente: RSI protegido contra inf).
-
-**Warning signs:**
-"inf" ou "R$ nan" na tela; R:R negativo com score alto; stop = entrada.
-
-**Phase to address:** Fase 15 (montagem do setup — guards de borda)
+**Fase:** 1 (reconciliação) + 2 (ingestão).
 
 ---
 
-## Technical Debt Patterns
+### Pitfall 7 — LPA por lote de mil ações (o 1000× do ITUB4)
 
-| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
-|----------|-------------------|----------------|-----------------|
-| Calcular stop/alvo/score dentro de `app.py` | Protótipo rápido na tela | Quebra o read-only; impossível testar com golden; reintroduz divergência | **Nunca** — lógica vai para `core/` |
-| `period="5y"` reaproveitado em qualquer interval | Uma chamada só | Frame vazio em 5m/1m; "indisponivel" mudo | Nunca para intraday — usar matriz period×interval |
-| `ttl=3600` copiado para o fetch intraday | Reusa o decorator existente | Atualizar não atualiza; dados de 1h vendidos como frescos | Nunca no intraday — ttl curto |
-| Detector de padrão calibrado num gráfico-exemplo | "Funciona" na demo | Falsos positivos em massa; perda de confiança | Nunca — validar multi-ticker |
-| Janela centrada (`center=True`/argrelextrema order=k) para pivôs | Extremos "limpos" | Lookahead bias; padrões que repintam | Nunca para sinais ao vivo |
-| Última barra intraday tratada como fechada | Gráfico "mais atual" | Repaint; sinais que piscam | Só para DESENHO, marcada como provisória |
+**O que dá errado.** Prática histórica brasileira (bancos e demonstrações antigas): *"lucro por lote de mil ações"*. Se a linha 3.99 vier nessa unidade, `lucro/LPA` dá uma contagem **1000× menor** → exatamente o "ITUB4 2019 = 10 milhões de ações em vez de 10 bilhões". Combina-se com o Pitfall 6 e vira ruído multiplicativo.
 
-## Integration Gotchas
+**A armadilha dentro da armadilha:** a "correção" tentadora é `if ticker in BANCOS_ANTIGOS: lpa *= 1000`. **Isso é um knob por ticker** — o overfit de novo, agora na ingestão. Não faça.
 
-| Integration | Common Mistake | Correct Approach |
-|-------------|----------------|------------------|
-| yfinance intraday | `tk.history(interval="30m")` com `auto_adjust` default (True) | `auto_adjust=False` + `_ajustar_por_split` (split-only), igual ao diário |
-| yfinance intraday | `period` fixo independente do interval | Matriz period×interval com clamp (1m≤7d, ≤30m≤60d, 1h≤730d) |
-| yfinance timezone | `datetime.now()` naive para "barra fechada" | `pd.Timestamp.now(tz="America/Sao_Paulo")`; VPS é UTC |
-| yfinance rate-limit | Refresh agressivo sem backoff | Reusar `_MAX_TENTATIVAS`/`_BACKOFF_SEG`; ttl curto mas não zero |
-| Streamlit cache | Intraday dentro de `montar()` (ttl=3600) | Função+cache separados, ttl curto, chave (ticker,interval,period) |
-| Streamlit "Atualizar" | `st.cache_data.clear()` global (limpa fundamentos) | Clear seletivo só do fetch intraday / rerun com ttl curto |
-| `core/indicators.calcular` | Mudar o contrato `SinaisTecnicos` para encaixar swing | Campos aditivos com default (padrão já usado) |
+**Prevenção.** Trocar a **fonte**, não aplicar fator. `num_acoes` deve vir de uma contagem real (`sharesOutstanding` do Yahoo para o ano corrente; FCA/FRE da CVM para o histórico de ações em circulação), e o LPA da CVM vira **apenas a checagem** do Pitfall 6. Quando a reconciliação falhar e não houver contagem confiável para o ano → o ano é **excluído** com motivo, não chutado.
+Corolário: `_fator_unit` (`build.py:24-37`) é uma heurística (`round(mediana(razões))`) construída sobre a contagem quebrada — quando `num_acoes` vier de fonte real, **delete a função**, não a conserte.
 
-## Performance Traps
+**Fase:** 2 (ingestão).
 
-| Trap | Symptoms | Prevention | When It Breaks |
-|------|----------|------------|----------------|
-| Recoleta de fundamentos a cada Atualizar | App lento, rate-limit Yahoo | Separar cache intraday do `montar` | Já no 1º usuário clicando muito |
-| Detecção de padrão O(n²) sobre série longa a cada rerun | Página trava ao mexer em toggle | Cachear a detecção; rodar só na barra fechada nova | Séries 1h/730d ou muitos overlays |
-| Loop Python barra-a-barra para S/R/padrões em cada rerun | Lentidão perceptível | Vetorizar; cachear resultado por (ticker,interval) | Reruns frequentes do Streamlit |
+---
 
-## Security / Legal Mistakes
+### Pitfall 8 — JCP: o código diz que inclui, e não inclui
 
-| Mistake | Risk | Prevention |
-|---------|------|------------|
-| Setup lido como ordem de compra/venda | CVM Res. 19/20 (análise/consultoria sem registro); risco de marca | Linguagem condicional; disclaimer contextual; score com ressalva (Pitfall 4) |
-| "Tempo real" com dado atrasado | Usuário age sobre dado velho; exposição legal | Selo "~15min atraso" + timestamp da barra (Pitfall 5) |
-| Disclaimer só na sidebar | Página de swing parece sinal de corretora | Disclaimer NA página, repetindo Res. 19/20 e "score ≠ compra" |
-| Sugerir performance/lucro ("alvo de lucro") | Promessa de resultado | "PROJEÇÃO do padrão", sem linguagem de retorno garantido |
+**O que dá errado.** `cvm.py:169`:
+```python
+incluir = ds.str.contains("dividendo", na=False)
+```
+O docstring (linha 150) promete *"dividendos + JCP"*. O filtro casa **só a palavra "dividendo"**. Uma empresa que apresenta a linha da DFC como *"Juros sobre o Capital Próprio Pagos"* — sem a palavra "dividendo" — **tem o JCP inteiramente descartado**. São as 13 empresas do diagnóstico. Para um banco, o JCP é a maior parte da distribuição: o payout sai pela metade → o DDM/RIM subvaloriza → "está caro".
 
-## UX Pitfalls
+**Prevenção.**
+```python
+_PROVENTO = r"dividendo|juros sobre (o )?capital|jcp|jscp"
+incluir = ds.str.contains(_PROVENTO, na=False, regex=True)
+```
+E o assert de reconciliação nº 2:
+```python
+def assert_proventos_reconciliam(div_cvm, dpa_yahoo, num_acoes, ticker, ano):
+    """A DFC e o Yahoo têm que contar a mesma história (±30%). Divergência
+    grande = uma das fontes está perdendo uma classe de provento."""
+    if not (div_cvm and dpa_yahoo and num_acoes): return
+    razao = div_cvm / (dpa_yahoo * num_acoes)
+    assert 0.7 <= razao <= 1.5, f"{ticker}/{ano}: DFC/Yahoo = {razao:.2f}"
+```
+(Banda larga de propósito: o Yahoo historicamente perde JCP, então razão ~1,3-1,5 é *esperada* nos bancos; razão ~0,5 significa que **a CVM** perdeu — o bug atual.)
 
-| Pitfall | User Impact | Better Approach |
-|---------|-------------|-----------------|
-| Score sem legenda | Lido como probabilidade de alta / sinal de compra | "Qualidade técnica do desenho (0–100), não é sinal de compra" |
-| "indisponivel" mudo no intraday curto | Usuário acha que o app quebrou | "Histórico insuficiente para SMA200 neste timeframe" |
-| Gráfico sem marcar a barra viva | Confusão sobre o que é definitivo | Barra em formação com estilo distinto + legenda |
-| Múltiplos padrões frouxos sobrepostos | Ruído, perda de confiança | Poucos padrões de alta confiança, confirmados |
-| Níveis Fibo/S/R sem origem | Parecem chutados | Mostrar pivôs de ancoragem ("topo 12/05, fundo 03/06") |
+**Fase:** 1 (assert) + 2 (fix do regex).
 
-## "Looks Done But Isn't" Checklist
+---
 
-- [ ] **Sinais intraday:** a última barra é fechada? Verificar que checklist/score usam barra FECHADA, não a viva.
-- [ ] **Detecção de padrão:** existe teste de no-repaint (truncar em t vs t+1, rótulo das barras ≤ t imutável)?
-- [ ] **Base de preço intraday:** `auto_adjust=False` + split-only? Conferir num ticker com provento na janela.
-- [ ] **Limites yfinance:** 5m com period longo retorna vazio? Há clamp + aviso?
-- [ ] **Timezone:** roda igual na VPS (UTC) e local? "Barra fechada" usa America/Sao_Paulo?
-- [ ] **Cache intraday:** Atualizar realmente re-busca? Não recoleta fundamentos?
-- [ ] **191 goldens:** verdes antes E depois de cada fase? Novos goldens técnicos adicionados?
-- [ ] **app.py read-only:** nenhum cálculo de método na página — tudo lido da engine?
-- [ ] **Linguagem:** zero imperativo ("compre/venda/entre"); disclaimer na própria página?
-- [ ] **Atraso comunicado:** selo ~15min + timestamp da última barra visível a cada refresh?
-- [ ] **Liquidez:** ticker ilíquido avisa/bloqueia setup?
-- [ ] **R:R:** stop==entrada e R:R negativo tratados (sem inf/nan na tela)?
+### Pitfall 9 — JCP bruto vs. líquido: o DY exibido superestima a renda no bolso
 
-## Recovery Strategies
+**O que dá errado.** Três bases se misturam hoje sem rótulo:
+1. A saída de caixa da DFC (`6.03`) é tipicamente **líquida de IRRF** para o JCP (a empresa retém na fonte). *(MEDIUM — varia por empresa/apresentação.)*
+2. O histórico de proventos do Yahoo é, em geral, o **declarado (bruto)**.
+3. O usuário PF recebe **líquido**.
 
-| Pitfall | Recovery Cost | Recovery Steps |
-|---------|---------------|----------------|
-| Repaint da barra viva | LOW | Descartar última barra na ingestão; reavaliar sinais sobre `iloc[-2]` |
-| Lookahead em padrões | MEDIUM | Reescrever detector causal + teste de estabilidade; revalidar alvos |
-| Base nominal/ajustada trocada | LOW | Centralizar fetch intraday no contrato do diário; um ponto de correção |
-| Setup lido como recomendação | MEDIUM | Copy review + disclaimer contextual; pode exigir redeploy e revisão de marca |
-| Cache intraday errado (ttl 3600) | LOW | ttl curto + função separada; clear seletivo no Atualizar |
-| Golden quebrado | LOW–MEDIUM | `git` bisect da fase; reverter mudança de assinatura; restaurar aditividade |
+Então: o **payout** (numerador CVM, líquido) fica subestimado, e o **DY** (numerador Yahoo, bruto) fica superestimado. Numerador e denominador de razões diferentes em bases diferentes — e nenhuma delas rotulada.
 
-## Pitfall-to-Phase Mapping
+**E a regra mudou em 2026** *(HIGH — Lei 15.270/2025 + PLP 128/2025)*:
+- **IRRF sobre JCP subiu de 15% para 17,5%**, vigente desde 01/jan/2026, **sem isenção de piso** (incide já no primeiro real).
+- **Dividendos**: IRRF de **10%** sobre pagamentos de uma mesma empresa à mesma PF **acima de R$ 50 mil/mês** (incide sobre o total do mês, não só sobre o excedente). Abaixo disso, isentos.
 
-| Pitfall | Prevention Phase | Verification |
-|---------|------------------|--------------|
-| 1. Repaint barra viva | 12 + 15 + 16 | Sinal estável entre dois refreshes no mesmo minuto |
-| 2. Lookahead em padrões/S-R | 14 (e 13) | Teste: rótulo das barras ≤ t não muda em t+1 |
-| 3. Base nominal × ajustada intraday | 12 | Preço do gráfico == preco_atual; sem salto em data de provento |
-| 4. Setup = recomendação | 15 + 16 (gate de marco) | Copy review: zero imperativo; disclaimer na página |
-| 5. "Tempo real" vs atraso | 16 | Selo ~15min + timestamp da barra presentes |
-| 6. Golden / read-only | Todas (gate por fase) | 191 verdes; nenhum cálculo de método em app.py |
-| 7. Cache/pipeline intraday | 12 + 16 | Atualizar re-busca intraday sem recoletar CVM |
-| 8. Limites period×interval | 12 + 13 | 5m com period longo não retorna vazio (clamp+aviso) |
-| 9. Timezone tz-aware/naive | 12 + 13 | Mesmo resultado na VPS (UTC) e local |
-| 10. Tickers ilíquidos | 12 + 15 | Aviso/bloqueio em baixa liquidez; volume 0 não confirma rompimento |
-| 11. Over-fit de padrões | 14 | Validação multi-ticker; limiares no config |
-| 12. S/R e Fibo arbitrários | 13 + 14 | Mesmos dados → mesmos níveis; origem exibida |
-| 13. Alinhamento multi-timeframe | 13 | Contexto usa barra do TF maior FECHADA |
-| 14. R:R / stop divisão por zero | 15 | Sem inf/nan; setup incoerente não pontua |
+O `ddm.tributacao_dividendos: 0.0` do `config.yaml:91` reflete o mundo pré-2026. Para o investidor PF típico do produto (abaixo de R$50k/mês), dividendos seguem isentos — mas **o JCP não**, e para um banco isso é a maior parte da distribuição. **Um DY de banco exibido bruto superestima a renda líquida em ~15-17% da parcela de JCP.** Num pagador majoritariamente-JCP, isso é ~1 a 1,5 p.p. de DY fantasma.
+
+**Prevenção.**
+- Carregar **dois campos distintos e explícitos**: `provento_bruto` e `provento_liquido_pf`. Nunca deixar uma função escolher implicitamente.
+- **Convenção travada por teste:** *payout e todos os motores rodam em base BRUTA* (é a apropriação contábil do lucro — a única base coerente com o lucro do denominador). *O DY exibido ao usuário roda em base LÍQUIDA*, com o rótulo "líquido de IRRF sobre JCP (17,5%)".
+```python
+def test_bases_de_provento_nao_se_misturam():
+    assert liquido <= bruto
+    assert 1.0 <= bruto / liquido <= 1.20      # teto de 17,5% sobre 100% de JCP
+def test_payout_usa_bruto_e_dy_usa_liquido():
+    ...  # trava a convenção; senão ela volta a derreter
+```
+- Ver a taxa de JCP como **config**, não constante (`impostos.irrf_jcp: 0.175`) — a lei muda. **Não é um knob de calibração** (é um fato legal); marque-o como tal para não consumir orçamento do P1.5.
+
+**Fase:** 2 (ingestão) + 5 (contrato de saída/rótulos).
+
+---
+
+### Pitfall 10 — Split ajustado duas vezes
+
+**O que dá errado.** O `Close` do Yahoo **já vem ajustado por split, sempre**. O flag `auto_adjust` controla o ajuste por **dividendos** (`Adj Close`), não por split. `prices.py:71-111` (`_ajustar_por_split`) então **divide de novo** os preços antigos pelo fator cumulativo de split → preços históricos comprimidos duas vezes → um salto artificial na série ajustada → beta, `desempenho_relativo_6m` e todos os indicadores técnicos corrompidos em qualquer ticker com split na janela de 5 anos. *(Confiança HIGH na semântica do yfinance; o teste abaixo é definitivo e barato — rode-o antes de mexer.)*
+
+**Prevenção — o teste que decide a questão em 3 linhas:**
+```python
+def test_yahoo_close_ja_vem_split_ajustado():
+    """Escolha um ticker com split conhecido na janela de 5a."""
+    hist = yf.Ticker(TICKER_COM_SPLIT).history(period="5y", auto_adjust=False)
+    r = hist["Close"].pct_change().abs()
+    assert r.max() < 0.35, "salto de split no Close cru -> o Yahoo NÃO ajusta (hipótese falsa)"
+    # Se este teste PASSA, o Close já está ajustado e _ajustar_por_split deve ser DELETADA.
+```
+E o assert genérico anti-descontinuidade, que pega esta e toda a família (bonificação, grupamento, mudança de ticker):
+```python
+def assert_sem_salto_espurio(serie, ticker):
+    r = np.log(serie).diff().abs()
+    assert r.max() < 0.4, f"{ticker}: salto de {r.max():.0%} num dia — corporate action não tratada"
+```
+
+**Bug irmão, na mesma família (`build.py:113`):** `c.dividendos[ano] = dpa * c.num_acoes[ano]` multiplica um **DPA do Yahoo já retroajustado para a base de hoje** por uma **contagem histórica de ações da época (pré-split, menor)** → dividendos dos anos pré-split subestimados. Mesma classe: duas séries em bases temporais diferentes, multiplicadas. O assert do Pitfall 8 (razão DFC/Yahoo) o detecta.
+
+**Fase:** 1 (assert) + 2 (deleção da função).
+
+---
+
+### Pitfall 11 — Mudança de exercício social, incorporações e o `g` que fita através de uma cratera
+
+**O que dá errado.**
+- Empresa que muda o encerramento do exercício publica um **período-tronco** (ex.: 9 meses). O código lê como "o ano" → lucro artificialmente baixo → contamina normalização, CAGR e payout. `cvm.py` **nunca lê `DT_INI_EXERC`/`DT_FIM_EXERC`**, então isso passa invisível.
+- Incorporação/fusão: o consolidado **salta** de patamar. O ajuste log-linear do `g_historico` lê o salto como **crescimento estrutural** → `g` fantasma → valuation explosivo. E `num_acoes` salta junto (ações emitidas na operação).
+
+**Prevenção — os asserts de reconciliação nº 3 e nº 4:**
+```python
+def assert_exercicio_anual(dt_ini, dt_fim, ticker, ano):
+    dias = (dt_fim - dt_ini).days
+    assert 355 <= dias <= 375, f"{ticker}/{ano}: exercício de {dias} dias — período-tronco"
+
+def assert_clean_surplus(pl_ini, pl_fim, lucro, dividendos, ticker, ano):
+    """ΔPL ≈ LL − Div. O resíduo é 'dirty surplus': OCI, recompras, aumento de
+    capital, incorporação. É o assert mais poderoso do conjunto — é uma
+    identidade contábil E a pré-condição de validade do RIM (Pitfall 12)."""
+    residuo = (pl_fim - pl_ini) - (lucro - dividendos)
+    razao = abs(residuo) / abs(pl_ini)
+    assert razao < 0.10, (
+        f"{ticker}/{ano}: dirty surplus de {razao:.0%} do PL — "
+        f"OCI / recompra / aumento de capital / evento societário não modelado"
+    )
+```
+- Evento societário detectado → **quebra a série**: o `g` histórico é ajustado só no segmento pós-evento (ou o ticker é marcado como "histórico descontínuo" e sai do valuation). **Nunca fite através da cratera.**
+
+**Fase:** 1 (asserts) + 3 (primitivas/`g`).
+
+---
+
+## RIM na prática brasileira
+
+### Pitfall 12 — Clean surplus não vale em banco brasileiro (e o RIM depende dele)
+
+**O que dá errado.** O RIM é *exato* apenas sob **clean surplus** (ΔB = LL − Div). Em banco sob IFRS 9, uma fatia grande da carteira de títulos é **FVOCI**: a marcação a mercado vai **direto para o patrimônio**, sem passar pelo resultado. Some hedge accounting, ganhos/perdas atuariais e variação cambial de subsidiárias no exterior (CTA). Num choque de juros (2021-22), o OCI **derruba o book** enquanto o lucro parece normal → `B0` deprimido → **o RIM subvaloriza o banco**. Que é, literalmente, o sintoma que o v2.3 tentou consertar com um valor terminal e um cap de excesso de ROE.
+
+**Isso reenquadra o marco: parte do "ITUB4 barato demais" pode ser dirty surplus, não calibração de `g`/Ke.** É uma hipótese *testável e barata* — e se ela for verdade, os knobs do v2.3 estavam mascarando um terceiro bug de dados.
+
+**Prevenção.**
+- O `assert_clean_surplus` do Pitfall 11 **é o teste de pré-condição do RIM**. Meça a razão de dirty surplus por ticker e reporte-a.
+- Correção de livro-texto, sem knob novo: usar o **resultado abrangente (lucro abrangente / comprehensive income)** no RI, não o lucro líquido. Isso **restaura o clean surplus por construção**. Custo: mais uma conta na ingestão (DRA — Demonstração do Resultado Abrangente, disponível na DFP). **Recomendo fortemente** — é a correção certa e não gasta grau de liberdade.
+- Se a DRA não for viável no orçamento: exiba a bandeira "clean surplus violado em X% do PL" ao lado do número do RIM. **Um número com a incerteza declarada é honesto; um número calibrado para esconder a incerteza é o v2.3.**
+
+**Fase:** 2 (ingestão da DRA) + 4/5 (motor).
+
+### Pitfall 13 — Book negativo, quase-zero, e a explosão do ROE
+
+**O que dá errado.** `B0 ≤ 0` → RIM indefinido. `PL < 0` com lucro `< 0` → **ROE positivo** (dois negativos) → uma empresa em colapso pontua como alta qualidade e entra no ranking. `B0` minúsculo (BBSE3, VPA≈5,35) → RIM ancorado em quase nada, dominado inteiramente pelo valor terminal — o que motivou a rota *ad hoc* do Pitfall 2.
+
+**Prevenção.**
+```python
+def test_roe_e_none_com_pl_nao_positivo():
+    assert fundamentals.roe_medio(lucro=-100, pl_ini=-50, pl_fim=-60) is None  # nunca +2.0
+
+# no motor:
+if b0 is None or b0 <= 0: return Recusa("book não-positivo — RIM inaplicável")
+if b0 / market_cap < 0.10: return Recusa("book imaterial — RIM é 95% valor terminal, sem poder de discriminação")
+```
+A segunda guarda é a que **teria recusado a BBSE3 honestamente**, em vez de inventar um motor para ela. Recusar é um resultado válido do produto. *"Este motor não fala sobre esta empresa"* é infinitamente mais honesto que um número construído para caber numa banda.
+
+**Fase:** 4/5 (motor).
+
+### Pitfall 14 — Ágio infla o book; a estatística robusta apaga a impairment
+
+**O que dá errado.** Duas coisas que se compõem de forma perversa:
+1. Um comprador serial carrega **goodwill** no book. O RIM cobra `Ke × B` sobre esse book → RI deprimido → o serial acquirer parece caro. (Direcionalmente correto! Ágio *é* capital empregado.)
+2. Quando o ágio é **baixado (impairment)**, é uma perda grande e pontual. E aí a `base_normalizada` (mediana / média winsorizada) **trata a impairment como outlier e a remove**.
+
+**O ponto profundo:** toda estatística "robusta" é uma decisão de modelagem com direção. Ela **apaga a má notícia grande e pontual** (impairment, provisão, acordo judicial) e **corta o crescimento** (Achado (a): −9,1% num crescedor de 10%). São dois vieses, em direções opostas, em populações diferentes — e nenhum dos dois foi jamais medido neste repo.
+
+**Prevenção.**
+```python
+def test_normalizacao_nao_tem_vies_direcional():
+    """Grupo de controle sintético: lucro estável + ruído simétrico.
+    A base normalizada tem que ser NÃO-ENVIESADA."""
+    rng = np.random.default_rng(0)
+    vieses = []
+    for _ in range(200):
+        s = [100 * (1 + rng.normal(0, 0.15)) for _ in range(10)]
+        vieses.append(norm.base_normalizada(s, anos_media=3) / 100 - 1)
+    assert abs(np.median(vieses)) < 0.02, "a primitiva de normalização tem viés próprio"
+```
+E, para o ágio: **nenhum knob**. Uma **bandeira de qualidade de book** (`intangível / PL > 30%` → "book majoritariamente intangível — o RI é sensível a impairment"). Bandeira, não ajuste.
+
+**Fase:** 3 (primitivas).
+
+### Pitfall 15 — "NAV = 1º termo do RIM" é falso justamente onde o NAV importa
+
+**O que dá errado.** O brief do marco afirma: *"`nav` é o 1º termo do RIM"*. Isso é verdade para o **NAV contábil** (B0). Mas o NAV que faz sentido para uma **holding** (ITSA4) é o valor de **mercado** das participações menos a dívida — e as participações estão no balanço por **equivalência patrimonial** (book do investido), não a mercado. Colapsar NAV em "primeiro termo do RIM" **importa o book contábil para dentro do único arquétipo em que o book contábil é a informação errada**, e joga fora o desconto de holding — que é o fenômeno inteiro que se quer capturar.
+
+**Prevenção.** Ou (a) a holding tem uma rota própria que marca as participações a mercado (declarada **antes** de rodar a cesta, não depois de a ITSA4 falhar — Pitfall 2), ou (b) a holding é **explicitamente recusada** pelo produto ("valuation de holding exige marcar as participações a mercado; fora do escopo desta versão"). **Não** escolha a opção (c): deixar o RIM rodar sobre o book de equivalência e apresentar o número como se fosse um NAV. Também: revise a afirmação no PROJECT.md — ela está sendo carregada como se fosse um fato algébrico, e é uma meia-verdade dependente do arquétipo.
+
+**Fase:** 5 (colapso dos motores) — decisão de carve-out **antes** da Fase 6.
+
+### Pitfall 16 — Instrumentos híbridos de capital (IHCD/AT1) dentro do PL do banco
+
+**O que dá errado.** Bancos brasileiros grandes (ITUB, BB) carregam instrumentos perpétuos elegíveis a capital nível 1. Sem obrigação contratual de pagar, eles são classificados como **patrimônio**, não passivo. Se `PL` inclui esse AT1, então: o **book do acionista ordinário está inflado**, o **ROE do ordinário está deprimido** e a remuneração paga a esses instrumentos **não é o dividendo do ordinário**. No RIM: `B0` grande demais, `RI = (ROE − Ke) × B` pequeno demais → **o banco de qualidade sai barato demais**. Que é, de novo, exatamente o sintoma que o v2.3 combateu com knobs. *(Confiança MEDIUM — precisa de confirmação nas notas explicativas das DFPs; mas é uma hipótese de custo baixo e retorno alto.)*
+
+**Prevenção.** Verificar nas notas se `2.03` contém instrumentos híbridos; se contiver, `PL_comum = PL_controlador − IHCD`. **Verifique antes de calibrar qualquer coisa** — se este bug existe, calibrar por cima dele é reconstruir o v2.3.
+
+**Fase:** 2 (ingestão), com uma investigação (spike) na Fase 1.
+
+---
+
+## MENORES (asserts baratos, alto retorno)
+
+| # | O que dá errado | Prevenção | Fase |
+|---|---|---|---|
+| 17 | `_valor_conta` casa `DS_CONTA` por **substring** e pega `.iloc[0]` — linha arbitrária quando várias casam (ex.: "Lucro por Ação" casa básico e diluído) | `assert len(matches) == 1` ou ordem de preferência explícita; jamais `.iloc[0]` silencioso | 2 |
+| 18 | `ESCALA_MOEDA` lido de `sub[...].iloc[0]` — assume escala única por empresa | `assert sub["ESCALA_MOEDA"].nunique() == 1` | 1 |
+| 19 | `_consolidado_ou_individual` escolhe con/ind **por demonstração**; a DFC escolhe por um loop próprio → um ticker pode ler DRE individual + DFC consolidada (ROE/payout de bases mistas) | `assert` que a base escolhida (con/ind) é a MESMA para DRE/BPA/BPP/DFC no ano | 1 |
+| 20 | Payout mistura **caixa** (DFC: dividendos *pagos* no ano t, boa parte declarados em t−1) com **competência** (DRE: lucro de t). Num crescedor, subestima o payout sistematicamente | Declarar a convenção e testá-la; ou usar dividendos **declarados** (DMPL) em vez de pagos. No mínimo: documentar o lag e não somar ao viés do Pitfall 6 sem saber | 2/3 |
+| 21 | Ano fiscal ≠ ano-calendário → o `ano` da CVM não alinha com preço/dividendo do Yahoo | Assert do Pitfall 11 (`DT_FIM_EXERC`) + alinhar a data-base ao encerramento real | 2 |
+| 22 | `data/cvm/*.zip` é cacheado sem carimbo de versão → o backtest não é reprodutível daqui a 6 meses | Sidecar com `data_download` + `ETag`; snapshot congelado é o artefato de teste, o ZIP não | 1 |
+
+---
+
+## Mapa: pitfall → fase
+
+| Fase (proposta do marco) | Pitfalls que ela DEVE endereçar |
+|---|---|
+| **0 — Blindagem processual** *(NOVA — recomendo fortemente inserir antes de tudo)* | **1** (deletar o golden, lock de knobs, hook de commit), **5** (classificar os 448 testes, baseline golden-master, CI anti-afrouxamento) |
+| **1 — Reconciliação de sanidade** | **6** (LPA reconcilia), **8** (proventos DFC↔Yahoo), **10** (sem salto espúrio), **11** (exercício anual + **clean surplus**), 18, 19, 22 — *estes 4 asserts são o coração do marco; o clean surplus é o mais valioso porque é simultaneamente detector de bug e pré-condição do RIM* |
+| **2 — Ingestão correta** | **6** (base do controlador), **7** (deletar `_fator_unit`), **8** (regex do JCP), **9** (bruto/líquido + IRRF 17,5%), **10** (deletar `_ajustar_por_split`), **12** (ingerir a DRA), **16** (IHCD), 17, 20, 21 |
+| **3 — Primitivas sem viés** | **14** (teste de viés direcional da normalização), **11** (`g` não fita através de evento societário) |
+| **4 — `g` e depois Ke** | **1.3** (teste de invariância à inflação — é o teste que *define* esta fase) |
+| **5 — Um motor + contrato** | **13** (recusar book não-positivo/imaterial), **15** (holding: rota própria ou recusa explícita), **2** (carve-outs declarados AGORA, por escrito, antes da Fase 6) |
+| **6 — Revalidação com hold-out** | **1.2** (distribuição + jackknife), **2** (zero exceções no hold-out), **3** (âncora não-circular; aposentar o consenso como gate), **4** (PIT ou não fazer), **5.4** (canário de sensibilidade) |
+
+---
+
+## Orçamento de graus de liberdade — resposta direta
+
+**Pergunta: para uma cesta de 40-60 tickers, qual o número máximo defensável de knobs livres? A proposta é 3.**
+
+**3 está certo. Mas o orçamento tem que contar o que o v2.3 não contou.**
+
+A heurística clássica de ≥10 observações por parâmetro livre daria 4-6 knobs para 40-60 tickers. Eu recomendo **ficar em 3**, por três razões específicas deste projeto:
+
+1. **As observações não são independentes.** 4 bancos brasileiros grandes são ~1 observação e meia (mesmo país, mesmo ciclo de crédito, mesma Selic, exposição correlacionada). Uma cesta de 50 tickers da B3 tem talvez 15-20 graus de liberdade **efetivos** — a estrutura de fatores comum (Selic, câmbio, commodity) domina. 3 knobs sobre ~15-20 observações efetivas já é o limite do defensável.
+2. **O alvo é ruidoso.** O "fair value" é ele próprio uma variável com erro grande (Pitfall 3). Calibrar muitos parâmetros contra um alvo ruidoso é ajustar o ruído por definição.
+3. **Os 3 knobs precisam ser econômicos, não numéricos.** Cada um tem que ter um significado defensável fora do modelo — `g_cap` = teto de crescimento nominal da economia; `erp` = prêmio de risco de equity; `excesso_sustentavel` = durabilidade de moat. Se você não consegue defender o valor **sem mencionar um ticker**, não é um knob: é um resíduo (`config.yaml:237` — *"Move ITUB4 ~R$2"* — é o exemplo canônico do que **não** é uma justificativa).
+
+**O que mais consome o orçamento (e não aparece no `config.yaml`):**
+- toda **rota/carve-out** criada depois de ver um resultado = 1 DoF (BBSE3);
+- toda **escolha de estatística** feita olhando o resultado = 1 DoF (`roe_terminal_stat: mediana|media`);
+- todo **mecanismo novo** adicionado porque a cesta não fechou = 1 DoF (valor terminal do RIM);
+- toda **exceção documentada** que converte reprovação em aprovação = 1 DoF (`excecao_nota`).
+
+Por essa contagem, o v2.3 gastou **~8 DoF sobre 4 observações** — razão de 0,5 observação por grau de liberdade. Um modelo com essa razão **interpola**; ele não generaliza, e não *pode* generalizar, independentemente de quanto cuidado se tome depois.
+
+**Regra operacional para o v2.4:** os 3 knobs numéricos vão para o `calibracao.lock.yaml` (P1.5); **toda escolha estrutural é congelada e commitada ANTES de o hold-out ser aberto**; o hold-out roda **uma vez**; e o resultado é reportado **como saiu**. Se o hold-out reprovar, a resposta permitida é *"o modelo tem esta limitação"* ou *"a estrutura está errada, volte à Fase 3"* — **nunca** *"mexa no knob"*. Um hold-out que você pode re-rodar depois de tunar não é um hold-out; é uma segunda cesta de treino com nome de gente séria.
+
+---
+
+## Confiança
+
+| Área | Nível | Por quê |
+|---|---|---|
+| Bugs de código citados (build.py:87, cvm.py:169, normalizacao.py:69-75, prices.py:71-111) | **HIGH** | Lidos no repo; o haircut e as bandas foram **executados**, não estimados |
+| Aritmética das bandas do gate (2/4 real, não 4/4) | **HIGH** | Calculado dos fixtures do próprio repo |
+| Prazo da DFP (3 meses) | **HIGH** | Resolução CVM 80/2022, art. 22, IV — fonte oficial |
+| IRRF: JCP 17,5% e dividendos 10% acima de R$50k/mês em 2026 | **HIGH** | Lei 15.270/2025 + PLP 128/2025; corroborado por Receita Federal e PwC |
+| `auto_adjust` do yfinance não controla split (Close já vem split-adjusted) | **HIGH** | Semântica documentada; **e o teste do Pitfall 10 decide em 3 linhas — rode antes de mexer** |
+| DFC 6.03 do JCP vir líquida de IRRF | **MEDIUM** | Varia por empresa/apresentação; verificar em 3-4 bancos antes de fixar a convenção |
+| IHCD/AT1 dentro do PL de bancos BR | **MEDIUM** | Alta plausibilidade contábil, mas **não verificado nas notas** — trate como spike da Fase 1, não como fato |
+| Disciplina de overfitting / DoF / pre-registration | **HIGH** | Conhecimento consolidado (hold-out, researcher DoF, garden of forking paths), aplicado a evidência específica deste repo |
+| Circularidade do consenso de sell-side | **MEDIUM-HIGH** | Argumento estrutural sólido; a magnitude do viés de ancoragem no BR não foi medida aqui |
 
 ## Sources
 
-- Código existente do projeto (HIGH): `src/analista/core/indicators.py` (no-repaint: Donchian `.shift(1)`,
-  `min_periods`, regressão trailing causal, Wilder SMA-seeded; `np.errstate` guards), `src/analista/ingest/prices.py`
-  (`auto_adjust=False`, `_ajustar_por_split` split-only, retry/backoff Yahoo), `app.py` (read-only, `@st.cache_data ttl=3600`, disclaimer CVM Res. 19/20), `config.yaml` (`base_temporal: diario`, AUD-IND-01)
-- `.planning/PROJECT.md` — Key Decisions ("EXIBE sinais, nunca recomenda"; intraday best-effort ~15min; página separada; v1.4 começa na Fase 12)
-- yfinance — limites intraday por intervalo (HIGH, derivado do source `scrapers/history.py`):
-  https://github.com/ranaroussi/yfinance/blob/main/yfinance/scrapers/history.py
-- AlgoTrading101 — yfinance guide (limites 1m≤7d, intraday≤60d): https://algotrading101.com/learn/yfinance-guide/
-- yfinance docs/functions (timezone, prepost): https://ranaroussi.github.io/yfinance/reference/yfinance.functions.html
-- yfinance Issue #1010 — resultado depende do timezone do host (MEDIUM): https://github.com/ranaroussi/yfinance/issues/1010
-- TradingHours — B3 horários/fuso America/Sao_Paulo (MEDIUM): https://www.tradinghours.com/markets/bovespa
-- Memória do projeto — "generalizar, não tunar por ação"; Res. CVM 19/20 já no disclaimer
-
----
-*Pitfalls research for: análise técnica swing-trade sobre dados B3 gratuitos/atrasados, adicionada a app fundamentalista existente*
-*Researched: 2026-06-29*
+- [Resolução CVM 80 (texto consolidado)](https://conteudo.cvm.gov.br/export/sites/cvm/legislacao/resolucoes/anexos/001/resol080consolid.pdf) — prazo de entrega da DFP (3 meses do encerramento do exercício, emissor nacional)
+- [Portal Dados Abertos CVM — DFP](https://dados.cvm.gov.br/dataset/cia_aberta-doc-dfp) — natureza do dataset (regenerado; sem garantia point-in-time)
+- [Receita Federal — recolhimento do IRRF sobre lucros e dividendos](https://www.gov.br/receitafederal/pt-br/assuntos/noticias/2025/dezembro/receita-federal-orienta-sobre-os-procedimentos-para-o-recolhimento-do-imposto-de-renda-retido-na-fonte-sobre-lucros-e-dividendos)
+- [PwC — Tributação de dividendos: Lei nº 15.270](https://www.pwc.com.br/pt/thinking-about-taxes/tax-intelligence/2025/tax-intelligence-ed-48-tributacao-de-dividendos.pdf) — IRRF 10% acima de R$50k/mês; JCP a 17,5% desde 01/01/2026
+- Código do próprio repositório (fonte primária dos achados críticos): `src/analista/ingest/build.py`, `src/analista/ingest/cvm.py`, `src/analista/ingest/prices.py`, `src/analista/core/normalizacao.py`, `src/analista/core/fundamentals.py`, `config.yaml`, `tests/test_backtest_bancos.py`, `tests/fixtures/fair_values_bancos.yaml`
