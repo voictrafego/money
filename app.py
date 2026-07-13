@@ -981,12 +981,22 @@ if modo.startswith("Analisar"):
             # a faixa honesta vive no banner de candidatos, não neste selo cravado.
             if getattr(a, "arquetipo_incerto", False):
                 intervalo = "—"
+            _motor = a.motor or "ddm"
+            # Quick 260713-hoo: a manchete do intrínseco lidera com o valor do motor primário
+            # (ex.: RIM R$ 32,88) quando a faixa vem DE FATO do motor — antes o usuário lia o
+            # piso do contraponto DDM ("16,13") como o intrínseco. Fora desse caso (DDM primário,
+            # banda degradada ou caso-fronteira) a manchete continua sendo a faixa vmin–vmax.
+            _usa_motor = (
+                _motor != "ddm"
+                and getattr(a, "banda_do_motor", False)
+                and not getattr(a, "arquetipo_incerto", False)
+                and a.intrinseco_motor is not None
+            )
             m1, m2, m3, m4, m5 = st.columns(5)
             m1.metric("Preço atual", esc_md(fmt_rs(a.preco_atual)), help=h("preco"))
             # Rótulo honesto do intrínseco (T-0304-01): quando o motor do arquétipo NÃO é o
             # DDM (RIM/normalizado/DCF/NAV), a faixa vem do motor primário — não chamar o
             # motor de "DDM" (enganaria o usuário). "Intrínseco (DDM)" só quando motor==ddm.
-            _motor = a.motor or "ddm"
             # CR-01: o rótulo do motor só é honesto quando a banda vem DE FATO do motor
             # (banda_do_motor True). Se o motor degradou e a faixa exibida é 100% do DDM,
             # rotular com o nome do motor enganaria o usuário → cai para "Intrínseco (DDM)".
@@ -995,26 +1005,22 @@ if modo.startswith("Analisar"):
                 if _motor == "ddm" or not getattr(a, "banda_do_motor", False)
                 else f"Intrínseco ({a.motor_rotulo or _motor})"
             )
-            m2.metric(_label_intr, esc_md(intervalo), help=h("valor_intrinseco"))
+            _valor_intr = esc_md(fmt_rs(a.intrinseco_motor)) if _usa_motor else esc_md(intervalo)
+            m2.metric(_label_intr, _valor_intr, help=h("valor_intrinseco"))
             hdr = presentation.header_dy(a.multiplos.get("DY rec."), a.multiplos.get("DY"))
             m3.metric(hdr["label"], hdr["value"], delta=hdr["delta"],
                       delta_color="off", help=hdr["help"])
             m4.metric("ROE", fmt_pct(a.multiplos.get("ROE")), help=h("roe"))
             m5.metric("Ke (custo)", fmt_pct(a.ke), help=h("ke"))
 
-            # WR-03: a faixa do ensemble combina o motor do arquétipo E o DDM (contraponto),
-            # mas o rótulo é só o motor. Quando NÃO há divergência (< 2×) nenhuma bandeira
-            # explica isso — sem esta legenda o usuário leria um limite da faixa "RIM" que na
-            # verdade é o DDM (inconsistência de superfície que o Core Value alerta). Legenda
-            # de uma linha esclarece; no caso divergente a própria bandeira já mostra os dois.
-            if (getattr(a, "banda_do_motor", False)
-                    and not getattr(a, "divergencia_ativa", False)
-                    and a.intrinseco_motor is not None
-                    and a.contraponto_valor is not None):
+            # Quick 260713-hoo: com a manchete liderando pelo motor, a faixa vmin–vmax e o DDM
+            # como contraponto conservador são rebaixados a este caption discreto — substitui a
+            # antiga legenda "A faixa combina..." (que disputava a leitura do intrínseco).
+            if _usa_motor and a.contraponto_valor is not None:
                 st.caption(
-                    f"A faixa combina o motor do arquétipo ({esc_md(a.motor_rotulo or _motor)}: "
-                    f"{esc_md(fmt_rs(a.intrinseco_motor))}) e o DDM como contraponto "
-                    f"({esc_md(fmt_rs(a.contraponto_valor))}) — não é só o motor."
+                    "Faixa com o DDM como contraponto conservador: "
+                    f"{esc_md(fmt_rs(a.vmin))} – {esc_md(fmt_rs(a.vmax))} · "
+                    f"DDM {esc_md(fmt_rs(a.contraponto_valor))}."
                 )
 
             # Guarda-corpo do DDM (Achado 2 / SAN-01): quando a faixa saiu negativa/zero a
