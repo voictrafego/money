@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.3
-milestone_name: Calibração do Valuation à Realidade (RIM com Valor Terminal)
-status: milestone_complete
-stopped_at: Phase 6 context gathered
-last_updated: "2026-07-13T14:49:23.087Z"
+milestone: v2.4
+milestone_name: Fidelidade do Valuation
+status: planning
+last_updated: "2026-07-13T16:58:45.963Z"
 last_activity: 2026-07-13
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 10
-  completed_plans: 8
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -27,10 +26,10 @@ qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio úni
 
 ## Current Position
 
-Phase: 06
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-07-13
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-07-13 — Milestone v2.4 started
 
 ## Deferred Items
 

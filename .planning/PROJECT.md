@@ -72,36 +72,62 @@ agregar valor de produto à ferramenta antes de cobrar. A v2.0 retoma depois.
 
 </details>
 
-## Current Milestone: v2.3 — Calibração do Valuation à Realidade (RIM com Valor Terminal / BACKTEST-01)
+## Current Milestone: v2.4 — Fidelidade do Valuation
 
-**Goal:** Corrigir a **subestimação sistemática do motor RIM** (bancos), dando-lhe um **valor
-terminal** (perpetuidade de residual income) para que bancos de qualidade valuem coerente com
-âncoras de realidade — ITUB4 na ordem de ~R$32-40, não R$23 — validado numa cesta de bancos. É o
-BACKTEST-01 que a Fase 2 do v2.2 deixou explicitamente adiado.
+**Goal:** Fazer os números do app servirem de **guia real de decisão** — hoje ele subvaloriza quase
+toda a B3 e diz "está caro" para 4 de cada 5 ações. Corrigir as **duas doenças independentes** na
+única ordem que a simulação provou segura.
 
-**Diagnóstico que originou o marco (2026-07-12):** o v2.2 roteou bancos para o RIM e removeu o
-carimbo "Evitar", mas o RIM ao vivo entrega ITUB4 a **R$23** vs o alvo ~R$40 do próprio SC#1.
-Causa raiz **não é o Ke** (varrer 10,5%→17,3% move só ~R$3): é a estrutura **fade-sem-valor-terminal
-(D-02)** que ancora o RIM perto do VPA. Um residual income COM perpetuidade (P/B justo) leva o
-ITUB4 a ~R$32-38, coerente com Graham (R$39,88)/preço (R$44,30).
+**Diagnóstico que originou o marco (auditoria forense de 2026-07-13 — 5 agentes, 104 tickers, engine
+ao vivo).** Mediana intrínseco/preço: `rim` 0,81 · `dcf` 0,63 · `normalizado` 0,63 (53 tickers, metade
+do universo) · `ddm` 0,48. Motor primário exibido: **0,68**.
+Mapa completo: https://claude.ai/code/artifact/cfdb3a4f-fffe-4465-b98a-bf3e9d4aa679
 
-**Target features:**
-- **RIM com valor terminal** — substituir/complementar o fade-sem-terminal por uma perpetuidade de
-  residual income (ou P/B justo (ROE−g)/(Ke−g)), parametrizada em `config.yaml`. Alavanca principal.
-- **Ke do RIM por arquétipo** — ajuste secundário/fino (rever o teto de 14% que binda hoje).
-- **Harness de validação (BACKTEST-01)** — cesta de bancos (ITUB4/BBAS3/BBSE3/BBDC4) triangulando
-  4 âncoras: Graham+Bazin, preço de mercado, tabela manual de fair values, múltiplos de pares (P/VP, P/L).
-- **Redeploy do app v2.3 na VPS** — o v2.2 nunca subiu; o app deployado ainda roda código antigo.
+**Doença 1 — VIÉS (erro de unidade, não calibração).** O `Ke` é **nominal** (rf = Selic-ciclo 9,58%,
+embutindo ~5,2% de inflação da década) e o `ddm.g_estavel` é **2,5% de PIB real**. O modelo trata
+inflação como destruição de valor. Isso impõe um teto de P/L = `1/(Ke−g)` = **7,8x** contra um P/L
+mediano de mercado de **9,9x** — o motor é *matematicamente incapaz* de justificar a ação mediana da
+bolsa. É o único parâmetro que os **quatro** motores compartilham.
 
-**Escopo:** cirúrgico — **só RIM/bancos** neste marco. Se o mesmo viés de conservadorismo afetar
-DCF/normalizado, tratar em marco futuro.
+**Doença 2 — DISPERSÃO (dados).** `num_acoes = lucro/LPA` (`build.py:87`) com bases cruzadas (lucro
+consolidado ÷ LPA do controlador): **escala quebrada em 41 dos 104 tickers**. CGRA4 → I/P 1.018×;
+ITUB4 2019 = 10 milhões de ações em vez de 10 bilhões — dentro do snapshot que dá verde nos 448
+testes. JCP descartado em 13 empresas (`cvm.py:169`). Split ajustado duas vezes (`prices.py:71-111`).
+**Zero reconciliação** no pipeline. Não move a mediana; move cada ticker de −48% a +193%.
 
-**Natureza:** trabalho de **engine** (calibração/modelagem do valuation) + operação (deploy). Não
-quebrar: firewall selo↛report, golden do DDM puro (`test_ddm`), pagadora regulada idêntica (TAEE11).
+**Target features (a ordem é obrigatória — cada passo depende do anterior):**
+1. **Reconciliação de sanidade na ingestão** — os 4 asserts que teriam pego 4 dos 5 bugs de dados.
+2. **Ingestão correta** — JCP, lucro/PL do controlador, duplo ajuste de split, `sharesOutstanding`.
+3. **Primitivas sem viés** — `normalizacao.py:73-75` (mediana de 3 = o ano do MEIO → haircut de
+   15-20% no lucro) e `fundamentals.py:137-150` (ROE de bases temporais cruzadas). Maior alavancagem
+   por linha do repositório.
+4. **Identidade do `g` fechada, e SÓ ENTÃO o Ke** — `g_cap = (1+IPCA_ciclo)(1+PIB_real)−1 ≈ 7,3%`,
+   mesma janela do `rf` → valuation invariante à inflação. O `ke_teto` só pode sair depois.
+5. **Um motor (RIM) + contrato de saída honesto** — sob clean surplus, DCF-equity ≡ RIM
+   algebricamente; `nav` é o 1º termo do RIM. Carve-out: transmissoras ficam no DDM (concessão de
+   prazo finito não é perpetuidade). Saída = preço-teto + viés binário + ponte auditável. Ranking
+   aposentado na forma atual.
+6. **Revalidação com hold-out** — cesta de 40-60 tickers estratificada, fair values commitados
+   ANTES de rodar, hold-out roda UMA vez, **3 graus de liberdade** (não 20). Métrica: `V/FairValue`,
+   nunca `V/preço`.
 
-_(Marcos v1.0–v2.2 arquivados em `.planning/milestones/`. v2.2 Motor de Valuation por Arquétipo
-shipped 2026-07-12, tag `v2.2` — porém não deployado; o redeploy entra neste marco. Auditoria do
-v2.2 em `.planning/v2.2-MILESTONE-AUDIT.md`.)_
+**TRÊS ARMADILHAS — provadas destrutivas por simulação, não teoria:**
+- **Remover `ke_teto: 0.13` antes de consertar o `g`** → ITUB4 0,75→0,64; BBDC4 0,71→**0,52**. O clamp
+  é indefensável (3 de 4 bancos saturam; a justificativa "Blume" do `config.yaml:235` é
+  *aritmeticamente falsa*) **mas é uma muleta que compensa o viés do `g`**. O Ke DEPENDE do `g`.
+  Ke sozinho é líquido zero (0,68 → 0,67).
+- **"Consertar" `dcf_crescimento` com FCFE (`lpa × payout`)** → vira DDM. WEGE3 0,58→**0,26**.
+- **Reajustar knobs quando o golden `ITUB4: 32.88 ± 0.20` quebrar.** Ele VAI quebrar e **isso é o
+  conserto funcionando**. Os knobs do RIM (valor terminal, `ke_teto`, ROE through-cycle) foram
+  calibrados para compensar o haircut de lucro da primitiva. Dois erros se cancelando.
+
+**Escopo:** engine inteira — ingestão, primitivas, motores, contrato de saída e validação. **Não é
+cirúrgico**, ao contrário do v2.3. ~150 dos 448 testes são goldens de um método errado e serão
+reescritos; isso é a correção, não regressão.
+
+_(Marcos v1.0–v2.3 arquivados/registrados em `.planning/`. O v2.3 shipped 2026-07-13 (tag `v2.3`,
+deployado) — a auditoria posterior mostrou que sua calibração era um overfit sobre 4 observações
+com ~4 knobs livres; o v2.4 corrige a causa que aqueles knobs mascaravam.)_
 
 ## Requirements
 
