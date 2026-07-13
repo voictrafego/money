@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.3
 milestone_name: Calibração do Valuation à Realidade (RIM com Valor Terminal)
-status: ready_to_plan
-stopped_at: Fase 4 CONTEXT capturado (recalibração it.2, loop D-12)
-last_updated: "2026-07-13T08:00:49.684Z"
-last_activity: 2026-07-13
+status: executing
+stopped_at: Completed 05-04-PLAN.md (loop D-12 aberto)
+last_updated: "2026-07-13T12:36:05.089Z"
+last_activity: 2026-07-13 -- Phase 04 planning complete
 progress:
   total_phases: 3
-  completed_phases: 3
-  total_plans: 5
+  completed_phases: 1
+  total_plans: 7
   completed_plans: 5
-  percent: 100
+  percent: 71
 ---
 
 # Project State
@@ -29,8 +29,8 @@ qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio úni
 
 Phase: 4 (reaberta pelo loop D-12; Fase 6 bloqueada até fechar)
 Plan: Not started (recalibração — iteração 2)
-Status: Ready to plan
-Last activity: 2026-07-13
+Status: Ready to execute
+Last activity: 2026-07-13 -- Phase 04 planning complete
 
 ## Deferred Items
 
@@ -154,6 +154,7 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
   snapshot congelado (`tests/fixtures/snapshot_bancos_2026-07-12.yaml`) cruzado com as faixas de consenso
   ao vivo aprovadas (`tests/fixtures/fair_values_bancos.yaml`), só **1/4 (ITUB4)** cai na banda ±15% —
   abaixo do quórum 3/4. Falha em **dois sentidos opostos** (não é viés uniforme):
+
   - **BBAS3 RIM 45,60 (+54,6%, acima de todo target ≤39)** → super-avalia. Hipótese: `num_acoes` dobrado / lucro por ação inflado.
   - **BBSE3 RIM 25,38 (−35,7%, abaixo do piso ≥33)** → sub-avalia a seguradora capital-light. Hipótese: RIM ancorado em book penaliza alto-ROE/baixo-capital.
   - **BBDC4 RIM 10,47 (−46,3%, abaixo do book)** → sub-avalia no vale de ROE. Hipótese: guarda anti-bad-bank apertando demais.
