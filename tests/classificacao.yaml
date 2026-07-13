@@ -464,3 +464,8 @@
 'tests/test_vulc3_regressao.py::test_capstone_vale3_motor_normalizado': contrato
 'tests/test_vulc3_regressao.py::test_capstone_wege3_motor_dcf_sem_faixa_lixo': contrato
 'tests/test_vulc3_regressao.py::test_capstone_vulc3_verifica_por_risco_real': contrato
+
+# --- Fase 7 / plano 07-02: as duas doencas escritas como codigo (BLIND-02, BLIND-03).
+# Os dois com xfail(strict) NAO sao golden_nivel: nenhum knob os satisfaz. Rodam no default.
+'tests/test_invariantes_v24.py::test_invariancia_inflacao_identidade_pb_justo': invariante
+'tests/test_invariantes_v24.py::test_invariancia_inflacao_engine_itub4': invariante
