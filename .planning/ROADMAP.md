@@ -115,6 +115,11 @@ harness reproduzível (script + teste) que roda o RIM calibrado numa cesta de ba
   2. **ITUB4 no app ao vivo** mostra arquétipo (financeira→RIM), o intrínseco calibrado do RIM (~R$32-40) e o veredito "ver motor primário" — **não** mais "Evitar" com faixa DDM R$12,93–19,32.
   3. Suíte verde e firewall intacto antes do deploy; smoke visual pós-deploy aprovado.
 
+**Plans:** 3 plans in 3 waves
+- [ ] 06-01-PLAN.md — Gate pré-deploy (suíte 447 verde + firewall) e entrega da tag v2.3 ao remote voictrafego/money
+- [ ] 06-02-PLAN.md — Rollback safety (money:pre-v2.3) + rebuild da tag v2.3 e redeploy do service lazari_money
+- [ ] 06-03-PLAN.md — Smoke pós-deploy em 3 camadas (infra/gate/WS, CLI no container, visual no navegador logado)
+
 ## Progress
 
 **Execution Order:**
@@ -124,4 +129,4 @@ Fases executam em ordem numérica: 4 → 5 → 6
 |-------|-----------|----------------|--------|-----------|
 | 4. RIM com Valor Terminal + Ke revisado | v2.3 | 1/1 | Complete (🔁 reaberta — loop D-12) | 2026-07-12 |
 | 5. BACKTEST-01 — Validação na cesta de bancos | v2.3 | 4/4 | Complete (achado: calibração não generaliza) | 2026-07-13 |
-| 6. Redeploy do app v2.3 na VPS | v2.3 | 0/? | 🔒 Blocked (loop D-12) | - |
+| 6. Redeploy do app v2.3 na VPS | v2.3 | 0/3 | Ready (planned; loop D-12 fechado) | - |
