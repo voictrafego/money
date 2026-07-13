@@ -4,14 +4,14 @@ milestone: v2.3
 milestone_name: Calibração do Valuation à Realidade (RIM com Valor Terminal)
 status: executing
 stopped_at: Phase 6 context gathered
-last_updated: "2026-07-13T14:29:20.173Z"
-last_activity: 2026-07-13 -- Phase 06 planning complete
+last_updated: "2026-07-13T14:49:23.087Z"
+last_activity: 2026-07-13
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 10
-  completed_plans: 7
-  percent: 70
+  completed_plans: 8
+  percent: 80
 ---
 
 # Project State
@@ -23,14 +23,14 @@ See: .planning/PROJECT.md (updated 2026-07-11)
 **Core value:** Cada tipo de negócio é roteado para o motor de valuation certo antes de valuar,
 e nenhum veredito final é puxado por um modelo que não serve àquele perfil — um compounder de
 qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio único não cabe nele.
-**Current focus:** Phase 04 — rim-com-valor-terminal-ke-revisado
+**Current focus:** Phase 06 — redeploy-do-app-v2-3-na-vps
 
 ## Current Position
 
-Phase: 05
-Plan: Not started
+Phase: 06 (redeploy-do-app-v2-3-na-vps) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-07-13 -- Phase 06 planning complete
+Last activity: 2026-07-13
 
 ## Deferred Items
 
@@ -43,7 +43,7 @@ Itens reconhecidos e adiados no fechamento do marco v2.2 (2026-07-12):
 | quick_task | 260629-ig6-aba-swing-trade-mvp-candlestick-intraday | missing (era v1.x) |
 | quick_task | 260630-g0b-adicionar-auto-refresh-opcional-ao-4-men | missing (era v1.x) |
 
-Progress: [██████████] 100%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -90,6 +90,7 @@ Progress: [██████████] 100%
 | Phase 05 P04 | 0h14m | 2 tasks | 1 files |
 | Phase 04 P02 | 0h18m | 3 tasks | 6 files |
 | Phase 04 P03 | 0h20m | 2 tasks | 3 files |
+| Phase 06 P01 | 0h08m | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -134,6 +135,7 @@ Decisions são registradas na tabela Key Decisions do PROJECT.md. Governando o v
 - [Phase 04]: Alavanca 2 (loop D-12) — normalização through-cycle do ROE aplicada SÓ no RI terminal (mediana histórica do ticker, capada por excesso_sustentavel); cesta cruza 3/4 (BBAS3 45,60→43,89, BBDC4 10,47→13,37) e ITUB4 fica bit-idêntico (32,88, cap satura)
 - [Phase 04]: roe_terminal é o último param de motores.rim (default None=legado); anchor sai da série via report._roe_through_cycle (never-raise <3 pts→None); único knob novo roe_terminal_stat (D-08); loop D-12 fechado com xfail(strict) removido do gate
 - [Phase 04]: Alavanca 3 (loop D-12) — rota de seguradora capital-light (BBSE3) via Gordon-franquia em report._intrinseco_por_motor ANTES do bank-RIM: reuso PURO de ddm.valor_gordon sobre dpa_recorrente, ke=CAPM ao vivo (a.ke, não ke_rim; Pitfall 3), g=g_estavel 2,5%; casa o token 'seguradora' por _setor_casa_token, seta a.motor='seguradora', never-raise degrada p/ RIM. BBSE3 25,38→39,87; cesta 4/4 na banda ±15% (zero knob numérico novo; ddm/fundamentals/arquetipo intocados)
+- [Phase ?]: [Phase 06]: Gate pré-deploy D-10 verde (448 passed + firewall selo↛report intacto) libera a entrega; tag anotada v2.3 (aponta a0fb0be) + main publicados em voictrafego/money via conta gh voictrafego (D-03/D-04). Nenhum deploy ainda (é o 06-02).
 
 ### Estrutura do Roadmap v2.2 (criado 2026-07-11)
 
@@ -203,9 +205,9 @@ Items carried forward do fechamento do marco anterior:
 
 ## Session Continuity
 
-Last session: 2026-07-13T14:06:12.080Z
+Last session: 2026-07-13T14:36:24.038Z
 Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-redeploy-do-app-v2-3-na-vps/06-CONTEXT.md
+Resume file: None
 
 ## Operator Next Steps
 

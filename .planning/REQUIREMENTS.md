@@ -44,7 +44,7 @@ NÃO o Ke (que move só ~R$3 no range 10,5%–17,3%). Um residual income COM per
 
 ### Operação (OPS)
 
-- [ ] **OPS-01**: O **app é redeployado na VPS** com o código v2.3 (o v2.2 nunca subiu — o app em
+- [x] **OPS-01**: O **app é redeployado na VPS** com o código v2.3 (o v2.2 nunca subiu — o app em
   produção ainda roda comportamento pré-arquétipo). **Critério de aceite:** ITUB4 no app ao vivo mostra
   o arquétipo (financeira→RIM), o intrínseco calibrado do RIM e o veredito "ver motor primário" —
   **não** mais "Evitar" com faixa DDM R$12,93–19,32. Suíte verde e firewall intacto antes do deploy.
