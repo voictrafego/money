@@ -68,7 +68,7 @@ direta do post-mortem do v2.3.
 - [x] **BLIND-03**: Existe teste de que a normalização **não pune crescimento** — série de lucro de
   +10%/ano *pura* (zero outlier) não pode produzir base normalizada abaixo do último ano menos
   inflação. Hoje produz haircut medido de **−9,1%**.
-- [ ] **BLIND-04**: **Nenhum teste de calibração afirma `ticker == valor em reais`.** A validação é
+- [x] **BLIND-04**: **Nenhum teste de calibração afirma `ticker == valor em reais`.** A validação é
   por **distribuição** (mediana + IQR) mais **jackknife**: `test_nenhum_ticker_e_load_bearing` falha
   se remover um único ticker mover a mediana além do limiar.
 - [ ] **BLIND-05**: Um hook de pre-commit **bloqueia** commit que altere `config.yaml` e um
@@ -251,7 +251,7 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | BLIND-01 | Phase 7 | Complete |
 | BLIND-02 | Phase 7 | Complete |
 | BLIND-03 | Phase 7 | Complete |
-| BLIND-04 | Phase 7 | Pending |
+| BLIND-04 | Phase 7 | Complete |
 | BLIND-05 | Phase 7 | Pending |
 | BLIND-06 | Phase 7 | Pending |
 | SAN-01 | Phase 8 | Pending |

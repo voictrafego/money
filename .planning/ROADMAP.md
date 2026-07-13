@@ -108,7 +108,7 @@ por um knob e **ninguém nota** (é a lição literal do post-mortem do v2.3).
 Plans:
 - [x] 07-01-PLAN.md — BLIND-01: quarentena dos goldens (448 testes classificados via YAML + `conftest.py`; zero edição nos testes existentes)
 - [x] 07-02-PLAN.md — BLIND-02 + BLIND-03: as duas doenças escritas como código (invariante algébrico exato + 2 `xfail(strict)`)
-- [ ] 07-03-PLAN.md — BLIND-04: meta-teste AST (`ticker == R$` proibido) + harness do jackknife (veredito adiado p/ a Fase 14)
+- [x] 07-03-PLAN.md — BLIND-04: meta-teste AST (`ticker == R$` proibido) + harness do jackknife (veredito adiado p/ a Fase 14)
 - [ ] 07-04-PLAN.md — BLIND-05: hook versionado (`.githooks/commit-msg` + `core.hooksPath`) + backstop contra `--no-verify`
 - [ ] 07-05-PLAN.md — BLIND-06: `calibracao.lock.yaml` (3 graus de liberdade) + limpeza dos comentários com ticker + **canário**
 
