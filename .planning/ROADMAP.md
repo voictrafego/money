@@ -110,7 +110,7 @@ Plans:
 - [x] 07-02-PLAN.md — BLIND-02 + BLIND-03: as duas doenças escritas como código (invariante algébrico exato + 2 `xfail(strict)`)
 - [x] 07-03-PLAN.md — BLIND-04: meta-teste AST (`ticker == R$` proibido) + harness do jackknife (veredito adiado p/ a Fase 14)
 - [x] 07-04-PLAN.md — BLIND-05: hook versionado (`.githooks/commit-msg` + `core.hooksPath`) + backstop contra `--no-verify`
-- [ ] 07-05-PLAN.md — BLIND-06: `calibracao.lock.yaml` (3 graus de liberdade) + limpeza dos comentários com ticker + **canário**
+- [x] 07-05-PLAN.md — BLIND-06: `calibracao.lock.yaml` (3 graus de liberdade) + limpeza dos comentários com ticker + **canário**
 
 ### Phase 8: Sanidade dos dados (SAN)
 **Goal**: Fazer o pipeline **saber quando o dado está errado**. Os asserts vêm **antes** dos
