@@ -1,0 +1,20 @@
+ITUB4:
+  min: 30.50
+  max: 50.00
+  data: "2026-07-12"
+  fonte: "Consenso de casas de análise (faixa de target prices, jul/2026) — agregadores investing.com corroborados por XP, BTG, Itaú BBA, Bradesco BBI, Genial, UBS BB, HSBC, Safra"
+BBAS3:
+  min: 20.00
+  max: 39.00
+  data: "2026-07-12"
+  fonte: "Consenso de casas de análise (faixa de target prices, jul/2026) — agregadores investing.com corroborados por XP, BTG, Itaú BBA, Bradesco BBI, Genial, UBS BB, HSBC, Safra"
+BBSE3:
+  min: 33.00
+  max: 46.00
+  data: "2026-07-12"
+  fonte: "Consenso de casas de análise (faixa de target prices, jul/2026) — agregadores investing.com corroborados por XP, BTG, Itaú BBA, Bradesco BBI, Genial, UBS BB, HSBC, Safra"
+BBDC4:
+  min: 15.00
+  max: 24.00
+  data: "2026-07-12"
+  fonte: "Consenso de casas de análise (faixa de target prices, jul/2026) — agregadores investing.com corroborados por XP, BTG, Itaú BBA, Bradesco BBI, Genial, UBS BB, HSBC, Safra"
