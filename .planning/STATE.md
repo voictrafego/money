@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.3
 milestone_name: Calibração do Valuation à Realidade (RIM com Valor Terminal)
-status: Fase 04 completa; próximo é a Fase 06 (redeploy do app v2.3 na VPS)
+status: ready_to_plan
 stopped_at: Completed 04-03-PLAN.md (cesta 4/4, rota seguradora, loop D-12 fechado)
 last_updated: "2026-07-13T13:26:57.960Z"
 last_activity: 2026-07-13
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
   completed_plans: 7
   percent: 100
@@ -27,9 +27,9 @@ qualidade (banco) nunca mais é carimbado "evitar" porque o DDM de estágio úni
 
 ## Current Position
 
-Phase: 04 (rim-com-valor-terminal-ke-revisado) — EXECUTING
-Plan: 3 of 3 (04-03 concluído — cesta 4/4, loop D-12 fechado)
-Status: Fase 04 completa; próximo é a Fase 06 (redeploy do app v2.3 na VPS)
+Phase: 05
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-07-13
 
 ## Deferred Items
@@ -62,7 +62,7 @@ Progress: [██████████] 100%
 | 01 | 8 | - | - |
 | 02 | 2 | - | - |
 | 03 | 4 | - | - |
-| 04 | 1 | - | - |
+| 04 | 3 | - | - |
 | 05 | 4 | - | - |
 
 **Recent Trend:**
