@@ -219,7 +219,7 @@ Fases com padrões bem estabelecidos (podem pular pesquisa extra):
 | Area | Confidence | Notes |
 |------|------------|-------|
 | Stack | HIGH | Séries do BCB e chaves do Yahoo verificadas ao vivo, não de memória |
-| Features (contrato de saída) | MEDIUM-HIGH | Achado central (livro não prescreve Bazin) é HIGH via anotações de capítulo com exemplos conferidos; convenções BR (vernáculo "preço-teto") MEDIUM-HIGH; comportamento de concorrentes sob baixa confiança MEDIUM |
+| Features (contrato de saída) | **HIGH** | **O PDF do livro FOI lido diretamente** (2026-07-13, `pdftotext`): "preço-teto" = **0 ocorrências**, "Bazin" = **0**, "valor intrínseco" = **39**. A regra de decisão de 3 estados e a MS simétrica escolhida pelo usuário são **citação literal** do Cap. 17. Comportamento de concorrentes sob baixa confiança permanece MEDIUM (mas é irrelevante — o livro tem precedência) |
 | Architecture | MEDIUM-HIGH | Álgebra e ordem de build HIGH (Ohlson 1995, Penman); materialidade de dirty surplus no Brasil e disponibilidade do prazo de concessão NÃO medidas |
 | Pitfalls | MEDIUM-HIGH | Bugs de código e bandas do gate HIGH (executados no repo); prazo DFP e IRRF HIGH (fonte oficial); IHCD/AT1 e DFC líquida de IRRF MEDIUM (não verificado nas notas) |
 
@@ -227,7 +227,16 @@ Fases com padrões bem estabelecidos (podem pular pesquisa extra):
 
 ### Gaps to Address
 
-- **Não foi lido o PDF do livro diretamente** nesta rodada de pesquisa (FEATURES.md) — a reconstrução via anotações de capítulo é forte mas indireta. Um grep no PDF por "margem de segurança"/regra de decisão explícita fecharia a única premissa da qual todo o contrato de saída depende — fazer antes de commitar o contrato de saída na Fase 6.
+- ~~**Não foi lido o PDF do livro diretamente**~~ — **FECHADO em 2026-07-13.** O PDF foi lido
+  (`659422642-Orleans-Martins-O-Investidor-em-Acoes-de-Dividendos.pdf`, via `pdftotext -layout`).
+  Resultado: **"preço-teto" e "Bazin" têm ZERO ocorrências**; "valor intrínseco", 39. O livro
+  prescreve **valor intrínseco + região de valor**, com regra de decisão de **três** estados
+  (compra descontada / valor justo / venda interessante — Cap. 17, citação literal), **margem de
+  segurança simétrica escolhida pelo usuário** (*"se 5%, 10% ou qualquer outro valor, é você quem
+  decide"*) e a **matriz de sensibilidade Ke×g** como a estratégia *preferida* (*"a que mais
+  gostamos"*). O contrato de saída do marco está travado no PROJECT.md e **não depende mais de
+  suposição**. A proposta original de "preço-teto + viés binário" foi **descartada por infidelidade
+  ao método**.
 - **Prazo remanescente `T` das concessões** — não confirmado como disponível gratuitamente; plano de fallback (tabela curada) precisa ser validado antes da Fase 5.
 - **Materialidade do dirty surplus no universo brasileiro** — não medida; script de 20 linhas proposto para a Fase 3 resolve isso barato.
 - **IHCD/AT1 dentro do PL de bancos BR** — hipótese plausível mas não verificada nas notas explicativas; spike necessário na Fase 1.
