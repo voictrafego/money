@@ -62,6 +62,36 @@ def test_rim_itub4_live_alvo_32_40():
     assert res.vp_terminal > 0
 
 
+def test_rim_terminal_normalizado():
+    # Alavanca 2 (CAL-01/D-01): normalização through-cycle do ROE ENTRA SÓ no RI terminal.
+    # Prova as duas metades da tese: (a) roe_terminal abaixo do cap MOVE o valor; (b) roe_terminal
+    # acima do cap SATURA no excesso_sustentavel → bit-idêntico ao legado (protege o ITUB4).
+    base = dict(
+        vpa0=19.0, roe0=0.193, ke=0.13, retencao=0.533, n=10,
+        excesso_sustentavel=0.045, g_terminal=0.025,
+    )
+    legado = motores.rim(**base)  # roe_terminal ausente → comportamento D-02/it.1
+    assert legado is not None
+    assert legado.vp_terminal > 0
+
+    # (a) excesso terminal (roe_ciclo − ke = 0,02) MENOR que o cap (0,045) → o terminal encolhe,
+    #     logo o valor_intrinseco DIFERE (e é menor) do legado — a alavanca move o número.
+    abaixo = motores.rim(**base, roe_terminal=0.15)
+    assert abaixo is not None
+    assert abaixo.valor_intrinseco != legado.valor_intrinseco
+    assert abaixo.valor_intrinseco < legado.valor_intrinseco
+    assert abaixo.vp_terminal < legado.vp_terminal
+    # A janela explícita fica INTOCADA (Pitfall 1): só o terminal muda.
+    assert abs(abaixo.vp_residual_income - legado.vp_residual_income) < 1e-12
+
+    # (b) excesso terminal (0,07) MAIOR que o cap (0,045) → min(...) satura no cap → o RI terminal
+    #     é idêntico ao legado (que também satura) → valor_intrinseco bit-idêntico (não regride).
+    acima = motores.rim(**base, roe_terminal=0.20)
+    assert acima is not None
+    assert abs(acima.valor_intrinseco - legado.valor_intrinseco) < 1e-9
+    assert abs(acima.vp_terminal - legado.vp_terminal) < 1e-9
+
+
 def test_rim_bad_bank_abaixo_do_book():
     # Guarda anti-bad-bank: banco que destrói valor (ROE < Ke) valua ABAIXO do book (P/B < 1).
     # fade_para = ke + min(roe0−ke, cap) SEM clampar a ≥ ke → RI terminal negativo → V < VPA.
