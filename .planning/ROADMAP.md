@@ -117,7 +117,7 @@ harness reproduzível (script + teste) que roda o RIM calibrado numa cesta de ba
 
 **Plans:** 3 plans in 3 waves
 - [x] 06-01-PLAN.md — Gate pré-deploy (suíte 447 verde + firewall) e entrega da tag v2.3 ao remote voictrafego/money
-- [ ] 06-02-PLAN.md — Rollback safety (money:pre-v2.3) + rebuild da tag v2.3 e redeploy do service lazari_money
+- [x] 06-02-PLAN.md — Rollback safety (money:pre-v2.3) + rebuild da tag v2.3 e redeploy do service lazari_money
 - [ ] 06-03-PLAN.md — Smoke pós-deploy em 3 camadas (infra/gate/WS, CLI no container, visual no navegador logado)
 
 ## Progress
