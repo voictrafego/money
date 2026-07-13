@@ -14,6 +14,8 @@ import ast
 import copy
 import json
 import pathlib
+import statistics
+from collections.abc import Sequence
 from functools import lru_cache
 
 import yaml
@@ -24,6 +26,11 @@ TICKER_MAP = RAIZ_REPO / "data" / "ticker_map.json"
 CLASSIFICACAO = RAIZ_REPO / "tests" / "classificacao.yaml"
 CONFIG_PROD = RAIZ_REPO / "config.yaml"
 SNAPSHOT_BANCOS = RAIZ_REPO / "tests" / "fixtures" / "snapshot_bancos_2026-07-12.yaml"
+
+# NAO EXISTE HOJE — nasce na FASE 14 (VAL-02): cesta estratificada, >= 6 por arquetipo + 10
+# "dificeis" deliberados. Ate la' o veredito do jackknife (BLIND-04b) SKIPa. O
+# `fair_values_bancos.yaml` (4 tickers, a cesta do overfit v2.3) NAO serve de substrato.
+HOLDOUT_V24 = RAIZ_REPO / "tests" / "fixtures" / "holdout_v24.yaml"
 
 CATEGORIAS = {"invariante", "golden_nivel", "contrato"}
 
@@ -174,6 +181,38 @@ def detectar_ticker_com_valor_cravado(
                 achados.add(f"{rel}::{fn.name}")
 
     return achados
+
+
+def mediana_jackknife(valores: Sequence[float]) -> tuple[float, float]:
+    """`(mediana_completa, desvio_max_ao_remover_1)` — o substituto do golden por ticker.
+
+    Funcao PURA: sem I/O, sem config, sem engine. So' aritmetica sobre a amostra.
+
+    O segundo termo e' `max(|mediana(valores - {v}) - mediana(valores)|)` sobre todo `v`:
+    o quanto a mediana da amostra depende do PONTO MAIS INFLUENTE dela. Se um unico ticker
+    consegue mover a mediana, esse ticker e' LOAD-BEARING — a calibracao esta apoiada nele,
+    nao na distribuicao. E' exatamente a doenca do v2.3 (a cesta de 4 bancos), medida.
+
+    O QUE ELE DETECTA (e o que NAO detecta): a mediana e' robusta a OUTLIER por construcao —
+    jogar um valor absurdo na cauda NAO move a mediana e NAO move este desvio (medido:
+    amostra homogenea de 31 pontos da desvio 0,05 com ou sem um outlier de 1000). O que faz
+    o desvio explodir e' um ponto que a mediana USA COMO PONTE: uma observacao sozinha no
+    centro, entre dois grupos afastados. Esse ponto e' load-bearing no sentido literal — sem
+    ele a mediana pula. E' esse ponto que o jackknife acha, e e' esse que importa.
+
+    `n < 3` levanta: jackknife sobre 2 pontos nao tem significado nenhum.
+    """
+    vals = list(valores)
+    if len(vals) < 3:
+        raise ValueError(
+            f"jackknife exige n >= 3; recebeu n = {len(vals)}. "
+            "Jackknife sobre uma amostra minuscula e' estatisticamente vazio."
+        )
+    mediana = statistics.median(vals)
+    desvio_max = max(
+        abs(statistics.median(vals[:i] + vals[i + 1:]) - mediana) for i in range(len(vals))
+    )
+    return mediana, desvio_max
 
 
 def importa_caminho_de_valuation(caminho: pathlib.Path) -> bool:

@@ -474,3 +474,5 @@
 # --- Fase 7 / plano 07-03: BLIND-04. Meta-testes (testam OS TESTES, nao a engine) + harness
 # do jackknife. Nenhum deles crava nivel: rodam no default, para sempre.
 'tests/test_blindagem_meta.py::test_nenhum_teste_de_calibracao_crava_ticker_em_reais': contrato
+'tests/test_blindagem_meta.py::test_mediana_jackknife_e_robusta_por_construcao': invariante
+'tests/test_blindagem_meta.py::test_nenhum_ticker_e_load_bearing': contrato  # SKIPa ate a Fase 14 (VAL-02) criar o holdout_v24.yaml
