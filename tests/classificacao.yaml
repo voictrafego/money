@@ -500,3 +500,11 @@
 'tests/test_blindagem_selecao.py::test_addopts_nao_desliga_a_blindagem': contrato
 'tests/test_blindagem_selecao.py::test_selecao_efetiva_roda_as_invariantes_e_as_duas_doencas': contrato
 'tests/test_blindagem_selecao.py::test_bootstrap_do_blind01_nao_esta_ligado': contrato
+
+# --- Fase 8 / plano 08-01: SAN Wave 0. Os INSUMOS de diagnostico existem e degradam sem
+# levantar. Sao `contrato` (presenca/borda/never-raise), independem do NIVEL dos numeros.
+'tests/test_sanidade_insumos.py::test_companydata_nasce_nao_avaliada': contrato
+'tests/test_sanidade_insumos.py::test_dados_mercado_degrada_sem_levantar_quando_o_yahoo_falha': contrato
+'tests/test_sanidade_insumos.py::test_montar_empresa_carimba_a_origem_de_num_acoes': contrato
+'tests/test_sanidade_insumos.py::test_montar_empresa_carimba_o_lucro_do_controlador': contrato
+'tests/test_sanidade_insumos.py::test_o_filtro_estreito_da_cvm_perde_o_jcp': contrato

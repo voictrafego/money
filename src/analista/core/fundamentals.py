@@ -52,6 +52,24 @@ class CompanyData:
     dpa_trailing_12m: Optional[float] = None
     ano_dpa: Optional[int] = None  # ano-base do DPA usado (exposto p/ a Fase 2 exibir)
 
+    # ---------------- DIAGNÓSTICO (Fase 8 / SAN) — leitura, não conserto ---------------- #
+    # D-01/D-03: um CompanyData construído à mão NÃO pode nascer parecendo limpo.
+    avisos: List["Aviso"] = field(default_factory=list)  # flags de sanidade disparadas (List genérica p/ não importar core.sanidade → ciclo)
+    confianca: str = "nao_avaliada"                       # síntese; default inegociável (D-03), nunca "alta"
+
+    # insumos dos checks (séries {ano: valor}) — os motores NÃO consomem nenhum destes
+    lucro_controlador: Dict[int, float] = field(default_factory=dict)      # SAN-04: lucro do controlador (CVM 3.11.01)
+    pl_nao_controladores: Dict[int, float] = field(default_factory=dict)   # SAN-04: minoritários no PL
+    lpa_cvm: Dict[int, float] = field(default_factory=dict)                # LPA CRU da CVM (pré-divisão) — a causa-raiz
+    dpa_por_ano: Dict[int, float] = field(default_factory=dict)            # SAN-03: DPA do Yahoo por ano
+    proventos_filtro_amplo: Dict[int, float] = field(default_factory=dict) # SAN-03: DFC 6.03.* por "dividendo" OU "juros sobre capital"
+    origem_num_acoes: Dict[int, str] = field(default_factory=dict)         # "cvm" | "yahoo_fallback" por ano (SAN-02)
+
+    # insumos de mercado (SAN-01/SAN-02)
+    market_cap: Optional[float] = None
+    implied_shares_outstanding: Optional[float] = None
+    splits: Dict[str, float] = field(default_factory=dict)  # {"YYYY-MM-DD": fator} histórico completo (D-12)
+
     # ------------------------------------------------------------------ #
     def anos_ordenados(self) -> List[int]:
         return sorted(a for a in self.anos)
