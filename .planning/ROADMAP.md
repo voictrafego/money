@@ -131,7 +131,7 @@ de dados** que os knobs do v2.3 mascaravam.
   - **NÃO instalar `pandera`/`great-expectations`** — peso e indireção para 4 asserts aritméticos, num projeto cujo constraint é custo zero.
 **Plans**: 6 plans (5 waves — a Wave 0 dos insumos precede os checks; o spike roda em paralelo)
 Plans:
-- [ ] 08-01-PLAN.md — Wave 0 dos insumos: `cvm.py` lê `3.11.01` + minoritários; `prices.py` lê `marketCap`/`impliedSharesOutstanding`/`splits`; `CompanyData` ganha `avisos`/`confianca` (default `nao_avaliada`). **Leitura nova, zero conserto.**
+- [x] 08-01-PLAN.md — Wave 0 dos insumos: `cvm.py` lê `3.11.01` + minoritários; `prices.py` lê `marketCap`/`impliedSharesOutstanding`/`splits`; `CompanyData` ganha `avisos`/`confianca` (default `nao_avaliada`). **Leitura nova, zero conserto.**
 - [ ] 08-02-PLAN.md — SAN-07: o spike (as duas respostas são **NÃO**; o 3º bug de dados não existe) + correção dos números fantasma no REQUIREMENTS/ROADMAP (`1.131×` e a conta `2.03`) + o legado do `composicao_capital` para a Fase 9
 - [ ] 08-03-PLAN.md — o snapshot congelado dos 104 tickers com o dado **SUJO** (congela `marketCap` e `splits`; degrada por ticker — o MRFG3 dá 404 e **não aborta**)
 - [ ] 08-04-PLAN.md — `core/sanidade.py`: os 5 checks (SAN-01..05) + os limiares (D-10, fora do lock) + o teste que os congela (D-11)

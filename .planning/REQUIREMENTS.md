@@ -81,12 +81,12 @@ direta do post-mortem do v2.3.
 
 Os asserts vêm **antes** dos consertos, de propósito: eles **são** o teste de regressão do bloco DATA.
 
-- [ ] **SAN-01**: A ingestão reconcilia `num_acoes × preço ≈ market cap` e rebaixa a confiança do
+- [x] **SAN-01**: A ingestão reconcilia `num_acoes × preço ≈ market cap` e rebaixa a confiança do
   ticker quando diverge. Pega GOAU4 (3× errado) e CGRA4 (escala de 1000×).
-- [ ] **SAN-02**: Detecta salto de `num_acoes` ano-a-ano sem evento societário. Pega ITUB4 2019
+- [x] **SAN-02**: Detecta salto de `num_acoes` ano-a-ano sem evento societário. Pega ITUB4 2019
   (1.131×) e BRSR6 (205.000×).
-- [ ] **SAN-03**: Reconcilia `dividendos_CVM ≈ DPA_yahoo × num_acoes`. Pega o JCP perdido.
-- [ ] **SAN-04**: Verifica que `PL` e `lucro` estão na **mesma base**. Pega MRFG3, CSNA3, ALUP11, EQTL3.
+- [x] **SAN-03**: Reconcilia `dividendos_CVM ≈ DPA_yahoo × num_acoes`. Pega o JCP perdido.
+- [x] **SAN-04**: Verifica que `PL` e `lucro` estão na **mesma base**. Pega MRFG3, CSNA3, ALUP11, EQTL3.
 - [ ] **SAN-05**: Verifica **clean surplus** (`ΔB ≈ LL − DIV`) e reporta a violação como **dado**, não
   exceção. É detector de bug **e** pré-condição de validade do RIM — o mais valioso dos asserts.
 - [ ] **SAN-06**: Nenhum assert levanta exceção — todos degradam para aviso + confiança rebaixada
@@ -254,10 +254,10 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | BLIND-04 | Phase 7 | Complete |
 | BLIND-05 | Phase 7 | Complete |
 | BLIND-06 | Phase 7 | Complete |
-| SAN-01 | Phase 8 | Pending |
-| SAN-02 | Phase 8 | Pending |
-| SAN-03 | Phase 8 | Pending |
-| SAN-04 | Phase 8 | Pending |
+| SAN-01 | Phase 8 | Complete |
+| SAN-02 | Phase 8 | Complete |
+| SAN-03 | Phase 8 | Complete |
+| SAN-04 | Phase 8 | Complete |
 | SAN-05 | Phase 8 | Pending |
 | SAN-06 | Phase 8 | Pending |
 | SAN-07 | Phase 8 | Pending |

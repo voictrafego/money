@@ -4,14 +4,14 @@ milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
 stopped_at: Phase 08 context gathered
-last_updated: "2026-07-14T12:37:24.003Z"
-last_activity: 2026-07-14 -- Phase 08 planning complete
+last_updated: "2026-07-14T23:18:59.705Z"
+last_activity: 2026-07-14
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 11
-  completed_plans: 5
-  percent: 45
+  completed_plans: 6
+  percent: 55
 ---
 
 # Project State
@@ -27,17 +27,17 @@ entre si** — a mesma ação não pode parecer barata num menu e cara/ausente e
 ITUB4, Cap. 17 (Tabelas 41/43): `g` = 10,24% · `Ke` = 12,48% → **V = R$ 37,22** (região R$ 35–39,
 MS ±5%). **Hoje o app entrega R$ 16,13.**
 
-**Current focus:** Phase 07 — blindagem-processual-blind
+**Current focus:** Phase 08 — sanidade-dos-dados-san
 
 ## Current Position
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
-Phase: 07 (blindagem-processual-blind) — ✓ COMPLETE (verificada)
-Plan: 5 of 5
+Phase: 08 (sanidade-dos-dados-san) — EXECUTING
+Plan: 2 of 6
 Status: Ready to execute
-Last activity: 2026-07-14 -- Phase 08 planning complete
+Last activity: 2026-07-14
 
-Progress: [██████████] 100%
+Progress: [██████░░░░] 55%
 
 **Suíte:** `425 passed, 1 skipped, 38 deselected, 2 xfailed` — 0 XPASS. Os 2 xfailed SÃO as duas
 doenças (BLIND-02 vira verde na Fase 12; BLIND-03 na Fase 10). Golden de nível que quebrar deve ser
@@ -102,10 +102,22 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 - Trend: o v2.4 corrige a causa que os knobs do v2.3 mascaravam.
 
 | Phase 7 P04 | 25min | 2 tasks | 3 files |
+| Phase 08 P01 | 22min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **SAN Wave 0 (Fase 8 / plano 08-01) — insumos de diagnóstico são PARALELOS; leitura ≠ conserto.**
+  `cvm.py` lê `3.11.01` (lucro do controlador), minoritários no PL e proventos por **filtro amplo**
+  (`dividendo` OU `juros sobre.*capital` — o literal `"juros sobre capital"` não casava "Juros sobre
+  **O** Capital Próprio" do BRSR6). `prices.py` lê `marketCap`/`impliedSharesOutstanding`/`splits`.
+  `CompanyData` nasce `confianca='nao_avaliada'`. **Nenhum número consumido pelos motores mudou**
+  (`num_acoes`/`_fator_unit`/`lpa`/`lucro_liquido`/`dividendos` byte a byte iguais). O comentário
+  BUG-JCP de `build.py` estava com a **direção invertida** e foi corrigido: é a **CVM** que perde o
+  JCP (18× no BRSR6, medido), o **Yahoo** é que o tem. `_distribuicoes_proventos_amplo` é função
+  **separada** (não parâmetro) de propósito — preserva o filtro estreito sujo como teste de regressão
+  do DATA-01 (Fase 9). Suíte: **430 passed, 0 failed, 38 deselected, 2 xfailed, 1 skipped**.
 
 - **BLIND-05 (Fase 7 / plano 07-04) — o co-change knob+golden agora é rejeitado pelo git.**
   `.githooks/commit-msg` (versionado, `sh` puro, zero dep) bloqueia `config.yaml` + `tests/(fixtures|test_)`
@@ -224,9 +236,9 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 
 ## Session Continuity
 
-Last session: 2026-07-14T11:06:56.180Z
+Last session: 2026-07-14T23:17:43.275Z
 Stopped at: Phase 08 context gathered
-Resume file: .planning/phases/08-sanidade-dos-dados-san/08-CONTEXT.md
+Resume file: None
 
 ## Operator Next Steps
 
