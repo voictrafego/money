@@ -72,7 +72,38 @@ def tickers_conhecidos() -> frozenset[str]:
 
 
 def _arquivos_de_teste(raiz: pathlib.Path) -> list[pathlib.Path]:
-    return sorted(p for p in raiz.glob("test_*.py"))
+    """RECURSIVO (WR-13): o pytest coleta `tests/qualquer_sub/test_x.py` (testpaths=tests).
+
+    Com `glob` (nao-recursivo), bastava criar uma PASTA para um golden por ticker sumir do
+    BLIND-04a continuando a rodar. Criar uma pasta e' mais facil que qualquer evasao de AST.
+    """
+    return sorted(p for p in raiz.rglob("test_*.py"))
+
+
+def _rel(caminho: pathlib.Path, raiz: pathlib.Path) -> str:
+    """Identificador do arquivo, no MESMO formato das chaves de `classificacao.yaml`.
+
+    Relativo a RAIZ_REPO (`tests/sub/test_x.py`), nao `f"tests/{nome}"` (IN-02): com
+    subdiretorios (WR-13) o nome puro do arquivo vira um identificador AMBIGUO.
+    O fallback cobre a raiz sintetica dos testes do proprio detector (`tmp_path`).
+    """
+    try:
+        return caminho.relative_to(RAIZ_REPO).as_posix()
+    except ValueError:
+        return caminho.relative_to(raiz.parent).as_posix()
+
+
+def _escopo_de_modulo(arvore: ast.Module) -> ast.Module:
+    """So' as atribuicoes de TOPO (fora de qualquer funcao).
+
+    Varrer a arvore INTEIRA aqui seria um gerador de falso positivo: ele colheria nomes de
+    variaveis LOCAIS de outras funcoes (medido: um `esperado = {...}` dentro de um teste
+    contaminava qualquer outro teste que usasse um local chamado `esperado`).
+    """
+    return ast.Module(
+        body=[n for n in arvore.body if isinstance(n, (ast.Assign, ast.AnnAssign))],
+        type_ignores=[],
+    )
 
 
 def _float_nao_trivial(no: ast.AST) -> bool:
@@ -112,16 +143,113 @@ def _constantes_de_nivel_por_nome(escopo: ast.AST) -> set[str]:
     return nomes
 
 
-def _tem_nivel_cravado(fn: ast.AST, nomes_de_nivel_do_modulo: set[str]) -> bool:
+def _tickers_por_nome(escopo: ast.AST, tickers: frozenset[str]) -> set[str]:
+    """Nomes atribuidos a um valor que contem literal de TICKER (CR-02).
+
+    Simetrico a `_constantes_de_nivel_por_nome`: o detector JA' resolvia constantes de
+    MODULO do lado do NIVEL (rota (c)) e nao resolvia do lado do TICKER. A assimetria era o
+    furo — e ele fugia pela forma MAIS NATURAL de escrever uma tabela de goldens:
+
+        ALVOS = {"ITUB4": 32.88}          # ticker E valor, ambos no modulo
+        TICKERS = ["ITUB4"]
+        @pytest.mark.parametrize("t", TICKERS)
+        def test_golden(t):
+            assert calcular(t) == pytest.approx(ALVOS[t])
+
+    Nao e' contorcao adversarial: e' literalmente como se escreve um golden parametrizado.
+
+    O `escopo` TEM que ser `_escopo_de_modulo(arvore)`, nunca a arvore inteira.
+    """
+    nomes: set[str] = set()
+    for no in ast.walk(escopo):
+        if not isinstance(no, (ast.Assign, ast.AnnAssign)) or no.value is None:
+            continue
+        if not any(
+            isinstance(s, ast.Constant) and isinstance(s.value, str) and s.value in tickers
+            for s in ast.walk(no.value)
+        ):
+            continue
+        alvos = no.targets if isinstance(no, ast.Assign) else [no.target]
+        for alvo in alvos:
+            for sub in ast.walk(alvo):
+                if isinstance(sub, ast.Name):
+                    nomes.add(sub.id)
+    return nomes
+
+
+def _helpers_conferidores(arvore: ast.Module) -> set[str]:
+    """Funcoes de MODULO (nao-teste) que CONFEREM: o corpo delas contem um `assert` (CR-03).
+
+    Exige `ast.Assert`, e NAO `ast.Compare`: uma FACTORY de fixture (`_mk(ticker, lucros=...)`)
+    quase sempre contem um `Compare` interno e viraria falso positivo em massa (medido: 37
+    testes legitimos, entre eles invariantes e contratos, seriam empurrados para a quarentena).
+    Um guarda-corpo que empurra 37 testes bons para a quarentena e' desinstalado por irritacao
+    antes de pegar o primeiro overfit — e' a licao explicita do plano 07-04 (o regex ingenuo
+    que casava `MACD12`).
+
+    Quem CONFERE tem `assert`. Quem CONSTROI, nao.
+    """
+    return {
+        no.name
+        for no in arvore.body
+        if isinstance(no, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and not no.name.startswith("test_")
+        and any(isinstance(s, ast.Assert) for s in ast.walk(no))
+    }
+
+
+def _nivel_via_helper(fn: ast.AST, conferidores: set[str]) -> bool:
+    """Constante de NIVEL passada como argumento a um HELPER QUE CONFERE (CR-03).
+
+    A evasao (medida): mover o `assert` para fora da funcao apaga o golden do detector,
+    porque as rotas (a)-(c) so' olham `Compare`/`Assert` DENTRO da funcao de teste.
+
+        def _confere(v, alvo):
+            assert abs(v - alvo) < 0.01
+
+        def test_golden_via_helper():
+            _confere(calcular("ITUB4"), 32.88)   # <- nenhum Assert nesta funcao
+
+    A correcao NAO e' "qualquer numero solto na funcao ja' e' nivel" (o que o review sugeriu):
+    isso arrasta as factories de fixture junto e produz os 37 falsos positivos acima. A
+    correcao e' SEGUIR A CHAMADA: o numero chega a um assert — so' que o assert esta uma
+    moldura acima.
+    """
+    for no in ast.walk(fn):
+        if not isinstance(no, ast.Call):
+            continue
+        alvo = no.func
+        if isinstance(alvo, ast.Name):
+            nome = alvo.id
+        elif isinstance(alvo, ast.Attribute):
+            nome = alvo.attr
+        else:
+            continue
+        if nome not in conferidores:
+            continue
+        for arg in [*no.args, *(kw.value for kw in no.keywords)]:
+            if any(_float_nao_trivial(sub) for sub in ast.walk(arg)):
+                return True
+    return False
+
+
+def _tem_nivel_cravado(
+    fn: ast.AST,
+    nomes_de_nivel_do_modulo: set[str],
+    conferidores: set[str] | None = None,
+) -> bool:
     """Constante numerica NAO-trivial que chega a um assert.
 
-    Tres rotas — as duas ultimas sao as evasoes obvias da primeira:
+    Quatro rotas — as tres ultimas sao as evasoes obvias da primeira:
       (a) direto: a constante esta dentro de um `Compare`/`Assert`
           -> `assert 30.0 <= v <= 40.0`
       (b) via variavel LOCAL usada num assert
           -> `alvos = {"ITUB4": 32.88}` ... `assert abs(v - alvo) <= tol`
       (c) via constante de MODULO usada num assert  <- e' assim que o golden da banda
           30-40 do ITUB4 se esconde: `_ITUB4_RIM_MIN = 30.0` mora fora da funcao.
+      (d) via HELPER que confere (CR-03): o assert esta uma moldura acima
+          -> `_confere(v, 32.88)`. Sem esta rota, mover o assert para um helper apagava
+             o golden do detector.
     """
     for no in ast.walk(fn):
         if isinstance(no, (ast.Compare, ast.Assert)):
@@ -131,7 +259,9 @@ def _tem_nivel_cravado(fn: ast.AST, nomes_de_nivel_do_modulo: set[str]) -> bool:
     usados = _nomes_usados_em_assert(fn)
     if usados & nomes_de_nivel_do_modulo:
         return True
-    return bool(usados & _constantes_de_nivel_por_nome(fn))
+    if usados & _constantes_de_nivel_por_nome(fn):
+        return True
+    return _nivel_via_helper(fn, conferidores or set())
 
 
 def detectar_ticker_com_valor_cravado(
@@ -141,9 +271,14 @@ def detectar_ticker_com_valor_cravado(
 
     Regra (RESEARCH § BLIND-04a): para cada `FunctionDef` cujo nome comeca com `test_`,
     casa quando o corpo contem
-      (i) um literal string que e' chave de `ticker_map.json`  E
-      (ii) um `ast.Constant` numerico NAO-trivial (∉ {0, 1, 0.5, 2}) que chega a um assert
-           (direto ou via variavel — ver `_tem_nivel_cravado`).
+      (i) um TICKER: literal string que e' chave de `ticker_map.json`, OU um nome de
+          CONSTANTE DE MODULO cujo valor contem um (CR-02 — `TICKERS = ["ITUB4"]`)  E
+      (ii) um `ast.Constant` numerico NAO-trivial (∉ {0, 1, 0.5, 2}) que chega a um assert —
+           direto, via variavel local, via constante de modulo, ou via HELPER QUE CONFERE
+           (CR-03 — `_confere(v, 32.88)`). Ver `_tem_nivel_cravado`.
+
+    A varredura e' RECURSIVA (WR-13): um golden escondido em `tests/sub/` continua sendo
+    coletado pelo pytest, logo precisa continuar visivel aqui.
 
     Devolve identificadores em NIVEL DE FUNCAO: `tests/arquivo.py::nome` (SEM `[param]`).
 
@@ -158,14 +293,13 @@ def detectar_ticker_com_valor_cravado(
 
     for caminho in _arquivos_de_teste(raiz):
         arvore = ast.parse(caminho.read_text(encoding="utf-8"), filename=str(caminho))
-        rel = f"tests/{caminho.name}"
+        rel = _rel(caminho, raiz)
+        escopo_modulo = _escopo_de_modulo(arvore)
         # Constantes de nivel no escopo do MODULO (fora de qualquer funcao de teste).
-        nivel_modulo = _constantes_de_nivel_por_nome(
-            ast.Module(
-                body=[n for n in arvore.body if isinstance(n, (ast.Assign, ast.AnnAssign))],
-                type_ignores=[],
-            )
-        )
+        nivel_modulo = _constantes_de_nivel_por_nome(escopo_modulo)
+        # ... e os TICKERS no escopo do modulo (CR-02) — o lado simetrico, que faltava.
+        ticker_modulo = _tickers_por_nome(escopo_modulo, tickers)
+        conferidores = _helpers_conferidores(arvore)
 
         for fn in ast.walk(arvore):
             if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -173,13 +307,15 @@ def detectar_ticker_com_valor_cravado(
             if not fn.name.startswith("test_"):
                 continue
 
+            nomes_usados = {n.id for n in ast.walk(fn) if isinstance(n, ast.Name)}
             tem_ticker = any(
                 isinstance(n, ast.Constant)
                 and isinstance(n.value, str)
                 and n.value in tickers
                 for n in ast.walk(fn)
-            )
-            if tem_ticker and _tem_nivel_cravado(fn, nivel_modulo):
+            ) or bool(nomes_usados & ticker_modulo)
+
+            if tem_ticker and _tem_nivel_cravado(fn, nivel_modulo, conferidores):
                 achados.add(f"{rel}::{fn.name}")
 
     return achados
@@ -324,7 +460,7 @@ def xfail_estritos(raiz: pathlib.Path | None = None) -> set[str]:
     achados: set[str] = set()
     for caminho in _arquivos_de_teste(raiz):
         arvore = ast.parse(caminho.read_text(encoding="utf-8"), filename=str(caminho))
-        rel = f"tests/{caminho.name}"
+        rel = _rel(caminho, raiz)
         for fn in ast.walk(arvore):
             if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
