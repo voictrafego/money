@@ -50,7 +50,9 @@ printf '%s\n' "$staged" \
 # visivel e revisavel no diff) e nao pode cair neste bloqueio.
 
 msg=$(cat "$1" 2>/dev/null || true)
-just=$(printf '%s\n' "$msg" | sed -n 's/^Knob-Change-Justification:[[:space:]]*//p' | head -1)
+# TODOS os trailers, nao so' o primeiro (WR-03): com `head -1`, bastava por uma justificativa
+# economica no primeiro e o ticker no segundo para passar (medido: rc=0).
+just=$(printf '%s\n' "$msg" | sed -n 's/^Knob-Change-Justification:[[:space:]]*//p')
 
 if [ -z "$just" ]; then
   echo "BLOQUEADO (BLIND-05): config.yaml + teste/fixture no MESMO commit." >&2
@@ -73,9 +75,15 @@ fi
 # A regex `[A-Z]{4}[0-9]{1,2}` sozinha e' um FALSO POSITIVO ambulante (ela casa `MACD12`,
 # que existe no proprio config.yaml). Ela e' so' o PRIMEIRO FILTRO: o candidato so' vira
 # bloqueio se for chave de `data/ticker_map.json` — a lista dos 104 tickers reais.
-candidatos=$(printf '%s\n' "$just" | grep -oE '[A-Z]{4}[0-9]{1,2}' || true)
+#
+# A varredura e' CASE-INSENSITIVE (WR-02): um trailer com `itub4` minusculo passava (medido,
+# rc=0). "Nunca menciona um ticker" e' uma regra sobre o PAPEL, nao sobre a tecla shift.
+candidatos=$(printf '%s\n' "$just" | tr 'a-z' 'A-Z' | grep -oE '[A-Z]{4}[0-9]{1,2}' || true)
 for cand in $candidatos; do
-  if grep -qF "\"$cand\"" "$MAPA" 2>/dev/null; then
+  # Casa o candidato como CHAVE do JSON (`"ITUB4":`), nao em qualquer posicao (IN-04): o
+  # `grep -qF "\"$cand\""` antigo casava tambem os VALORES, divergindo de `tickers_conhecidos()`
+  # (que so' olha chaves, e ignora as `_`-prefixadas).
+  if grep -qE "\"$cand\"[[:space:]]*:" "$MAPA" 2>/dev/null; then
     echo "BLOQUEADO (BLIND-05): a justificativa do knob menciona um TICKER ($cand)." >&2
     echo >&2
     echo "      Knob-Change-Justification: $just" >&2
@@ -83,8 +91,12 @@ for cand in $candidatos; do
     echo "  Uma justificativa legitima de knob NUNCA menciona um ticker: um knob e' uma" >&2
     echo "  premissa ECONOMICA (premio de risco, horizonte de fade, PIB real), nao um" >&2
     echo "  ajuste para um papel especifico." >&2
-    echo "  Contra-exemplo canonico, dentro deste repo — config.yaml:238:" >&2
-    echo "      'Move ITUB4 ~R\$2'  <- e' isto que o marco v2.4 existe para nao repetir." >&2
+    # Cita o HISTORICO (imutavel), nao uma linha VIVA do config: a Fase 7 REMOVEU esse
+    # comentario, e uma citacao que nao confere faz o hook perder credibilidade exatamente
+    # no momento em que ele esta bloqueando alguem (WR-11).
+    echo "  Contra-exemplo canonico, no historico deste repo (v2.3):" >&2
+    echo "      config.yaml:  '# ... Move ITUB4 ~R\$2'  <- e' isto que o v2.4 existe para nao repetir." >&2
+    echo "      (removido na Fase 7; veja: git log -S 'Move ITUB4' -- config.yaml)" >&2
     exit 1
   fi
 done

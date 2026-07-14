@@ -62,9 +62,12 @@ def _menciona_ticker(texto: str) -> str | None:
     A regex e' so' o primeiro filtro — ela casa `MACD12` (falso positivo real, que existe
     no proprio `config.yaml`). O candidato so' conta se for um ticker REAL, do
     `ticker_map.json`.
+
+    CASE-INSENSITIVE (WR-02): `itub4` minusculo e' a mesma confissao que `ITUB4`. A regra e'
+    sobre o PAPEL, nao sobre a tecla shift.
     """
     conhecidos = tickers_conhecidos()
-    for cand in _RE_CANDIDATO_TICKER.findall(texto):
+    for cand in _RE_CANDIDATO_TICKER.findall(texto.upper()):
         if cand in conhecidos:
             return cand
     return None
@@ -136,8 +139,10 @@ def test_historico_do_v24_sem_co_change_knob_e_golden():
 
         msg = _git("show", "--no-patch", "--format=%B", sha).stdout
         assunto = msg.strip().splitlines()[0] if msg.strip() else "(sem mensagem)"
-        achado = _RE_TRAILER.search(msg)
-        if not achado:
+        # TODOS os trailers, nao so' o primeiro (WR-03): com `search`, bastava por a razao
+        # economica no primeiro trailer e o ticker no segundo para escapar.
+        justificativas = [j.strip() for j in _RE_TRAILER.findall(msg)]
+        if not justificativas:
             ofensores.append(
                 f"{sha[:7]} {assunto}\n"
                 f"        -> co-change knob+golden SEM `Knob-Change-Justification:` "
@@ -145,13 +150,13 @@ def test_historico_do_v24_sem_co_change_knob_e_golden():
             )
             continue
 
-        just = achado.group(1).strip()
-        ticker = _menciona_ticker(just)
-        if ticker:
-            ofensores.append(
-                f"{sha[:7]} {assunto}\n"
-                f"        -> justificativa menciona o TICKER {ticker}: {just!r}"
-            )
+        for just in justificativas:
+            ticker = _menciona_ticker(just)
+            if ticker:
+                ofensores.append(
+                    f"{sha[:7]} {assunto}\n"
+                    f"        -> justificativa menciona o TICKER {ticker}: {just!r}"
+                )
 
     assert not ofensores, (
         f"Commit(s) do marco v2.4 com a assinatura do overfit "
