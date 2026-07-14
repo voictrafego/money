@@ -244,3 +244,150 @@ Nada aqui bloqueia a **Fase 8** (SAN), que não deleta golden nenhum.
 
 _Verificado: 2026-07-13_
 _Verificador: Claude (gsd-verifier)_
+
+---
+
+## Fechamento de gaps — 2026-07-13 (commit `e6eb86c`)
+
+Gaps **1 (WR-12)** e **3 (WR-10)** estão **FECHADOS**. Gap **2 (WR-04)** continua **ABERTO** e é
+**tarefa obrigatória antes da Fase 10**. Nada em `src/` foi tocado (`git diff -- src/` vazio) e o
+`config.yaml` não foi aberto. Suíte: **425 passed, 1 skipped, 38 deselected, 2 xfailed** (era 422
+passed — os 3 novos são os do BLIND-07). Os 2 `xfailed` continuam sendo as duas doenças; nenhum
+XPASS.
+
+### Gap 1 (WR-12) — o kill-switch do `addopts` — **FECHADO**
+
+**O que foi feito** (`tests/test_blindagem_selecao.py`, novo; `tests/helpers_blindagem.py`;
+`tests/conftest.py`):
+
+- `helpers_blindagem.violacoes_da_blindagem()` lê o `pyproject.toml` **do disco** (`tomllib`) — não
+  pode confiar no `addopts`, que é o objeto sob ataque — e afirma o **núcleo inegociável**:
+  1. `xfail_strict is True`; 2. `--strict-markers` no `addopts`; 3. o markexpr do run default
+  **seleciona** `invariante` **e** `contrato`. O markexpr é avaliado pelo próprio
+  `_pytest.mark.expression.Expression`, não por `in` sobre string — `not golden_nivel and not
+  invariante` e `not (golden_nivel or invariante)` são a mesma evasão escrita de dois jeitos.
+- A quarentena do `golden_nivel` foi deixada **fora** do núcleo, de propósito: a Fase 10 deleta os
+  goldens e nesse dia mexer no marcador é legítimo. Ela é afirmada no teste (diff visível), não no
+  conftest (que abortaria a coleta).
+- `conftest.pytest_configure` chama o **mesmo** check → é um hook, roda seja qual for o `-m`: **não
+  existe expressão de marcador que o desselecione**. É o backstop indesligável. O teste `contrato` é
+  a denúncia legível; o conftest é o que não dá para desligar.
+- `conftest.pytest_collection_finish` grava a **seleção efetiva** (`session.items`, pós-desseleção);
+  o teste afirma sobre o que foi **coletado de verdade**, não sobre o que o config promete — inclui
+  as 108 invariantes e os `xfail(strict)` (descobertos por AST, nunca por nodeid hardcoded: um nome
+  hardcoded envelhece calado e a guarda passaria afirmando sobre conjunto vazio).
+- `BLIND_BOOTSTRAP` é afirmado ausente do ambiente. Continua funcionando para o
+  `scripts/bootstrap_classificacao.py` porque ele roda `--collect-only` (nenhum teste **executa**).
+
+**Evasões EXECUTADAS** (antes do fix a suíte ficava VERDE em todas):
+
+| Evasão | Depois do fix |
+|---|---|
+| `addopts` += `and not invariante` (a do verificador: era `316 passed, 0 failed`) | **rc=4, coleta ABORTA** — `UsageError: BLINDAGEM DESLIGADA (BLIND-07)` |
+| `addopts` += `and not contrato` (mata a própria guarda) | **rc=4, coleta ABORTA** |
+| `xfail_strict = false` | **rc=4, coleta ABORTA** |
+| `--strict-markers` removido | **rc=4, coleta ABORTA** |
+| `and not invariante` **+ backstop do conftest removido** | **2 failed** — o teste `contrato` sozinho já morde |
+| `BLIND_BOOTSTRAP=1` (era `423 passed`) | **1 failed** |
+
+**Sem falso positivo** (a lição do `MACD12`, 07-04): `pytest` → 425 passed; `pytest -k blindagem` →
+11 passed, 2 skipped; `pytest -m golden_nivel` → 38 passed; `pytest -m ""` → 462 passed;
+`pytest -m contrato` → 318 passed. Em run **parcial** (`-k`, `-m` na linha de comando, caminho
+explícito) o teste da seleção efetiva faz `skip` explícito e só o contrato **estático** é afirmado —
+esse vale sempre.
+
+**Limite conhecido, declarado:** um `-m 'not invariante'` digitado **na linha de comando** não fica
+vermelho (é indistinguível de um `-m contrato` legítimo, e a guarda não pode punir o subconjunto
+legítimo). Não é o modo de falha que importa: nada fica commitado, e a CI roda `pytest` puro. O que
+o post-mortem do v2.3 descreve ("o conserto é revertido e ninguém nota") exige **persistência** — e
+todo caminho persistente (arquivo ou env) agora aborta a coleta.
+
+### Gap 3 (WR-10) — o veredito fabricado do `choque_nominal` — **FECHADO**
+
+`tests/helpers_blindagem.py`: o `continue` silencioso virou `raise ValueError` nomeando o ticker.
+
+Prova executada (simulando a PRIM-02 da Fase 10, que reescreve `roe_valuation`):
+
+- **Antes do fix**, com `roe_valuation()` devolvendo `0.0` para o ITUB4: o ticker era chocado **pela
+  metade** (só a perna da taxa) e o teste seguia afirmando — `--runxfail` revela a mensagem que ele
+  produzia: _"+300 bps simultâneos em (rf, g, ROE) movem o V de R$ 8,06 para R$ 9,14 (+13,46%)"_. O
+  ROE **não** foi chocado; a mensagem **mentia**, e o número (13,46% vs. os 18,02% reais) era
+  fabricado. Sem `--runxfail`: `1 xfailed` — silêncio absoluto.
+- **Depois do fix**, mesmo cenário (`None` **ou** `0.0`): `ValueError: choque_nominal: 'ITUB4' não
+  tem base de ROE positiva ... Se este ticker deve mesmo sair da cesta do choque, tire-o
+  EXPLICITAMENTE do fixture` → **1 failed**. O ticker nunca mais some da cesta em silêncio.
+
+Hoje o run normal continua verde (os 4 tickers do snapshot têm ROE > 0; o choque aplica +300 bps
+exatos e o V do ITUB4 vai 32,88 → 38,80, +18,02% — inalterado).
+
+### Gap 2 (WR-04) — 21 invariantes estruturais presos na quarentena — **ABERTO / OBRIGATÓRIO ANTES DA FASE 10**
+
+**Continua exatamente como o verificador descreveu. Nada foi feito aqui.**
+
+**Por que é obrigatório antes da Fase 10, e não depois:** a Fase 10 (PRIM) é a fase que **DELETA**
+os goldens de nível — o CLAUDE.md manda "golden de nível quebrou? DELETE, nunca atualize", e o
+critério de saída da própria Fase 10 é _"o golden ITUB4 32,88 quebra e é DELETADO"_. As funções
+quarentenadas são **mistas**: carregam, na MESMA função, uma banda de nível **e** um invariante
+estrutural que não depende de nível nenhum (`a.motor == 'rim'`, `a.san01_reetiquetado is True`,
+`c.dy_recorrente() <= c.dy_atual()`, `itub['arquetipo'] == 'financeira'`, contratos de chave do home
+feed, degradação por item). Esses asserts **já não rodam hoje** (estão deselecionados). Quando a
+Fase 10 apagar a função, o invariante morre **junto, em silêncio** — e ninguém notará, porque ele já
+não roda. A fase que existia para **aumentar** a superfície de constrangimento a terá **reduzido**.
+
+**A tarefa (não precisa re-derivar a análise):**
+
+1. **Cindir** cada função mista em duas: o(s) assert(s) relacional(is)/estrutural(is) viram uma
+   função nova classificada `invariante` (volta ao run default e **sobrevive** à Fase 10); a banda
+   de nível fica na função `golden_nivel` (e morre com ela). Precedente já no repo:
+   `test_capm_local.py::test_ke_local_materialmente_acima_do_ke_de_2019` — extraído do golden
+   `test_ke_local_na_faixa_small_cap_br`, comentado como "WR-04: extraído do golden acima; SOBREVIVE
+   à Fase 12". O fix pass cindiu **2**; faltam as demais.
+2. **Cuidado medido pelo fixer:** algumas metades "invariante" carregariam ticker + constante de
+   módulo e seriam pegas pelo BLIND-04a agora endurecido. A metade que volta ao default **não pode**
+   afirmar `ticker == valor em reais` — se afirmar, ela não é invariante, é golden.
+3. **Depois da cisão:** um teste `contrato` que **PROÍBE quarentenar função mista** (fecha a classe
+   inteira, não só as instâncias de hoje). Ele é barato agora que o AST da triagem existe.
+4. Cada teste novo **tem** de entrar em `tests/classificacao.yaml` no **mesmo commit** (o conftest
+   impõe completude: teste sem entrada quebra a coleta).
+
+**Triagem reprodutível** (rodada em 2026-07-13, sobre as 38 funções `golden_nivel`): um varredor AST
+que marca toda função quarentenada com ≥ 1 `assert` **sem literal float não-trivial** devolve **30**
+funções — um **superset mecânico** dos 21 do verificador (ele exigiu invariante estrutural de
+verdade; o superset inclui asserts triviais e casos que talvez nem devessem ser `golden_nivel`, ex.
+`test_lentes.py::test_normalizar_tickers_upper`). Use o superset como fila de triagem, decidindo
+caso a caso:
+
+```
+test_arquetipo.py                      test_mdia3_resolve_para_alimentos_nao_banco
+test_arquetipo_roteamento.py           test_financeira_rim_destrava_vs_ddm_e_alimenta_veredito
+test_backtest_bancos.py                test_backtest_alvos_recalibrados
+                                       test_backtest_cesta_rota_por_ticker
+                                       test_backtest_gate_quorum_e_anotacao
+test_growth_reconciliacao.py           test_g_fund_menor_que_cagr_vira_teto_do_g_alto
+                                       test_trava_ke_quando_g_fund_supera_ke
+test_guardrails_ddm.py                 test_san01_reetiqueta_aberracao_itub4_like
+test_guardrails_fix06.py               test_setor_override_vulc3_calcados
+test_home_feed.py                      test_cotacoes_contrato_e_variacao_do_dia
+                                       test_cotacoes_degrada_por_item
+test_ingest_intraday.py                test_atraso_min_injetavel
+test_ingest_resolucao.py               test_regressao_cosan / _energisa / _tim / _totvs
+                                       test_tokenset_casa_agro3
+                                       test_tokenset_casa_sbsp3_sem_falso_positivo
+test_lentes.py                         test_normalizar_tickers_dedup_preserva_ordem / _upper
+                                       test_normalizar_tickers_virgula_e_espaco_separam
+test_motores.py                        test_rim_itub4_honesto_maior_que_ddm
+                                       test_rim_itub4_live_alvo_32_40
+                                       test_rota_seguradora_bbse3_gordon_franquia
+                                       test_rota_seguradora_nao_pega_banco
+test_payout_sustentavel_multiticker.py test_perfil_normal_estavel_mediana_no_regime_e_dy_rec_earnings_based
+                                       test_perfil_taee11_payout_acima_de_100pct_nao_clampado
+                                       test_perfil_vulc3_mediana_descarta_spike_extraordinario
+test_vulc3_regressao.py                test_rim_itub4_dispatch_banda
+                                       test_vulc3_cascata_domada_regressao
+```
+
+O varredor: para cada nodeid `golden_nivel` de `tests/classificacao.yaml`, `ast.parse` do arquivo,
+localiza a função e conta os `ast.Assert` cujo `.test` não contém `ast.Constant` float fora de
+`helpers_blindagem.TRIVIAIS`.
+
+**Nada aqui bloqueia a Fase 8 (SAN)** — ela não deleta golden nenhum.
