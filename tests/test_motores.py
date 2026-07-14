@@ -124,13 +124,30 @@ def test_rim_never_raise():
 # ke_rim (D-01) — a alavanca do critério #1
 # --------------------------------------------------------------------------- #
 def test_ke_rim_menor_que_ke_live_de_banco():
+    """INVARIANTE (WR-04): o Ke estrutural do RIM é ESTRITAMENTE MENOR que o Ke do CAPM ao
+    vivo. É o coração do critério #1 — e não depende de NÍVEL nenhum: nenhum knob o satisfaz,
+    ele é a relação entre dois motores.
+
+    Estava PRESO dentro do golden da banda [0,11; 0,14] (função única, classificada
+    `golden_nivel` ⇒ deselecionada do run default). Hoje ele já não guardava nada, e a
+    Fase 12 iria DELETAR a função inteira junto com a banda — levando o invariante embora
+    sem ninguém notar. Quarentenar dívida é certo; quarentenar a proteção junto, não.
+    """
     cfg = _cfg()
     kr = motores.ke_rim(1.0, cfg)
-    # Ke estrutural na faixa [0,11; 0,14].
-    assert 0.11 <= kr <= 0.14
-    # E estritamente MENOR que o Ke do CAPM ao vivo de banco (o coração do critério #1).
     ke_live = capm.ke_local(1.0, cfg["capm"]["rf_local"], cfg["capm"]["erp_local"])
     assert kr < ke_live
+
+
+def test_ke_rim_na_banda_estrutural():
+    """GOLDEN DE NÍVEL: a banda [0,11; 0,14] é literalmente `ke_piso`/`ke_teto` do config.
+
+    Trava um NÚMERO ⇒ trava o método atual. MORRE na Fase 12 (KE-04), quando o `ke_teto` sair
+    — DELETAR, nunca atualizar. O invariante relacional que morava aqui foi extraído para
+    `test_ke_rim_menor_que_ke_live_de_banco`, que SOBREVIVE a esta deleção (WR-04).
+    """
+    kr = motores.ke_rim(1.0, _cfg())
+    assert 0.11 <= kr <= 0.14
 
 
 def test_ke_rim_never_raise():

@@ -65,6 +65,7 @@
 'tests/test_backtest_bancos.py::test_backtest_rotulo_do_motor_consistente': contrato
 'tests/test_capm_local.py::test_config_capm_local_documentado': contrato
 'tests/test_capm_local.py::test_ke_local_na_faixa_small_cap_br': golden_nivel  # banda de Ke vinda dos knobs erp_local/rf_local -> Fase 12 (KE)
+'tests/test_capm_local.py::test_ke_local_materialmente_acima_do_ke_de_2019': invariante  # WR-04: extraido do golden acima; SOBREVIVE a Fase 12
 'tests/test_capm_local.py::test_resolvedor_rf_usa_selic_ao_vivo': invariante
 'tests/test_capm_local.py::test_resolvedor_rf_degrada_para_fallback': contrato
 'tests/test_capm_local.py::test_rf_ciclo_usa_media_da_serie': invariante
@@ -335,7 +336,8 @@
 'tests/test_motores.py::test_rim_bad_bank_abaixo_do_book': invariante
 'tests/test_motores.py::test_rim_roe_igual_ke_ancora_no_vpa': invariante
 'tests/test_motores.py::test_rim_never_raise': contrato
-'tests/test_motores.py::test_ke_rim_menor_que_ke_live_de_banco': golden_nivel  # banda 0,11-0,14 = ke_piso/ke_teto -> Fase 12 (KE)
+'tests/test_motores.py::test_ke_rim_menor_que_ke_live_de_banco': invariante  # WR-04: ke_rim < ke_live e' RELACIONAL (coracao do criterio #1); SOBREVIVE a Fase 12
+'tests/test_motores.py::test_ke_rim_na_banda_estrutural': golden_nivel  # banda 0,11-0,14 = ke_piso/ke_teto -> Fase 12 (KE)
 'tests/test_motores.py::test_ke_rim_never_raise': contrato
 'tests/test_motores.py::test_lucro_normalizado_usa_media_e_ignora_pico_vale': invariante
 'tests/test_motores.py::test_lucro_normalizado_never_raise': contrato

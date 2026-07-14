@@ -39,15 +39,30 @@ def test_config_capm_local_documentado():
     assert cap["rf_local"] == cap["selic_fallback"]
 
 
-def test_ke_local_na_faixa_small_cap_br():
-    """Ke = rf_local + beta × erp_local sobe para a faixa de small cap BR (caso VULC3, beta 0,88).
+def test_ke_local_materialmente_acima_do_ke_de_2019():
+    """INVARIANTE (WR-04): a abordagem `local` produz um Ke materialmente ACIMA dos literais
+    de 2019 (9,43%) — que é a razão de ela existir. Sobrevive à cura: mesmo com o ERP do KE-02
+    (0,06 → 0,045), o `rf_local` sozinho (10,5%) já está acima dos 9,4%.
 
-    Com rf de fallback (0,105) e erp 0,06: 0,105 + 0,88×0,06 = 0,1578 — materialmente acima
-    dos 9,4% dos literais de 2019. Ao vivo (Selic 2-dígitos) o piso é ainda mais alto.
+    Estava PRESO dentro do golden da faixa 0,13–0,22 (função única, `golden_nivel` ⇒ fora do
+    run default). A Fase 12 deletaria a função inteira e levaria este invariante junto.
     """
     cap = _cfg()["capm"]
     ke = capm.ke_local(0.88, cap["rf_local"], cap["erp_local"])
     assert ke > 0.094          # materialmente acima do Ke de 2019 (9,43%)
+
+
+def test_ke_local_na_faixa_small_cap_br():
+    """GOLDEN DE NÍVEL: a faixa 0,13–0,22 é função direta dos knobs `rf_local`/`erp_local`.
+
+    Trava um NÚMERO ⇒ trava o método atual. MORRE na Fase 12 (KE) — DELETAR, nunca atualizar.
+    O invariante que morava aqui foi extraído para
+    `test_ke_local_materialmente_acima_do_ke_de_2019`, que SOBREVIVE a esta deleção (WR-04).
+
+    Caso VULC3, beta 0,88: com rf de fallback (0,105) e erp 0,06 ⇒ 0,105 + 0,88×0,06 = 0,1578.
+    """
+    cap = _cfg()["capm"]
+    ke = capm.ke_local(0.88, cap["rf_local"], cap["erp_local"])
     assert 0.13 < ke < 0.22    # faixa small cap BR
 
 
