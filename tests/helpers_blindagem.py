@@ -13,9 +13,12 @@ from __future__ import annotations
 import ast
 import copy
 import json
+import os
 import pathlib
 import re
+import shlex
 import statistics
+import tomllib
 from collections.abc import Sequence
 from functools import lru_cache
 
@@ -23,6 +26,7 @@ import yaml
 
 # Raiz do repo: tests/helpers_blindagem.py -> tests/ -> repo/
 RAIZ_REPO = pathlib.Path(__file__).resolve().parent.parent
+PYPROJECT = RAIZ_REPO / "pyproject.toml"
 TICKER_MAP = RAIZ_REPO / "data" / "ticker_map.json"
 CLASSIFICACAO = RAIZ_REPO / "tests" / "classificacao.yaml"
 CONFIG_PROD = RAIZ_REPO / "config.yaml"
@@ -472,6 +476,135 @@ def xfail_estritos(raiz: pathlib.Path | None = None) -> set[str]:
 
 
 # --------------------------------------------------------------------------- #
+# BLIND-07 — a blindagem se protege do proprio kill-switch (gap 1 da 07-VERIFICATION).
+#
+# O `addopts` do pyproject.toml e' a RAIZ do BLIND-01/02/03, e ate agora NENHUM teste
+# afirmava que ele continua la'. Medido pelo verificador: trocar
+#     addopts = "-m 'not golden_nivel' --strict-markers"
+# por
+#     addopts = "-m 'not golden_nivel and not invariante' --strict-markers"
+# apaga as 108 invariantes E os 2 `xfail(strict)` das duas doencas, e a suite reporta
+# `316 passed, 0 failed` — VERDE. Uma linha de config desliga a blindagem inteira e a
+# suite ainda diz OK. E' exatamente o modo de falha do post-mortem do v2.3 ("o conserto
+# e' revertido e ninguem nota"), agora com o carimbo de aprovacao da suite.
+#
+# O que este bloco pode e o que NAO pode confiar:
+#   - NAO pode confiar no `addopts` (e' o que esta sob ataque) -> ele e' o OBJETO da
+#     afirmacao, lido do arquivo, nao o veiculo dela.
+#   - NAO pode confiar em estar SELECIONADO -> por isso o `conftest.pytest_configure`
+#     tambem chama `violacoes_da_blindagem()`: um hook de conftest roda seja qual for o
+#     `-m`, entao nao ha expressao de marcador que o desselecione. O teste `contrato`
+#     e' a denuncia legivel; o conftest e' o backstop indesligavel.
+#
+# NUCLEO INEGOCIAVEL (o que `violacoes_da_blindagem` afirma) — as 3 propriedades que
+# nenhuma fase futura tem motivo legitimo para mexer:
+#   1. `xfail_strict = true`         -> XPASS = FAILED (o alarme "a doenca foi curada").
+#   2. `--strict-markers`            -> marcador com typo nao vira quarentena de graca.
+#   3. o markexpr do `addopts` SELECIONA `invariante` e `contrato`.
+# A quarentena do `golden_nivel` NAO esta no nucleo: a Fase 10 DELETA os goldens, e nesse
+# dia mexer no marcador e' legitimo. Ela e' afirmada no teste (diff visivel), nao aqui.
+# --------------------------------------------------------------------------- #
+
+CATEGORIAS_PROTEGIDAS = ("invariante", "contrato")
+
+# Escape do BLIND-01 (conftest.py:40). Legitimo SO' dentro de
+# `scripts/bootstrap_classificacao.py`, que precisa colher nodeids antes de o YAML existir
+# — e que roda `--collect-only` (nenhum teste EXECUTA). Logo, se um teste esta rodando com
+# esta variavel no ambiente, ela veio de um `export` no shell/CI: a completude do BLIND-01
+# esta desligada em silencio (medido: `423 passed`, teste sem classificacao roda mudo).
+ENV_BOOTSTRAP = "BLIND_BOOTSTRAP"
+
+
+def ini_options_do_pyproject() -> dict:
+    """`[tool.pytest.ini_options]` lido do ARQUIVO, nao do runtime do pytest."""
+    dados = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
+    return dados.get("tool", {}).get("pytest", {}).get("ini_options", {})
+
+
+def _tokens_do_addopts(ini: dict | None = None) -> list[str]:
+    ini = ini if ini is not None else ini_options_do_pyproject()
+    addopts = ini.get("addopts", "")
+    if isinstance(addopts, str):
+        return shlex.split(addopts)
+    return [str(t) for t in addopts]
+
+
+def markexpr_declarado(ini: dict | None = None) -> str:
+    """A expressao de marcador que o `addopts` impoe ao run default (`-m ...`)."""
+    tokens = _tokens_do_addopts(ini)
+    for i, tok in enumerate(tokens):
+        if tok == "-m":
+            return tokens[i + 1] if i + 1 < len(tokens) else ""
+        if tok.startswith("-m") and len(tok) > 2:
+            return tok[2:]
+    return ""
+
+
+def expressao_seleciona(markexpr: str, categoria: str) -> bool:
+    """`markexpr` SELECIONA um teste marcado so' com `categoria`?
+
+    Usa o proprio avaliador do pytest (`_pytest.mark.expression`) em vez de casar texto:
+    `'not golden_nivel'` e `'not (golden_nivel or invariante)'` sao a MESMA evasao escrita
+    de dois jeitos, e um `in` sobre string pegaria so' um deles.
+    """
+    if not markexpr.strip():
+        return True  # `-m ""` seleciona tudo
+    from _pytest.mark.expression import Expression
+
+    return bool(Expression.compile(markexpr).evaluate(lambda nome: nome == categoria))
+
+
+def violacoes_da_blindagem(ini: dict | None = None) -> list[str]:
+    """O NUCLEO INEGOCIAVEL. Lista vazia = blindagem ligada. Chamado pelo conftest E pelo teste."""
+    ini = ini if ini is not None else ini_options_do_pyproject()
+    violacoes: list[str] = []
+
+    if ini.get("xfail_strict") is not True:
+        violacoes.append(
+            "pyproject.toml: `xfail_strict` NAO e' true — um xfail(strict) que volta a "
+            "passar deixa de quebrar a suite, e o alarme 'a doenca foi curada' (BLIND-02/03) "
+            "morre calado."
+        )
+
+    if "--strict-markers" not in _tokens_do_addopts(ini):
+        violacoes.append(
+            "pyproject.toml: `--strict-markers` sumiu do addopts — marcador com typo "
+            "(`@pytest.mark.golden_nivell`) passa a ser aceito em silencio."
+        )
+
+    markexpr = markexpr_declarado(ini)
+    for categoria in CATEGORIAS_PROTEGIDAS:
+        if not expressao_seleciona(markexpr, categoria):
+            violacoes.append(
+                f"pyproject.toml: o addopts `-m '{markexpr}'` DESSELECIONA a classe "
+                f"'{categoria}' do run default. E' o kill-switch de uma linha: a suite "
+                f"fica verde sem rodar a blindagem. Quarentena e' SO' para `golden_nivel`."
+            )
+
+    return violacoes
+
+
+def e_run_default(config) -> bool:
+    """O run e' a suite INTEIRA (o que a CI roda), e nao um subconjunto pedido a mao?
+
+    Afirmar a selecao EFETIVA num run parcial seria um falso positivo garantido: um
+    `pytest -k blindagem` legitimo nao coleta as 108 invariantes, e uma guarda que fica
+    vermelha no trabalho legitimo e' desinstalada por irritacao (a licao do falso positivo
+    do `MACD12`, 07-04). Num run parcial so' o contrato ESTATICO (o arquivo) e' afirmado —
+    esse vale sempre.
+
+    Parcial = tem `-k`, tem `-m` na linha de comando (diferente do declarado no addopts),
+    ou pediu caminho/nodeid explicito (`config.args` != `testpaths`).
+    """
+    if config.getoption("keyword", default=""):
+        return False
+    if config.getoption("markexpr", default="") != markexpr_declarado():
+        return False
+    testpaths = set(config.getini("testpaths") or [])
+    return set(config.args) <= testpaths
+
+
+# --------------------------------------------------------------------------- #
 # BLIND-02 — o choque de inflacao (plano 07-02).
 #
 # O config e' INJETADO POR DEPENDENCIA (`report.analisar_acao(c, cfg)` recebe um
@@ -628,7 +761,21 @@ def choque_nominal(empresas, cfg: dict, bps: int):
     for c in empresas2:
         roe0 = c.roe_valuation()
         if roe0 is None or roe0 <= 0:
-            continue  # perna do lucro nao aplicavel (sem base de ROE positiva)
+            # NAO e' `continue` (gap 3 da 07-VERIFICATION). Um `continue` aqui chocaria a
+            # empresa PELA METADE — so' a perna da taxa, com o ROE real congelado — que e'
+            # a propria Doenca 1, e o teste seguiria afirmando sobre o resultado. Hoje e'
+            # inofensivo (os 4 tickers do snapshot tem ROE > 0, medido), mas a PRIM-02
+            # (Fase 10) REESCREVE `roe_valuation`: se ela devolver None para o ITUB4, o
+            # veredito "doenca curada" da Fase 12 passaria a ser FABRICADO sobre uma cesta
+            # meio-chocada, sem um aviso sequer. Ou a empresa e' chocada por inteiro, ou o
+            # teste QUEBRA e alguem decide explicitamente tira-la da cesta.
+            raise ValueError(
+                f"choque_nominal: {getattr(c, 'ticker', c)!r} nao tem base de ROE positiva "
+                f"(roe_valuation() = {roe0!r}) — a perna do LUCRO NOMINAL nao e' aplicavel. "
+                "Chocar so' a perna da TAXA compara um ROE real com um Ke nominal e fabrica "
+                "a Doenca 1 dentro do proprio teste que existe para medi-la. Se este ticker "
+                "deve mesmo sair da cesta do choque, tire-o EXPLICITAMENTE do fixture."
+            )
         k = (roe0 + delta) / roe0
         for serie in ("lucro_liquido", "dividendos"):
             destino = getattr(c, serie)

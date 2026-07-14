@@ -493,3 +493,10 @@
 'tests/test_blindagem_orcamento.py::test_knobs_batem_com_o_lock': contrato
 'tests/test_blindagem_orcamento.py::test_nenhuma_justificativa_de_knob_menciona_ticker': contrato
 'tests/test_blindagem_orcamento.py::test_a_suite_reage_a_um_knob_grosseiramente_errado': contrato  # o CANARIO (P5.4): sem ele, "448 verdes" pode ser "448 deselecionados"
+
+# --- Fase 7 / gap 1 da 07-VERIFICATION: BLIND-07. A BLINDAGEM SE PROTEGE DO KILL-SWITCH.
+# `contrato` OBRIGATORIAMENTE (nunca `invariante`): sao a guarda que denuncia a desselecao
+# da classe `invariante` — se morassem na classe atacada, morreriam junto com ela.
+'tests/test_blindagem_selecao.py::test_addopts_nao_desliga_a_blindagem': contrato
+'tests/test_blindagem_selecao.py::test_selecao_efetiva_roda_as_invariantes_e_as_duas_doencas': contrato
+'tests/test_blindagem_selecao.py::test_bootstrap_do_blind01_nao_esta_ligado': contrato

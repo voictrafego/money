@@ -7,7 +7,13 @@ apagar a linha do YAML quebra a coleta.
 
 Escape unico e explicito: `BLIND_BOOTSTRAP=1` desliga a imposicao de completude (nao os
 marcadores). E' usado SO por `scripts/bootstrap_classificacao.py`, que precisa colher os
-nodeids antes de o YAML existir.
+nodeids antes de o YAML existir. Ele NAO e' um bypass geral: um teste que EXECUTA com essa
+variavel no ambiente deixa a suite vermelha (`test_blindagem_selecao.py`).
+
+BLIND-07 (gap 1 da 07-VERIFICATION): `pytest_configure` afirma o NUCLEO da blindagem antes
+de qualquer coleta. Este hook roda seja qual for o `-m` — nao existe expressao de marcador
+que o desselecione. E' o backstop do kill-switch de uma linha no `addopts` (o teste
+`contrato` e' a denuncia legivel; este hook e' o que nao da' para desligar).
 """
 
 from __future__ import annotations
@@ -16,7 +22,28 @@ import os
 
 import pytest
 
-from helpers_blindagem import CATEGORIAS, carregar_classificacao
+from helpers_blindagem import (
+    CATEGORIAS,
+    carregar_classificacao,
+    violacoes_da_blindagem,
+)
+
+
+def pytest_configure(config):
+    violacoes = violacoes_da_blindagem()
+    if violacoes:
+        raise pytest.UsageError(
+            "BLINDAGEM DESLIGADA (BLIND-07) — o mecanismo de selecao da suite foi "
+            "neutralizado no pyproject.toml:\n  - " + "\n  - ".join(violacoes)
+        )
+
+
+def pytest_collection_finish(session):
+    """Guarda a selecao EFETIVA (pos-desselecao por `-m`) para o BLIND-07 afirmar sobre ela.
+
+    Roda DEPOIS do filtro de marcadores -> `session.items` e' o que vai REALMENTE rodar.
+    """
+    session.config._blind_selecionados = frozenset(item.nodeid for item in session.items)
 
 
 def pytest_collection_modifyitems(config, items):
