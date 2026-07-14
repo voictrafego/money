@@ -97,6 +97,18 @@ def test_orcamento_de_knobs_e_exatamente_3():
         "ENG-06 — nunca como grau de liberdade."
     )
 
+    # ... e o caminho declarado tem que EXISTIR no config (CR-05). Sem isto, a declaracao
+    # sobrevive a` morte da chave e o lock vira ficcao — do lado justamente do knob que
+    # nao entra no `escopo` e por isso nao e' pego pela verificacao de particao acima.
+    for caminho in lock["user_control"]:
+        try:
+            h.valor_em(cfg, caminho)
+        except (KeyError, TypeError):
+            raise AssertionError(
+                f"`{caminho}` esta declarado em `user_control` do lock mas NAO EXISTE no "
+                "config.yaml. A declaracao do D-04 esta apontando para o vazio."
+            ) from None
+
 
 # --------------------------------------------------------------------------- #
 # 2. O dente: mexer num knob deixa de ser invisivel.
@@ -115,6 +127,13 @@ def test_knobs_batem_com_o_lock():
     A verificacao e' sobre AS 30 FOLHAS (os 3 graus E os 27 congelados), nao so' sobre os
     graus de liberdade: sao justamente os knobs "congelados" (`ke_teto`, `excesso_sustentavel`)
     que o overfit do v2.3 moveu.
+
+    ... E TAMBEM SOBRE O `user_control` (CR-05). Ele nao e' grau de liberdade — mas
+    `veredito.margem_seguranca` MULTIPLICA o `V`. Antes deste teste le-lo, o lock declarava
+    `0.15`, o `test_orcamento_de_knobs_e_exatamente_3` conferia so' a PRESENCA DA CHAVE, e
+    trocar `0.15` por `0.30` no config.yaml mudava a escala do `V` da carteira inteira com a
+    suite VERDE (medido: 420 passed). A "Armadilha 4 morta por construcao" estava morta so' no
+    comentario. Uma declaracao sem teste que a le e' decoracao.
     """
     cfg = h.carregar_config_producao()
     lock = h.carregar_lock()
@@ -123,6 +142,11 @@ def test_knobs_batem_com_o_lock():
         spec["caminho"]: spec["valor"] for spec in lock["graus_de_liberdade"].values()
     }
     esperado.update(lock["congelados"])
+    # CR-05 — o 4o grau de liberdade escondido ganha DENTE: se o valor dele pode mudar sem
+    # aparecer no lock, a declaracao do D-04 nao vale nada.
+    esperado.update(
+        {caminho: spec["valor"] for caminho, spec in lock["user_control"].items()}
+    )
 
     divergentes = []
     for caminho, valor_lock in sorted(esperado.items()):
@@ -161,8 +185,17 @@ def test_nenhuma_justificativa_de_knob_menciona_ticker():
     O candidato a ticker vem de regex, mas o VEREDITO vem de `data/ticker_map.json`: a
     regex nua casa `MACD12` (falso positivo REAL, `config.yaml:134`). Um teste que bloqueia
     `MACD12` e' desligado por irritacao antes de barrar o primeiro overfit de verdade.
+
+    O escopo inclui os blocos do `user_control` (CR-05): `veredito` nao esta no `escopo` do
+    lock (nao e' bloco de valuation), mas a `margem_seguranca` MULTIPLICA o `V` — logo uma
+    justificativa dela que cite um ticker e' a MESMA confissao, no knob MAIS perigoso do
+    sistema. Sem esta linha, os comentarios do bloco `veredito` nunca eram varridos.
     """
-    ofensores = h.comentarios_com_ticker(h.carregar_lock()["escopo"])
+    lock = h.carregar_lock()
+    escopo_comentarios = list(lock["escopo"]) + [
+        caminho.split(".", 1)[0] for caminho in lock["user_control"]
+    ]
+    ofensores = h.comentarios_com_ticker(escopo_comentarios)
 
     assert not ofensores, (
         "justificativa de knob mencionando TICKER no config.yaml:\n"
