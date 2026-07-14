@@ -37,6 +37,24 @@ def _fetch_info(tk) -> dict:
         return {}
 
 
+def _fetch_splits(tk) -> Dict[str, float]:
+    """Histórico COMPLETO de splits do Yahoo → {"YYYY-MM-DD": fator}; {} em qualquer falha.
+
+    Ponto de injeção dos testes (como `_fetch_info`). `tk.splits` é uma chamada de rede a mais
+    e devolve uma `pandas.Series` NUNCA `None` — quando não há split, vem VAZIA e com
+    `dtype=object`; tratamos o caso vazio antes de qualquer aritmética. O index é DatetimeIndex
+    tz-aware: NÃO comparamos datas — só serializamos a chave como string ISO (p/ o SAN-02 só o
+    ano importa). `try/except Exception` cobre inclusive o 404 do MRFG3 (never-raise, SAN-06).
+    """
+    try:
+        s = tk.splits
+        if s is None or len(s) == 0:
+            return {}
+        return {data.strftime("%Y-%m-%d"): float(fator) for data, fator in s.items()}
+    except Exception:
+        return {}
+
+
 def yahoo_symbol(ticker: str) -> str:
     t = ticker.upper().strip()
     return t if t.endswith(".SA") else f"{t}.SA"
@@ -59,6 +77,10 @@ class DadosMercado:
     ohlc: Optional["pd.DataFrame"] = None           # frame OHLCV nominal 5a (Yahoo cru, auto_adjust=False)
     ohlc_ajustado: Optional["pd.DataFrame"] = None  # OHLCV split-only-adjusted p/ indicadores (Phase 5)
     serie_precos_ajustada: Optional["pd.Series"] = None  # Adj Close diário 5a — retorno total c/ dividendos reinvestidos; p/ RET-01, mesma origem do beta, sem rede nova
+    # DIAGNÓSTICO (Fase 8 / SAN — leitura, não conserto): insumos paralelos p/ os detectores.
+    market_cap: Optional[float] = None                    # info["marketCap"] (referência do SAN-01)
+    implied_shares_outstanding: Optional[float] = None    # info["impliedSharesOutstanding"] — ON+PN; NUNCA sharesOutstanding (só a classe negociada)
+    splits: Dict[str, float] = field(default_factory=dict)  # histórico COMPLETO {"YYYY-MM-DD": fator} p/ a isenção do SAN-02 (D-12)
 
 
 def _retornos_mensais(precos) -> list:
@@ -136,6 +158,11 @@ def coletar_mercado(ticker: str, meses_beta: int = 60) -> DadosMercado:
     dm.num_acoes = info.get("sharesOutstanding")
     dm.setor = info.get("sector", "") or info.get("industry", "")
     dm.nome = info.get("longName", "") or info.get("shortName", "")
+    # DIAGNÓSTICO (SAN-01/SAN-02) — insumos NOVOS e paralelos; `num_acoes` acima fica INTOCADO
+    # (trocá-lo por impliedSharesOutstanding seria o conserto do DATA-02, Fase 9).
+    dm.market_cap = info.get("marketCap")
+    dm.implied_shares_outstanding = info.get("impliedSharesOutstanding")
+    dm.splits = _fetch_splits(tk)  # chamada de rede a mais; never-raise → {} em falha (SAN-06)
 
     # histórico de preços (para liquidez, beta e desempenho relativo).
     # auto_adjust=False traz Close NOMINAL (R$ correntes) + Adj Close (retroajustado):
