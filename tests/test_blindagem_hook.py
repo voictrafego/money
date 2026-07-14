@@ -36,6 +36,16 @@ HOOK = RAIZ_REPO / ".githooks" / "commit-msg"
 _RE_CANDIDATO_TICKER = re.compile(r"[A-Z]{4}[0-9]{1,2}")
 _RE_TRAILER = re.compile(r"^Knob-Change-Justification:[ \t]*(.+)$", re.MULTILINE)
 
+# O conjunto "golden" — os arquivos que CONTEM o golden E os que o GOVERNAM (CR-04).
+# MESMA regra do hook (`.githooks/commit-msg`). `classificacao.yaml` entra porque mudar a
+# CATEGORIA de um teste para `golden_nivel` o DESELECIONA do run default: e' a versao v2.4
+# de "silenciar o teste que ficou vermelho", e ela nao passa por editar o golden.
+# `pyproject.toml` entra porque `addopts`/`xfail_strict` (a quarentena e o XPASS) moram nele.
+_RE_GOVERNA_GOLDEN = re.compile(
+    r"^(tests/(fixtures/|test_|classificacao\.yaml|conftest\.py|helpers_blindagem\.py)"
+    r"|pyproject\.toml)"
+)
+
 
 def _git(*args: str) -> subprocess.CompletedProcess:
     return subprocess.run(
@@ -120,9 +130,7 @@ def test_historico_do_v24_sem_co_change_knob_e_golden():
     for sha in shas:
         arquivos = _git("show", "--no-renames", "--name-only", "--format=", sha).stdout.split()
         toca_knob = "config.yaml" in arquivos
-        toca_golden = any(
-            a.startswith("tests/fixtures/") or a.startswith("tests/test_") for a in arquivos
-        )
+        toca_golden = any(_RE_GOVERNA_GOLDEN.match(a) for a in arquivos)
         if not (toca_knob and toca_golden):
             continue
 

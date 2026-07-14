@@ -30,7 +30,20 @@ staged=$(git diff --cached --name-only)
 
 # So' o CO-CHANGE interessa. Mexer so' no knob, ou so' no teste, passa reto.
 printf '%s\n' "$staged" | grep -qx 'config.yaml' || exit 0
-printf '%s\n' "$staged" | grep -qE '^tests/(fixtures/|test_)' || exit 0
+
+# O conjunto "golden" inclui os arquivos que GOVERNAM o golden, nao so' os que o CONTEM
+# (CR-04). Depois da Fase 7, "calibrei o knob ate o teste parar de reclamar" NAO se escreve
+# mais editando o golden — se escreve:
+#   - `tests/classificacao.yaml`   : mudar a categoria para `golden_nivel` DESELECIONA o
+#                                    teste do run default. E' a versao v2.4 de silenciar o
+#                                    teste que ficou vermelho, e nao tocava o padrao antigo.
+#   - `pyproject.toml`             : `addopts` (a quarentena) e `xfail_strict` moram nele.
+#   - `tests/conftest.py`          : impoe a completude do BLIND-01.
+#   - `tests/helpers_blindagem.py` : e' o proprio detector do BLIND-04a.
+# Todos eram invisiveis para `^tests/(fixtures/|test_)`.
+printf '%s\n' "$staged" \
+  | grep -qE '^(tests/(fixtures/|test_|classificacao\.yaml|conftest\.py|helpers_blindagem\.py)|pyproject\.toml)' \
+  || exit 0
 
 # NOTA: `calibracao.lock.yaml` (BLIND-06) fica na RAIZ, fora de `tests/` — de proposito.
 # `config.yaml` + lock no mesmo commit e' o caminho SANCIONADO (a mudanca de knob fica
