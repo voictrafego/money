@@ -98,7 +98,7 @@ Os asserts vêm **antes** dos consertos, de propósito: eles **são** o teste de
 - [x] **SAN-04**: Verifica que `PL` e `lucro` estão na **mesma base**. Pega MRFG3, CSNA3, ALUP11, EQTL3.
 - [ ] **SAN-05**: Verifica **clean surplus** (`ΔB ≈ LL − DIV`) e reporta a violação como **dado**, não
   exceção. É detector de bug **e** pré-condição de validade do RIM — o mais valioso dos asserts.
-- [ ] **SAN-06**: Nenhum assert levanta exceção — todos degradam para aviso + confiança rebaixada
+- [x] **SAN-06**: Nenhum assert levanta exceção — todos degradam para aviso + confiança rebaixada
   (contrato `never-raise` que o ingest já tem).
 - [x] **SAN-07**: *(spike, ANTES de calibrar qualquer coisa)* Verificar se IHCD/AT1 entram no PL dos
   bancos e se o dirty surplus por IFRS 9 FVOCI é material. **RESPONDIDO** em
@@ -292,7 +292,7 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | SAN-03 | Phase 8 | Complete |
 | SAN-04 | Phase 8 | Complete |
 | SAN-05 | Phase 8 | Pending |
-| SAN-06 | Phase 8 | Pending |
+| SAN-06 | Phase 8 | Complete |
 | SAN-07 | Phase 8 | Complete |
 | DATA-01 | Phase 9 | Pending |
 | DATA-02 | Phase 9 | Pending |

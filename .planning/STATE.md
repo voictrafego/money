@@ -4,14 +4,14 @@ milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
 stopped_at: Phase 08 context gathered
-last_updated: "2026-07-14T23:29:22.259Z"
+last_updated: "2026-07-14T23:50:03.877Z"
 last_activity: 2026-07-14
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 11
-  completed_plans: 6
-  percent: 55
+  completed_plans: 7
+  percent: 64
 ---
 
 # Project State
@@ -33,13 +33,13 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 08 (sanidade-dos-dados-san) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 Status: Ready to execute
 Last activity: 2026-07-14
 
-Progress: [██████░░░░] 55%
+Progress: [██████░░░░] 64%
 
-**Suíte:** `425 passed, 1 skipped, 38 deselected, 2 xfailed` — 0 XPASS. Os 2 xfailed SÃO as duas
+**Suíte:** `435 passed, 1 skipped, 38 deselected, 2 xfailed` — 0 XPASS. Os 2 xfailed SÃO as duas
 doenças (BLIND-02 vira verde na Fase 12; BLIND-03 na Fase 10). Golden de nível que quebrar deve ser
 **DELETADO, nunca atualizado** (contrato novo do CLAUDE.md).
 
@@ -104,10 +104,26 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 | Phase 7 P04 | 25min | 2 tasks | 3 files |
 | Phase 08 P01 | 22min | 3 tasks | 6 files |
 | Phase 08 P02 | 15min | 2 tasks | 5 files |
+| Phase 08 P03 | 35min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **SAN Wave 2 (Fase 8 / plano 08-03) — o snapshot congelado dos 104 é a evidência intocada do dado
+  SUJO.** `tests/fixtures/snapshot_sanidade_2026-07-14.yaml` (104 tickers, 13.756 linhas) congela
+  **`market_cap` E `splits`, não só o preço** — o EQTL3 (a 0,5% do limiar do SAN-01) não pisca, e os
+  12 splits do ITUB4 (incluindo o de **2018**, fora da janela de 5y do `prices.py`) ficam disponíveis
+  para a isenção D-12. **Degradação por ticker (SAN-06, never-raise):** **11 tickers dão 404 no Yahoo
+  HOJE** (AZUL4, BRFS3, CCRO3, CPLE6, ELET3, ELET6, EMBR3, JBSS3, MRFG3, ODPV3, TRPL4) — congelados
+  **com a CVM intacta e sem mercado**, listados no bloco `falhas:`. **NÃO é rate-limit** (verificado:
+  Yahoo serve ITUB4/PETR4/WEGE3 na mesma sessão fresca; os 11 falham nos endpoints `info` **E**
+  `history` por símbolo; re-rodar reproduz os mesmos 11). Parte são renames/fusões reais
+  (BRFS3→MBRF, CCRO3→MOTV3, TRPL4→ISAE4, JBSS3→NYSE, MRFG3→MBRF); ELET3/EMBR3/ODPV3 é quirk do
+  `quoteSummary`. **Zero R$ derivado por ticker** (nenhum `intrinseco`/`motor`/`arquetipo`; o
+  `report` não é tocado). Loader offline `tests/helpers_sanidade.py` reconstrói `CompanyData` nascendo
+  `confianca='nao_avaliada'` (D-03). Suíte: **435 passed, 1 skipped, 38 deselected, 2 xfailed, 0
+  failed**. SAN-01/SAN-02/SAN-06 marcados completos.
 
 - **SAN-07 (Fase 8 / plano 08-02) — o TERCEIRO bug de dados NÃO existe (medido, não deduzido).**
   Spike `.planning/spikes/san-07-ihcd-at1-fvoci.md` + `scripts/spike_san07_bancos.py` (offline, do
@@ -257,7 +273,7 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 
 ## Session Continuity
 
-Last session: 2026-07-14T23:28:42.707Z
+Last session: 2026-07-14T23:49:23.746Z
 Stopped at: Phase 08 context gathered
 Resume file: None
 
