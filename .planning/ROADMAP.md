@@ -120,11 +120,11 @@ de dados** que os knobs do v2.3 mascaravam.
 **Depends on**: Phase 7
 **Requirements**: SAN-01, SAN-02, SAN-03, SAN-04, SAN-05, SAN-06, SAN-07
 **Success Criteria** (what must be TRUE):
-  1. A ingestão **reporta os 41 tickers de escala quebrada** hoje invisíveis: `num_acoes × preço ≈ market cap` pega GOAU4 (3×) e CGRA4 (1000×); salto ano-a-ano sem evento societário pega ITUB4 2019 (1.131×) e BRSR6 (205.000×).
+  1. A ingestão **reporta os 41 tickers de escala quebrada** hoje invisíveis: `num_acoes × preço ≈ market cap` pega GOAU4 (3×) e CGRA4 (1000×); salto ano-a-ano sem evento societário, com limiar **simétrico** `max(r, 1/r) ≥ 3×`, pega ITUB4 2019 (÷1000) e 2020 (×780), BRSR6 2020/21 (×205.000), CGRA4 2025 (÷1000) — números **medidos** contra o cache CVM (2026-07-14, `08-RESEARCH.md` §Achado 2). *(O salto que antes se atribuía ao ITUB4 2019 era um número fantasma — é o salto real 2024→2025 = 1,1286×, bonificação legítima, mal-rotulado como 2019; um limiar calibrado para ele dispararia em toda bonificação de 10% da B3.)*
   2. A reconciliação `dividendos_CVM ≈ DPA_yahoo × num_acoes` **aponta o JCP perdido** e a checagem de base `PL`×`lucro` **aponta MRFG3, CSNA3, ALUP11, EQTL3** — antes de qualquer conserto.
   3. O **clean surplus** (`ΔB ≈ LL − DIV`) é medido e a violação é reportada **como dado, não como exceção** — é simultaneamente detector de bug **e** pré-condição de validade do RIM.
   4. **Nenhum assert levanta exceção**: todos degradam para aviso + confiança rebaixada do ticker (contrato `never-raise` que o ingest já tem). Rodar a engine num ticker sujo continua produzindo resposta.
-  5. O spike SAN-07 responde por escrito: IHCD/AT1 entram no PL dos bancos (`2.03`)? O dirty surplus por IFRS 9 FVOCI é material? **A resposta é pré-requisito da Fase 9** — se `B0` estiver deprimido, o RIM subvaloriza banco de qualidade e existe um 3º bug de dados.
+  5. O spike SAN-07 responde por escrito (`.planning/spikes/san-07-ihcd-at1-fvoci.md`): IHCD/AT1 entram no PL dos bancos? O dirty surplus por IFRS 9 FVOCI é material? **As duas respostas são NÃO; o terceiro bug de dados não existe; nenhum knob se move.** Correção de premissa: `2.03` **não é o PL de banco nenhum** — o PL é `2.08` (ITUB4) / `2.07` (BBAS3/BBDC4/BRSR6), casado pelo nome "Patrimônio Líquido Consolidado". Não há AT1 dentro do PL (o `B0` do RIM não está inflado) e o OCI fica entre 0,03% e 0,59% do PL — ruído. A Fase 9 herda um "não" fundamentado.
 **NÃO fazer nesta fase**:
   - **NÃO consertar nenhum dado.** Consertar aqui destrói o teste de regressão da Fase 9 (os asserts precisam falhar primeiro, e ser *vistos* falhando).
   - **NÃO calibrar nada com base no spike** — o spike responde uma pergunta contábil, não move um knob (Armadilha 3).
@@ -132,7 +132,7 @@ de dados** que os knobs do v2.3 mascaravam.
 **Plans**: 6 plans (5 waves — a Wave 0 dos insumos precede os checks; o spike roda em paralelo)
 Plans:
 - [x] 08-01-PLAN.md — Wave 0 dos insumos: `cvm.py` lê `3.11.01` + minoritários; `prices.py` lê `marketCap`/`impliedSharesOutstanding`/`splits`; `CompanyData` ganha `avisos`/`confianca` (default `nao_avaliada`). **Leitura nova, zero conserto.**
-- [ ] 08-02-PLAN.md — SAN-07: o spike (as duas respostas são **NÃO**; o 3º bug de dados não existe) + correção dos números fantasma no REQUIREMENTS/ROADMAP (`1.131×` e a conta `2.03`) + o legado do `composicao_capital` para a Fase 9
+- [ ] 08-02-PLAN.md — SAN-07: o spike (as duas respostas são **NÃO**; o 3º bug de dados não existe) + correção dos números fantasma no REQUIREMENTS/ROADMAP (o salto fantasma do ITUB4 2019 e a conta `2.03`) + o legado do `composicao_capital` para a Fase 9
 - [ ] 08-03-PLAN.md — o snapshot congelado dos 104 tickers com o dado **SUJO** (congela `marketCap` e `splits`; degrada por ticker — o MRFG3 dá 404 e **não aborta**)
 - [ ] 08-04-PLAN.md — `core/sanidade.py`: os 5 checks (SAN-01..05) + os limiares (D-10, fora do lock) + o teste que os congela (D-11)
 - [ ] 08-05-PLAN.md — `aplicar_sanidade` + agregação da confiança + a chamada no pipeline real **provada por execução** (D-04) + never-raise nos 104 (SAN-06)

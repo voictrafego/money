@@ -83,26 +83,59 @@ Os asserts vêm **antes** dos consertos, de propósito: eles **são** o teste de
 
 - [x] **SAN-01**: A ingestão reconcilia `num_acoes × preço ≈ market cap` e rebaixa a confiança do
   ticker quando diverge. Pega GOAU4 (3× errado) e CGRA4 (escala de 1000×).
-- [x] **SAN-02**: Detecta salto de `num_acoes` ano-a-ano sem evento societário. Pega ITUB4 2019
-  (1.131×) e BRSR6 (205.000×).
+- [x] **SAN-02**: Detecta salto de `num_acoes` ano-a-ano sem evento societário, com limiar
+  **simétrico** `max(r, 1/r) ≥ 3×`. Pega ITUB4 2019 (÷1000) e 2020 (×780), BRSR6 2020/21
+  (×205.000), CGRA4 2025 (÷1000) e MRFG3 (4,7×) — e ignora toda bonificação real da B3 (que
+  raramente passa de 2×). Números **medidos** contra o cache CVM em 2026-07-14 (`08-RESEARCH.md`
+  §Achado 2/§R-01); o salto que antes se atribuía ao ITUB4 2019 era um número fantasma (é quase
+  certamente o salto real 2024→2025 = 1,1286×, uma bonificação legítima do Itaú, mal-rotulado como
+  2019). Um limiar calibrado para esse salto dispararia em **toda** bonificação de 10% da B3 (falso
+  positivo em massa) e
+  deixaria a guarda dependente do `.splits` do Yahoo para **não** gritar; o 3× simétrico torna o
+  SAN-02 robusto **por construção** — a isenção por `.splits` (D-12) fica mantida, mas deixa de ser
+  load-bearing.
 - [x] **SAN-03**: Reconcilia `dividendos_CVM ≈ DPA_yahoo × num_acoes`. Pega o JCP perdido.
 - [x] **SAN-04**: Verifica que `PL` e `lucro` estão na **mesma base**. Pega MRFG3, CSNA3, ALUP11, EQTL3.
 - [ ] **SAN-05**: Verifica **clean surplus** (`ΔB ≈ LL − DIV`) e reporta a violação como **dado**, não
   exceção. É detector de bug **e** pré-condição de validade do RIM — o mais valioso dos asserts.
 - [ ] **SAN-06**: Nenhum assert levanta exceção — todos degradam para aviso + confiança rebaixada
   (contrato `never-raise` que o ingest já tem).
-- [ ] **SAN-07**: *(spike, ANTES de calibrar qualquer coisa)* Verificar se IHCD/AT1 entram no PL dos
-  bancos (`2.03`) e se o dirty surplus por IFRS 9 FVOCI é material. Se for, `B0` está deprimido e o
-  RIM subvaloriza banco de qualidade — **um terceiro bug de dados que os knobs do v2.3 mascaravam**.
+- [x] **SAN-07**: *(spike, ANTES de calibrar qualquer coisa)* Verificar se IHCD/AT1 entram no PL dos
+  bancos e se o dirty surplus por IFRS 9 FVOCI é material. **RESPONDIDO** em
+  `.planning/spikes/san-07-ihcd-at1-fvoci.md`: **as duas respostas são NÃO; o terceiro bug de dados
+  não existe; nenhum knob se move.** Correção de premissa: `2.03` **não é o PL de banco nenhum** — é
+  "Passivos Financeiros ao Custo Amortizado" (ITUB4) ou "Provisões" (os outros três); o PL real é
+  **`2.08`** (ITUB4) / **`2.07`** (BBAS3/BBDC4/BRSR6), casado pelo **nome** "Patrimônio Líquido
+  Consolidado" (é como o `cvm.py` já o acha). Não há linha de IHCD/AT1 dentro do PL de nenhum banco
+  (o `B0` do RIM NÃO está inflado por AT1); o OCI anual fica entre 0,03% e 0,59% do PL — ruído.
 
 ## Ingestão correta (DATA)
 
 - [ ] **DATA-01**: JCP capturado nas 13 empresas que hoje o perdem (`cvm.py:169` filtra só
   "dividendo"). BRSR6 sai de payout 10,3% para 55,9%.
+  ⚠️ **A direção do bug é o contrário do que `build.py:104-107` afirma** (medido, 2026-07-14,
+  `08-RESEARCH.md` §R-02/§Achado 7). O filtro de `cvm.py:169` casa só `"dividendo"`; o BRSR6 fila o
+  JCP em `6.03.04 "Juros sobre o Capital Próprio Pagos"`, que **não casa** → `_distribuicoes_proventos`
+  devolve **R$ 36,0 M em 2025 contra R$ 620,0 M reais (18× a menos)**; e 19×/24×/25×/5× em 2021-2024.
+  Os 4 grandes bancos **escapam por acidente** (filam numa linha `"Dividendos E Juros sobre o Capital
+  Próprio Pagos"`, que casa o filtro) — por isso o bug só atinge as ~13 empresas. **E o DPA do Yahoo
+  JÁ INCLUI o JCP:** validado contra o provento real do BRSR6 com erro **< 5% em 4 anos** (2022-2024).
+  Ou seja, **o código prefere a CVM exatamente onde a CVM está quebrada**, e o Yahoo — que o
+  comentário chama de fallback inferior — é o lado bom. A correção mínima é ampliar o filtro da DFC
+  para `"dividendo" OU "juros sobre capital"`, **não trocar de fonte** (o plano 08-01 já corrigiu o
+  comentário e adicionou o insumo de detecção `proventos_filtro_amplo`).
 - [ ] **DATA-02**: `lucro` e `PL` usam a base do **controlador**, não o consolidado com minoritários.
 - [ ] **DATA-03**: `num_acoes` deixa de ser derivado de `lucro/LPA` com bases cruzadas
   (`build.py:87`); o fallback usa `impliedSharesOutstanding` (ON+PN), não `sharesOutstanding` (só a
   classe).
+  **Insumo herdado (medido, `08-RESEARCH.md` §R-09/§Achado 4):** o
+  `dfp_cia_aberta_composicao_capital_{ano}.csv` vive **dentro do ZIP que o projeto já baixa** e traz a
+  contagem **oficial** de ações (`QT_ACAO_TOTAL_CAP_INTEGR`, `QT_ACAO_TOTAL_TESOURO`) — é o insumo que
+  resolve o DATA-03. **Duas armadilhas medidas:** (i) é chaveado por **`CNPJ_CIA`, não por `CD_CVM`**
+  (exige join via `cad_cia_aberta.csv`); (ii) a **escala é inconsistente entre empresas** — ITUB4 e
+  BRSR6 vêm em **MILHARES** de ações, GOAU4/CGRA4/CSNA3/EQTL3/ALUP11/MRFG3 vêm em **unidades**. Usá-lo
+  cru **reintroduziria a doença do ×1000 por outro caminho**. Validação cruzada: ele confirma o
+  `impliedSharesOutstanding` do Yahoo com erro < 0,3% em 5 de 5 tickers.
 - [ ] **DATA-04**: O duplo ajuste de split é removido (`prices.py:71-111` — o `Close` do Yahoo já vem
   ajustado; a engine **cria** um degrau artificial de 13% no ITUB4).
 - [ ] **DATA-05**: O DY reflete o **IRRF de 17,5% sobre JCP** (Lei 15.270/2025, desde 01/01/2026) ou
@@ -260,7 +293,7 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | SAN-04 | Phase 8 | Complete |
 | SAN-05 | Phase 8 | Pending |
 | SAN-06 | Phase 8 | Pending |
-| SAN-07 | Phase 8 | Pending |
+| SAN-07 | Phase 8 | Complete |
 | DATA-01 | Phase 9 | Pending |
 | DATA-02 | Phase 9 | Pending |
 | DATA-03 | Phase 9 | Pending |
