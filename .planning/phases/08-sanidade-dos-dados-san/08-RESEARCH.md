@@ -371,7 +371,32 @@ Componente FVOCI isolado (ITUB4, `4.02.01` "Ativos Financeiros ao Valor Justo po
 ### Achado 7 — SAN-05 (clean surplus) e SAN-03 (JCP): insumos já existem
 
 - **SAN-05** (`ΔB ≈ LL − DIV`): `patrimonio_liquido`, `lucro_liquido` e `dividendos` já estão no `CompanyData` (`fundamentals.py:27-31`). Aritmética pura, zero insumo novo. **Mas atenção:** o resíduo do clean surplus é justamente OCI + recompras + o próprio bug de base (Achado 4). Num ticker com `num_acoes` quebrado, o SAN-05 vai acusar violação por causa do bug de base, não por dirty surplus. **Isso é uma feature, não um bug** — o REQUIREMENTS já diz que o SAN-05 é "detector de bug **e** pré-condição de validade do RIM".
-- **SAN-03** (`dividendos_CVM ≈ DPA_yahoo × num_acoes`): ambos existem — `cvm.py:245` (`dividendos_distribuidos`, via `_distribuicoes_proventos`, que já inclui JCP) e `prices.py:198` (`dm.dividendos_por_ano`, DPA do Yahoo, que **perde o JCP** — documentado em `build.py:104-107`). O check é a razão entre os dois. **Contamina-se com o bug de `num_acoes`** — o planner deve prever que SAN-03 dispara em cascata nos tickers de escala quebrada. Registre no baseline como flag legítima (é a verdade: o dado *está* inconsistente).
+- **SAN-03** — 🔴 **CORRIGIDO EM 2026-07-14 (pós-review, MEDIDO): a direção deste achado estava INVERTIDA.**
+
+  A versão original desta linha afirmava, seguindo o comentário de `build.py:104-107`, que
+  `_distribuicoes_proventos` *"já inclui JCP"* e que o Yahoo *"perde o JCP"*. **É o contrário.**
+
+  - **O lado CVM PERDE o JCP.** `cvm.py:169` casa `ds.str.contains("dividendo")`. O **BRSR6** fila o
+    JCP em `6.03.04 "Juros sobre o Capital Próprio Pagos"` — **sem a substring "dividendo"** → o
+    filtro **não casa**. Medido: `_distribuicoes_proventos()` devolve **R$ 36,0 M** em 2025 contra
+    **R$ 620,0 M** de JCP fora do filtro (**18,2×** a menos); 19,1× / 24,1× / 25,3× / 5,4× em
+    2021-2024.
+  - **O lado Yahoo INCLUI o JCP.** `DPA_yahoo × contagem real de ações` bate com o provento real do
+    BRSR6 (div + JCP) com erro **< 5% em 4 anos** (1,00× / 1,00× / 1,00× em 2022-2024).
+  - Os 4 grandes bancos (ITUB4/BBAS3/BBDC4) **escapam por acidente**: filam numa linha
+    `"Dividendos E Juros sobre o Capital Próprio Pagos"`, que casa o filtro. Por isso o bug atinge só
+    as ~13 empresas do DATA-01.
+
+  **Consequência de desenho (planos 08-01 + 08-04):** o SAN-03 ganha **dois sinais**. O bom é o
+  **detector direto de JCP perdido**, 100% interno à CVM (`Σ proventos_filtro_amplo / Σ dividendos`,
+  com o filtro amplo casando `"dividendo"` **OU** `"juros sobre capital"`) — **imune à contaminação do
+  `num_acoes` (R-06)**. A razão `dividendos_CVM` vs `DPA × num_acoes` continua existindo, mas é sinal
+  de **consistência**, não veredito de quem está certo: no BRSR6 (cujo `num_acoes` está quebrado em
+  205.000×) ela dispararia **pelo motivo errado** e esvaziaria o teste de regressão do DATA-01.
+
+  **O comentário `build.py:104-107` está factualmente errado e é corrigido no plano 08-01** (corrigir
+  comentário não é consertar dado); `_distribuicoes_proventos` e `c.dividendos` ficam **intocados e
+  sujos** — consertá-los é DATA-01, Fase 9.
 
 ---
 
@@ -665,11 +690,29 @@ Não é um erro no teste — é `pytest.UsageError` na coleta: **a suíte inteir
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **O limiar do SAN-02.** O valor "1.131×" do REQUIREMENTS está errado (R-01). Um limiar de 3× simétrico é robusto e pega todos os alvos reais; um limiar de ~1,13 seria frágil e dependente do `.splits`. **Precisa de confirmação do usuário** — é o único ponto onde a medição obriga a reinterpretar um critério de sucesso escrito.
-2. **MRFG3 no `ticker_map.json`.** Está 404 no Yahoo. Remover é dado (fora do escopo), manter é conviver com um ticker meio-cego. **Recomendação: MANTER nesta fase** (é o caso de teste perfeito do SAN-06) e registrar para a Fase 9.
-3. **`c.confianca` no `CompanyData` e o snapshot dos bancos.** O `snapshot_bancos_2026-07-12.yaml` reconstrói `CompanyData` via `backtest.carregar_snapshot`. Adicionar campos com default (`field(default_factory=list)` / `= "nao_avaliada"`) **não quebra** a reconstrução. ✅ Verificado por inspeção de `helpers_blindagem.py:627-638`. Mas o D-03 diz que o default é `nao_avaliada` — então os `CompanyData` do snapshot de bancos nascerão `nao_avaliada`, e **isso é exatamente o comportamento desejado** (D-03: "um `CompanyData` construído à mão não pode nascer parecendo limpo").
+**Todas as três foram decididas pelo usuário em 2026-07-14, durante o planejamento da fase.**
+
+1. **O limiar do SAN-02.** ✅ **RESOLVED: 3× simétrico (`max(r, 1/r) >= 3`), confirmado pelo usuário em
+   2026-07-14.** O valor "1.131×" do REQUIREMENTS é um **número fantasma** (R-01) e é **corrigido no
+   plano 08-02** (REQUIREMENTS + ROADMAP, no mesmo diff, com a nota de que o valor foi **medido, não
+   lembrado**). O 3× pega todos os alvos reais com folga (ITUB4 2019 = ÷1000, ITUB4 2020 = ×780,
+   BRSR6 = ×205.000, CGRA4 = ÷1000, MRFG3 = 4,7×) e **ignora toda bonificação real da B3**. A isenção
+   por `.splits` (D-12) **fica MANTIDA** — apenas deixa de ser load-bearing.
+2. **MRFG3 no `ticker_map.json`.** ✅ **RESOLVED: MANTER, confirmado pelo usuário em 2026-07-14.**
+   `ticker_map.json` **não é tocado** (é dado = Fase 9, e alimenta o `tickers_conhecidos()` do
+   BLIND-04a). O MRFG3 é o **caso de teste vivo do SAN-06**: o SAN-01 é INCOMPUTÁVEL para ele → o check
+   devolve **"não avaliável"**, nem flag, nem exceção.
+3. **O spike SAN-07.** ✅ **RESOLVED: formalizar o documento, confirmado pelo usuário em 2026-07-14.**
+   A pesquisa **já respondeu** as duas perguntas com medição nos 4 bancos (§Achado 6): **as duas
+   respostas são NÃO — o terceiro bug de dados NÃO existe.** O plano 08-02 escreve o doc em
+   `.planning/spikes/`, com a **correção da conta** (o PL dos bancos é `2.07`/`2.08`, **não** `2.03`) e
+   os números por banco. **Nenhum knob se move.**
+
+### Nota técnica (não é pergunta aberta)
+
+**`c.confianca` no `CompanyData` e o snapshot dos bancos.** O `snapshot_bancos_2026-07-12.yaml` reconstrói `CompanyData` via `backtest.carregar_snapshot`. Adicionar campos com default (`field(default_factory=list)` / `= "nao_avaliada"`) **não quebra** a reconstrução. ✅ Verificado por inspeção de `helpers_blindagem.py:627-638`. Mas o D-03 diz que o default é `nao_avaliada` — então os `CompanyData` do snapshot de bancos nascerão `nao_avaliada`, e **isso é exatamente o comportamento desejado** (D-03: "um `CompanyData` construído à mão não pode nascer parecendo limpo").
 
 ---
 
