@@ -508,3 +508,12 @@
 'tests/test_sanidade_insumos.py::test_montar_empresa_carimba_a_origem_de_num_acoes': contrato
 'tests/test_sanidade_insumos.py::test_montar_empresa_carimba_o_lucro_do_controlador': contrato
 'tests/test_sanidade_insumos.py::test_o_filtro_estreito_da_cvm_perde_o_jcp': contrato
+
+# --- Fase 8 / plano 08-03: SAN Wave 2. O SNAPSHOT congelado dos 104 (D-08) e' a evidencia
+# intocada do dado SUJO. `contrato` (cobertura/presenca/ausencia/never-raise, offline): nenhum
+# crava NIVEL — rodam no default. Se sairem daqui, o baseline da Fase 9 perde a prova de origem.
+'tests/test_sanidade_snapshot.py::test_snapshot_cobre_o_universo_conhecido': contrato
+'tests/test_sanidade_snapshot.py::test_snapshot_congela_market_cap_e_splits': contrato
+'tests/test_sanidade_snapshot.py::test_snapshot_nao_estampa_reais_por_ticker': contrato
+'tests/test_sanidade_snapshot.py::test_ticker_sem_dado_de_mercado_e_congelado_com_a_cvm_intacta': contrato
+'tests/test_sanidade_snapshot.py::test_snapshot_reconstroi_companydata_offline': contrato
