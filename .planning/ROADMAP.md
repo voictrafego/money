@@ -76,7 +76,7 @@ quarentenados/deletados; **isso é a correção, não regressão.**
 
 ## Phases
 
-- [ ] **Phase 7: Blindagem processual (BLIND)** - quarentena dos ~150 goldens de nível + invariantes algébricos que knob nenhum satisfaz; redefine o que "suíte verde" significa ANTES de tocar código
+- [x] **Phase 7: Blindagem processual (BLIND)** - quarentena dos 38 goldens de nível + invariantes algébricos que knob nenhum satisfaz; redefine o que "suíte verde" significa ANTES de tocar código. **Gap aberto (WR-04): 21 funções quarentenadas carregam invariantes estruturais presos — cindir ANTES da Fase 10, que deleta os goldens e mataria esses invariantes em silêncio.**
 - [ ] **Phase 8: Sanidade dos dados (SAN)** - os asserts vêm ANTES dos consertos, de propósito: eles SÃO o teste de regressão da Fase 9
 - [ ] **Phase 9: Ingestão correta (DATA)** - JCP, base do controlador, duplo split, `impliedSharesOutstanding`; os asserts da Fase 8 viram verde ticker a ticker
 - [ ] **Phase 10: Primitivas sem viés (PRIM)** - maior alavancagem por linha do repo; **critério de saída: o golden ITUB4 32.88 quebra e é DELETADO**

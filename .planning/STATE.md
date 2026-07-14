@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
-status: verifying
-stopped_at: "Completado 07-04-PLAN.md (BLIND-05: hook + backstop)"
+status: phase_complete
+stopped_at: "Fase 07 (BLIND) completa e verificada. Gap WR-04 aberto: cindir 21 funcoes mistas ANTES da Fase 10."
 last_updated: "2026-07-13T23:30:59.272Z"
 last_activity: 2026-07-13
 progress:
@@ -32,12 +32,24 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 ## Current Position
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
-Phase: 07 (blindagem-processual-blind) — EXECUTING
+Phase: 07 (blindagem-processual-blind) — ✓ COMPLETE (verificada)
 Plan: 5 of 5
-Status: Phase complete — ready for verification
+Status: Fase 07 completa. Próxima: Fase 8 (SAN — sanidade dos dados).
 Last activity: 2026-07-13
 
 Progress: [██████████] 100%
+
+**Suíte:** `425 passed, 1 skipped, 38 deselected, 2 xfailed` — 0 XPASS. Os 2 xfailed SÃO as duas
+doenças (BLIND-02 vira verde na Fase 12; BLIND-03 na Fase 10). Golden de nível que quebrar deve ser
+**DELETADO, nunca atualizado** (contrato novo do CLAUDE.md).
+
+**⚠ DÍVIDA OBRIGATÓRIA ANTES DA FASE 10 (gap WR-04):** 21 das 38 funções quarentenadas carregam
+invariantes estruturais presos (`a.motor == 'rim'`, contratos de roteamento, reetiquetagem SAN-01).
+Já não rodam. A Fase 10 deleta esses goldens — os invariantes morreriam junto, em silêncio.
+Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
+
+**⚠ `core.hooksPath` é estado local por clone.** Todo clone novo nasce sem a proteção do BLIND-05;
+`test_hook_do_blind05_esta_instalado` é o que torna isso vermelho em vez de proteção fantasma.
 
 ## A ordem é a decisão de arquitetura mais importante do marco
 
