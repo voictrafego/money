@@ -257,12 +257,42 @@ def quarentenados() -> set[str]:
 
 
 def _e_xfail_estrito(decorador: ast.AST) -> bool:
-    """True se o decorador e' `@...mark.xfail(..., strict=True)` com literal True."""
+    """True SO' se `@...mark.xfail(strict=True)` SEM CONDICAO e com `run` nao-False.
+
+    A CONDICAO e' a evasao (CR-01, medida): `@pytest.mark.xfail(False, strict=True)` NAO
+    marca o teste como xfail — o pytest o roda normalmente e ele fica **PASSED**. Um golden
+    por ticker decorado assim entra VERDE na suite E entra na lista de TOLERADOS do
+    BLIND-04a. E' a porta que esta fase inteira existe para fechar.
+
+    Por isso qualquer condicao — posicional (`xfail(False, ...)`) ou nomeada
+    (`condition=...`) — DESQUALIFICA: nao ha como provar ESTATICAMENTE que ela e' sempre
+    verdadeira, e a promessa desta lista ("o teste esta VERMELHO por contrato") so' vale
+    quando o xfail e' incondicional.
+
+    `run=False` idem: o teste nem roda, entao ele nao denuncia nada — vira um `skip` com
+    outro nome, e o XPASS (que e' o auto-policiamento desta porta) nunca dispara.
+
+    Os dois xfail legitimos de `test_invariantes_v24.py` sao incondicionais -> continuam
+    tolerados.
+    """
     if not isinstance(decorador, ast.Call):
         return False
     alvo = decorador.func
     if not (isinstance(alvo, ast.Attribute) and alvo.attr == "xfail"):
         return False
+
+    # Qualquer condicao (posicional ou `condition=`) desqualifica.
+    if decorador.args:
+        return False
+    if any(kw.arg == "condition" for kw in decorador.keywords):
+        return False
+    # `run=False` -> o teste nao roda -> nao ha XPASS possivel -> nao denuncia nada.
+    if any(
+        kw.arg == "run" and isinstance(kw.value, ast.Constant) and kw.value.value is False
+        for kw in decorador.keywords
+    ):
+        return False
+
     return any(
         kw.arg == "strict"
         and isinstance(kw.value, ast.Constant)
@@ -285,6 +315,10 @@ def xfail_estritos(raiz: pathlib.Path | None = None) -> set[str]:
     Esta lista NAO e' um allowlist por nome (que cresceria em silencio): e' uma propriedade
     ESTRUTURAL, medida no AST. Nao ha como se auto-incluir sem declarar o teste como
     falho-hoje-de-proposito, o que e' o oposto de calibrar.
+
+    ATENCAO (CR-01): "declarar como falho-hoje" exige um xfail INCONDICIONAL. Um
+    `xfail(condicao_falsa, strict=True)` deixa o teste VERDE e nao vale — ver
+    `_e_xfail_estrito`, que o rejeita.
     """
     raiz = raiz if raiz is not None else RAIZ_REPO / "tests"
     achados: set[str] = set()
