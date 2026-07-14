@@ -24,3 +24,4 @@ Decisões que emergiram durante o spike (não-negociáveis para o build real):
 |---|------|------|-----------|---------|------|
 | 001 | tv-feel-candlestick | standard | Candlestick BBSE3 via Lightweight Charts em Streamlit entrega UX do TV (zoom/pan/crosshair/Y-autoscale/último preço) | ✅ VALIDATED | ux, charting, lightweight-charts, streamlit |
 | 002 | overlays-da-engine | standard | Portar zona de entrada (banda) + stop/alvo (priceLines) + padrões da engine para o chart, medindo esforço vs add_hrect/add_hline | ✅ VALIDATED | overlays, pricelines, band, porting |
+| san-07 | ihcd-at1-fvoci | contábil | IHCD/AT1 no PL dos bancos? dirty surplus FVOCI material? | ❌ REFUTADO (as duas respostas são NÃO) | contabilidade, bancos, rim, fase-8 |
