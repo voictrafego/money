@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
-status: phase_complete
-stopped_at: "Fase 07 (BLIND) completa e verificada. Gap WR-04 aberto: cindir 21 funcoes mistas ANTES da Fase 10."
-last_updated: "2026-07-13T23:30:59.272Z"
+status: "Fase 07 completa. Próxima: Fase 8 (SAN — sanidade dos dados)."
+stopped_at: Phase 08 context gathered
+last_updated: "2026-07-14T11:06:56.183Z"
 last_activity: 2026-07-13
 progress:
   total_phases: 8
@@ -224,9 +224,9 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 
 ## Session Continuity
 
-Last session: 2026-07-13T23:30:59.265Z
-Stopped at: Completado 07-04-PLAN.md (BLIND-05: hook + backstop)
-Resume file: None
+Last session: 2026-07-14T11:06:56.180Z
+Stopped at: Phase 08 context gathered
+Resume file: .planning/phases/08-sanidade-dos-dados-san/08-CONTEXT.md
 
 ## Operator Next Steps
 
