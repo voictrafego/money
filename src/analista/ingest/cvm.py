@@ -6,6 +6,12 @@ Demonstrações Financeiras Padronizadas (DFP) em CSV, desde 2010:
 Cada ZIP traz BPA, BPP, DRE e DFC (consolidado e individual). Extraímos as contas
 padronizadas por código (CD_CONTA), com fallback por nome (DS_CONTA) para tolerar o
 template diferente das instituições financeiras (bancos).
+
+DIAGNÓSTICO (Fase 8 / SAN — LEITURA, NÃO CONSERTO): as chaves `lucro_controlador`
+(`3.11.01`), `pl_nao_controladores` e `proventos_filtro_amplo` são insumos de diagnóstico
+(SAN-03/SAN-04). O `lucro_liquido` continua sendo o CONSOLIDADO (`3.11`/`3.13`/`3.09`) e o
+`dividendos_distribuidos` continua saindo do filtro estreito de `_distribuicoes_proventos`
+(que PERDE o JCP). O conserto desses dados é o DATA-01 da Fase 9 — aqui só se mede.
 """
 
 from __future__ import annotations
@@ -174,6 +180,40 @@ def _distribuicoes_proventos(df: Optional[pd.DataFrame], cd_cvm: int) -> Optiona
     return abs(float(rows["VL_CONTA"].astype(float).sum())) * escala
 
 
+def _distribuicoes_proventos_amplo(df: Optional[pd.DataFrame], cd_cvm: int) -> Optional[float]:
+    """DIAGNÓSTICO (SAN-03) — irmã de `_distribuicoes_proventos`, com o filtro de inclusão AMPLO.
+
+    Idêntica em tudo à função estreita (mesma varredura da DFC `6.03.*`, mesmas exclusões,
+    mesmo `abs()`, mesma escala) EXCETO no filtro de inclusão, que passa a casar
+    "dividendo" OU "juros sobre capital". Mede o JCP que o filtro estreito PERDE, sem depender
+    de `num_acoes`.
+
+    Existe como função separada — e NÃO como parâmetro de `_distribuicoes_proventos` — de
+    propósito: a função estreita alimenta `c.dividendos` (que os motores consomem) e precisa
+    continuar devolvendo o mesmo número SUJO de hoje, que é o teste de regressão do DATA-01
+    (Fase 9). Um parâmetro com default seria um convite a "só ligar" o filtro amplo e apagar
+    a prova. Este valor alimenta SÓ o detector do SAN-03.
+    """
+    if df is None:
+        return None
+    sub = df[df["CD_CVM"] == cd_cvm]
+    if sub.empty:
+        return None
+    escala = 1000 if sub["ESCALA_MOEDA"].iloc[0] == "MIL" else 1
+    fin = sub[sub["CD_CONTA"].astype("string").str.startswith("6.03", na=False)]
+    if fin.empty:
+        return None
+    ds = fin["DS_CONTA"].map(_norm)
+    # "juros sobre.*capital": a DFC do BRSR6 fila em "Juros sobre O Capital Próprio Pagos" —
+    # o literal "juros sobre capital" não casaria por causa do "o". O `.*` tolera o artigo.
+    incluir = ds.str.contains("dividendo|juros sobre.*capital", na=False, regex=True)
+    excluir = ds.str.contains("nao control|minoritar|recebid", na=False, regex=True)
+    rows = fin[(incluir & ~excluir).values]
+    if rows.empty:
+        return None
+    return abs(float(rows["VL_CONTA"].astype(float).sum())) * escala
+
+
 def _tem_empresa(df: Optional[pd.DataFrame], cd_cvm: int) -> bool:
     return df is not None and not df.empty and (df["CD_CVM"] == cd_cvm).any()
 
@@ -241,6 +281,26 @@ def fundamentos_do_ano(cd_cvm: int, ano: int) -> Dict[str, Optional[float]]:
         # LPA básico por ação ON (R$/ação) — NÃO aplicar escala MIL.
         "lpa": _valor_conta(dre, cd_cvm, ["3.99.01.01", "3.99.01"],
                             ["Lucro por Ação"], aplicar_escala=False),
-        # Proventos pagos no ano (div + JCP) — fonte completa p/ o payout (Yahoo perde JCP).
+        # Proventos pagos no ano — FILTRO ESTREITO (só "dividendo"), que PERDE o JCP em ~13
+        # empresas (BRSR6 etc.). Fonte SUJA de `c.dividendos`; consertar é DATA-01 (Fase 9).
         "dividendos_distribuidos": _distribuicoes_proventos(dfc, cd_cvm),
+        # DIAGNÓSTICO (SAN-04): lucro atribuído aos sócios da CONTROLADORA (3.11.01). NÃO é a
+        # fonte de `lucro_liquido` (que segue o consolidado 3.11/3.13/3.09). None sem a linha.
+        "lucro_controlador": _valor_conta(
+            dre, cd_cvm, ["3.11.01"],
+            ["Atribuído a Sócios da Empresa Controladora",
+             "Atribuído a Sócios da Empresa Controlada"],
+        ),
+        # DIAGNÓSTICO (SAN-04): participação de não-controladores no PL. O código varia por
+        # template (2.03.09 empresas, 2.07.02 BBAS3/BBDC4/BRSR6, 2.08.09 ITUB4) → passamos os
+        # três, com nome_primeiro=True (mesma defesa do patrimonio_liquido). None sem a linha.
+        "pl_nao_controladores": _valor_conta(
+            bpp, cd_cvm, ["2.03.09", "2.07.02", "2.08.09"],
+            ["Participação dos Acionistas Não Controladores",
+             "Participação dos Não Controladores"],
+            nome_primeiro=True,
+        ),
+        # DIAGNÓSTICO (SAN-03): proventos por FILTRO AMPLO (dividendo OU JCP) — mede o JCP que
+        # o filtro estreito perde, sem depender de num_acoes. Alimenta SÓ o detector.
+        "proventos_filtro_amplo": _distribuicoes_proventos_amplo(dfc, cd_cvm),
     }
