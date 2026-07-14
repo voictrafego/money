@@ -265,7 +265,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 7. Blindagem processual (BLIND) | v2.4 | 5/5 | Complete (gap WR-04 aberto) | 2026-07-13 |
-| 8. Sanidade dos dados (SAN) | v2.4 | 0/? | Not started | - |
+| 8. Sanidade dos dados (SAN) | v2.4 | 1/6 | In Progress|  |
 | 9. Ingestão correta (DATA) | v2.4 | 0/? | Not started | - |
 | 10. Primitivas sem viés (PRIM) | v2.4 | 0/? | Not started | - |
 | 11. Crescimento / g (GROW) | v2.4 | 0/? | Not started | - |

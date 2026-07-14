@@ -4,7 +4,7 @@ milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
 stopped_at: Phase 08 context gathered
-last_updated: "2026-07-14T23:18:59.705Z"
+last_updated: "2026-07-14T23:29:22.259Z"
 last_activity: 2026-07-14
 progress:
   total_phases: 8
@@ -33,7 +33,7 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 08 (sanidade-dos-dados-san) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-07-14
 
@@ -103,10 +103,31 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 
 | Phase 7 P04 | 25min | 2 tasks | 3 files |
 | Phase 08 P01 | 22min | 3 tasks | 6 files |
+| Phase 08 P02 | 15min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **SAN-07 (Fase 8 / plano 08-02) — o TERCEIRO bug de dados NÃO existe (medido, não deduzido).**
+  Spike `.planning/spikes/san-07-ihcd-at1-fvoci.md` + `scripts/spike_san07_bancos.py` (offline, do
+  cache CVM), nos 4 bancos: **(1) IHCD/AT1 NÃO estão no PL** da DFP da CVM — não há linha de
+  instrumento perpétuo/híbrido dentro do bloco do PL (no BRSR6 o subordinado está no **passivo**,
+  `2.01.01`); o `B0` que o RIM consome **não está inflado por AT1**. **(2) dirty surplus FVOCI é
+  imaterial** — OCI/PL entre **0,03% e 0,59%** (ruído contra o clean surplus). **Premissa do
+  requisito estava errada:** `2.03` não é o PL de banco nenhum (é "Passivos ao Custo Amortizado" no
+  ITUB4, "Provisões" nos demais); o PL real é **`2.08`** (ITUB4) / **`2.07`** (BBAS3/BBDC4/BRSR6),
+  casado pelo **nome** — o parser já estava certo. **Nenhum knob se move** (D-15; Armadilha 3).
+  Ressalva honesta registrada: nas DFs IFRS *próprias* do Itaú os AT1 **são** equity — mas a DFP da
+  CVM (que este pipeline lê) não os expõe assim. Anomalia declarada: `Ajustes de Avaliação
+  Patrimonial` (estoque de OCI) lê 0,00 nos 4 bancos apesar do fluxo não-zero — não muda a
+  materialidade. **Também matou dois números fantasma no REQUIREMENTS/ROADMAP:** o "ITUB4 2019 =
+  1.131×" (era o salto real 2024→2025 = **1,1286×**, bonificação legítima mal-rotulada; SAN-02 agora
+  usa limiar **simétrico** `max(r,1/r) ≥ 3×`) e a conta `2.03`. E registrou para a Fase 9: a
+  **direção INVERTIDA do BUG-JCP** no DATA-01 (a **CVM** perde o JCP, 18× no BRSR6; o **Yahoo** o tem
+  — a correção é ampliar o filtro, não trocar de fonte) e o **`composicao_capital`** no DATA-03 (com
+  as 2 armadilhas: chave por `CNPJ_CIA`, escala inconsistente MILHARES×unidades). Suíte intocada:
+  **430 passed, 0 failed**.
 
 - **SAN Wave 0 (Fase 8 / plano 08-01) — insumos de diagnóstico são PARALELOS; leitura ≠ conserto.**
   `cvm.py` lê `3.11.01` (lucro do controlador), minoritários no PL e proventos por **filtro amplo**
@@ -236,7 +257,7 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 
 ## Session Continuity
 
-Last session: 2026-07-14T23:17:43.275Z
+Last session: 2026-07-14T23:28:42.707Z
 Stopped at: Phase 08 context gathered
 Resume file: None
 
