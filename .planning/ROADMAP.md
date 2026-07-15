@@ -136,7 +136,7 @@ Plans:
 - [x] 08-03-PLAN.md — o snapshot congelado dos 104 tickers com o dado **SUJO** (congela `marketCap` e `splits`; degrada por ticker — o MRFG3 dá 404 e **não aborta**)
 - [x] 08-04-PLAN.md — `core/sanidade.py`: os 5 checks (SAN-01..05) + os limiares (D-10, fora do lock) + o teste que os congela (D-11)
 - [x] 08-05-PLAN.md — `aplicar_sanidade` + agregação da confiança + a chamada no pipeline real **provada por execução** (D-04) + never-raise nos 104 (SAN-06)
-- [ ] 08-06-PLAN.md — o baseline dos sujos (YAML, flag + bucket, **zero R$**) + a monotonicidade por par `(ticker, check)` (D-06) + o relatório CLI da Fase 9
+- [x] 08-06-PLAN.md — o baseline dos sujos (YAML, flag + bucket, **zero R$**) + a monotonicidade por par `(ticker, check)` (D-06) + o relatório CLI da Fase 9
 
 ### Phase 9: Ingestão correta (DATA)
 **Goal**: Curar a **Doença 2 (dispersão)**. Os asserts da Fase 8 viram verde ticker a ticker —
