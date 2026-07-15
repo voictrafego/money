@@ -517,3 +517,28 @@
 'tests/test_sanidade_snapshot.py::test_snapshot_nao_estampa_reais_por_ticker': contrato
 'tests/test_sanidade_snapshot.py::test_ticker_sem_dado_de_mercado_e_congelado_com_a_cvm_intacta': contrato
 'tests/test_sanidade_snapshot.py::test_snapshot_reconstroi_companydata_offline': contrato
+
+# --- Fase 8 / plano 08-04: SAN Wave 3. Os 5 checks aritmeticos (SAN-01..05) provados contra
+# o snapshot congelado. Sao `contrato` (pertinencia: flaga/nao-flaga/nao-avaliavel, offline,
+# zero constante de nivel) — SAO o teste de regressao da Fase 9: precisam disparar e ser vistos
+# disparando ANTES de qualquer conserto de dado.
+'tests/test_sanidade_checks.py::test_san01_flaga_os_tickers_de_escala_quebrada': contrato
+'tests/test_sanidade_checks.py::test_san01_nao_flaga_os_tickers_sadios': contrato
+'tests/test_sanidade_checks.py::test_san01_e_nao_avaliavel_sem_dado_de_mercado': contrato
+'tests/test_sanidade_checks.py::test_san02_flaga_o_salto_de_escala': contrato
+'tests/test_sanidade_checks.py::test_san02_isenta_o_desdobramento_real': contrato
+'tests/test_sanidade_checks.py::test_san03_flaga_o_jcp_perdido': contrato
+'tests/test_sanidade_checks.py::test_san03_nao_flaga_o_grande_banco_que_escapa_por_acidente': contrato
+'tests/test_sanidade_checks.py::test_san04_flaga_a_base_divergente': contrato
+'tests/test_sanidade_checks.py::test_san04_nao_flaga_os_bancos_limpos': contrato
+'tests/test_sanidade_checks.py::test_san05_reporta_o_clean_surplus_como_dado': contrato
+
+# --- Fase 8 / plano 08-04: os LIMIARES congelados (D-11). Sao `invariante` porque sao a trava
+# que denuncia o afrouxamento: afrouxar um limiar ate a flag calar e' um diff de uma linha que
+# ninguem nota — se estas entradas sairem daqui, afrouxar limiar volta a ser invisivel. Numero
+# permitido, ticker PROIBIDO (o arquivo nao contem nenhum literal de ticker).
+'tests/test_sanidade_limiares.py::test_limiares_de_sanidade_estao_congelados': invariante
+'tests/test_sanidade_limiares.py::test_limiar_do_san02_e_simetrico': invariante
+'tests/test_sanidade_limiares.py::test_isencao_por_split_exime_salto_compativel_e_flaga_o_sem_split': invariante
+'tests/test_sanidade_limiares.py::test_bucket_nunca_levanta_com_fator_nao_positivo': invariante
+'tests/test_sanidade_limiares.py::test_limiares_nao_vivem_no_config_nem_no_lock': invariante
