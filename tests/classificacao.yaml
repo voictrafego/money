@@ -295,6 +295,9 @@
 'tests/test_ingest_ohlc.py::test_itsa4_5_splits_ponta_recente_coincide_com_nominal': invariante
 'tests/test_ingest_ohlc.py::test_itsa4_5_splits_serie_ajustada_continua_sem_saltos': invariante
 'tests/test_ingest_ohlc.py::test_itsa4_fator_cumulativo_pre_primeiro_split': contrato
+'tests/test_ingest_split.py::test_serie_precos_de_valuation_preserva_a_queda_nominal_da_bonificacao': invariante
+'tests/test_ingest_split.py::test_sem_degrau_no_produto_preco_nominal_x_num_acoes_na_bonificacao': invariante
+'tests/test_ingest_split.py::test_ajuste_por_split_fica_confinado_ao_ohlc_ajustado': invariante
 'tests/test_ingest_resolucao.py::test_retry_excecao_depois_sucesso': contrato
 'tests/test_ingest_resolucao.py::test_retry_info_vazio_depois_sucesso': contrato
 'tests/test_ingest_resolucao.py::test_retry_todas_falham_desiste_sem_excecao': contrato
