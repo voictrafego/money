@@ -13,6 +13,11 @@ JCP que o filtro estreito perdia. As chaves `lucro_controlador` (`3.11.01`) e
 `pl_nao_controladores` seguem como insumos que o build promove à base do controlador (DATA-02).
 `proventos_filtro_amplo` continua populado como detector do SAN-03. A gêmea estreita
 `_distribuicoes_proventos` fica no módulo só como referência do filtro estreito (testes).
+
+DATA-03 (Fase 9 / DATA — CONSERTO): `contagem_oficial_do_ano` lê a contagem OFICIAL de ações
+por ano do `dfp_cia_aberta_composicao_capital_{ano}.csv` (dentro do mesmo ZIP), casada por
+CNPJ_CIA via `cad_cia_aberta.csv`. É a fonte que o `build` promove a `num_acoes`, aposentando a
+derivação `LL/LPA` (a causa-raiz da dispersão em 41/104 tickers). A escala é decidida no build.
 """
 
 from __future__ import annotations
@@ -100,6 +105,83 @@ def _ler_demonstracao(ano: int, prefixo: str) -> Optional[pd.DataFrame]:
     if "ORDEM_EXERC" in df.columns:
         df = df[df["ORDEM_EXERC"] == "ÚLTIMO"]
     return df
+
+
+@lru_cache(maxsize=1)
+def _mapa_cnpj_por_cd_cvm() -> Dict[int, str]:
+    """CD_CVM → CNPJ_CIA, lido de cad_cia_aberta.csv.
+
+    O `composicao_capital` (DATA-03) é chaveado por CNPJ_CIA, NÃO por CD_CVM (armadilha 2);
+    este mapa é o join. `{}` quando o arquivo falta ou não lê (never-raise)."""
+    caminho = os.path.abspath(os.path.join(CACHE_DIR, "cad_cia_aberta.csv"))
+    if not os.path.exists(caminho):
+        return {}
+    try:
+        df = pd.read_csv(caminho, sep=";", encoding="latin-1", dtype={"CD_CVM": "Int64"})
+    except (ValueError, OSError, UnicodeDecodeError):
+        return {}
+    mapa: Dict[int, str] = {}
+    for cnpj, cd in zip(df.get("CNPJ_CIA", []), df.get("CD_CVM", [])):
+        if pd.notna(cd):
+            mapa[int(cd)] = cnpj
+    return mapa
+
+
+@lru_cache(maxsize=32)
+def _composicao_capital(ano: int) -> Optional[pd.DataFrame]:
+    """Lê `dfp_cia_aberta_composicao_capital_{ano}.csv` de dentro do ZIP da DFP.
+
+    Mesmo padrão de `_ler_demonstracao` (latin-1, sep=';'), mas chaveado por CNPJ_CIA. Traz a
+    contagem oficial de ações do ano (QT_ACAO_*). None quando o ZIP ou o CSV faltam — o
+    composicao_capital só passou a ser publicado a partir de ~2020 (never-raise)."""
+    caminho = baixar_dfp(ano)
+    if not caminho:
+        return None
+    nome_csv = f"dfp_cia_aberta_composicao_capital_{ano}.csv"
+    try:
+        with zipfile.ZipFile(caminho) as z:
+            if nome_csv not in z.namelist():
+                return None
+            with z.open(nome_csv) as fh:
+                df = pd.read_csv(io.TextIOWrapper(fh, encoding="latin-1"), sep=";")
+    except (zipfile.BadZipFile, ValueError, KeyError):
+        return None
+    return df
+
+
+def contagem_oficial_do_ano(cd_cvm: int, ano: int) -> Optional[float]:
+    """Contagem OFICIAL de ações do ano (CVM `composicao_capital`), CRUA — sem escala.
+
+    = `QT_ACAO_TOTAL_CAP_INTEGR − QT_ACAO_TOTAL_TESOURO` (ON+PN em circulação), casada por
+    CNPJ_CIA via `cad_cia_aberta.csv` (o composicao_capital é chaveado por CNPJ, não CD_CVM —
+    armadilha 2). Devolve o valor CRU: a escala (MILHARES para ITUB4/BRSR6 × UNIDADES para
+    GOAU4/CGRA4/CSNA3/EQTL3/ALUP11/MRFG3 — armadilha 3) é decidida no `build`, onde o
+    `impliedSharesOutstanding` está disponível como âncora. Aplicá-la aqui, às cegas,
+    reintroduziria o ×1000 por outro caminho (Pitfall 4).
+
+    None quando o CNPJ não casa, o arquivo/ano falta, ou a linha não existe (never-raise).
+    Quando o mesmo CNPJ traz mais de um `DT_REFER`/`VERSAO` (período de transição), fica com o
+    mais recente e a maior versão (a vigente)."""
+    cnpj = _mapa_cnpj_por_cd_cvm().get(cd_cvm)
+    if cnpj is None:
+        return None
+    df = _composicao_capital(ano)
+    if df is None or "CNPJ_CIA" not in df.columns:
+        return None
+    sub = df[df["CNPJ_CIA"] == cnpj]
+    if sub.empty:
+        return None
+    ordenar = [col for col in ("DT_REFER", "VERSAO") if col in sub.columns]
+    if ordenar:
+        sub = sub.sort_values(ordenar)
+    r = sub.iloc[-1]  # mais recente DT_REFER + maior VERSAO
+    try:
+        total = float(r["QT_ACAO_TOTAL_CAP_INTEGR"])
+        tesouro = float(r["QT_ACAO_TOTAL_TESOURO"])
+    except (ValueError, TypeError, KeyError):
+        return None
+    contagem = total - tesouro
+    return contagem if contagem > 0 else None
 
 
 def _valor_conta(
