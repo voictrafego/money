@@ -567,3 +567,8 @@
 'tests/test_sanidade_baseline.py::test_bucket_nao_muda_sem_a_flag_sumir': invariante
 'tests/test_sanidade_baseline.py::test_o_baseline_contem_os_alvos_do_roadmap': contrato
 'tests/test_sanidade_baseline.py::test_o_baseline_nao_estampa_reais_por_ticker': contrato
+# --- Fase 9 / plano 09-05: DATA-06 ratchet honesto. O POSITIVO da cura (alvos consertados somem
+# de hoje) e a integridade da accept-list (par novo, sem alvo silenciado, motivo sem ticker) sao
+# `contrato` (presenca/ausencia/formato, zero constante de nivel).
+'tests/test_sanidade_baseline.py::test_os_alvos_consertados_sumiram_de_hoje': contrato
+'tests/test_sanidade_baseline.py::test_accept_list_e_disjunta_e_sem_reais': contrato

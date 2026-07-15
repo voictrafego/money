@@ -1,0 +1,58 @@
+# Accept-list DATA-06 (plano 09-05) — o ratchet honesto do baseline dos sujos.
+#
+# A cura da Fase 9 (DATA-01/02/03) MUDA os dados de entrada; logo a monotonicidade
+# `pares_hoje ⊆ pares_baseline` deixa de ser subconjunto puro: a cura legitimamente SURFACED
+# pares (ticker, check) que o pipeline antigo (LL/LPA + filtro estreito) não conseguia medir, e
+# deslocou a ordem-de-grandeza (bucket) de flags que sobrevivem. Esta lista, VERSIONADA, é o
+# único lugar onde um par/bucket novo pode ser aceito — e cada entrada carrega a IDENTIDADE
+# (ticker, check) como DADO e uma justificativa por CATEGORIA.
+#
+# 🔴 NÃO é regeneração do baseline (o reflexo do overfit do v2.3). Um par novo em pares_hoje que
+# não esteja aqui QUEBRA `test_baseline_de_sujos_so_encolhe`; um bucket genuinamente novo que não
+# esteja aqui QUEBRA `test_bucket_nao_muda_sem_a_flag_sumir`. Ambos os ratchets são provados
+# RED-able por execução (ver 09-05-SUMMARY).
+#
+# 🔴 BLIND-04a / regra da justificativa de knob: o `motivo` é CATEGÓRICO — NUNCA menciona um
+# ticker e NUNCA carrega uma constante de nível. A identidade do par vive nos campos `ticker`/
+# `check` (dado, lido em runtime — nenhum literal de ticker no AST do teste), não na justificativa.
+
+# --- pares_aceitos: (ticker, check) novos em pares_hoje, legítimos, ausentes do baseline ---
+pares:
+  - ticker: IGTI11
+    check: SAN-02
+    motivo: "salto societário real (reorganização) além da troca de unidade de escala; sem dado de split no Yahoo p/ isentar"
+  - ticker: CMIN3
+    check: SAN-01
+    motivo: "dado-fonte da CVM anômalo por fator não-potência-de-mil, corretamente detectado pelo SAN; sem âncora confiável p/ correção automática"
+  - ticker: CMIN3
+    check: SAN-03
+    motivo: "dado-fonte da CVM anômalo por fator não-potência-de-mil, corretamente detectado pelo SAN; sem âncora confiável p/ correção automática"
+  - ticker: CMIN3
+    check: SAN-05
+    motivo: "dado-fonte da CVM anômalo por fator não-potência-de-mil, corretamente detectado pelo SAN; sem âncora confiável p/ correção automática"
+  - ticker: GOAU4
+    check: SAN-03
+    motivo: "cascata legítima da captura do JCP (ingestão): sinal direto neutro, a divergência é a reconciliação CVM↔Yahoo que o check reporta sem eleger verdade"
+  - ticker: EQTL3
+    check: SAN-03
+    motivo: "cascata legítima da captura do JCP (ingestão): sinal direto neutro, a divergência é a reconciliação CVM↔Yahoo que o check reporta sem eleger verdade"
+  - ticker: GRND3
+    check: SAN-03
+    motivo: "cascata legítima da captura do JCP (ingestão): sinal direto neutro, a divergência é a reconciliação CVM↔Yahoo que o check reporta sem eleger verdade"
+  - ticker: EQTL3
+    check: SAN-05
+    motivo: "superávit-limpo residual do PL na base do controlador somado a evento real de capital"
+  - ticker: AGRO3
+    check: SAN-05
+    motivo: "superávit-limpo residual do PL na base do controlador somado a evento real de capital"
+
+# --- buckets_aceitos: pares PERSISTENTES cujo bucket é genuinamente NOVO (não presente no
+# baseline). Sob a regra `buckets_hoje ⊆ buckets_baseline`, um bucket que SOME é ocorrência
+# curada (passa livre, ex.: o ~1e1 do CSAN3 que encolheu) — só o bucket NOVO precisa de entrada.
+buckets:
+  - ticker: TIMS3
+    check: SAN-03
+    motivo: "reconciliação CVM↔Yahoo deslocada pela captura do JCP na ingestão"
+  - ticker: BRKM5
+    check: SAN-05
+    motivo: "resíduo de superávit-limpo deslocado pelo PL passar à base do controlador"

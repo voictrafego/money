@@ -23,7 +23,14 @@ import yaml
 from analista.core.fundamentals import CompanyData
 
 RAIZ_REPO = pathlib.Path(__file__).resolve().parent.parent
+# O SUJO (evidencia congelada) — a regua e os detectores (test_sanidade_checks) leem daqui.
 CAMINHO_SNAPSHOT = RAIZ_REPO / "tests" / "fixtures" / "snapshot_sanidade_2026-07-14.yaml"
+# O LIMPO (produto do codigo consertado, DATA-06) — SO a medicao de "hoje"
+# (_pares_e_buckets_de_hoje) le daqui, para a monotonicidade enxergar o progresso. Regenravel
+# pelo scripts/capturar_snapshot_limpo.py; nao e evidencia congelada como o sujo.
+CAMINHO_SNAPSHOT_LIMPO = (
+    RAIZ_REPO / "tests" / "fixtures" / "snapshot_sanidade_limpo_2026-07-15.yaml"
+)
 
 # chaves globais do YAML (nao sao tickers) — puladas na reconstrucao.
 _CHAVES_GLOBAIS = {"data_base", "falhas"}
