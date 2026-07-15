@@ -311,3 +311,158 @@ def checar_san05(c: CompanyData) -> Optional[Aviso]:
         bucket=_bucket(mediano),
         detalhe="clean surplus violado: mediana do resíduo (ΔB − (LL − DIV)) acima de 10% do PL.",
     )
+
+
+# --------------------------------------------------------------------------- #
+# aplicar_sanidade (plano 08-05) — a síntese: roda os 5 checks, acumula os Aviso
+# e deriva c.confianca. NUNCA levanta (SAN-06, estrutural). O veredito é INTERNO
+# nesta fase (D-14): NADA muda na tela do app; o consumo é por teste e por CLI.
+# --------------------------------------------------------------------------- #
+
+# Flags de ESCALA (quebram a ordem de grandeza → tudo que depende de num_acoes fica
+# sem sentido). São as que rebaixam a confiança para "baixa".
+_CHECKS_ESCALA = frozenset({"SAN-01", "SAN-02"})
+
+# Os quatro rótulos da confiança (D-13). Escala discreta de quatro valores — jamais
+# um número por ticker: um número por ticker inventaria precisão que não existe e
+# convidaria a virar knob. "nao_avaliada" é o default inegociável do D-03.
+_ROTULOS_CONFIANCA = ("alta", "media", "baixa", "nao_avaliada")
+
+
+def _avaliavel_san01(c: CompanyData) -> bool:
+    ult = c.ultimo_ano()
+    if ult is None:
+        return False
+    return bool(c.num_acoes.get(ult) and c.preco_atual and c.market_cap)
+
+
+def _avaliavel_san02(c: CompanyData) -> bool:
+    anos = c.anos_ordenados()
+    for i in range(1, len(anos)):
+        n_prev = c.num_acoes.get(anos[i - 1])
+        n_curr = c.num_acoes.get(anos[i])
+        if n_prev not in (None, 0) and n_curr is not None:
+            return True
+    return False
+
+
+def _avaliavel_san03(c: CompanyData) -> bool:
+    _, soma_estreito = _soma_pareada(c, "proventos_filtro_amplo", "dividendos")
+    if soma_estreito:
+        return True
+    anos = [a for a in c.anos_ordenados() if a in c.dividendos and a in c.dpa_por_ano and a in c.num_acoes]
+    return bool(sum(c.dpa_por_ano[a] * c.num_acoes[a] for a in anos))
+
+
+def _avaliavel_san04(c: CompanyData) -> bool:
+    for ano in c.anos_ordenados():
+        ll = c.lucro_liquido.get(ano)
+        lc = c.lucro_controlador.get(ano)
+        if ll is not None and lc not in (None, 0):
+            return True
+    return False
+
+
+def _avaliavel_san05(c: CompanyData) -> bool:
+    anos = c.anos_ordenados()
+    utilizaveis = 0
+    for i in range(1, len(anos)):
+        t, p = anos[i], anos[i - 1]
+        pl_t = c.patrimonio_liquido.get(t)
+        pl_p = c.patrimonio_liquido.get(p)
+        ll_t = c.lucro_liquido.get(t)
+        div_t = c.dividendos.get(t)
+        if None not in (pl_t, pl_p, ll_t, div_t) and pl_p != 0:
+            utilizaveis += 1
+    return utilizaveis >= 2
+
+
+# Os 5 checks pareados com seu predicado de "tinha insumo p/ avaliar". O predicado
+# separa "avaliado e limpo" (→ confiança alta) de "não avaliável por falta de insumo"
+# (→ nao_avaliada) — distinção que o retorno None dos checks, sozinho, não carrega.
+_CHECKS = (
+    (checar_san01, _avaliavel_san01),
+    (checar_san02, _avaliavel_san02),
+    (checar_san03, _avaliavel_san03),
+    (checar_san04, _avaliavel_san04),
+    (checar_san05, _avaliavel_san05),
+)
+
+
+def aplicar_sanidade(c: CompanyData, _diagnostico: Optional[dict] = None) -> CompanyData:
+    """Roda os 5 checks sobre `c`, popula `c.avisos` e deriva `c.confianca`. Devolve `c`.
+
+    Mutação in-place + retorno (para encadear). Idempotente: reinicia `c.avisos` no
+    começo, então rodar duas vezes não duplica flags.
+
+    NEVER-RAISE (SAN-06) — estrutural, não por sorte. Cada check roda dentro de um
+    `try/except Exception`; uma exceção inesperada vira "não avaliável" para aquele
+    check e NÃO propaga. `aplicar_sanidade` não termina com erro em nenhuma
+    circunstância: um `CompanyData` vazio, um sem preço, um sem CVM — todos saem com
+    resposta.
+
+    ⚠️ O `try/except` é rede de segurança, NÃO desculpa para um check bugado. Uma
+    exceção engolida transforma uma detecção REAL em "não avaliável" em silêncio — uma
+    flag some sem deixar rastro. Por isso o contador de quedas: se algum check cair no
+    `except` para algum dos 104 tickers do snapshot, isso é um BUG do check, e o teste
+    exige ZERO quedas — não só ausência de exceção propagada. Passe um dict em
+    `_diagnostico` para inspecionar `quedas` / `checks_com_queda` / `algum_avaliado`.
+
+    Agregação de `c.confianca` (D-13 — escala discreta de quatro rótulos, jamais um
+    número por ticker):
+      - "baixa": disparou qualquer flag de ESCALA (SAN-01 ou SAN-02) — quebram a ordem
+        de grandeza; tudo que depende de num_acoes fica sem sentido.
+      - "media": só flags de base/consistência (SAN-03, SAN-04, SAN-05).
+      - "alta": nenhuma flag E pelo menos um check foi de fato avaliado.
+      - "nao_avaliada": nenhum check pôde ser avaliado (todos sem insumo). Não avaliável
+        ≠ limpo (D-03): um CompanyData construído à mão não nasce parecendo limpo.
+
+    Um ticker acende VÁRIAS flags, e isso é correto (R-06): um num_acoes quebrado
+    envenena SAN-01, SAN-03 E SAN-05 ao mesmo tempo. `c.avisos` é uma LISTA — não
+    deduplica, não elege "a flag principal".
+
+    O veredito é INTERNO nesta fase (D-14). Nada muda na tela do app. `c.confianca` é
+    consumido por teste e por relatório CLI (plano 08-06). A apresentação ao usuário é
+    decidida uma vez, na Fase 13, com o dado já consertado pela Fase 9 — acender um selo
+    de "baixa confiança" agora exporia 41 dos 104 tickers como "dado suspeito" para
+    cliente pagante, durante semanas, por um problema que será resolvido antes.
+    """
+    c.avisos = []
+    quedas = 0
+    checks_com_queda: List[str] = []
+    algum_avaliado = False
+
+    for check_fn, avaliavel_fn in _CHECKS:
+        try:
+            avaliado = avaliavel_fn(c)
+            resultado = check_fn(c)
+        except Exception:  # rede de segurança SAN-06; a queda é CONTADA, não silenciada
+            quedas += 1
+            checks_com_queda.append(getattr(check_fn, "__name__", str(check_fn)))
+            continue
+        if avaliado:
+            algum_avaliado = True
+        if resultado is None:
+            continue
+        if isinstance(resultado, Aviso):
+            c.avisos.append(resultado)
+        else:
+            c.avisos.extend(resultado)
+
+    tem_escala = any(a.check in _CHECKS_ESCALA for a in c.avisos)
+    tem_base = any(a.check not in _CHECKS_ESCALA for a in c.avisos)
+    if tem_escala:
+        c.confianca = "baixa"
+    elif tem_base:
+        c.confianca = "media"
+    elif algum_avaliado:
+        c.confianca = "alta"
+    else:
+        c.confianca = "nao_avaliada"
+
+    if _diagnostico is not None:
+        _diagnostico["quedas"] = quedas
+        _diagnostico["checks_com_queda"] = checks_com_queda
+        _diagnostico["algum_avaliado"] = algum_avaliado
+
+    return c
