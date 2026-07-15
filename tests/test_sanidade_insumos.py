@@ -94,8 +94,10 @@ def test_montar_empresa_carimba_a_origem_de_num_acoes(monkeypatch):
 
 
 def test_montar_empresa_carimba_o_lucro_do_controlador(monkeypatch):
-    """SAN-04: o lucro do controlador é lido e é DIFERENTE do consolidado num ticker
-    com minoritários (ITUB4)."""
+    """DATA-02: o lucro do controlador é lido e DIFERE do CONSOLIDADO bruto num ticker com
+    minoritários (ITUB4) — verdade permanente medida direto na fonte (cvm.fundamentos_do_ano).
+    E o conserto: c.lucro_liquido agora É a base do controlador (== lucro_controlador), não mais
+    o consolidado. Asserts de comparação entre campos — sem constante numérica (BLIND-04a longe)."""
     monkeypatch.setattr(build.prices, "coletar_mercado", lambda t: _dm_stub(t))
 
     c = _montar("ITUB4")
@@ -103,7 +105,14 @@ def test_montar_empresa_carimba_o_lucro_do_controlador(monkeypatch):
     assert c is not None
     assert c.lucro_controlador  # não vazio
     ult = c.ultimo_ano()
-    assert c.lucro_controlador[ult] != c.lucro_liquido[ult]
+
+    # o controlador DIFERE do consolidado bruto (minoritários reais), medido direto na fonte
+    cd_cvm, _ = universe.resolver("ITUB4", None)
+    consolidado_bruto = cvm.fundamentos_do_ano(cd_cvm, ult)["lucro_liquido"]
+    assert c.lucro_controlador[ult] != consolidado_bruto
+
+    # o conserto do DATA-02: c.lucro_liquido é a base do controlador
+    assert c.lucro_liquido[ult] == c.lucro_controlador[ult]
 
 
 def test_o_filtro_estreito_da_cvm_perde_o_jcp(monkeypatch):

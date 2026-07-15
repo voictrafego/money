@@ -80,9 +80,23 @@ def montar_empresa(
     dist_cvm: Dict[int, float] = {}  # proventos pagos (div + JCP) por ano, da CVM
     for ano in anos:
         f = cvm.fundamentos_do_ano(cd_cvm, ano)
-        if f["lucro_liquido"] is not None:
-            c.lucro_liquido[ano] = f["lucro_liquido"]
-        for campo in ("patrimonio_liquido", "fco", "vendas_liquidas",
+        # DATA-02 (Fase 9): lucro E PL na base do CONTROLADOR, acoplados por um ÚNICO gate em
+        # lucro_controlador — para nunca cruzar bases (lucro do controlador com PL consolidado é
+        # exatamente a doença que o SAN-04 detecta). COM controlador: LL = controlador e PL =
+        # consolidado − minoritários (os dois juntos). SEM controlador (single-entity): ambos
+        # ficam no consolidado (fallback) e minoritários NÃO são subtraídos mesmo que
+        # pl_nao_controladores exista — lucro (DRE) e PL (BPP) podem divergir em disponibilidade,
+        # e subtrair só o PL recriaria a base cruzada. `.get()` tolera stubs sem a chave.
+        if f.get("lucro_controlador") is not None:
+            c.lucro_liquido[ano] = f["lucro_controlador"]
+            if f.get("patrimonio_liquido") is not None:
+                c.patrimonio_liquido[ano] = f["patrimonio_liquido"] - (f.get("pl_nao_controladores") or 0)
+        else:
+            if f.get("lucro_liquido") is not None:
+                c.lucro_liquido[ano] = f["lucro_liquido"]
+            if f.get("patrimonio_liquido") is not None:
+                c.patrimonio_liquido[ano] = f["patrimonio_liquido"]
+        for campo in ("fco", "vendas_liquidas",
                       "ativo_circulante", "passivo_circulante", "divida_lp",
                       "ativo_intangivel"):
             if f[campo] is not None:
