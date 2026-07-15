@@ -7,11 +7,12 @@ Cada ZIP traz BPA, BPP, DRE e DFC (consolidado e individual). Extraímos as cont
 padronizadas por código (CD_CONTA), com fallback por nome (DS_CONTA) para tolerar o
 template diferente das instituições financeiras (bancos).
 
-DIAGNÓSTICO (Fase 8 / SAN — LEITURA, NÃO CONSERTO): as chaves `lucro_controlador`
-(`3.11.01`), `pl_nao_controladores` e `proventos_filtro_amplo` são insumos de diagnóstico
-(SAN-03/SAN-04). O `lucro_liquido` continua sendo o CONSOLIDADO (`3.11`/`3.13`/`3.09`) e o
-`dividendos_distribuidos` continua saindo do filtro estreito de `_distribuicoes_proventos`
-(que PERDE o JCP). O conserto desses dados é o DATA-01 da Fase 9 — aqui só se mede.
+DATA-01 (Fase 9 / DATA — CONSERTO): `dividendos_distribuidos` passou a sair do filtro AMPLO
+(`_distribuicoes_proventos_amplo`, casa "dividendo" OU "juros sobre capital"), capturando o
+JCP que o filtro estreito perdia. As chaves `lucro_controlador` (`3.11.01`) e
+`pl_nao_controladores` seguem como insumos que o build promove à base do controlador (DATA-02).
+`proventos_filtro_amplo` continua populado como detector do SAN-03. A gêmea estreita
+`_distribuicoes_proventos` fica no módulo só como referência do filtro estreito (testes).
 """
 
 from __future__ import annotations
@@ -281,9 +282,12 @@ def fundamentos_do_ano(cd_cvm: int, ano: int) -> Dict[str, Optional[float]]:
         # LPA básico por ação ON (R$/ação) — NÃO aplicar escala MIL.
         "lpa": _valor_conta(dre, cd_cvm, ["3.99.01.01", "3.99.01"],
                             ["Lucro por Ação"], aplicar_escala=False),
-        # Proventos pagos no ano — FILTRO ESTREITO (só "dividendo"), que PERDE o JCP em ~13
-        # empresas (BRSR6 etc.). Fonte SUJA de `c.dividendos`; consertar é DATA-01 (Fase 9).
-        "dividendos_distribuidos": _distribuicoes_proventos(dfc, cd_cvm),
+        # Proventos pagos no ano — FILTRO AMPLO (casa "dividendo" OU "juros sobre capital").
+        # DATA-01 (Fase 9): promove o filtro amplo a fonte de `c.dividendos`, capturando o JCP
+        # que o filtro estreito perdia em ~13 empresas (BRSR6 payout 10,3% → ~55,9%). A correção
+        # é ampliar o filtro DENTRO da CVM — NÃO trocar de fonte para o Yahoo. A gêmea estreita
+        # `_distribuicoes_proventos` permanece no módulo como referência (teste do filtro estreito).
+        "dividendos_distribuidos": _distribuicoes_proventos_amplo(dfc, cd_cvm),
         # DIAGNÓSTICO (SAN-04): lucro atribuído aos sócios da CONTROLADORA (3.11.01). NÃO é a
         # fonte de `lucro_liquido` (que segue o consolidado 3.11/3.13/3.09). None sem a linha.
         "lucro_controlador": _valor_conta(
