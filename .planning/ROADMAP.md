@@ -133,7 +133,7 @@ de dados** que os knobs do v2.3 mascaravam.
 Plans:
 - [x] 08-01-PLAN.md — Wave 0 dos insumos: `cvm.py` lê `3.11.01` + minoritários; `prices.py` lê `marketCap`/`impliedSharesOutstanding`/`splits`; `CompanyData` ganha `avisos`/`confianca` (default `nao_avaliada`). **Leitura nova, zero conserto.**
 - [x] 08-02-PLAN.md — SAN-07: o spike (as duas respostas são **NÃO**; o 3º bug de dados não existe) + correção dos números fantasma no REQUIREMENTS/ROADMAP (o salto fantasma do ITUB4 2019 e a conta `2.03`) + o legado do `composicao_capital` para a Fase 9
-- [ ] 08-03-PLAN.md — o snapshot congelado dos 104 tickers com o dado **SUJO** (congela `marketCap` e `splits`; degrada por ticker — o MRFG3 dá 404 e **não aborta**)
+- [x] 08-03-PLAN.md — o snapshot congelado dos 104 tickers com o dado **SUJO** (congela `marketCap` e `splits`; degrada por ticker — o MRFG3 dá 404 e **não aborta**)
 - [ ] 08-04-PLAN.md — `core/sanidade.py`: os 5 checks (SAN-01..05) + os limiares (D-10, fora do lock) + o teste que os congela (D-11)
 - [ ] 08-05-PLAN.md — `aplicar_sanidade` + agregação da confiança + a chamada no pipeline real **provada por execução** (D-04) + never-raise nos 104 (SAN-06)
 - [ ] 08-06-PLAN.md — o baseline dos sujos (YAML, flag + bucket, **zero R$**) + a monotonicidade por par `(ticker, check)` (D-06) + o relatório CLI da Fase 9

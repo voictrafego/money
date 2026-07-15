@@ -4,14 +4,14 @@ milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
 stopped_at: Phase 08 context gathered
-last_updated: "2026-07-14T23:50:03.877Z"
-last_activity: 2026-07-14
+last_updated: "2026-07-15T00:06:32.175Z"
+last_activity: 2026-07-15
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 11
-  completed_plans: 7
-  percent: 64
+  completed_plans: 8
+  percent: 73
 ---
 
 # Project State
@@ -33,11 +33,11 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 08 (sanidade-dos-dados-san) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6
 Status: Ready to execute
-Last activity: 2026-07-14
+Last activity: 2026-07-15
 
-Progress: [██████░░░░] 64%
+Progress: [███████░░░] 73%
 
 **Suíte:** `435 passed, 1 skipped, 38 deselected, 2 xfailed` — 0 XPASS. Os 2 xfailed SÃO as duas
 doenças (BLIND-02 vira verde na Fase 12; BLIND-03 na Fase 10). Golden de nível que quebrar deve ser
@@ -105,10 +105,27 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 | Phase 08 P01 | 22min | 3 tasks | 6 files |
 | Phase 08 P02 | 15min | 2 tasks | 5 files |
 | Phase 08 P03 | 35min | 2 tasks | 5 files |
+| Phase 08 P04 | 18min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **SAN Wave 3 (Fase 8 / plano 08-04) — os 5 checks aritméticos viram código.** `core/sanidade.py`
+  (funções puras, espelho de `normalizacao.py`, zero I/O, zero dependência nova) entrega SAN-01
+  (escala `num_acoes×preço≈market_cap`), SAN-02 (salto temporal simétrico 3×, isenção por split D-12,
+  fronteira de fonte), SAN-03 (DOIS sinais: detector direto de JCP perdido interno à CVM + reconciliação
+  CVM↔Yahoo que **reporta divergência sem eleger verdade**), SAN-04 (base dos minoritários, `sinal_invertido`
+  do CSNA3) e SAN-05 (clean surplus como DADO). Os limiares (D-10) são **constantes de módulo**, fora do
+  `config.yaml` e do `calibracao.lock.yaml` (limiar de detecção **não é knob de valuation** — o lock segue
+  com 3 graus) e congelados por teste `invariante` (D-11). `_bucket` é string e **nunca levanta** com fator
+  ≤ 0. **NADA conserta nada** — os asserts SÃO o teste de regressão da Fase 9 (`git diff src/analista/ingest/`
+  vazio). **DESVIOS MEDIDOS (o check funcionando, não bug):** (1) o **BBAS3 flaga SAN-04** — o LL consolidado
+  do BB supera o do controlador em ~22% (minoritário REAL de subsidiárias consolidadas), então saiu da lista
+  "bancos limpos" do teste (ITUB4/BBDC4/BRSR6); a premissa do plano era a % de minoritário no **PL** (2,3%),
+  não no lucro. (2) A **ALUP11 flaga SAN-01** no snapshot congelado (0,586×), além do SAN-04 — sem quebrar
+  teste (nenhum assert exige ALUP11 limpa no SAN-01). Suíte: **450 passed, 1 skipped, 38 deselected, 2 xfailed,
+  0 failed**. SAN-05 marcado completo (SAN-01..04 já vinham dos planos 08-01/08-03).
 
 - **SAN Wave 2 (Fase 8 / plano 08-03) — o snapshot congelado dos 104 é a evidência intocada do dado
   SUJO.** `tests/fixtures/snapshot_sanidade_2026-07-14.yaml` (104 tickers, 13.756 linhas) congela
@@ -273,8 +290,8 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 
 ## Session Continuity
 
-Last session: 2026-07-14T23:49:23.746Z
-Stopped at: Phase 08 context gathered
+Last session: 2026-07-15T00:06:32.171Z
+Stopped at: Completed 08-04-PLAN.md (os 5 checks aritméticos SAN-01..05 + limiares congelados)
 Resume file: None
 
 ## Operator Next Steps
