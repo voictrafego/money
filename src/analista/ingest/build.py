@@ -47,23 +47,40 @@ def _fator_unit(contagem_oficial: Dict[int, float], acoes_yahoo: Optional[float]
     return cand if cand >= 2 else 1
 
 
-def _fator_escala_oficial(oficial_cru: Dict[int, float], implied: Optional[float]) -> int:
-    """Escala da contagem oficial (armadilha 3): a CVM publica o `composicao_capital` em
-    MILHARES para umas empresas (ITUB4/BRSR6) e em UNIDADES para outras (GOAU4/CGRA4/CSNA3/
-    EQTL3/ALUP11/MRFG3). Usar a contagem CRUA reintroduziria o ×1000 por outro caminho (Pitfall
-    4). Detectamos o fator cruzando a contagem oficial do ÚLTIMO ano disponível com o
-    `impliedSharesOutstanding` (ON+PN, âncora limpa que bate <0,3% em 5/5) e arredondamos para a
-    potência de 1000 mais próxima (na prática 1 ou 1000).
+def _escala_por_ano(
+    oficial_cru: Dict[int, float], implied: Optional[float]
+) -> Dict[int, float]:
+    """Escala da contagem oficial (armadilha 3), detectada POR ANO. A CVM publica o
+    `composicao_capital` em MILHARES para umas empresas (ITUB4/BRSR6) e em UNIDADES para outras
+    (GOAU4/…). Usar a contagem CRUA reintroduziria o ×1000 por outro caminho (Pitfall 4).
 
-    Sem âncora (`implied` None — ex.: MRFG3 404) ou sem contagem: fator 1 (não confirmável, mas
-    nunca aborta — SAN-06). Nunca devolve < 1 (encolher a contagem perderia ações)."""
-    if not oficial_cru or not implied:
-        return 1
-    ult = oficial_cru[max(oficial_cru)]
-    if ult <= 0:
-        return 1
-    expoente = round(math.log10(implied / ult) / 3.0)  # potência de 1000
-    return 1000 ** max(0, expoente)
+    🔴 A unidade de reporte NÃO é constante DENTRO de um mesmo ticker: o `composicao_capital`
+    troca de MILHARES para UNIDADES entre anos (PETR4 2020 vem em milhares, 2021+ em unidades;
+    BBDC4 2020-2023 em milhares, 2024+ em unidades). Um fator ÚNICO — o do último ano — deixa os
+    anos de escala diferente com o ×1000 PRESO, e o salto artificial ÷1000 reaparece na série
+    (o mesmo Pitfall 4 num eixo novo, o temporal). Por isso ancoramos CADA ano no
+    `impliedSharesOutstanding` (ON+PN, âncora limpa e ÚNICA) pela potência de 1000 mais próxima:
+    a unidade é decidida ano a ano.
+
+    Variação societária REAL (bonificação, fusão, recompra) é sempre < 1000× — logo nunca é
+    confundida com troca de unidade e NÃO é mascarada (AGRO3 2020 = 59M contra 99M de 2021 fica
+    intacto; o `implied/cru` = 1,68 arredonda a expoente 0). Uma anomalia CRUA que não seja
+    potência de 1000 (ex.: CMIN3 2025 = 54,3 bi = 10× o real 5,4 bi, erro do próprio arquivo da
+    CVM) NÃO é potência de 1000, então NÃO é tocada aqui — fica visível ao SAN, de propósito.
+
+    Sem âncora (`implied` None — ex.: MRFG3 404): devolve a contagem crua (não confirmável, mas
+    nunca aborta — SAN-06). Nunca ENCOLHE (`max(0, expoente)`) — multiplicar por unidade perdida
+    é o conserto; dividir perderia ações reais."""
+    if not implied:
+        return dict(oficial_cru)
+    escalado: Dict[int, float] = {}
+    for ano, cru in oficial_cru.items():
+        if cru and cru > 0:
+            expoente = round(math.log10(implied / cru) / 3.0)  # potência de 1000, por ano
+            escalado[ano] = cru * (1000 ** max(0, expoente))
+        else:
+            escalado[ano] = cru
+    return escalado
 
 
 def montar_empresa(
@@ -148,10 +165,10 @@ def montar_empresa(
             c.lpa_cvm[ano] = f["lpa"]  # LPA cru da CVM (pré-divisão) — a causa-raiz
 
     # Escala (armadilha 3 / Pitfall 4): a contagem oficial vem em MILHARES (ITUB4/BRSR6) ou em
-    # UNIDADES (GOAU4/…). Detecta o fator contra o impliedSharesOutstanding do último ano e o
-    # aplica à série INTEIRA — nunca usa a contagem crua.
-    fator_escala = _fator_escala_oficial(oficial_cru, dm.implied_shares_outstanding)
-    oficial: Dict[int, float] = {ano: cru * fator_escala for ano, cru in oficial_cru.items()}
+    # UNIDADES (GOAU4/…) — e a unidade TROCA entre anos de um mesmo ticker. Detecta o fator
+    # POR ANO contra o impliedSharesOutstanding (âncora ON+PN) — nunca usa a contagem crua nem um
+    # fator único de série (que deixaria o ×1000 preso nos anos de escala divergente).
+    oficial: Dict[int, float] = _escala_por_ano(oficial_cru, dm.implied_shares_outstanding)
 
     # BUG-UNIT: a contagem oficial é POR AÇÃO (ON+PN), mas preço e proventos (Yahoo) são POR UNIT.
     # Sem converter, LPA/P/L/EY ficam inflados pelo fator da unit (3× TAEE/ALUP, ~5× KLBN), o
