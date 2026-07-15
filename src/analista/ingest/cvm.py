@@ -287,9 +287,13 @@ def _distribuicoes_proventos_amplo(df: Optional[pd.DataFrame], cd_cvm: int) -> O
     if fin.empty:
         return None
     ds = fin["DS_CONTA"].map(_norm)
-    # "juros sobre.*capital": a DFC do BRSR6 fila em "Juros sobre O Capital Próprio Pagos" —
-    # o literal "juros sobre capital" não casaria por causa do "o". O `.*` tolera o artigo.
-    incluir = ds.str.contains("dividendo|juros sobre.*capital", na=False, regex=True)
+    # "juros sobre.*capital proprio": a DFC do BRSR6 fila em "Juros sobre O Capital Próprio
+    # Pagos" — o literal "juros sobre capital proprio" não casaria por causa do "o"; o `.*`
+    # tolera o artigo. A âncora "proprio" (WR-01) impede que o `.*` case linhas de
+    # financiamento que NÃO são JCP ("juros sobre capital de giro/terceiros", "juros sobre
+    # empréstimos ... capital") e inflem os proventos — JCP é "juros sobre o capital PRÓPRIO".
+    # `ds` já vem NFKD/ascii-folded por `_norm` (próprio → proprio).
+    incluir = ds.str.contains("dividendo|juros sobre.*capital proprio", na=False, regex=True)
     excluir = ds.str.contains("nao control|minoritar|recebid", na=False, regex=True)
     rows = fin[(incluir & ~excluir).values]
     if rows.empty:
