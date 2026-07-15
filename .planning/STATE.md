@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
-status: executing
-stopped_at: Completed 09-04-PLAN.md (DATA-05)
-last_updated: "2026-07-15T16:42:36.705Z"
+status: verifying
+stopped_at: Completed 09-05-PLAN.md (DATA-06)
+last_updated: "2026-07-15T21:04:38.469Z"
 last_activity: 2026-07-15
 progress:
   total_phases: 8
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 16
-  completed_plans: 15
-  percent: 94
+  completed_plans: 16
+  percent: 100
 ---
 
 # Project State
@@ -34,12 +34,12 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 09 (ingest-o-correta-data) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-15
 
-Progress: [█████████░] 94%
+Progress: [██████████] 100%
 
-**Suíte:** `465 passed, 1 skipped, 34 deselected, 2 xfailed` — 0 XPASS. Os 2 xfailed SÃO as duas
+**Suíte:** `467 passed, 1 skipped, 34 deselected, 2 xfailed` — 0 XPASS. Os 2 xfailed SÃO as duas
 doenças (BLIND-02 vira verde na Fase 12; BLIND-03 na Fase 10). Golden de nível que quebrar deve ser
 **DELETADO, nunca atualizado** (contrato novo do CLAUDE.md).
 
@@ -112,10 +112,34 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 | Phase 09 P02 | 55min | 2 tasks | 4 files |
 | Phase 09 P03 | 20min | 2 tasks | 4 files |
 | Phase 09 P04 | 12min | 2 tasks | 4 files |
+| Phase 09 P05 | 256min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **DATA-06 (Fase 9 / plano 09-05) — a régua ENXERGA o progresso + o invariante virou um RATCHET
+  honesto.** O snapshot LIMPO novo (`scripts/capturar_snapshot_limpo.py`, produto do código
+  consertado) desacopla a medição de "hoje" da régua (baseline sujo) e da evidência (snapshot sujo);
+  `_pares_e_buckets_de_hoje` lê o limpo → a monotonicidade deixa de ser tautologia sujo-vs-sujo e
+  ENCOLHE (os 9 alvos DATA-01/02/03 somem, ticker a ticker; `test_os_alvos_consertados_sumiram_de_hoje`).
+  **A régua expôs um bug real do DATA-03 (09-02):** a escala do `composicao_capital` era aplicada por
+  SÉRIE (fator do último ano), deixando o ÷1000 preso nos anos de escala divergente (o `composicao`
+  troca MILHARES↔UNIDADES entre anos do mesmo ticker). **Escopo expandido/autorizado p/ `build.py`:**
+  `_escala_por_ano` (âncora `implied` por ano; some 8 SAN-02 espúrios em PETR4/BBDC4/VIVT3/RENT3/…) +
+  `_alinhar_escala_interna` (sem âncora: ELET3/ELET6/IGTI11, infere a unidade da própria série).
+  Variação real (<1000×) preservada; anomalia não-potência-de-1000 fica visível (IGTI11 reorg 2021;
+  CMIN3 2025 = 10× erro no arquivo da CVM). **Ratchet reformulado (aprovado):** subconjunto puro era
+  impossível p/ uma cura que troca a fonte → `pares_hoje ⊆ (baseline ∪ pares_aceitos)` e
+  `buckets_hoje ⊆ baseline` (+ `buckets_aceitos`), com accept-list VERSIONADA (`pares_aceitos_sanidade.yaml`:
+  9 pares + 2 buckets, motivos por categoria, sem ticker+número — BLIND-04a-safe). **Provado RED-able
+  por execução:** par sujo não-documentado e bucket novo não-documentado deixam a suíte vermelha (a
+  accept-list NÃO é regeneração silenciosa do baseline). `snapshot_bancos` **não** regenerado (Fase 10).
+  **Zero motor/knob/config** (`config.yaml`/`calibracao.lock.yaml` intactos; 3 graus). Suíte default
+  **467 passed, 1 skipped, 34 deselected, 2 xfailed, 0 failed**; `-m ""` 500 passed; `-m golden_nivel`
+  34 passed, 0 CLASSIFICACAO ORFA. Sujo/baseline intactos. **Checkpoint de decisão (Rule 4) ×2 +
+  1 desvio de premissa** resolvidos pelo usuário: expansão de escopo p/ build.py (bug de escala) e
+  reformulação do invariante (ratchet + bucket-accept); IGTI11·SAN-02 aceito (reorg real, não escala).
 
 - **DATA-05 (Fase 9 / plano 09-04) — o DY passa a DECLARAR sua base: é BRUTO, sem calcular imposto.**
   `header_dy` (help nos DOIS caminhos, recorrente e fallback) e o glossário (verbete `dy` + bloco
@@ -362,8 +386,8 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 
 ## Session Continuity
 
-Last session: 2026-07-15T16:42:36.694Z
-Stopped at: Completed 09-04-PLAN.md (DATA-05)
+Last session: 2026-07-15T21:04:38.465Z
+Stopped at: Completed 09-05-PLAN.md (DATA-06)
 Resume file: None
 
 ## Operator Next Steps

@@ -167,7 +167,7 @@ Plans:
 - [x] 09-03-PLAN.md — DATA-04: spike de localização do degrau de ~13% (ref obsoleta) + conserto do duplo split + teste-guarda
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 09-05-PLAN.md — DATA-06: snapshot limpo novo + loader desacoplado + monotonicidade encolhendo (snapshot_bancos fica p/ Fase 10)
+- [x] 09-05-PLAN.md — DATA-06: snapshot limpo novo + loader desacoplado + monotonicidade encolhendo (snapshot_bancos fica p/ Fase 10)
 
 ### Phase 10: Primitivas sem viés (PRIM)
 **Goal**: **Maior alavancagem por linha do repositório** — as primitivas atingem todos os motores,

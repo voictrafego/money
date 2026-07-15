@@ -140,7 +140,7 @@ Os asserts vêm **antes** dos consertos, de propósito: eles **são** o teste de
   ajustado; a engine **cria** um degrau artificial de 13% no ITUB4).
 - [x] **DATA-05**: O DY reflete o **IRRF de 17,5% sobre JCP** (Lei 15.270/2025, desde 01/01/2026) ou
   declara explicitamente que é bruto.
-- [ ] **DATA-06**: O snapshot de teste é regenerado — o atual tem ITUB4 com **10 milhões de ações** em
+- [x] **DATA-06**: O snapshot de teste é regenerado — o atual tem ITUB4 com **10 milhões de ações** em
   2019 e dá verde nos 448 testes.
 
 ## Primitivas sem viés (PRIM)
@@ -299,7 +299,7 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | DATA-03 | Phase 9 | Complete |
 | DATA-04 | Phase 9 | Complete |
 | DATA-05 | Phase 9 | Complete |
-| DATA-06 | Phase 9 | Pending |
+| DATA-06 | Phase 9 | Complete |
 | PRIM-01 | Phase 10 | Pending |
 | PRIM-02 | Phase 10 | Pending |
 | PRIM-03 | Phase 10 | Pending |
