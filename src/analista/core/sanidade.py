@@ -94,7 +94,7 @@ def checar_san01(c: CompanyData) -> Optional[Aviso]:
     falso positivo ~2× em toda empresa com PN. A base é ON+PN (implícita no market_cap).
 
     Sem market_cap / preço / num_acoes[ult] → None (não avaliável — nem flag, nem exceção).
-    É o caso do MRFG3 (404 no Yahoo) e o caso vivo do never-raise (SAN-06).
+    É o caso do MRFG3 (404 no Yahoo) e o caso vivo do never_raise/SAN-06.
     """
     ult = c.ultimo_ano()
     if ult is None:
@@ -166,3 +166,148 @@ def checar_san02(c: CompanyData) -> List[Aviso]:
             )
         )
     return avisos
+
+
+def _soma_pareada(c: CompanyData, num_attr: str, den_attr: str) -> tuple:
+    """Soma de dois dicionários {ano: valor} só nos anos presentes em AMBOS. (num, den)."""
+    dnum = getattr(c, num_attr)
+    dden = getattr(c, den_attr)
+    anos = [a for a in c.anos_ordenados() if a in dnum and a in dden]
+    return (sum(dnum[a] for a in anos), sum(dden[a] for a in anos))
+
+
+def checar_san03(c: CompanyData) -> List[Aviso]:
+    """Proventos. DOIS sinais independentes — e a ordem importa.
+
+    A premissa que o repo escrevia estava INVERTIDA (medido): a CVM (filtro estreito
+    "dividendo") PERDE o JCP (BRSR6 ~18× a menos), e o DPA do Yahoo o INCLUI. Este check
+    NÃO assume que a CVM é a verdade — ele reporta divergência.
+
+    Sinal (a) — o detector direto de JCP perdido. É o que vale, 100% interno à CVM: não
+    passa por `num_acoes` nem pelo Yahoo, logo é imune à contaminação de escala (R-06). Flaga
+    quando `Σ proventos_filtro_amplo / Σ dividendos > LIMIAR_SAN03_JCP`. É este que SÓ apaga
+    quando o JCP for capturado — o teste de regressão ticker-a-ticker do DATA-01.
+
+    Sinal (b) — reconciliação de consistência CVM ↔ Yahoo (o que o REQUIREMENTS pede
+    literalmente). `r = Σ dividendos / Σ(dpa_por_ano × num_acoes)`, razão das SOMAS da janela
+    (a data de pagamento do Yahoo e o ano de caixa da CVM não casam ano-a-ano; a soma cancela
+    o descasamento). Flaga `max(r, 1/r) >= LIMIAR_SAN03`. NÃO afirma qual lado está certo —
+    reporta DIVERGÊNCIA. Espere cascata legítima: um num_acoes quebrado envenena o denominador
+    e dispara o sinal (b) pelo motivo errado (escala, não JCP) — é por isso que o sinal (a) existe.
+    """
+    avisos: List[Aviso] = []
+
+    # sinal (a): JCP perdido — filtro amplo vs. filtro estreito, 100% CVM.
+    soma_amplo, soma_estreito = _soma_pareada(c, "proventos_filtro_amplo", "dividendos")
+    if soma_estreito:
+        r_jcp = soma_amplo / soma_estreito
+        if r_jcp > LIMIAR_SAN03_JCP:
+            avisos.append(
+                Aviso(
+                    check="SAN-03",
+                    ano=None,
+                    fator=r_jcp,
+                    bucket=_bucket(r_jcp),
+                    detalhe="JCP perdido: Σ proventos (filtro amplo) / Σ dividendos (filtro estreito), interno à CVM.",
+                )
+            )
+
+    # sinal (b): reconciliação CVM (Σ dividendos) vs. Yahoo (Σ dpa × num_acoes).
+    anos_b = [a for a in c.anos_ordenados() if a in c.dividendos and a in c.dpa_por_ano and a in c.num_acoes]
+    soma_cvm = sum(c.dividendos[a] for a in anos_b)
+    soma_yahoo = sum(c.dpa_por_ano[a] * c.num_acoes[a] for a in anos_b)
+    if soma_yahoo:
+        r = soma_cvm / soma_yahoo
+        if r > 0 and max(r, 1.0 / r) >= LIMIAR_SAN03:
+            avisos.append(
+                Aviso(
+                    check="SAN-03",
+                    ano=None,
+                    fator=r,
+                    bucket=_bucket(r),
+                    detalhe=(
+                        "CVM e Yahoo divergem — a causa pode ser JCP perdido (lado CVM) OU "
+                        "num_acoes quebrado (lado do produto). Cruze com SAN-01/SAN-02."
+                    ),
+                )
+            )
+    return avisos
+
+
+def checar_san04(c: CompanyData) -> Optional[Aviso]:
+    """PL e lucro na mesma base — o bug dos minoritários (3.11 consolidado vs 3.11.01 controlador).
+
+    No último ano com AMBOS: `razao = LL / LL_controlador`. Flaga quando `|razao - 1| > LIMIAR_SAN04`
+    OU quando os minoritários (LL − LL_controlador) e o controlador têm sinais opostos. O CSNA3 é
+    esse caso: os minoritários tiveram lucro (+0,496 bi) enquanto o controlador teve prejuízo
+    (−2,00 bi) — `sinal_invertido = True`, e a razão (0,752) puxa a contagem de ações para BAIXO.
+    Um check que só olhasse `razao > 1` deixaria o CSNA3 passar.
+
+    `bucket = _bucket(abs(razao))` — NUNCA passar razão negativa ao `_bucket` (log10 de negativo
+    levantaria, e o try/except do `aplicar_sanidade` transformaria a detecção em "não avaliável"
+    em silêncio). `lucro_controlador` ausente → None (não avaliável ≠ limpo). Pega MRFG3 (100% CVM,
+    independe do Yahoo) e a ALUP11 — é onde o REQUIREMENTS a atribui.
+
+    O check REPORTA divergência, não elege verdade: uma razão de 1,22 pode ser minoritário real
+    (banco que consolida subsidiária) OU base cruzada. Quem decide é a Fase 9.
+    """
+    for ano in reversed(c.anos_ordenados()):
+        ll = c.lucro_liquido.get(ano)
+        lc = c.lucro_controlador.get(ano)
+        if ll is None or lc is None or lc == 0:
+            continue
+        razao = ll / lc
+        minoritarios = ll - lc
+        sinal_invertido = minoritarios * lc < 0
+        if abs(razao - 1.0) > LIMIAR_SAN04 or sinal_invertido:
+            return Aviso(
+                check="SAN-04",
+                ano=ano,
+                fator=razao,
+                bucket=_bucket(abs(razao)),
+                detalhe="LL consolidado (3.11) diverge do LL do controlador (3.11.01) — base de lucro cruzada.",
+                sinal_invertido=sinal_invertido,
+            )
+        return None  # avaliado e dentro da tolerância — limpo, não "não avaliável"
+    return None  # nenhum ano com ambos os insumos — não avaliável
+
+
+def checar_san05(c: CompanyData) -> Optional[Aviso]:
+    """Clean surplus (`ΔB ≈ LL − DIV`) — detector de bug E pré-condição de validade do RIM.
+
+    Para cada par de anos consecutivos com PL, LL e DIV:
+    `residuo[t] = ((PL[t] − PL[t−1]) − (LL[t] − DIV[t])) / abs(PL[t−1])` (adimensional).
+    Flaga quando a MEDIANA dos `abs(residuo)` da janela > LIMIAR_SAN05 (mediana, não máximo: um
+    único ano de recompra grande não pode acender a flag sozinho). Menos de 2 anos utilizáveis → None.
+
+    Reportado como DADO, não exceção: o `Aviso` carrega o resíduo mediano como `fator`
+    (adimensional) e o `bucket`, nunca um R$. O spike SAN-07 mediu que o dirty surplus real dos
+    bancos é 0,03%–0,59% do PL — logo quando o SAN-05 dispara em cima do limiar de 10% NÃO é FVOCI,
+    é bug de dado (num_acoes quebrado envenena a base). Cascata esperada, e é feature, não bug.
+    """
+    from statistics import median
+
+    anos = c.anos_ordenados()
+    residuos: List[float] = []
+    for i in range(1, len(anos)):
+        t, p = anos[i], anos[i - 1]
+        pl_t = c.patrimonio_liquido.get(t)
+        pl_p = c.patrimonio_liquido.get(p)
+        ll_t = c.lucro_liquido.get(t)
+        div_t = c.dividendos.get(t)
+        if pl_t is None or pl_p is None or ll_t is None or div_t is None or pl_p == 0:
+            continue
+        residuo = ((pl_t - pl_p) - (ll_t - div_t)) / abs(pl_p)
+        residuos.append(abs(residuo))
+    if len(residuos) < 2:
+        return None
+    mediano = float(median(residuos))
+    if mediano <= LIMIAR_SAN05:
+        return None
+    return Aviso(
+        check="SAN-05",
+        ano=None,
+        fator=mediano,
+        bucket=_bucket(mediano),
+        detalhe="clean surplus violado: mediana do resíduo (ΔB − (LL − DIV)) acima de 10% do PL.",
+    )
