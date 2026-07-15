@@ -385,6 +385,11 @@
 'tests/test_presentation_multiticker.py::test_selo_badge_verificar_alerta_e_sem_rotulo_de_preco': contrato
 'tests/test_presentation_multiticker.py::test_selo_badge_cor_none_degrada_para_em_dash': contrato
 'tests/test_presentation_multiticker.py::test_selo_badge_nunca_e_imperativo': contrato
+
+# DATA-05 — o DY declara sua base BRUTA (contrato de string; sem nivel de mercado).
+'tests/test_dy_base.py::test_header_dy_recorrente_declara_base_bruta': contrato
+'tests/test_dy_base.py::test_header_dy_fallback_declara_base_bruta': contrato
+'tests/test_dy_base.py::test_glossario_do_dy_declara_base_bruta': contrato
 'tests/test_ranking_freio.py::test_freio_r2_baixo_nao_estampa_alvo': contrato
 'tests/test_ranking_freio.py::test_freio_alvo_degenerado_romi3': contrato
 'tests/test_ranking_freio.py::test_freio_upside_absurdo_com_regressao_sadia': contrato
