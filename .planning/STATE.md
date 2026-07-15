@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
-stopped_at: Completed 08-04-PLAN.md (os 5 checks aritméticos SAN-01..05 + limiares congelados)
-last_updated: "2026-07-15T11:57:02.731Z"
-last_activity: 2026-07-15 -- Phase 9 planning complete
+stopped_at: Completed 09-01-PLAN.md (DATA-01 + DATA-02)
+last_updated: "2026-07-15T13:27:56.475Z"
+last_activity: 2026-07-15
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 16
-  completed_plans: 11
-  percent: 69
+  completed_plans: 12
+  percent: 75
 ---
 
 # Project State
@@ -27,17 +27,17 @@ entre si** — a mesma ação não pode parecer barata num menu e cara/ausente e
 ITUB4, Cap. 17 (Tabelas 41/43): `g` = 10,24% · `Ke` = 12,48% → **V = R$ 37,22** (região R$ 35–39,
 MS ±5%). **Hoje o app entrega R$ 16,13.**
 
-**Current focus:** Phase 08 — sanidade-dos-dados-san
+**Current focus:** Phase 09 — ingest-o-correta-data
 
 ## Current Position
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
-Phase: 9
-Plan: Not started
+Phase: 09 (ingest-o-correta-data) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-07-15 -- Phase 9 planning complete
+Last activity: 2026-07-15
 
-Progress: [██████████] 100%
+Progress: [████████░░] 75%
 
 **Suíte:** `435 passed, 1 skipped, 38 deselected, 2 xfailed` — 0 XPASS. Os 2 xfailed SÃO as duas
 doenças (BLIND-02 vira verde na Fase 12; BLIND-03 na Fase 10). Golden de nível que quebrar deve ser
@@ -108,10 +108,30 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 | Phase 08 P03 | 35min | 2 tasks | 5 files |
 | Phase 08 P04 | 18min | 3 tasks | 4 files |
 | Phase 08 P05 | 20min | 2 tasks | 4 files |
+| Phase 09 P01 | 40min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **DATA-01/02 (Fase 9 / plano 09-01) — insumos limpos da Fase 8 PROMOVIDOS a fonte-de-verdade.**
+  `cvm.fundamentos_do_ano` aponta `dividendos_distribuidos` para `_distribuicoes_proventos_amplo`
+  (dividendo OU JCP): `c.dividendos` captura o JCP — **BRSR6 amplo/estreito = 5,43×**; os 4 grandes
+  bancos (ITUB4/BBDC4/BBAS3) **amplo == estreito (ratio 1,0)**, sem contagem em dobro (T-09-01
+  medido). `montar_empresa` decide lucro E PL por um **gate ÚNICO** em `lucro_controlador`: com
+  controlador → `LL = controlador` e `PL = consolidado − minoritários` (juntos); sem controlador →
+  ambos no consolidado (fallback) e minoritários NÃO subtraídos, mesmo com `pl_nao_controladores`
+  presente (Pitfall 3 — nunca base cruzada). **Zero motor/knob/config tocado** (`config.yaml`/
+  `calibracao.lock.yaml` intactos; 3 graus). Suíte **459 passed, 1 skipped, 38 deselected, 2 xfailed,
+  0 failed**. **Checkpoint de decisão (Rule 4, resolvido pelo usuário — Option A):** dois testes-
+  diagnóstico da Fase 8 (`test_o_filtro_estreito_da_cvm_perde_o_jcp`,
+  `test_montar_empresa_carimba_o_lucro_do_controlador`, `contrato`) rodam o pipeline LIVE e
+  asseriam a doença via `c.dividendos`/`c.lucro_liquido`; o conserto os invalidava. Foram
+  **re-apontados aos insumos CRUS** (filtro estreito vs amplo direto no DFC; `lucro_controlador` vs
+  consolidado bruto) + novos invariantes do conserto — **sem afrouxar, sem deletar, sem mexer em
+  `classificacao.yaml`** (nomes mantidos; diff-scope de teste expandido e autorizado). CSNA3 muda de
+  sinal no lucro (controlador em prejuízo) — conserto funcionando, visível quando o snapshot limpo
+  for regenerado (09-05). Prova formal ticker-a-ticker (monotonicidade) fica no plano 09-05.
 
 - **SAN Wave 3 (Fase 8 / plano 08-04) — os 5 checks aritméticos viram código.** `core/sanidade.py`
   (funções puras, espelho de `normalizacao.py`, zero I/O, zero dependência nova) entrega SAN-01
@@ -292,8 +312,8 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 
 ## Session Continuity
 
-Last session: 2026-07-15T00:35:57.610Z
-Stopped at: Completed 08-04-PLAN.md (os 5 checks aritméticos SAN-01..05 + limiares congelados)
+Last session: 2026-07-15T13:27:56.470Z
+Stopped at: Completed 09-01-PLAN.md (DATA-01 + DATA-02)
 Resume file: None
 
 ## Operator Next Steps

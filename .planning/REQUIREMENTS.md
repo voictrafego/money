@@ -111,7 +111,7 @@ Os asserts vêm **antes** dos consertos, de propósito: eles **são** o teste de
 
 ## Ingestão correta (DATA)
 
-- [ ] **DATA-01**: JCP capturado nas 13 empresas que hoje o perdem (`cvm.py:169` filtra só
+- [x] **DATA-01**: JCP capturado nas 13 empresas que hoje o perdem (`cvm.py:169` filtra só
   "dividendo"). BRSR6 sai de payout 10,3% para 55,9%.
   ⚠️ **A direção do bug é o contrário do que `build.py:104-107` afirma** (medido, 2026-07-14,
   `08-RESEARCH.md` §R-02/§Achado 7). O filtro de `cvm.py:169` casa só `"dividendo"`; o BRSR6 fila o
@@ -124,7 +124,7 @@ Os asserts vêm **antes** dos consertos, de propósito: eles **são** o teste de
   comentário chama de fallback inferior — é o lado bom. A correção mínima é ampliar o filtro da DFC
   para `"dividendo" OU "juros sobre capital"`, **não trocar de fonte** (o plano 08-01 já corrigiu o
   comentário e adicionou o insumo de detecção `proventos_filtro_amplo`).
-- [ ] **DATA-02**: `lucro` e `PL` usam a base do **controlador**, não o consolidado com minoritários.
+- [x] **DATA-02**: `lucro` e `PL` usam a base do **controlador**, não o consolidado com minoritários.
 - [ ] **DATA-03**: `num_acoes` deixa de ser derivado de `lucro/LPA` com bases cruzadas
   (`build.py:87`); o fallback usa `impliedSharesOutstanding` (ON+PN), não `sharesOutstanding` (só a
   classe).
@@ -294,8 +294,8 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | SAN-05 | Phase 8 | Complete |
 | SAN-06 | Phase 8 | Complete |
 | SAN-07 | Phase 8 | Complete |
-| DATA-01 | Phase 9 | Pending |
-| DATA-02 | Phase 9 | Pending |
+| DATA-01 | Phase 9 | Complete |
+| DATA-02 | Phase 9 | Complete |
 | DATA-03 | Phase 9 | Pending |
 | DATA-04 | Phase 9 | Pending |
 | DATA-05 | Phase 9 | Pending |

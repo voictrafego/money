@@ -157,7 +157,7 @@ testes com o ITUB4 a 10 milhões de ações) é regenerado.
 regra de regressão: DATA-06 mede o progresso só depois dos consertos de dado)
 Plans:
 **Wave 1**
-- [ ] 09-01-PLAN.md — DATA-01 + DATA-02: JCP capturado (filtro amplo) + base do controlador (lucro E PL juntos), em cvm.py/build.py
+- [x] 09-01-PLAN.md — DATA-01 + DATA-02: JCP capturado (filtro amplo) + base do controlador (lucro E PL juntos), em cvm.py/build.py
 - [ ] 09-04-PLAN.md — DATA-05: DY declara base BRUTA (rótulo + glossário), sem imposto especulativo
 
 **Wave 2** *(blocked on Wave 1 completion)*
