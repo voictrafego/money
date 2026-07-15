@@ -72,7 +72,7 @@ def _escala_por_ano(
     nunca aborta — SAN-06). Nunca ENCOLHE (`max(0, expoente)`) — multiplicar por unidade perdida
     é o conserto; dividir perderia ações reais."""
     if not implied:
-        return dict(oficial_cru)
+        return _alinhar_escala_interna(oficial_cru)
     escalado: Dict[int, float] = {}
     for ano, cru in oficial_cru.items():
         if cru and cru > 0:
@@ -81,6 +81,36 @@ def _escala_por_ano(
         else:
             escalado[ano] = cru
     return escalado
+
+
+def _alinhar_escala_interna(oficial_cru: Dict[int, float]) -> Dict[int, float]:
+    """Alinhamento de escala INTERNO À SÉRIE, para quando NÃO há âncora externa (`implied`
+    None — ELET3/ELET6/IGTI11 dão 404 no Yahoo). O `composicao_capital` troca de MILHARES para
+    UNIDADES entre anos do MESMO ticker (ELET3: 2020 em unidades = 1,57 bi, 2021+ em milhares =
+    1,57 M) → salto artificial ÷1000 que o SAN-02 acende. Sem `impliedSharesOutstanding`, a
+    unidade de cada ano é inferida da PRÓPRIA série: a "banda" de cada ano é `round(log10(n)/3)`
+    (a potência de 1000), a banda de REFERÊNCIA é a mais frequente (empate → a do ano mais
+    recente) e cada ano é trazido à referência por `1000 ** (banda − ref)`.
+
+    Corrige SÓ desvios que são potência de 1000 (troca de unidade). Variação corporativa REAL
+    (não-potência-de-1000) sobrevive: no IGTI11 o salto 2020→2021 = 12.811 = 1000 (unidade) ×
+    ~12,8 (reorganização real de 2021) — a unidade é corrigida, os ~12,8× reais permanecem e o
+    SAN-02 os reporta, de propósito. Menos de 2 anos com contagem: devolve a série crua."""
+    validos = {a: v for a, v in oficial_cru.items() if v and v > 0}
+    if len(validos) < 2:
+        return dict(oficial_cru)
+    bandas = {a: round(math.log10(v) / 3.0) for a, v in validos.items()}
+    freq: Dict[int, int] = {}
+    for b in bandas.values():
+        freq[b] = freq.get(b, 0) + 1
+    mais_freq = max(freq.values())
+    candidatas = [b for b, f in freq.items() if f == mais_freq]
+    banda_ano_recente = bandas[max(validos)]
+    ref = banda_ano_recente if banda_ano_recente in candidatas else max(candidatas)
+    return {
+        a: (v / (1000 ** (bandas[a] - ref)) if (v and v > 0) else v)
+        for a, v in oficial_cru.items()
+    }
 
 
 def montar_empresa(
