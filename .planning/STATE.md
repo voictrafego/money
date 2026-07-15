@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
-status: verifying
+status: ready_to_plan
 stopped_at: Completed 08-04-PLAN.md (os 5 checks aritméticos SAN-01..05 + limiares congelados)
 last_updated: "2026-07-15T00:35:57.614Z"
 last_activity: 2026-07-15
 progress:
   total_phases: 8
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 11
   completed_plans: 11
-  percent: 100
+  percent: 38
 ---
 
 # Project State
@@ -32,9 +32,9 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 ## Current Position
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
-Phase: 08 (sanidade-dos-dados-san) — EXECUTING
-Plan: 6 of 6
-Status: Phase complete — ready for verification
+Phase: 9
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-07-15
 
 Progress: [██████████] 100%
@@ -93,6 +93,7 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 | 12. Custo de capital / Ke (KE) | TBD | - | - |
 | 13. Motores + contrato de saída (ENG) | TBD | - | - |
 | 14. Validação honesta (VAL) | TBD | - | - |
+| 08 | 6 | - | - |
 
 **Recent Trend:**
 
