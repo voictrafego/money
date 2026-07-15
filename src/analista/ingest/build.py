@@ -95,7 +95,18 @@ def _alinhar_escala_interna(oficial_cru: Dict[int, float]) -> Dict[int, float]:
     Corrige SÓ desvios que são potência de 1000 (troca de unidade). Variação corporativa REAL
     (não-potência-de-1000) sobrevive: no IGTI11 o salto 2020→2021 = 12.811 = 1000 (unidade) ×
     ~12,8 (reorganização real de 2021) — a unidade é corrigida, os ~12,8× reais permanecem e o
-    SAN-02 os reporta, de propósito. Menos de 2 anos com contagem: devolve a série crua."""
+    SAN-02 os reporta, de propósito. Menos de 2 anos com contagem: devolve a série crua.
+
+    🔴 NO-SHRINK guard (WR-03), assimétrico e espelhando o `max(0, expoente)` de
+    `_escala_por_ano`: sem âncora externa, a banda de referência sai da PRÓPRIA série; um ano
+    cuja contagem REAL seja ≥ ~31,6× a referência tem a banda deslocada em +1 (`bandas[a] − ref`
+    > 0) e seria DIVIDIDO por 1000 — destruindo ações reais (reintroduz a dispersão que a fase
+    curou). Por isso só ENCOLHE (delta > 0, ÷1000) quando o ano é troca de unidade LIMPA — sua
+    banda `log10(v)/3` cai perto de um inteiro (resíduo pequeno); com resíduo grande a diferença
+    é variação societária real e o ano fica INTACTO. A direção de CRESCER (delta < 0, ×1000 —
+    recuperar unidade perdida em anos de MILHARES) segue sem guarda: multiplicar conserta,
+    dividir é o que arrisca (ELET3 2020, unidades entre anos de milhares, tem resíduo pequeno e
+    é corretamente trazido à referência)."""
     validos = {a: v for a, v in oficial_cru.items() if v and v > 0}
     if len(validos) < 2:
         return dict(oficial_cru)
@@ -107,10 +118,18 @@ def _alinhar_escala_interna(oficial_cru: Dict[int, float]) -> Dict[int, float]:
     candidatas = [b for b, f in freq.items() if f == mais_freq]
     banda_ano_recente = bandas[max(validos)]
     ref = banda_ano_recente if banda_ano_recente in candidatas else max(candidatas)
-    return {
-        a: (v / (1000 ** (bandas[a] - ref)) if (v and v > 0) else v)
-        for a, v in oficial_cru.items()
-    }
+
+    def _alinhado(a: float, v: float) -> float:
+        if not (v and v > 0):
+            return v
+        delta = bandas[a] - ref
+        if delta > 0:  # encolheria: só se for troca de unidade limpa (resíduo pequeno)
+            cont = math.log10(v) / 3.0
+            if abs(cont - round(cont)) > 0.15:
+                delta = 0  # variação real — não divide ações reais (WR-03)
+        return v / (1000 ** delta)
+
+    return {a: _alinhado(a, v) for a, v in oficial_cru.items()}
 
 
 def montar_empresa(
