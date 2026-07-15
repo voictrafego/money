@@ -62,7 +62,9 @@ def header_dy(dy_recorrente: Optional[float], dy_atual: Optional[float]) -> dict
             "help": (
                 "DY recorrente: provento sustentável (lucro normalizado × payout "
                 "sustentável) sobre o preço. O trailing (cinza, ao lado) pode estar "
-                "inflado por proventos extraordinários da janela (Cap. 6)."
+                "inflado por proventos extraordinários da janela (Cap. 6). "
+                "É um DY **bruto** (proventos brutos sobre o preço): o imposto de renda "
+                "sobre dividendos/JCP não é descontado."
             ),
             "fallback": False,
         }
@@ -73,7 +75,9 @@ def header_dy(dy_recorrente: Optional[float], dy_atual: Optional[float]) -> dict
         "delta": None,
         "delta_color": "off",
         "help": (
-            "DY recorrente indisponível (ano de prejuízo na janela) — exibindo o DY trailing."
+            "DY recorrente indisponível (ano de prejuízo na janela) — exibindo o DY trailing. "
+            "É um DY **bruto** (proventos brutos sobre o preço): o imposto de renda "
+            "sobre dividendos/JCP não é descontado."
         ),
         "fallback": True,
     }

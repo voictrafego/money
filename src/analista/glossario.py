@@ -30,7 +30,9 @@ G: dict[str, str] = {
     ),
     "dy": (
         "**Dividend Yield (DY)** — proventos por ação ÷ preço da ação, em %. Quanto a ação 'rende' "
-        "em dividendos. Compare com a Selic/renda fixa, lembrando que ação tem risco maior."
+        "em dividendos. É a base **bruta** (proventos brutos sobre o preço): o imposto de renda "
+        "sobre dividendos/JCP não é descontado. Compare com a Selic/renda fixa, lembrando que "
+        "ação tem risco maior."
     ),
     "roe": (
         "**ROE — Retorno sobre o Patrimônio Líquido** — lucro líquido recorrente ÷ patrimônio líquido. "
@@ -54,7 +56,7 @@ G: dict[str, str] = {
         "cobriu 1,5× o dividendo).\n"
         "- **Payout (último ano)**: % do lucro do exercício mais recente distribuído como proventos. Acima de 100% é alerta.\n"
         "- **Payout p/ valuation (sustentável)**: mediana histórica do payout, usada pelo DDM (mais robusta a anos atípicos).\n"
-        "- **DY — Dividend Yield**: proventos ÷ preço, em %.\n"
+        "- **DY — Dividend Yield**: proventos ÷ preço, em %; base **bruta** (sem descontar o imposto de renda sobre dividendos/JCP).\n"
         "- **DY rec. — DY recorrente**: DY calculado sobre o provento normalizado/sustentável (exclui extraordinários), "
         "leitura mais conservadora."
     ),
