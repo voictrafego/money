@@ -74,13 +74,15 @@ def test_build_prefere_distribuicao_cvm_sobre_yahoo(stub_fontes):
     # Yahoo diria DPA 1.18/ação (sem JCP) → payout ~24%; a CVM tem o provento completo (div+JCP).
     dm = prices.DadosMercado(ticker="BBAS3")
     dm.preco_atual = 20.34
-    dm.num_acoes = 5_708_689_674
+    # DATA-03: num_acoes vem da contagem oficial (ausente para o cd stub) → fallback ao
+    # impliedSharesOutstanding (ON+PN). BBAS3 é ON puro → implied ≈ sharesOutstanding. O payout
+    # cancela num_acoes (dpa/lpa), mas ele precisa existir para dpa/lpa não serem None.
+    dm.implied_shares_outstanding = 5_708_689_674
     dm.nome = "Banco do Brasil"
     dm.dividendos_por_ano = {2024: 1.18}
     stub_fontes["dm"] = dm
     f = {k: None for k in _CAMPOS}
     f["lucro_liquido"] = 29172e6
-    f["lpa"] = 4.62
     f["dividendos_distribuidos"] = 14824e6  # CVM: div + JCP completos
     stub_fontes["fund"] = {2024: f}
 
@@ -92,16 +94,18 @@ def test_build_prefere_distribuicao_cvm_sobre_yahoo(stub_fontes):
 def test_build_cai_para_yahoo_quando_cvm_sem_provento(stub_fontes):
     dm = prices.DadosMercado(ticker="FOO3")
     dm.preco_atual = 10.0
-    dm.num_acoes = 1_000_000_000
+    # DATA-03: num_acoes vem da contagem oficial (ausente para o cd stub) → fallback ao
+    # impliedSharesOutstanding (ON+PN), NUNCA ao sharesOutstanding (armadilha 1). O stub sem
+    # contagem oficial precisa do implied para o fallback popular num_acoes.
+    dm.implied_shares_outstanding = 1_000_000_000
     dm.nome = "Foo"
     dm.dividendos_por_ano = {2024: 0.50}
     stub_fontes["dm"] = dm
     f = {k: None for k in _CAMPOS}
     f["lucro_liquido"] = 1000e6
-    f["lpa"] = 1.0
     f["dividendos_distribuidos"] = None  # CVM sem a linha → fallback Yahoo
     stub_fontes["fund"] = {2024: f}
 
     c = build.montar_empresa("FOO3", ano_base=2024, n_anos=1)
-    # Yahoo: 0.50/ação × 1bi ações = 500mi
+    # Yahoo: 0.50/ação × 1bi ações (implied ON+PN) = 500mi
     assert c.dividendos[2024] == pytest.approx(0.50 * 1_000_000_000)

@@ -310,10 +310,6 @@
 'tests/test_ingest_resolucao.py::test_regressao_cosan': golden_nivel
 'tests/test_ingest_resolucao.py::test_regressao_energisa': golden_nivel
 'tests/test_ingest_resolucao.py::test_regressao_tim': golden_nivel
-'tests/test_ingest_unit.py::test_unit_taee_converte_para_base_de_unit': golden_nivel
-'tests/test_ingest_unit.py::test_unit_klbn_fator_derivado_da_razao': golden_nivel
-'tests/test_ingest_unit.py::test_nao_unit_fica_intacto': golden_nivel
-'tests/test_ingest_unit.py::test_unit_sem_lpa_cvm_usa_units_do_yahoo': golden_nivel
 'tests/test_lentes.py::test_graham': invariante
 'tests/test_lentes.py::test_graham_degrada': contrato
 'tests/test_lentes.py::test_vpa': contrato

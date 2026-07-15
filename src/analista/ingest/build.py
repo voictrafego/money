@@ -3,11 +3,16 @@
 Combina:
   - fundamentos anuais (CVM): LL, PL, FCO, receita, ativos/passivos, dívida, intangível;
   - mercado (yfinance): preço, dividendos/ação por ano, nº de ações, beta, liquidez;
-  - nº de ações por ano: deduzido de LL/LPA (CVM) quando o LPA está disponível.
+  - nº de ações por ano: a contagem OFICIAL da CVM (`composicao_capital`, ON+PN), com a escala
+    (MILHARES × unidades) detectada contra o `impliedSharesOutstanding` (DATA-03). O fallback,
+    quando o ano não tem contagem oficial, é o `impliedSharesOutstanding` (ON+PN) — NUNCA o
+    `sharesOutstanding` (só a classe negociada). A derivação `LL/LPA`, causa-raiz da dispersão
+    em 41/104 tickers, foi APOSENTADA; `c.lpa_cvm` segue como diagnóstico.
 """
 
 from __future__ import annotations
 
+import math
 from typing import Dict, List, Optional
 
 from ..core import sanidade
@@ -22,20 +27,43 @@ def _eh_unit(ticker: str) -> bool:
     return ticker.upper().replace(".SA", "").endswith("11")
 
 
-def _fator_unit(contagem_cvm: Dict[int, float], acoes_yahoo: Optional[float]) -> int:
-    """Nº de ações que compõem 1 unit (3 = TAEE, ~5 = KLBN). A contagem da CVM (LL/LPA) é a
-    base POR AÇÃO; o `sharesOutstanding` do Yahoo, para units, é a contagem de UNITS negociadas.
-    A razão (ações/unit) é um inteiro pequeno — usamos a mediana das razões anuais, arredondada.
+def _fator_unit(contagem_oficial: Dict[int, float], acoes_yahoo: Optional[float]) -> int:
+    """Nº de ações que compõem 1 unit (3 = TAEE/ALUP, ~5 = KLBN). A contagem OFICIAL da CVM
+    (`composicao_capital`, já escalada) é a base POR AÇÃO (ON+PN total); o `sharesOutstanding`
+    do Yahoo, para units, é a contagem de UNITS negociadas. A razão (ações/unit) é um inteiro
+    pequeno — usamos a mediana das razões anuais, arredondada. Com a contagem ON+PN correta, o
+    fator vira exato (ALUP11: 988.880.601 / 329.626.867 = 3,000), sem o valor 5 espúrio que a
+    contagem inflada pelos minoritários produzia (Pitfall 5).
+
     Só aceita ≥ 2 (senão não há unit de fato); 1 = sem conversão (deixa os números intactos).
     A trava ≥ 2 protege não-units que caiam aqui por engano (razão ≈ 1 → fator 1)."""
     if not acoes_yahoo:
         return 1
-    razoes = sorted(c / acoes_yahoo for c in contagem_cvm.values() if c)
+    razoes = sorted(c / acoes_yahoo for c in contagem_oficial.values() if c)
     if not razoes:
         return 1
     mediana = razoes[len(razoes) // 2]
     cand = round(mediana)
     return cand if cand >= 2 else 1
+
+
+def _fator_escala_oficial(oficial_cru: Dict[int, float], implied: Optional[float]) -> int:
+    """Escala da contagem oficial (armadilha 3): a CVM publica o `composicao_capital` em
+    MILHARES para umas empresas (ITUB4/BRSR6) e em UNIDADES para outras (GOAU4/CGRA4/CSNA3/
+    EQTL3/ALUP11/MRFG3). Usar a contagem CRUA reintroduziria o ×1000 por outro caminho (Pitfall
+    4). Detectamos o fator cruzando a contagem oficial do ÚLTIMO ano disponível com o
+    `impliedSharesOutstanding` (ON+PN, âncora limpa que bate <0,3% em 5/5) e arredondamos para a
+    potência de 1000 mais próxima (na prática 1 ou 1000).
+
+    Sem âncora (`implied` None — ex.: MRFG3 404) ou sem contagem: fator 1 (não confirmável, mas
+    nunca aborta — SAN-06). Nunca devolve < 1 (encolher a contagem perderia ações)."""
+    if not oficial_cru or not implied:
+        return 1
+    ult = oficial_cru[max(oficial_cru)]
+    if ult <= 0:
+        return 1
+    expoente = round(math.log10(implied / ult) / 3.0)  # potência de 1000
+    return 1000 ** max(0, expoente)
 
 
 def montar_empresa(
@@ -75,8 +103,11 @@ def montar_empresa(
 
     acoes_atual = dm.num_acoes  # Yahoo sharesOutstanding: já é a contagem de UNITS p/ tickers unit
 
-    # Passo 1: fundamentos por ano + contagem de ações CRUA da CVM (base POR AÇÃO = LL/LPA).
-    contagem_cvm: Dict[int, float] = {}
+    # Passo 1: fundamentos por ano + contagem OFICIAL de ações da CVM por ano (CRUA, ON+PN).
+    # DATA-03 (Fase 9): a fonte de num_acoes deixa de ser a derivação LL/LPA (base cruzada, a
+    # causa-raiz da dispersão em 41/104 tickers) e passa a ser a contagem oficial do
+    # composicao_capital (cvm.contagem_oficial_do_ano). A escala é aplicada depois do laço.
+    oficial_cru: Dict[int, float] = {}
     dist_cvm: Dict[int, float] = {}  # proventos pagos (div + JCP) por ano, da CVM
     for ano in anos:
         f = cvm.fundamentos_do_ano(cd_cvm, ano)
@@ -102,9 +133,9 @@ def montar_empresa(
             if f[campo] is not None:
                 getattr(c, campo)[ano] = f[campo]
 
-        lpa_cvm = f.get("lpa")
-        if lpa_cvm and f["lucro_liquido"]:
-            contagem_cvm[ano] = abs(f["lucro_liquido"] / lpa_cvm)
+        cont_oficial = cvm.contagem_oficial_do_ano(cd_cvm, ano)
+        if cont_oficial is not None:
+            oficial_cru[ano] = cont_oficial
         if f.get("dividendos_distribuidos") is not None:
             dist_cvm[ano] = f["dividendos_distribuidos"]
 
@@ -116,19 +147,29 @@ def montar_empresa(
         if f.get("lpa") is not None:
             c.lpa_cvm[ano] = f["lpa"]  # LPA cru da CVM (pré-divisão) — a causa-raiz
 
-    # BUG-UNIT: a contagem da CVM é POR AÇÃO (ON+PN), mas preço e proventos (Yahoo) são POR UNIT.
-    # Sem converter, LPA/P/L/EY ficam inflados pelo fator da unit (3× TAEE, ~5× KLBN), o payout
-    # estoura (>100% falso) e o DDM subavalia a unit → veredito "sobreavaliada" espúrio. Dividir a
-    # contagem pelo fator coloca num_acoes na base de UNITS, alinhando TODOS os derivados ao preço.
-    fator = _fator_unit(contagem_cvm, acoes_atual) if _eh_unit(ticker) else 1
+    # Escala (armadilha 3 / Pitfall 4): a contagem oficial vem em MILHARES (ITUB4/BRSR6) ou em
+    # UNIDADES (GOAU4/…). Detecta o fator contra o impliedSharesOutstanding do último ano e o
+    # aplica à série INTEIRA — nunca usa a contagem crua.
+    fator_escala = _fator_escala_oficial(oficial_cru, dm.implied_shares_outstanding)
+    oficial: Dict[int, float] = {ano: cru * fator_escala for ano, cru in oficial_cru.items()}
+
+    # BUG-UNIT: a contagem oficial é POR AÇÃO (ON+PN), mas preço e proventos (Yahoo) são POR UNIT.
+    # Sem converter, LPA/P/L/EY ficam inflados pelo fator da unit (3× TAEE/ALUP, ~5× KLBN), o
+    # payout estoura (>100% falso) e o DDM subavalia a unit → veredito "sobreavaliada" espúrio.
+    # Dividir pela contagem pelo fator coloca num_acoes na base de UNITS, alinhando ao preço.
+    fator = _fator_unit(oficial, acoes_atual) if _eh_unit(ticker) else 1
 
     # Passo 2: num_acoes na base de UNITS e dividendos totais (consistentes com o preço).
+    # DATA-03 (armadilha 1): o fallback é o impliedSharesOutstanding (ON+PN), NUNCA o
+    # sharesOutstanding (dm.num_acoes = só a classe negociada), que daria falso ~2× em toda
+    # empresa com PN.
+    implied = dm.implied_shares_outstanding
     for ano in anos:
-        if ano in contagem_cvm:
-            c.num_acoes[ano] = contagem_cvm[ano] / fator
+        if ano in oficial:
+            c.num_acoes[ano] = oficial[ano] / fator
             c.origem_num_acoes[ano] = "cvm"          # SAN-02: carimba a origem de cada ano
-        elif acoes_atual:
-            c.num_acoes[ano] = acoes_atual  # Yahoo já está na base de unit — não dividir
+        elif implied:
+            c.num_acoes[ano] = implied / fator
             c.origem_num_acoes[ano] = "yahoo_fallback"
 
         # dividendos totais do ano (R$). 🔴 BUG-JCP — a DIREÇÃO ESTÁ AO CONTRÁRIO DO QUE O
