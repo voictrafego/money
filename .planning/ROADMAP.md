@@ -164,7 +164,7 @@ Plans:
 - [x] 09-02-PLAN.md — DATA-03: num_acoes da contagem oficial (composicao_capital + join CNPJ→CD_CVM + escala detectada); _fator_unit refeito
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 09-03-PLAN.md — DATA-04: spike de localização do degrau de ~13% (ref obsoleta) + conserto do duplo split + teste-guarda
+- [x] 09-03-PLAN.md — DATA-04: spike de localização do degrau de ~13% (ref obsoleta) + conserto do duplo split + teste-guarda
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 09-05-PLAN.md — DATA-06: snapshot limpo novo + loader desacoplado + monotonicidade encolhendo (snapshot_bancos fica p/ Fase 10)

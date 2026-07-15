@@ -136,7 +136,7 @@ Os asserts vêm **antes** dos consertos, de propósito: eles **são** o teste de
   BRSR6 vêm em **MILHARES** de ações, GOAU4/CGRA4/CSNA3/EQTL3/ALUP11/MRFG3 vêm em **unidades**. Usá-lo
   cru **reintroduziria a doença do ×1000 por outro caminho**. Validação cruzada: ele confirma o
   `impliedSharesOutstanding` do Yahoo com erro < 0,3% em 5 de 5 tickers.
-- [ ] **DATA-04**: O duplo ajuste de split é removido (`prices.py:71-111` — o `Close` do Yahoo já vem
+- [x] **DATA-04**: O duplo ajuste de split é removido (`prices.py:71-111` — o `Close` do Yahoo já vem
   ajustado; a engine **cria** um degrau artificial de 13% no ITUB4).
 - [ ] **DATA-05**: O DY reflete o **IRRF de 17,5% sobre JCP** (Lei 15.270/2025, desde 01/01/2026) ou
   declara explicitamente que é bruto.
@@ -297,7 +297,7 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | DATA-01 | Phase 9 | Complete |
 | DATA-02 | Phase 9 | Complete |
 | DATA-03 | Phase 9 | Complete |
-| DATA-04 | Phase 9 | Pending |
+| DATA-04 | Phase 9 | Complete |
 | DATA-05 | Phase 9 | Pending |
 | DATA-06 | Phase 9 | Pending |
 | PRIM-01 | Phase 10 | Pending |

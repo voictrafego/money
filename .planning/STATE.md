@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
-stopped_at: Completed 09-02-PLAN.md (DATA-03)
-last_updated: "2026-07-15T13:57:57.306Z"
+stopped_at: Completed 09-03-PLAN.md (DATA-04)
+last_updated: "2026-07-15T16:34:21.726Z"
 last_activity: 2026-07-15
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 16
-  completed_plans: 13
-  percent: 81
+  completed_plans: 14
+  percent: 88
 ---
 
 # Project State
@@ -33,13 +33,13 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 09 (ingest-o-correta-data) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-07-15
 
-Progress: [████████░░] 81%
+Progress: [█████████░] 88%
 
-**Suíte:** `435 passed, 1 skipped, 38 deselected, 2 xfailed` — 0 XPASS. Os 2 xfailed SÃO as duas
+**Suíte:** `462 passed, 1 skipped, 34 deselected, 2 xfailed` — 0 XPASS. Os 2 xfailed SÃO as duas
 doenças (BLIND-02 vira verde na Fase 12; BLIND-03 na Fase 10). Golden de nível que quebrar deve ser
 **DELETADO, nunca atualizado** (contrato novo do CLAUDE.md).
 
@@ -110,10 +110,26 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 | Phase 08 P05 | 20min | 2 tasks | 4 files |
 | Phase 09 P01 | 40min | 2 tasks | 3 files |
 | Phase 09 P02 | 55min | 2 tasks | 4 files |
+| Phase 09 P03 | 20min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **DATA-04 (Fase 9 / plano 09-03) — o degrau artificial de ~13% do ITUB4 NÃO existe mais na série
+  por-ação de valuation (MEDIDO, não suposto).** A ref do requisito (`prices.py:71-111`) é OBSOLETA
+  (Fases 3-4 reescreveram o módulo); o site REAL do split é `prices._ajustar_por_split` (`prices.py:93-133`),
+  que alimenta só `dm.ohlc_ajustado` (candle `report.py:682` + indicadores) — **nunca cruzado com
+  `num_acoes`**. Os dois ingredientes do double-count EXISTEM (spike): `num_acoes` 2024→2025 = **1,1311×**
+  (bonificação real, degrau legítimo único) e o Yahoo `.splits` registra a mesma bonif. como 1,1 × 1,03 =
+  **1,133** (o "~13%"). Mas ficam em **trilhos separados**: firewall das Fases 3-4 (`serie_precos` = Close
+  nominal) + `num_acoes` oficial por ano do 09-02. **Conserto = guarda de regressão, SEM edição de produção**
+  (o plano previu esse desfecho): `tests/test_ingest_split.py` (3 `invariante` adimensionais, ticker
+  sintético `BON3` — BLIND-04a limpo) trava a ausência do degrau e é **RED-able provado por execução**
+  (regressão simulada `serie_precos = _ajustar_por_split(...)` → 3 asserts vermelhos). **Zero motor/knob/
+  config** (`config.yaml`/`calibracao.lock.yaml` intactos; 3 graus). Suíte default **462 passed, 1 skipped,
+  2 xfailed, 0 failed**; `-m golden_nivel` **34 passed, 0 CLASSIFICACAO ORFA**. Sem checkpoint (mudança
+  aditiva; nenhum teste diagnóstico existente invalidado, ao contrário de 09-01/09-02).
 
 - **DATA-03 (Fase 9 / plano 09-02) — `num_acoes` deixa de ser `LL/LPA` e passa à contagem OFICIAL
   da CVM.** `cvm.contagem_oficial_do_ano` lê `composicao_capital` (ON+PN em circulação =
@@ -333,8 +349,8 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 
 ## Session Continuity
 
-Last session: 2026-07-15T13:57:57.298Z
-Stopped at: Completed 09-02-PLAN.md (DATA-03)
+Last session: 2026-07-15T16:33:50.358Z
+Stopped at: Completed 09-03-PLAN.md (DATA-04)
 Resume file: None
 
 ## Operator Next Steps
