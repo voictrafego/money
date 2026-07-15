@@ -1,0 +1,564 @@
+# baseline_sanidade.yaml — o BASELINE DOS SUJOS (Fase 8 / plano 08-06).
+#
+# GERADO por scripts/gerar_baseline_sanidade.py — offline, idempotente. NÃO edite à mão.
+#
+# Isto é um golden de DETECÇÃO, não de nível. Ele NÃO trava um método nem um número em reais
+# — trava QUAIS flags disparam por ticker. É por isso que não viola o BLIND-04a e é por isso
+# que vive em YAML (nenhum literal de ticker no AST de um teste; helpers_blindagem.py:286-292).
+#
+# A lista de sujos só pode ENCOLHER (D-06). Se um par (ticker, check) sumir, foi a Fase 9
+# consertando o dado. Se um par RESSUSCITAR, foi uma regressão — e o teste fica vermelho.
+# SE VOCÊ ESTÁ TENTADO A "ATUALIZAR" ESTE ARQUIVO PARA DEIXAR A SUÍTE VERDE, PARE — é
+# exatamente o reflexo que produziu o overfit do v2.3 (dois erros se anulando).
+#
+# O `bucket` é ordem de grandeza (string ~1eN), não magnitude. Se o bucket mudar sem a flag
+# sumir, a escala não foi consertada — foi só empurrada, e o teste de bucket quebra.
+#
+# confianca ∈ {alta, media, baixa, nao_avaliada}. flags: [] + confianca: alta = ticker limpo
+# (a ausência de flag é versionada tão a sério quanto a presença).
+ABCB4:
+  confianca: baixa
+  flags:
+  - bucket: ~1e0
+    check: SAN-01
+  - bucket: ~1e-2
+    check: SAN-02
+  - bucket: ~1e0
+    check: SAN-03
+ABEV3:
+  confianca: alta
+  flags: []
+AGRO3:
+  confianca: alta
+  flags: []
+ALOS3:
+  confianca: baixa
+  flags:
+  - bucket: ~1e1
+    check: SAN-02
+  - bucket: ~1e0
+    check: SAN-04
+ALUP11:
+  confianca: baixa
+  flags:
+  - bucket: ~1e0
+    check: SAN-01
+  - bucket: ~1e0
+    check: SAN-03
+  - bucket: ~1e0
+    check: SAN-04
+ASAI3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+AURE3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+  - bucket: ~1e-1
+    check: SAN-05
+AZUL4:
+  confianca: baixa
+  flags:
+  - bucket: ~1e-2
+    check: SAN-02
+  - bucket: ~1e0
+    check: SAN-04
+B3SA3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-03
+  - bucket: ~1e-1
+    check: SAN-05
+BBAS3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-03
+  - bucket: ~1e0
+    check: SAN-04
+BBDC3:
+  confianca: alta
+  flags: []
+BBDC4:
+  confianca: alta
+  flags: []
+BBSE3:
+  confianca: media
+  flags:
+  - bucket: ~1e-1
+    check: SAN-05
+BEEF3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-05
+BMGB4:
+  confianca: baixa
+  flags:
+  - bucket: ~1e1
+    check: SAN-02
+BPAC11:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-03
+BRAP4:
+  confianca: alta
+  flags: []
+BRFS3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+BRKM5:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+  - bucket: ~1e0
+    check: SAN-05
+BRSR6:
+  confianca: baixa
+  flags:
+  - bucket: ~1e-5
+    check: SAN-02
+  - bucket: ~1e5
+    check: SAN-02
+  - bucket: ~1e-1
+    check: SAN-03
+  - bucket: ~1e1
+    check: SAN-03
+CCRO3:
+  confianca: alta
+  flags: []
+CGRA4:
+  confianca: baixa
+  flags:
+  - bucket: ~1e-3
+    check: SAN-01
+  - bucket: ~1e-3
+    check: SAN-02
+CMIG3:
+  confianca: alta
+  flags: []
+CMIG4:
+  confianca: alta
+  flags: []
+CMIN3:
+  confianca: baixa
+  flags:
+  - bucket: ~1e1
+    check: SAN-02
+  - bucket: ~1e0
+    check: SAN-04
+COGN3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+CPFE3:
+  confianca: alta
+  flags: []
+CPLE3:
+  confianca: baixa
+  flags:
+  - bucket: ~1e1
+    check: SAN-02
+  - bucket: ~1e0
+    check: SAN-04
+CPLE6:
+  confianca: baixa
+  flags:
+  - bucket: ~1e1
+    check: SAN-02
+  - bucket: ~1e0
+    check: SAN-04
+CSAN3:
+  confianca: baixa
+  flags:
+  - bucket: ~1e0
+    check: SAN-01
+  - bucket: ~1e-1
+    check: SAN-02
+  - bucket: ~1e1
+    check: SAN-02
+  - bucket: ~1e0
+    check: SAN-03
+CSMG3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-03
+CSNA3:
+  confianca: baixa
+  flags:
+  - bucket: ~1e-1
+    check: SAN-02
+  - bucket: ~1e1
+    check: SAN-02
+  - bucket: ~1e0
+    check: SAN-04
+  - bucket: ~1e-1
+    check: SAN-05
+CXSE3:
+  confianca: alta
+  flags: []
+CYRE3:
+  confianca: baixa
+  flags:
+  - bucket: ~1e1
+    check: SAN-02
+  - bucket: ~1e0
+    check: SAN-04
+DOHL4:
+  confianca: baixa
+  flags:
+  - bucket: ~1e-1
+    check: SAN-01
+DXCO3:
+  confianca: baixa
+  flags:
+  - bucket: ~1e2
+    check: SAN-01
+  - bucket: ~1e2
+    check: SAN-02
+  - bucket: ~1e2
+    check: SAN-04
+EGIE3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+  - bucket: ~1e-1
+    check: SAN-05
+ELET3:
+  confianca: alta
+  flags: []
+ELET6:
+  confianca: alta
+  flags: []
+EMBR3:
+  confianca: alta
+  flags: []
+ENEV3:
+  confianca: baixa
+  flags:
+  - bucket: ~1e-1
+    check: SAN-02
+  - bucket: ~1e1
+    check: SAN-02
+  - bucket: ~1e0
+    check: SAN-04
+ENGI11:
+  confianca: baixa
+  flags:
+  - bucket: ~1e0
+    check: SAN-01
+  - bucket: ~1e-3
+    check: SAN-02
+  - bucket: ~1e3
+    check: SAN-02
+  - bucket: ~1e0
+    check: SAN-04
+EQTL3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+EZTC3:
+  confianca: alta
+  flags: []
+FESA4:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-03
+FLRY3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+GGBR4:
+  confianca: alta
+  flags: []
+GOAU4:
+  confianca: baixa
+  flags:
+  - bucket: ~1e0
+    check: SAN-01
+  - bucket: ~1e0
+    check: SAN-04
+GRND3:
+  confianca: alta
+  flags: []
+HAPV3:
+  confianca: media
+  flags:
+  - bucket: ~1e-1
+    check: SAN-03
+  - bucket: ~1e-1
+    check: SAN-05
+HYPE3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+IGTI11:
+  confianca: media
+  flags:
+  - bucket: ~1e-1
+    check: SAN-03
+ITSA3:
+  confianca: alta
+  flags: []
+ITSA4:
+  confianca: alta
+  flags: []
+ITUB3:
+  confianca: baixa
+  flags:
+  - bucket: ~1e-3
+    check: SAN-02
+  - bucket: ~1e3
+    check: SAN-02
+ITUB4:
+  confianca: baixa
+  flags:
+  - bucket: ~1e-3
+    check: SAN-02
+  - bucket: ~1e3
+    check: SAN-02
+JBSS3:
+  confianca: baixa
+  flags:
+  - bucket: ~1e-1
+    check: SAN-02
+  - bucket: ~1e1
+    check: SAN-02
+  - bucket: ~1e0
+    check: SAN-04
+KEPL3:
+  confianca: alta
+  flags: []
+KLBN11:
+  confianca: baixa
+  flags:
+  - bucket: ~1e-1
+    check: SAN-01
+  - bucket: ~1e0
+    check: SAN-04
+KLBN4:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+LEVE3:
+  confianca: baixa
+  flags:
+  - bucket: ~1e1
+    check: SAN-02
+LREN3:
+  confianca: alta
+  flags: []
+MDIA3:
+  confianca: alta
+  flags: []
+MGLU3:
+  confianca: media
+  flags:
+  - bucket: ~1e-1
+    check: SAN-03
+  - bucket: ~1e-1
+    check: SAN-05
+MRFG3:
+  confianca: baixa
+  flags:
+  - bucket: ~1e-1
+    check: SAN-02
+  - bucket: ~1e1
+    check: SAN-02
+  - bucket: ~1e0
+    check: SAN-04
+  - bucket: ~1e0
+    check: SAN-05
+MRVE3:
+  confianca: alta
+  flags: []
+MULT3:
+  confianca: alta
+  flags: []
+ODPV3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+  - bucket: ~1e-1
+    check: SAN-05
+PEAB3:
+  confianca: alta
+  flags: []
+PETR3:
+  confianca: alta
+  flags: []
+PETR4:
+  confianca: alta
+  flags: []
+POMO4:
+  confianca: alta
+  flags: []
+PRIO3:
+  confianca: baixa
+  flags:
+  - bucket: ~1e1
+    check: SAN-02
+  - bucket: ~1e-1
+    check: SAN-05
+PSSA3:
+  confianca: alta
+  flags: []
+RADL3:
+  confianca: alta
+  flags: []
+RAIL3:
+  confianca: alta
+  flags: []
+RAIZ4:
+  confianca: baixa
+  flags:
+  - bucket: ~1e1
+    check: SAN-02
+  - bucket: ~1e0
+    check: SAN-03
+  - bucket: ~1e0
+    check: SAN-04
+RDOR3:
+  confianca: media
+  flags:
+  - bucket: ~1e-1
+    check: SAN-05
+RECV3:
+  confianca: alta
+  flags: []
+RENT3:
+  confianca: media
+  flags:
+  - bucket: ~1e-1
+    check: SAN-03
+  - bucket: ~1e1
+    check: SAN-03
+  - bucket: ~1e0
+    check: SAN-04
+ROMI3:
+  confianca: alta
+  flags: []
+SANB11:
+  confianca: alta
+  flags: []
+SAPR11:
+  confianca: alta
+  flags: []
+SAPR4:
+  confianca: alta
+  flags: []
+SBSP3:
+  confianca: baixa
+  flags:
+  - bucket: ~1e-1
+    check: SAN-01
+  - bucket: ~1e0
+    check: SAN-03
+SLCE3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-03
+SMTO3:
+  confianca: alta
+  flags: []
+SUZB3:
+  confianca: alta
+  flags: []
+TAEE11:
+  confianca: baixa
+  flags:
+  - bucket: ~1e0
+    check: SAN-01
+TASA4:
+  confianca: alta
+  flags: []
+TGMA3:
+  confianca: alta
+  flags: []
+TIMS3:
+  confianca: baixa
+  flags:
+  - bucket: ~1e-1
+    check: SAN-02
+  - bucket: ~1e1
+    check: SAN-02
+  - bucket: ~1e-1
+    check: SAN-03
+TOTS3:
+  confianca: alta
+  flags: []
+TRPL4:
+  confianca: baixa
+  flags:
+  - bucket: ~1e1
+    check: SAN-02
+UGPA3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-03
+UNIP6:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+USIM5:
+  confianca: baixa
+  flags:
+  - bucket: ~1e-2
+    check: SAN-02
+  - bucket: ~1e2
+    check: SAN-02
+  - bucket: ~1e0
+    check: SAN-04
+VALE3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+VBBR3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+VIVT3:
+  confianca: alta
+  flags: []
+VULC3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+WEGE3:
+  confianca: alta
+  flags: []
+WIZC3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
+  - bucket: ~1e-1
+    check: SAN-05
+YDUQ3:
+  confianca: media
+  flags:
+  - bucket: ~1e0
+    check: SAN-04
