@@ -32,15 +32,21 @@ Auditoria de milestone **passed** — blocker da aba Ranking do Streamlit (parid
 fechado por quick task `260712-p6r` antes do arquivamento. Suíte **437 testes verdes**; firewall
 selo↛report intacto. Marco arquivado em `.planning/milestones/v2.2-*`.
 
-**Agora: v2.4 Fidelidade do Valuation em andamento. Fase 8 (Sanidade dos Dados / SAN) completa 2026-07-15.**
-O pipeline agora **sabe quando o dado está errado**: 5 checks aritméticos (SAN-01..05) + reconciliação
-de JCP + clean surplus em `core/sanidade.py`, ligados ao `build.py` e provados por execução (D-04),
-sob contrato never-raise (SAN-06). O spike SAN-07 respondeu **NÃO** às duas perguntas contábeis
-(IHCD/AT1 fora do PL da CVM; dirty surplus FVOCI imaterial) — o terceiro bug de dados não existe.
-Congelado o baseline de regressão dos sujos (62 tickers / 117 pares, flag+bucket, zero R$) que a
-Fase 9 leva a zero, ticker a ticker. 7/7 requisitos verificados; suíte 459 verdes. **Nenhum dado
-consertado nesta fase** (de propósito — os asserts são o teste de regressão da Fase 9). Próximo:
-Fase 9 (Ingestão correta / DATA).
+**Agora: v2.4 Fidelidade do Valuation em andamento. Fase 9 (Ingestão correta / DATA) completa 2026-07-15.**
+A Doença 2 (dispersão) está curada na entrada: `c.dividendos` sai do filtro amplo (JCP capturado,
+DATA-01); `lucro`/`PL` na base do controlador (DATA-02); `num_acoes` vem da contagem oficial da CVM
+(`composicao_capital`, ON+PN − tesouraria, join CNPJ→CD_CVM), aposentando a derivação `LL/LPA` —
+com detecção de escala por-ano e interna-à-série (DATA-03); guarda RED-able do duplo split (DATA-04);
+o DY declara base bruta (DATA-05); e o snapshot de teste foi regenerado do pipeline curado
+(ITUB4 2019 = 11,02 bi de ações, não milhões), com a monotonicidade do DATA-06 reformulada num
+**ratchet honesto** — accept-list versionada e categórica (BLIND-04a-safe) porque a cura legitimamente
+revela sujeira que o baseline pré-cura não media; ambos os ratchets provados RED-able por execução.
+Dois goldens do método `LL/LPA` removido foram **deletados** (doutrina "DELETE, não atualize"); os
+knobs (orçamento de 3) ficaram intocados. 10/10 must-haves verificados; suíte **467 verdes**.
+Code review: WR-01/WR-03 corrigidos (0-change medido); WR-02 (heurística de escala indistinguível),
+WR-04, WR-05 e um comentário obsoleto em `build.py` seguem como dívida técnica documentada.
+Próximo: Fase 10 (Primitivas sem viés / PRIM) — inclui o critério de saída de deletar o golden
+`ITUB4 = 32,88`.
 
 <details>
 <summary>Histórico v1.7 (Swing Trade / Modo Trading / Home / Lentes-Selo-Comparador) — shipped 2026-07-04</summary>
