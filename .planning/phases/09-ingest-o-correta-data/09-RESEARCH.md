@@ -485,25 +485,28 @@ demanda `-m golden_nivel`); gate da fase: suíte verde v2.4 (0 failed).
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **DATA-06 — arquitetura dos fixtures (a mais importante).**
    - Sabemos: o snapshot sujo é evidência congelada; a monotonicidade precisa de "hoje" limpo; os
      testes de detecção precisam do sujo.
    - Falta decidir: gerar snapshot limpo novo + desacoplar o loader (recomendado) vs. rodar live.
    - Recomendação: snapshot limpo novo, preservar sujo, apontar só `_pares_e_buckets_de_hoje` para o limpo.
-   **Precisa de confirmação no discuss-phase.**
+   - **RESOLVED:** preservar snapshot sujo + baseline; gerar snapshot limpo novo; desacoplar loader via `carregar_snapshot_sanidade(path=CAMINHO_SNAPSHOT_LIMPO)` (ver plano 09-05).
 
 2. **DATA-06 — o `snapshot_bancos` é regenerado nesta fase ou na 10?**
    - Regenerar aqui (ITUB4 → bilhões) é permitido e só quebra golden quarentenado; deixar p/ Fase 10
      mantém a antecipação de quebra fora de escopo. **Confirmar preferência.**
+   - **RESOLVED:** NÃO regenerar nesta fase; deferido à Fase 10 (ver plano 09-05).
 
 3. **DATA-04 — onde está o degrau de 13% hoje?**
    - Requer spike de localização (a linha do requisito está obsoleta). Recomendação: medir antes de planejar a task.
+   - **RESOLVED:** spike de localização primeiro (a ref prices.py:71-111 está obsoleta), depois o conserto (ver plano 09-03).
 
 4. **DATA-05 — aplicar IRRF ou declarar bruto?**
    - Menor risco: declarar bruto (rótulo). Aplicar imposto exige decompor JCP por ano + validar a lei.
      **Discricionário; recomendo declarar bruto salvo decisão do usuário.**
+   - **RESOLVED:** declarar DY BRUTO no rótulo/glossário, sem calcular IRRF especulativo (ver plano 09-04).
 
 ---
 
