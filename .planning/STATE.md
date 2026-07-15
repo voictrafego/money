@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
-status: verifying
+status: ready_to_plan
 stopped_at: Completed 09-05-PLAN.md (DATA-06)
 last_updated: "2026-07-15T21:04:38.469Z"
 last_activity: 2026-07-15
 progress:
   total_phases: 8
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 16
   completed_plans: 16
-  percent: 100
+  percent: 50
 ---
 
 # Project State
@@ -32,9 +32,9 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 ## Current Position
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
-Phase: 09 (ingest-o-correta-data) — EXECUTING
-Plan: 5 of 5
-Status: Phase complete — ready for verification
+Phase: 10
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-07-15
 
 Progress: [██████████] 100%
@@ -94,6 +94,7 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 | 13. Motores + contrato de saída (ENG) | TBD | - | - |
 | 14. Validação honesta (VAL) | TBD | - | - |
 | 08 | 6 | - | - |
+| 09 | 5 | - | - |
 
 **Recent Trend:**
 
