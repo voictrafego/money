@@ -158,7 +158,7 @@ regra de regressão: DATA-06 mede o progresso só depois dos consertos de dado)
 Plans:
 **Wave 1**
 - [x] 09-01-PLAN.md — DATA-01 + DATA-02: JCP capturado (filtro amplo) + base do controlador (lucro E PL juntos), em cvm.py/build.py
-- [ ] 09-04-PLAN.md — DATA-05: DY declara base BRUTA (rótulo + glossário), sem imposto especulativo
+- [x] 09-04-PLAN.md — DATA-05: DY declara base BRUTA (rótulo + glossário), sem imposto especulativo
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [x] 09-02-PLAN.md — DATA-03: num_acoes da contagem oficial (composicao_capital + join CNPJ→CD_CVM + escala detectada); _fator_unit refeito

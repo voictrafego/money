@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
-stopped_at: Completed 09-03-PLAN.md (DATA-04)
-last_updated: "2026-07-15T16:34:21.726Z"
+stopped_at: Completed 09-04-PLAN.md (DATA-05)
+last_updated: "2026-07-15T16:42:36.705Z"
 last_activity: 2026-07-15
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 16
-  completed_plans: 14
-  percent: 88
+  completed_plans: 15
+  percent: 94
 ---
 
 # Project State
@@ -33,13 +33,13 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 09 (ingest-o-correta-data) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-07-15
 
-Progress: [█████████░] 88%
+Progress: [█████████░] 94%
 
-**Suíte:** `462 passed, 1 skipped, 34 deselected, 2 xfailed` — 0 XPASS. Os 2 xfailed SÃO as duas
+**Suíte:** `465 passed, 1 skipped, 34 deselected, 2 xfailed` — 0 XPASS. Os 2 xfailed SÃO as duas
 doenças (BLIND-02 vira verde na Fase 12; BLIND-03 na Fase 10). Golden de nível que quebrar deve ser
 **DELETADO, nunca atualizado** (contrato novo do CLAUDE.md).
 
@@ -111,10 +111,23 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 | Phase 09 P01 | 40min | 2 tasks | 3 files |
 | Phase 09 P02 | 55min | 2 tasks | 4 files |
 | Phase 09 P03 | 20min | 2 tasks | 4 files |
+| Phase 09 P04 | 12min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **DATA-05 (Fase 9 / plano 09-04) — o DY passa a DECLARAR sua base: é BRUTO, sem calcular imposto.**
+  `header_dy` (help nos DOIS caminhos, recorrente e fallback) e o glossário (verbete `dy` + bloco
+  `tab_multiplos`) declaram que o DY é bruto (proventos brutos sobre o preço; IR sobre dividendos/JCP
+  **não** descontado). Decisão travada (09-RESEARCH Open Question 4 / A2): **NÃO** aplicar IRRF
+  especulativo da Lei 15.270/2025 (não verificada juridicamente) — declarar "bruto" satisfaz o
+  requisito sem cravar alíquota/vigência frágeis. **Zero motor/knob/cálculo:** `multiples.dividend_yield`,
+  `config.yaml` e `calibracao.lock.yaml` (3 graus) **INTOCADOS** (scope check `git diff` VAZIO). Teste
+  de contrato `tests/test_dy_base.py` (3 asserts, string "bruto", BLIND-04a limpo) + 3 entradas
+  `contrato` em `classificacao.yaml` no MESMO commit. Suíte default **465 passed, 1 skipped, 34
+  deselected, 2 xfailed, 0 failed**. Sem checkpoint (mudança de rótulo aditiva; nenhum teste diagnóstico
+  invalidado, ao contrário de 09-01/09-02).
 
 - **DATA-04 (Fase 9 / plano 09-03) — o degrau artificial de ~13% do ITUB4 NÃO existe mais na série
   por-ação de valuation (MEDIDO, não suposto).** A ref do requisito (`prices.py:71-111`) é OBSOLETA
@@ -349,8 +362,8 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 
 ## Session Continuity
 
-Last session: 2026-07-15T16:33:50.358Z
-Stopped at: Completed 09-03-PLAN.md (DATA-04)
+Last session: 2026-07-15T16:42:36.694Z
+Stopped at: Completed 09-04-PLAN.md (DATA-05)
 Resume file: None
 
 ## Operator Next Steps
