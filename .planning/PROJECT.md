@@ -32,7 +32,15 @@ Auditoria de milestone **passed** — blocker da aba Ranking do Streamlit (parid
 fechado por quick task `260712-p6r` antes do arquivamento. Suíte **437 testes verdes**; firewall
 selo↛report intacto. Marco arquivado em `.planning/milestones/v2.2-*`.
 
-**Agora: nenhum marco ativo.** Próximo marco via `/gsd-new-milestone`.
+**Agora: v2.4 Fidelidade do Valuation em andamento. Fase 8 (Sanidade dos Dados / SAN) completa 2026-07-15.**
+O pipeline agora **sabe quando o dado está errado**: 5 checks aritméticos (SAN-01..05) + reconciliação
+de JCP + clean surplus em `core/sanidade.py`, ligados ao `build.py` e provados por execução (D-04),
+sob contrato never-raise (SAN-06). O spike SAN-07 respondeu **NÃO** às duas perguntas contábeis
+(IHCD/AT1 fora do PL da CVM; dirty surplus FVOCI imaterial) — o terceiro bug de dados não existe.
+Congelado o baseline de regressão dos sujos (62 tickers / 117 pares, flag+bucket, zero R$) que a
+Fase 9 leva a zero, ticker a ticker. 7/7 requisitos verificados; suíte 459 verdes. **Nenhum dado
+consertado nesta fase** (de propósito — os asserts são o teste de regressão da Fase 9). Próximo:
+Fase 9 (Ingestão correta / DATA).
 
 <details>
 <summary>Histórico v1.7 (Swing Trade / Modo Trading / Home / Lentes-Selo-Comparador) — shipped 2026-07-04</summary>
@@ -359,4 +367,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-12 — Aberto v2.3 Calibração do Valuation à Realidade (RIM com valor terminal / BACKTEST-01): RIM ao vivo dá ITUB4 R$23 vs alvo ~R$40; raiz é fade-sem-terminal (D-02), não o Ke. Escopo cirúrgico (RIM/bancos) + redeploy. (v2.2 SHIPPED/tag mas não deployado; v2.0 SHIPPED 2026-07-10.)*
+*Last updated: 2026-07-15 — v2.4 Fidelidade do Valuation em andamento: Fase 8 (Sanidade dos Dados / SAN) completa — o pipeline detecta dado sujo (5 checks + JCP + clean surplus em `core/sanidade.py`, never-raise), spike SAN-07 fecha o 3º bug de dados como inexistente, baseline de regressão dos sujos (62 tickers) congelado para a Fase 9. Zero conserto de dado (de propósito). Próximo: Fase 9 (Ingestão correta / DATA).*
