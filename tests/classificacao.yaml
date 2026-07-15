@@ -553,3 +553,13 @@
 'tests/test_sanidade_pipeline.py::test_ticker_sem_dado_de_mercado_nao_estoura_e_san01_e_incomputavel': contrato
 'tests/test_sanidade_pipeline.py::test_o_sinal_invertido_nao_vira_nao_avaliavel': contrato
 'tests/test_sanidade_pipeline.py::test_engine_roda_num_ticker_sujo_e_produz_resposta': contrato
+
+# --- Fase 8 / plano 08-06: SAN Wave 5. O BASELINE DOS SUJOS — o teste de regressao da Fase 9.
+# A monotonicidade (so_encolhe) e o bucket sao `invariante`: sao verdades ESTRUTURAIS, knob
+# nenhum as satisfaz. Se sairem daqui, "41 sujos -> 0" volta a ser uma FRASE em vez de um teste
+# — e o reflexo de "atualizar o baseline" (o overfit do v2.3) volta a ficar impune. Os alvos e o
+# "sem R$" sao `contrato` (presenca/ausencia/formato, zero constante de nivel).
+'tests/test_sanidade_baseline.py::test_baseline_de_sujos_so_encolhe': invariante
+'tests/test_sanidade_baseline.py::test_bucket_nao_muda_sem_a_flag_sumir': invariante
+'tests/test_sanidade_baseline.py::test_o_baseline_contem_os_alvos_do_roadmap': contrato
+'tests/test_sanidade_baseline.py::test_o_baseline_nao_estampa_reais_por_ticker': contrato
