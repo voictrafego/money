@@ -156,10 +156,17 @@ testes com o ITUB4 a 10 milhões de ações) é regenerado.
 **Plans**: 5 plans (4 waves — serializados pelo compartilhamento de cvm.py/build.py e pela
 regra de regressão: DATA-06 mede o progresso só depois dos consertos de dado)
 Plans:
+**Wave 1**
 - [ ] 09-01-PLAN.md — DATA-01 + DATA-02: JCP capturado (filtro amplo) + base do controlador (lucro E PL juntos), em cvm.py/build.py
-- [ ] 09-02-PLAN.md — DATA-03: num_acoes da contagem oficial (composicao_capital + join CNPJ→CD_CVM + escala detectada); _fator_unit refeito
-- [ ] 09-03-PLAN.md — DATA-04: spike de localização do degrau de ~13% (ref obsoleta) + conserto do duplo split + teste-guarda
 - [ ] 09-04-PLAN.md — DATA-05: DY declara base BRUTA (rótulo + glossário), sem imposto especulativo
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 09-02-PLAN.md — DATA-03: num_acoes da contagem oficial (composicao_capital + join CNPJ→CD_CVM + escala detectada); _fator_unit refeito
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 09-03-PLAN.md — DATA-04: spike de localização do degrau de ~13% (ref obsoleta) + conserto do duplo split + teste-guarda
+
+**Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 09-05-PLAN.md — DATA-06: snapshot limpo novo + loader desacoplado + monotonicidade encolhendo (snapshot_bancos fica p/ Fase 10)
 
 ### Phase 10: Primitivas sem viés (PRIM)
