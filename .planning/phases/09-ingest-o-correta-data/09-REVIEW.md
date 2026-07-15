@@ -32,6 +32,12 @@ status: issues_found
 **Files Reviewed:** 12
 **Status:** issues_found
 
+> **Follow-up (2026-07-15):** WR-01 and WR-03 fixed (commits `aad298c`, `23f613d`) — both
+> behavior-preserving on the current 104-ticker universe, verified by offline old-vs-new
+> measurement against the CVM cache. WR-02 was investigated and **NOT applied**: the suggested
+> residual gate regresses ASAI3/ENEV3/KEPL3 by 1000× (see WR-02 for the measurement) — it is left
+> OPEN for a future design decision. WR-04, WR-05 and the Info items remain open.
+
 ## Summary
 
 Reviewed the Phase 09 (DATA) ingestion rewrite: CVM proventos broad-filter, controller-base
@@ -49,7 +55,14 @@ silently produce a wrong per-share number, which is exactly the disease this pha
 
 ## Warnings
 
-### WR-01: Over-broad JCP regex can over-count `c.dividendos`
+### WR-01: Over-broad JCP regex can over-count `c.dividendos` — ✅ RESOLVED (commit `aad298c`)
+
+**Resolution:** Regex anchored to `dividendo|juros sobre.*capital proprio` in
+`_distribuicoes_proventos_amplo` (and the twin `_distribuicoes_proventos` was left as the
+narrow reference). Measured offline across all 104 tickers × 2016–2025 on the CVM cache:
+**0 matched rows change** (no legitimate JCP row dropped, no current false match removed) —
+behavior-preserving today, closes the latent hole for future CVM data.
+
 
 **File:** `src/analista/ingest/cvm.py:292`
 **Issue:** `_distribuicoes_proventos_amplo` matches inclusion with
@@ -66,7 +79,40 @@ incluir = ds.str.contains(r"dividendo|juros sobre.*capital proprio", na=False, r
 ```
 (`ds` is already NFKD-normalized/ascii-folded by `_norm`, so "próprio" → "proprio".)
 
-### WR-02: Scale heuristic mis-classifies genuine 31.6×–316× share growth as a unit change
+### WR-02: Scale heuristic mis-classifies genuine 31.6×–316× share growth as a unit change — ⚠️ INVESTIGATED, NOT APPLIED (false positive — the suggested fix REGRESSES real tickers)
+
+**Resolution (measured, not assumed):** The suggested residual gate (`abs(raw_exp - expoente) >
+0.15 → expoente = 0`) was measured offline against `_escala_por_ano` over all 104 tickers ×
+2016–2025 (raw `composicao_capital` from the CVM cache, `implied` from the clean snapshot).
+It does **not** leave the universe unchanged — it changes **4 values, and all 4 are regressions,
+not corrections**:
+
+| Ticker | Year | Current (`round`) | With WR-02 fix | Reality |
+| ------ | ---- | ----------------- | -------------- | ------- |
+| ASAI3  | 2020 | 268 352 000       | 268 352        | 268 352 is in MILHARES → real ≈ 268 M (pre-2021 spin-off from GPA); the `×1000` is the correct unit recovery. The fix would 1000×-**undercount** it. |
+| ENEV3  | 2020 | 315 836 000       | 315 836        | Same — 315 836 = thousands → real ≈ 316 M; `×1000` correct. |
+| KEPL3  | 2020 | 26 312 000        | 26 312         | Same — thousands → ≈ 26 M (pre-follow-on); `×1000` correct. |
+| KEPL3  | 2021 | 30 007 000        | 30 007         | Same — thousands → ≈ 30 M; `×1000` correct. |
+
+**Why the fix is unsafe:** the large residual (0.23–0.27) in these years is **not** a
+misclassified units value — it is a genuine MILHARES value where a **real** corporate event
+(spin-off / follow-on) also makes `cru` several × smaller than the *current* `implied`. The
+rounding correctly extracts the `×1000` unit flip and leaves the real change visible (exactly the
+design the docstring describes for AGRO3). The reviewer's theoretical hole — a year whose `cru`
+is genuinely in UNITS yet 31.6×–316× below `implied` — is **mathematically indistinguishable from
+these thousands-plus-real-change cases using the ratio to `implied` alone** (both land in the same
+power-of-1000 band). No residual threshold separates them; any threshold that closes the hole
+1000×-undercounts ASAI3/ENEV3/KEPL3, which would fire fresh SAN-02 pairs and break the DATA-06
+ratchet with a **regression**.
+
+**Decision:** the current `round`-based `_escala_por_ano` is **correct on the actual universe**;
+the theoretical hole is unreached and cannot be closed with the suggested heuristic without
+introducing a new disambiguation rule (a design choice — e.g. an absolute-magnitude / overshoot
+guard, which needs a new threshold constant). Per project discipline (halt on design choices,
+never ship a regression to satisfy a review note), **WR-02 is left OPEN for a future dedicated
+design decision** rather than patched now. It remains a real *theoretical* latent risk, but the
+suggested fix is a net negative today.
+
 
 **File:** `src/analista/ingest/build.py:79`
 **Issue:** `expoente = round(math.log10(implied / cru) / 3.0)` crosses from 0 to 1 when
@@ -88,7 +134,19 @@ if abs(raw_exp - expoente) > 0.15:
 escalado[ano] = cru * (1000 ** max(0, expoente))
 ```
 
-### WR-03: `_alinhar_escala_interna` can silently DIVIDE real share counts by 1000
+### WR-03: `_alinhar_escala_interna` can silently DIVIDE real share counts by 1000 — ✅ RESOLVED (commit `23f613d`)
+
+**Resolution:** Added the asymmetric no-shrink guard the finding asked for — a year is only
+DIVIDED (`bandas[a] − ref > 0`, ÷1000) when it is a **clean** unit flip (its band `log10(v)/3`
+falls near an integer, residual ≤ 0.15); a large residual means the band shift is **real**
+corporate variation and the year is left intact (never divides real shares). The grow direction
+(×1000, recovering a lost MILHARES unit) stays unguarded, mirroring `max(0, expoente)` in
+`_escala_por_ano`. Measured offline over all anchorless tickers with an official count
+(AZUL4/BRFS3/CCRO3/CPLE6/ELET3/ELET6/EMBR3/IGTI11/JBSS3/MRFG3/ODPV3/TRPL4): **0 values change**
+(ELET3 2020's legitimate ÷1000 — residual 0.065 — survives; IGTI11 2020's legitimate ×1000 is a
+grow and is untouched), so the clean snapshot and the DATA-06 ratchet are unaffected, and the
+downward-shrink hole is now closed for future data.
+
 
 **File:** `src/analista/ingest/build.py:102-113`
 **Issue:** For anchorless tickers (`implied` None — ELET3/ELET6/IGTI11), the band is
