@@ -542,3 +542,14 @@
 'tests/test_sanidade_limiares.py::test_isencao_por_split_exime_salto_compativel_e_flaga_o_sem_split': invariante
 'tests/test_sanidade_limiares.py::test_bucket_nunca_levanta_com_fator_nao_positivo': invariante
 'tests/test_sanidade_limiares.py::test_limiares_nao_vivem_no_config_nem_no_lock': invariante
+
+# --- Fase 8 / plano 08-05: SAN Wave 4. O diagnostico LIGADO ao pipeline e PROVADO por
+# execucao (D-04). `aplicar_sanidade` nao roda sozinho (D-02) — sem estes testes, alguem apaga
+# a chamada de `montar_empresa` e o app roda liso e CEGO, e nada fica vermelho. Sao `contrato`
+# (presenca/never-raise/nao-avaliavel, offline, zero constante de nivel). Se sairem daqui, o
+# detector vira protecao fantasma: a evasao (apagar a chamada) deixa de ser exercitada.
+'tests/test_sanidade_pipeline.py::test_sanidade_e_chamada_pelo_pipeline_real': contrato
+'tests/test_sanidade_pipeline.py::test_nenhum_check_levanta_em_nenhum_ticker_do_snapshot': contrato
+'tests/test_sanidade_pipeline.py::test_ticker_sem_dado_de_mercado_nao_estoura_e_san01_e_incomputavel': contrato
+'tests/test_sanidade_pipeline.py::test_o_sinal_invertido_nao_vira_nao_avaliavel': contrato
+'tests/test_sanidade_pipeline.py::test_engine_roda_num_ticker_sujo_e_produz_resposta': contrato

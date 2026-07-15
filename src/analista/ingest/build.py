@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
+from ..core import sanidade
 from ..core.fundamentals import CompanyData
 from . import cvm, prices, universe
 
@@ -136,4 +137,7 @@ def montar_empresa(
 
     # mantém apenas anos com lucro líquido coletado (núcleo da análise)
     c.anos = sorted(a for a in anos if a in c.lucro_liquido)
+    # DIAGNÓSTICO (Fase 8 / SAN) — a CHAMADA ÚNICA, provada por execução (D-02/D-04).
+    # never-raise (SAN-06): não pode derrubar montar_empresa. NÃO conserta dado nenhum.
+    sanidade.aplicar_sanidade(c)
     return c
