@@ -125,7 +125,7 @@ Os asserts vêm **antes** dos consertos, de propósito: eles **são** o teste de
   para `"dividendo" OU "juros sobre capital"`, **não trocar de fonte** (o plano 08-01 já corrigiu o
   comentário e adicionou o insumo de detecção `proventos_filtro_amplo`).
 - [x] **DATA-02**: `lucro` e `PL` usam a base do **controlador**, não o consolidado com minoritários.
-- [ ] **DATA-03**: `num_acoes` deixa de ser derivado de `lucro/LPA` com bases cruzadas
+- [x] **DATA-03**: `num_acoes` deixa de ser derivado de `lucro/LPA` com bases cruzadas
   (`build.py:87`); o fallback usa `impliedSharesOutstanding` (ON+PN), não `sharesOutstanding` (só a
   classe).
   **Insumo herdado (medido, `08-RESEARCH.md` §R-09/§Achado 4):** o
@@ -296,7 +296,7 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | SAN-07 | Phase 8 | Complete |
 | DATA-01 | Phase 9 | Complete |
 | DATA-02 | Phase 9 | Complete |
-| DATA-03 | Phase 9 | Pending |
+| DATA-03 | Phase 9 | Complete |
 | DATA-04 | Phase 9 | Pending |
 | DATA-05 | Phase 9 | Pending |
 | DATA-06 | Phase 9 | Pending |

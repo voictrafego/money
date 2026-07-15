@@ -161,7 +161,7 @@ Plans:
 - [ ] 09-04-PLAN.md — DATA-05: DY declara base BRUTA (rótulo + glossário), sem imposto especulativo
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 09-02-PLAN.md — DATA-03: num_acoes da contagem oficial (composicao_capital + join CNPJ→CD_CVM + escala detectada); _fator_unit refeito
+- [x] 09-02-PLAN.md — DATA-03: num_acoes da contagem oficial (composicao_capital + join CNPJ→CD_CVM + escala detectada); _fator_unit refeito
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 09-03-PLAN.md — DATA-04: spike de localização do degrau de ~13% (ref obsoleta) + conserto do duplo split + teste-guarda

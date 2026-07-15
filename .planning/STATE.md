@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
-stopped_at: Completed 09-01-PLAN.md (DATA-01 + DATA-02)
-last_updated: "2026-07-15T13:27:56.475Z"
+stopped_at: Completed 09-02-PLAN.md (DATA-03)
+last_updated: "2026-07-15T13:57:57.306Z"
 last_activity: 2026-07-15
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 16
-  completed_plans: 12
-  percent: 75
+  completed_plans: 13
+  percent: 81
 ---
 
 # Project State
@@ -33,11 +33,11 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 09 (ingest-o-correta-data) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-07-15
 
-Progress: [████████░░] 75%
+Progress: [████████░░] 81%
 
 **Suíte:** `435 passed, 1 skipped, 38 deselected, 2 xfailed` — 0 XPASS. Os 2 xfailed SÃO as duas
 doenças (BLIND-02 vira verde na Fase 12; BLIND-03 na Fase 10). Golden de nível que quebrar deve ser
@@ -109,10 +109,31 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 | Phase 08 P04 | 18min | 3 tasks | 4 files |
 | Phase 08 P05 | 20min | 2 tasks | 4 files |
 | Phase 09 P01 | 40min | 2 tasks | 3 files |
+| Phase 09 P02 | 55min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **DATA-03 (Fase 9 / plano 09-02) — `num_acoes` deixa de ser `LL/LPA` e passa à contagem OFICIAL
+  da CVM.** `cvm.contagem_oficial_do_ano` lê `composicao_capital` (ON+PN em circulação =
+  `QT_ACAO_TOTAL_CAP_INTEGR − QT_ACAO_TOTAL_TESOURO`), join CNPJ→CD_CVM via `cad_cia_aberta.csv`
+  (armadilha 2). No `build`, a **escala** (milhares×unidades — armadilha 3 / Pitfall 4) é detectada
+  cruzando a contagem do último ano com o `impliedSharesOutstanding` e arredondada à potência de 1000,
+  aplicada à série; **fallback** = `impliedSharesOutstanding` (ON+PN), NUNCA `sharesOutstanding`
+  (armadilha 1); `_fator_unit` refeito sobre a contagem oficial (**ALUP11 = 3, não 5** — Pitfall 5).
+  **Medido:** ITUB4 2019 = 1,10e10 (bilhões, não milhões); GOAU4 SAN-01 1,0015 (era 2,969×); CGRA4
+  0,925 (era 0,001×); BRSR6 1,0000. `composicao_capital` só existe a partir de ~2020 → anos antigos
+  caem no `implied` (fronteira de origem cvm↔fallback isenta o par no SAN-02, sem salto ÷1000).
+  **Zero motor/knob/config** (`config.yaml`/`calibracao.lock.yaml` intactos; 3 graus). Suíte **default
+  459 passed, 1 skipped, 2 xfailed, 0 failed**; `-m golden_nivel` 34 passed, 0 CLASSIFICACAO ORFA.
+  **Checkpoint de decisão (Rule 4, resolvido pelo usuário — Option B):** dois stubs de
+  `test_cvm_distribuicoes` (`test_build_cai_para_yahoo…` `invariante` e `test_build_prefere…`
+  `golden_nivel`) populavam `num_acoes` por `LL/LPA` e quebravam com a fonte trocada; foram
+  **completados com `implied_shares_outstanding`** (nova fonte de fallback), **sem alterar valor
+  asserido**. `test_ingest_unit.py` (4 goldens que asseriam `num_acoes == LL/LPA`, o método removido)
+  foi **DELETADO** + suas 4 entradas em `classificacao.yaml`, no mesmo commit — completude da coleta
+  preservada (0 órfão). Prova formal ticker-a-ticker (monotonicidade, snapshot limpo) fica no 09-05.
 
 - **DATA-01/02 (Fase 9 / plano 09-01) — insumos limpos da Fase 8 PROMOVIDOS a fonte-de-verdade.**
   `cvm.fundamentos_do_ano` aponta `dividendos_distribuidos` para `_distribuicoes_proventos_amplo`
@@ -312,8 +333,8 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 
 ## Session Continuity
 
-Last session: 2026-07-15T13:27:56.470Z
-Stopped at: Completed 09-01-PLAN.md (DATA-01 + DATA-02)
+Last session: 2026-07-15T13:57:57.298Z
+Stopped at: Completed 09-02-PLAN.md (DATA-03)
 Resume file: None
 
 ## Operator Next Steps
