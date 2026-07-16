@@ -218,7 +218,10 @@ por fundamentos (10,24% no Itaú) — o app calcula 10,29% e **descarta**, adota
   - **NÃO tocar no `Ke`. NÃO remover `ke_teto` nem `ke_piso`. NÃO mexer no ERP nem no beta.** **Regra dura (A).** Consertar o Ke antes do g piora o modelo: ITUB4 0,75→0,64; BBDC4 0,71→**0,52** — porque o `ke_teto` é uma muleta que compensa exatamente o viés do `g` que esta fase remove. O Ke é a Fase 12.
   - **NÃO fundir esta fase com a Fase 12 "para economizar tempo".** A tentação vai ser forte e está errada: fundir dá **um número e zero diagnóstico**; separar dá duas medições limpas contra o mapa de 104 tickers.
   - **NÃO calibrar `PIB_real`** contra resultado — é 1 dos 3 graus de liberdade e é constante estrutural (2,0%), não série ajustável.
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 11-01-PLAN.md — π_ciclo: helper `ipca_ciclo_para_g` + carimbo `cfg['macro']['pi_ciclo']` (cli/app) + default offline (GROW-01/02)
+- [ ] 11-02-PLAN.md — g_cap derivado + adoção de g_fundamentos + g_T fechado por empresa + migração de knob no MESMO diff (GROW-01/03/04, D-05)
+- [ ] 11-03-PLAN.md — split-before-delete dos goldens do g antigo + cobertura D-07 (spread apertado) + verificação (BLIND-02 xfail, não-regressão) (GROW-04/05)
 
 ### Phase 12: Custo de capital / `Ke` (KE)
 **Goal**: Curar a **outra metade da Doença 1**, e **só agora** — porque tirar o clamp só é seguro
