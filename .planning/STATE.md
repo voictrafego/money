@@ -4,14 +4,14 @@ milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
 stopped_at: Phase 10 context gathered
-last_updated: "2026-07-16T01:18:47.654Z"
-last_activity: 2026-07-16 -- Phase 10 planning complete
+last_updated: "2026-07-16T11:23:05.138Z"
+last_activity: 2026-07-16
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 20
-  completed_plans: 16
-  percent: 80
+  completed_plans: 17
+  percent: 85
 ---
 
 # Project State
@@ -27,21 +27,22 @@ entre si** — a mesma ação não pode parecer barata num menu e cara/ausente e
 ITUB4, Cap. 17 (Tabelas 41/43): `g` = 10,24% · `Ke` = 12,48% → **V = R$ 37,22** (região R$ 35–39,
 MS ±5%). **Hoje o app entrega R$ 16,13.**
 
-**Current focus:** Phase 09 — ingest-o-correta-data
+**Current focus:** Phase 10 — primitivas-sem-vi-s-prim
 
 ## Current Position
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
-Phase: 10
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-07-16 -- Phase 10 planning complete
+Phase: 10 (primitivas-sem-vi-s-prim) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute (10-01 completo)
+Last activity: 2026-07-16 -- PRIM-01 (10-01) completo: endpoint Theil-Sen + split media_ciclo; BLIND-03 curado
 
-Progress: [██████████] 100%
+Progress: [█████████░] 85%
 
-**Suíte:** `467 passed, 1 skipped, 34 deselected, 2 xfailed` — 0 XPASS. Os 2 xfailed SÃO as duas
-doenças (BLIND-02 vira verde na Fase 12; BLIND-03 na Fase 10). Golden de nível que quebrar deve ser
-**DELETADO, nunca atualizado** (contrato novo do CLAUDE.md).
+**Suíte:** `472 passed, 1 skipped, 34 deselected, 1 xfailed` — 0 XPASS. **BLIND-03 curado no 10-01**
+(virou invariante normal). Sobra **1 xfailed** = BLIND-02b (vira verde na Fase 12) e **1 skipped** =
+jackknife (Fase 14). Golden de nível que quebrar deve ser **DELETADO, nunca atualizado** (contrato do
+CLAUDE.md) — o golden ITUB4=32,88 ainda vive: sua deleção é o critério de saída do plano **10-04** (PRIM-05).
 
 **⚠ DÍVIDA OBRIGATÓRIA ANTES DA FASE 10 (gap WR-04):** 21 das 38 funções quarentenadas carregam
 invariantes estruturais presos (`a.motor == 'rim'`, contratos de roteamento, reetiquetagem SAN-01).
@@ -114,10 +115,35 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 | Phase 09 P03 | 20min | 2 tasks | 4 files |
 | Phase 09 P04 | 12min | 2 tasks | 4 files |
 | Phase 09 P05 | 256min | 2 tasks | 7 files |
+| Phase 10 P01 | 65 | 3 tasks | 10 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **PRIM-01 (Fase 10 / plano 10-01) — a base de valuation trocou o `median()`-do-meio pelo ENDPOINT
+  de tendência robusta (Theil-Sen).** `normalizacao.base_normalizada` deixou de devolver o ano-do-meio
+  (que punia crescimento com o haircut fechado `−g/(1+g)` = −9,1% em g=10%) e passa a devolver o valor
+  da regressão robusta (`scipy.stats.theilslopes`) AVALIADO NO ANO ATUAL — reflete o crescimento recente,
+  robusto a 1 exercício atípico; ladder curta (vazio→None, N=1→valor, N=2→média) + GUARD
+  `endpoint<=0 → median(janela)` (nunca base negativa a jusante do RIM/DCF). **Split do estimador
+  (decisão estrutural, RESEARCH §Estimator split):** os dois consumidores de `base_normalizada` querem
+  estimadores OPOSTOS — a base de valuation (3a) quer o endpoint; o motor cíclico (10a) quer a MÉDIA
+  through-cycle (CSNA3: endpoint = −891M vs média = +1.270M). Criada `norm.media_ciclo` (a média/mediana
+  antiga) e o ramo `"normalizado"` de `report.py` repontado para ela — o cíclico NÃO recebe o endpoint.
+  **BLIND-03 curado:** removido o `xfail` de `test_normalizacao_nao_pune_crescimento` (vira invariante
+  normal; nunca skip, nunca afrouxado). **Checkpoint de decisão (janela 3 vs 5, resolvido pelo usuário):
+  janela=5** — com 3 pontos a regressão persegue um pico terminal, com 5 ela o separa da tendência;
+  co-change SANCIONADO `config.yaml:57` + `calibracao.lock.yaml:194` (`anos_media: 3→5`) no MESMO commit
+  com trailer `Knob-Change-Justification:` sem ticker. **Orçamento intacto: 3 graus** (ERP, n_fade,
+  PIB_real) — Theil-Sen é parameter-free. **2º checkpoint (Option A, resolvido pelo usuário):** 4 testes
+  a jusante quebraram (não previstos pela RESEARCH break-table) — 2 `invariante` que codificavam a mediana
+  antiga (reescritos para a invariância do endpoint, mais fortes) e 2 `contrato` Core Value cross-modo
+  (a igualdade cross-menu preservada; a fixture de coerência de direção RECALIBRADA pela própria doutrina
+  escrita do teste, com as 3 asserts intactas). **Nada afrouxado, nenhum xfail→skip, nenhum assert de
+  guarda removido; golden ITUB4=32,88 NÃO tocado (é do 10-04).** Suíte default **472 passed, 1 skipped,
+  34 deselected, 1 xfailed, 0 failed** (sobra BLIND-02b→Fase 12 e o skip do jackknife→Fase 14). Commits:
+  `8b983ae` (RED), `4301f10` (GREEN).
 
 - **DATA-06 (Fase 9 / plano 09-05) — a régua ENXERGA o progresso + o invariante virou um RATCHET
   honesto.** O snapshot LIMPO novo (`scripts/capturar_snapshot_limpo.py`, produto do código
@@ -387,9 +413,9 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 
 ## Session Continuity
 
-Last session: 2026-07-15T23:38:29.906Z
+Last session: 2026-07-16T11:22:57.331Z
 Stopped at: Phase 10 context gathered
-Resume file: .planning/phases/10-primitivas-sem-vi-s-prim/10-CONTEXT.md
+Resume file: None
 
 ## Operator Next Steps
 

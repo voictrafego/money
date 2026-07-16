@@ -147,7 +147,7 @@ Os asserts vêm **antes** dos consertos, de propósito: eles **são** o teste de
 
 Maior alavancagem por linha do repositório: atinge todos os motores, todos os múltiplos, todas as telas.
 
-- [ ] **PRIM-01**: A base de lucro do valuation deixa de descartar o ano mais recente
+- [x] **PRIM-01**: A base de lucro do valuation deixa de descartar o ano mais recente
   (`normalizacao.py:73-75`: `anos_media=3` cai em `median()` de 3 = **o ano do meio**).
 - [ ] **PRIM-02**: `roe_valuation` deixa de cruzar bases temporais (lucro de 2023 ÷ PL de 2024). Passa
   a ser a **mediana da série de ROEs anuais**. ITUB4: 16,1% → 18,0%.
@@ -300,7 +300,7 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | DATA-04 | Phase 9 | Complete |
 | DATA-05 | Phase 9 | Complete |
 | DATA-06 | Phase 9 | Complete |
-| PRIM-01 | Phase 10 | Pending |
+| PRIM-01 | Phase 10 | Complete |
 | PRIM-02 | Phase 10 | Pending |
 | PRIM-03 | Phase 10 | Pending |
 | PRIM-04 | Phase 10 | Pending |
