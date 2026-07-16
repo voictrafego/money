@@ -261,15 +261,22 @@ def indicadores_bsd(c: CompanyData, anos_media: int = 3) -> Dict[str, Optional[f
         payout_medio = media([c.payout(a) for a in anos])
         cresc_lucro_lp = growth.crescimento_por_fundamentos(roe_medio, payout_medio)
 
-    # 8/9/10. crescimento de FCO, dividendos e lucro: tendência log-linear (OLS de ln) sobre a
-    #    série COMPLETA winsorizada de cada atributo (D-04, D-05) — o MESMO estimador do Analisar
-    #    (g_historico). Um ano extraordinário de lucro/provento/caixa deixa de envenenar o BSD: a
-    #    winsorização morde só com ≥5 pontos (a janela 3a tornaria D-05 inócuo), por isso usa-se a
-    #    série inteira. Com lucro = serie_winsorizada(c.serie("lucro_liquido")), o
-    #    crescimento_lucro_3a coincide por construção com report.g_historico (D-04). Chaves mantêm o
-    #    sufixo _3a (são chaves de REFERENCIA_BSD — não renomear).
+    # 8/9. crescimento de FCO e dividendos: tendência log-linear (OLS de ln) sobre a série
+    #    COMPLETA winsorizada de cada atributo (D-05, elegibilidade BSD do Cap. 8). Um ano
+    #    extraordinário de provento/caixa deixa de envenenar o BSD; a winsorização morde só com
+    #    ≥5 pontos (a janela 3a tornaria D-05 inócuo), por isso usa-se a série inteira. Estes são
+    #    conceitos de screening (fora do escopo PRIM) — seguem winsorizados.
     def crescimento_serie(attr: str):
         return growth.crescimento_log_linear(normalizacao.serie_winsorizada(c.serie(attr)))
+
+    # 10. crescimento do LUCRO: consome a MESMA série de valuation que report.g_historico
+    #    (`serie_lucro_normalizada`, PRIM-03/D-04 = série CRUA na Fase 10) — assim
+    #    crescimento_lucro_3a coincide POR CONSTRUÇÃO com o g_historico do Analisar (Core Value:
+    #    a ação não ranqueia num g diferente do que o Analisar exibe). A winsorização temporal do
+    #    lucro saiu na Fase 10 (o g robusto é desenhado na Fase 11); FCO/dividendos acima seguem
+    #    winsorizados por serem elegibilidade de screening. Chave mantém o sufixo _3a (REFERENCIA_BSD).
+    def crescimento_lucro():
+        return growth.crescimento_log_linear(c.serie_lucro_normalizada())
 
     return {
         "payout": payout,
@@ -281,7 +288,7 @@ def indicadores_bsd(c: CompanyData, anos_media: int = 3) -> Dict[str, Optional[f
         "crescimento_lucro_lp": cresc_lucro_lp,
         "crescimento_fc_3a": crescimento_serie("fco"),
         "crescimento_dividendos_3a": crescimento_serie("dividendos"),
-        "crescimento_lucro_3a": crescimento_serie("lucro_liquido"),
+        "crescimento_lucro_3a": crescimento_lucro(),
     }
 
 

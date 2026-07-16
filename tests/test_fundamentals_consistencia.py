@@ -6,6 +6,8 @@ Cobrem as funções canônicas que os 3 modos (Analisar/Garimpo/Ranking) compart
 - dy_atual (WR-04): trailing-12m quando disponível, com ano-base exposto
 """
 
+from statistics import median
+
 from analista.core.fundamentals import CompanyData
 
 
@@ -102,19 +104,21 @@ def test_roe_valuation_igual_ao_cru_quando_lucro_estavel():
     assert abs(c.roe_valuation() - c.roe(ult)) < 1e-9
 
 
-def test_roe_valuation_reflete_endpoint_nao_a_mediana_do_meio():
-    # PRIM-01: a base de valuation trocou o median()-do-meio pelo ENDPOINT de tendência robusta.
-    # Último ano 3x os demais: o endpoint REFLETE a subida recente (base=200, acima da
-    # mediana-do-meio=100), mas continua ROBUSTO ao pulo único (não vira o cru 300).
+def test_roe_valuation_e_mediana_dos_roe_anuais_nao_o_endpoint():
+    # PRIM-02: roe_valuation deixou de cruzar bases (endpoint da base de lucro ÷ PL do último
+    # ano) e passou a ser a MEDIANA da série de roe(a) anuais. Split de sinal (Option A da Fase
+    # 10, espelhando o split do PRIM-01): o ENDPOINT segue vivo como `roe_qualidade_atual` (só
+    # roteamento). Último ano 3x os demais: roe(2022)=roe(2023)=0,10; roe(2024)=0,30 -> mediana
+    # 0,10, ABAIXO do endpoint/qualidade-atual (0,20) e do ROE cru do ano de pico (0,30).
     c = CompanyData(ticker="X", anos=[2021, 2022, 2023, 2024])
     c.lucro_liquido = {2021: 100, 2022: 100, 2023: 100, 2024: 300}
     for a in c.anos:
         c.patrimonio_liquido[a] = 1000
     ult = c.ultimo_ano()
-    # base = endpoint Theil-Sen([100,100,300]) = 200; roe_valuation = 200/PL_medio(1000) = 0,20.
-    assert c.roe_valuation() < c.roe(ult)      # robusto: abaixo do ROE cru do ano de pico (0,30)
-    assert c.roe_valuation() > c.roe(ult) / 3  # reflete a subida: ACIMA da mediana-do-meio (0,10)
-    assert abs(c.roe_valuation() - 0.20) < 1e-9  # endpoint exato
+    validos = [c.roe(a) for a in c.anos_ordenados() if c.roe(a) is not None]
+    assert abs(c.roe_valuation() - median(validos)) < 1e-9   # mediana dos roe(a) = 0,10
+    assert c.roe_valuation() < c.roe(ult)                      # robusto ao ano de pico (0,30)
+    assert c.roe_valuation() < c.roe_qualidade_atual()        # split: mediana < endpoint (0,20)
 
 
 def test_lpa_valuation_usa_base_normalizada():

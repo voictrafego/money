@@ -85,22 +85,21 @@ def test_perfil_vulc3_spike_extraordinario_nao_infla_g_nem_bsd():
     a = report.analisar_acao(c, _cfg())
     assert a.g_historico is not None
 
-    wins = normalizacao.serie_winsorizada(raw)   # a base que o g log-linear consome
-    cagr_endpoint = growth.cagr(wins[0], wins[-1], len(wins) - 1)
     cagr_raw_endpoint = growth.cagr(raw[0], raw[-1], len(raw) - 1)
-    assert cagr_endpoint is not None and cagr_raw_endpoint is not None
-    # pelo método (D-01): a regressão log-linear usa TODOS os pontos ⇒ o spike na ponta NÃO
-    # manda no g; fica abaixo do CAGR endpoint-a-endpoint do MESMO par (que vê só base e ponta).
-    assert a.g_historico < cagr_endpoint
-    # pelo método (D-01): e MUITO abaixo do CAGR endpoint sobre a série CRUA (estimador naïve
-    # que o spike inflaria) — a de-poison é material, não cosmética.
+    assert cagr_raw_endpoint is not None
+    # PRIM-03/D-04: a winsorização temporal do lucro SAIU (série crua até a Fase 11 — o desenho
+    # do g robusto é de lá). O que ainda impede o spike na ponta de mandar no g é o ESTIMADOR
+    # log-linear: usa TODOS os 10 pontos (9 recorrentes + 1 atípico), então fica MUITO abaixo do
+    # CAGR endpoint-a-endpoint da série CRUA — o estimador naïve que só vê base e ponta e que o
+    # spike inflaria. A de-poison do estimador é material, não cosmética.
     assert a.g_historico < cagr_raw_endpoint
 
     ind = screening.indicadores_bsd(c)
     # pelo método (D-04): o fator de crescimento do BSD é a MESMA fonte ⇒ também não inflado.
     assert ind["crescimento_lucro_3a"] is not None
     assert ind["crescimento_lucro_3a"] < cagr_raw_endpoint
-    # pelo método (D-04): consistência por construção Screening == Analisar (fonte única).
+    # Core Value (D-04): Screening == Analisar por construção — ambos consomem a MESMA
+    # serie_lucro_normalizada crua (PRIM-03), não mais só coincidentemente a winsorizada.
     assert ind["crescimento_lucro_3a"] == a.g_historico
 
 

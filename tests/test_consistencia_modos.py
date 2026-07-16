@@ -190,17 +190,18 @@ def test_veredito_direcao_coerente():
     # Ke local ~15% a alvo precisa crescer p/ o DDM render um intrínseco bem acima do preço SEM
     # disparar o flag DY>15% (DY≈12,4% < 15%).
     alvo = _empresa_param_crescente("AAA3", preco=5.5, lucro_inicial=600, g=0.14, pl=5000, payout=0.35)
-    # Comparáveis EXPENSIVOS (P/L ~40-49) e comparáveis DE VERDADE: ROE ~0,34 (próximo do da
-    # alvo, ~0,39) e payout 0,35 (igual ao da alvo). Puxam o P/L justo para cima, deixando a
-    # alvo (P/L corrente ~2,84, bem mais barata) acima do preço na regressão (preço-alvo ~7,20).
-    # RECALIBRAÇÃO PRIM-01 (doutrina deste teste: "recalibram-se os NÚMEROS das fixtures, nunca
-    # se relaxa o assert"): o endpoint Theil-Sen elevou o lucro/ROE da alvo (ela cresce ~14%/ano,
-    # ROE 0,39), então os comparáveis passaram de ROE ~0,23 para ROE ~0,34 — um conjunto
-    # comparável honesto ao novo nível da base. A DIREÇÃO volta a bater nos dois menus (upside
-    # +31% na regressão E SUBAVALIADA no DDM), SEM afrouxar nenhum assert.
-    comp_b = _empresa_param("BBB3", preco=60.0, lucro=1400, pl=4000, div=490)
-    comp_c = _empresa_param("CCC3", preco=66.0, lucro=1350, pl=4000, div=473)
-    comp_d = _empresa_param("DDD3", preco=57.0, lucro=1440, pl=4200, div=504)
+    # Comparáveis EXPENSIVOS (P/L ~42-48) e comparáveis DE VERDADE: ROE ~0,23 (bracketando o da
+    # alvo) e payout ~0,35 (próximo do da alvo). Puxam o P/L justo para cima, deixando a alvo
+    # (P/L corrente ~2,84, bem mais barata) acima do preço na regressão.
+    # RECALIBRAÇÃO PRIM-02 (doutrina deste teste: "recalibram-se os NÚMEROS das fixtures, nunca
+    # se relaxa o assert"): o `roe_valuation` da alvo passou do ENDPOINT (~0,39) para a MEDIANA
+    # through-cycle dos roe(a) (~0,231, o meio da subida de 14%/ano). Os comparáveis, portanto,
+    # voltaram de ROE ~0,34 para ROE ~0,23 — bracketando a mediana da alvo, um conjunto comparável
+    # honesto ao novo nível. A DIREÇÃO volta a bater nos dois menus (barata na regressão E
+    # SUBAVALIADA no DDM), SEM afrouxar nenhum assert.
+    comp_b = _empresa_param("BBB3", preco=42.0, lucro=920, pl=4000, div=322)
+    comp_c = _empresa_param("CCC3", preco=43.0, lucro=900, pl=4000, div=324)
+    comp_d = _empresa_param("DDD3", preco=40.0, lucro=960, pl=4000, div=326)
     empresas = [alvo, comp_b, comp_c, comp_d]
 
     # Vetores PL/DP/ROE como no modo Ranking VIVO (app.py/cli.py pós-FIX-04): tudo via

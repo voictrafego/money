@@ -160,7 +160,11 @@ def classificar(c: "CompanyData", cfg: dict) -> ResultadoArquetipo:
         return ResultadoArquetipo(PAGADORA_REGULADA, confianca="alta")
 
     # 3. REFINO quantitativo -------------------------------------------------- #
-    roe = c.roe_valuation()
+    # ROE de QUALIDADE ATUAL (endpoint), NÃO a mediana through-cycle de roe_valuation (PRIM-02):
+    # o roteamento quer saber se o ticker é HOJE um alto-ROE. A mediana subestima um compounder
+    # de ROE crescente (fica no meio da subida) e o desrotearia de CRESCIMENTO — split de sinal
+    # espelhando o split de estimador do PRIM-01 (Option A da Fase 10).
+    roe = c.roe_qualidade_atual()
     payout = c.payout_valuation()
     retencao = (1.0 - payout) if payout is not None else None
     cv = _cv_lucro(c.serie("lucro_liquido"))

@@ -373,10 +373,11 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     }
 
     # --- Crescimento (Cap. 14) ---
-    # Tendência log-linear (regressão de ln(lucro) sobre o tempo) na série de lucro
-    # NORMALIZADA (winsorizada): usa TODOS os pontos, então um exercício atípico no
-    # início/fim deixa de mandar no g histórico (não mais endpoint-a-endpoint). A série
-    # CRUA segue valendo p/ os fatos per-ano do ciclo de vida (lucrou/decresceu em cada ano).
+    # Tendência log-linear (regressão de ln(lucro) sobre o tempo) na série de lucro de
+    # valuation (`serie_lucro_normalizada`): usa TODOS os pontos, então o g não é mais
+    # endpoint-a-endpoint. PRIM-03/D-04: essa série passou a ser CRUA na Fase 10 (a
+    # winsorização temporal saiu; o desenho do g robusto é a Fase 11). O screening consome a
+    # MESMA série (crescimento_lucro_3a == g_historico por construção — Core Value).
     lucros_raw = c.serie("lucro_liquido")
     lucros = c.serie_lucro_normalizada()
     if len(lucros) >= 2:

@@ -10,6 +10,7 @@ que o livro trata como motivo de exclusão nos filtros de persistência.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from statistics import median
 from typing import Dict, List, Optional
 
 from . import multiples as mult
@@ -143,9 +144,15 @@ class CompanyData:
         return norm.base_normalizada(self.serie("lucro_liquido"), anos_media, winsor)
 
     def serie_lucro_normalizada(self, winsor: float = 0.10) -> List[float]:
-        """Série de lucro winsorizada (mesmo comprimento) p/ o CAGR de valuation — um ano
-        atípico no início/fim deixa de distorcer o `g_historico`."""
-        return norm.serie_winsorizada(self.serie("lucro_liquido"), winsor)
+        """Série CRUA de lucro para o CAGR de valuation (PRIM-03/D-04).
+
+        A Fase 10 REMOVE o viés da winsorização temporal — que ressuscitava um ano de
+        prejuízo e fabricava `g` — devolvendo a série de `lucro_liquido` crua. O desenho do
+        `g` robusto é a Fase 11 (fronteira limpa entre as fases). `norm.serie_winsorizada`
+        continua VIVA: o screening (Cap. 8, elegibilidade) ainda a consome; só este
+        consumidor de valuation deixa de winsorizar. `winsor` permanece na assinatura
+        (inerte) por compatibilidade de chamada."""
+        return self.serie("lucro_liquido")
 
     def lpa_valuation(self, anos_media: int = 3, winsor: float = 0.10) -> Optional[float]:
         """LPA canônico de valuation: base de lucro normalizada / nº de ações do último ano."""
@@ -153,10 +160,35 @@ class CompanyData:
         return mult.lpa(base, self.num_acoes.get(self.ultimo_ano()))
 
     def roe_valuation(self, anos_media: int = 3, winsor: float = 0.10) -> Optional[float]:
-        """ROE canônico de valuation: base de lucro normalizada / PL médio do último ano.
+        """ROE canônico de valuation = MEDIANA da série de ROEs anuais (PRIM-02/D-02).
 
-        Mesma fronteira de None que `roe(ano)` (sem PL do ano anterior → None), só trocando
-        o lucro cru do último ano pela base normalizada."""
+        Deixa de cruzar bases temporais (a base de lucro de 3a ÷ PL do último ano): agora é a
+        mediana de `roe(ano)` sobre a série COMPLETA — cada ROE anual usa a definição ÚNICA
+        `roe(ano)` (lucro_t ÷ PL médio(t-1,t)), sem inventar uma segunda semântica de ROE
+        (Fronteira FIX-04). Espelha `payout_valuation` e usa EXATAMENTE a mesma estatística
+        que `report._roe_through_cycle` (o roe_terminal do RIM): `roe0` e `roe_terminal` não
+        divergem mais. A mediana descarta naturalmente um ano de prejuízo (não vira negativa
+        por 1 exercício ruim). Fronteira None: nenhuma `roe(ano)` válida → None.
+
+        `anos_media`/`winsor` permanecem na assinatura (INERTES) por compatibilidade das 3
+        superfícies que chamam `roe_valuation()` sem args (número-síntese canônico, FIX-04)."""
+        serie = [self.roe(a) for a in self.anos_ordenados()]
+        validos = [r for r in serie if r is not None]
+        return float(median(validos)) if validos else None
+
+    def roe_qualidade_atual(self, anos_media: int = 3, winsor: float = 0.10) -> Optional[float]:
+        """ROE de QUALIDADE ATUAL (só-roteamento) = base de lucro normalizada ÷ PL médio do
+        último ano — o ENDPOINT de tendência (base_lucro_normalizada, PRIM-01), que REFLETE o
+        nível recente.
+
+        Split de sinal (espelha o split de estimador do PRIM-01): `roe_valuation` virou a
+        MEDIANA through-cycle (consistente com o roe_terminal do RIM), estatística conservadora
+        que SUBESTIMA um compounder de ROE crescente (a mediana fica no meio da subida). O
+        roteamento de arquétipo precisa da qualidade CORRENTE — se um compounder é hoje um
+        alto-ROE — então consome este sinal-endpoint, NÃO a mediana. Não é número de valuation
+        (não alimenta motor): é só o sinal de qualidade recente para a classificação.
+
+        Mesma fronteira de None que `roe(ano)` (sem PL do ano anterior → None)."""
         base = self.base_lucro_normalizada(anos_media, winsor)
         if base is None:
             return None
