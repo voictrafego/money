@@ -189,9 +189,16 @@ primitiva correta não significa nada.**
   - **NÃO compensar o novo nível de lucro com nenhum knob** ("o intrínseco subiu demais, vou abaixar X") — é o post-mortem do v2.3 se repetindo.
 **Plans**: 4 plans (4 waves — serializados pelo compartilhamento de `tests/classificacao.yaml` e pela divisão do estimador: o split precede a deflação; a deleção dos goldens vem por último)
 Plans:
+**Wave 1**
 - [ ] 10-01-PLAN.md — PRIM-01: divisão do estimador (base_normalizada → endpoint Theil-Sen + guard; media_ciclo para o cíclico) + BLIND-03 verde
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 10-02-PLAN.md — PRIM-02 + PRIM-03: roe_valuation = mediana dos ROEs anuais; serie_lucro_normalizada crua (winsor fora da série temporal)
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 10-03-PLAN.md — PRIM-04: deflação IPCA do motor cíclico via stamping offline (macro.ipca_deflatores_anuais, espelho do rf_local)
+
+**Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 10-04-PLAN.md — PRIM-05: **critério de saída** — deleta o golden ITUB4 32,88 (função + linha classificacao.yaml)
 
 ### Phase 11: Crescimento / `g` (GROW)
