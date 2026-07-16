@@ -4,14 +4,14 @@ milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
 stopped_at: Phase 10 context gathered
-last_updated: "2026-07-16T11:23:05.138Z"
+last_updated: "2026-07-16T11:58:46.099Z"
 last_activity: 2026-07-16
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 20
-  completed_plans: 17
-  percent: 85
+  completed_plans: 18
+  percent: 90
 ---
 
 # Project State
@@ -33,11 +33,11 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 10 (primitivas-sem-vi-s-prim) — EXECUTING
-Plan: 2 of 4
-Status: Ready to execute (10-01 completo)
-Last activity: 2026-07-16 -- PRIM-01 (10-01) completo: endpoint Theil-Sen + split media_ciclo; BLIND-03 curado
+Plan: 3 of 4
+Status: Ready to execute
+Last activity: 2026-07-16
 
-Progress: [█████████░] 85%
+Progress: [█████████░] 90%
 
 **Suíte:** `472 passed, 1 skipped, 34 deselected, 1 xfailed` — 0 XPASS. **BLIND-03 curado no 10-01**
 (virou invariante normal). Sobra **1 xfailed** = BLIND-02b (vira verde na Fase 12) e **1 skipped** =
@@ -116,10 +116,37 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 | Phase 09 P04 | 12min | 2 tasks | 4 files |
 | Phase 09 P05 | 256min | 2 tasks | 7 files |
 | Phase 10 P01 | 65 | 3 tasks | 10 files |
+| Phase 10 P02 | 26min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **PRIM-02/PRIM-03 (Fase 10 / plano 10-02) — `roe_valuation` virou a MEDIANA da série de `roe(a)`
+  e `serie_lucro_normalizada` virou CRUA, com um SIGNAL SPLIT do ROE (Option A).** `roe_valuation`
+  deixou de cruzar bases temporais (base de lucro de 3a ÷ PL do último ano) e passou a ser
+  `median([roe(a) for a in anos_ordenados() se não None])` — reusando a definição única `roe(ano)`
+  (lucro_t ÷ PL médio(t-1,t)), a MESMA estatística de `report._roe_through_cycle`, então o `roe0` e o
+  `roe_terminal` do RIM não divergem mais. `serie_lucro_normalizada` devolve a série de `lucro_liquido`
+  CRUA (winsorização temporal removida — a Fase 10 só REMOVE o viés; o desenho do `g` robusto é a Fase
+  11); `norm.serie_winsorizada` continua VIVA para o screening (FCO/dividendos/tangível, Cap. 8).
+  **Checkpoint de decisão (Option A, resolvido pelo usuário):** `roe_valuation` é consumido também pelo
+  ROTEAMENTO de `arquetipo.py` — a mediana through-cycle SUBESTIMA um compounder de ROE crescente
+  (fica no meio da subida; medido: uma série `[0,063…0,329]` tem mediana 0,113 < limiar `roe_alto_min`
+  0,15) e o desrotearia de CRESCIMENTO. **Signal split (espelha o estimator split do PRIM-01):** novo
+  helper `roe_qualidade_atual` (o ROE-endpoint pré-PRIM-02, só-roteamento); `arquetipo` consome-o; o
+  `roe_valuation` (mediana) segue servindo RIM/display. `roe_alto_min` NÃO tocado. **Core Value
+  preservado:** o `crescimento_lucro_3a` do screening foi repointado à MESMA `serie_lucro_normalizada`
+  crua → `crescimento_lucro_3a == g_historico` por CONSTRUÇÃO (era coincidência winsor). **3 deviations
+  mecânicas (asserts intactos):** rewrite do invariante do endpoint p/ a mediana; rewrite do contrato do
+  spike p/ a série crua; recalibração dos NÚMEROS das fixtures da coerência de direção pela própria
+  doutrina do teste. **Nada afrouxado, nenhum xfail→skip, nenhum assert de guarda removido; ZERO knob**
+  (`config.yaml`/`calibracao.lock.yaml` intactos; 3 graus). **2 golden_nivel de `g`
+  (`test_growth_reconciliacao`, tagged "→ Fase 11 (GROW)") quebram como CONSEQUÊNCIA do `g_fund` novo —
+  NÃO atualizados (contrato v2.4: golden de nível é DELETADO pela fase que corrige o método, nunca
+  atualizado); a lógica de teto/trava está intocada, é o nível da fixture que mudou. Golden ITUB4=32,88
+  segue vivo (10-04).** Suíte default **477 passed, 1 skipped, 34 deselected, 1 xfailed, 0 failed**.
+  Commits: `e6bdb5f` (RED), `10b54fc` (GREEN).
 
 - **PRIM-01 (Fase 10 / plano 10-01) — a base de valuation trocou o `median()`-do-meio pelo ENDPOINT
   de tendência robusta (Theil-Sen).** `normalizacao.base_normalizada` deixou de devolver o ano-do-meio
@@ -413,7 +440,7 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 
 ## Session Continuity
 
-Last session: 2026-07-16T11:22:57.331Z
+Last session: 2026-07-16T11:57:59.681Z
 Stopped at: Phase 10 context gathered
 Resume file: None
 

@@ -193,7 +193,7 @@ Plans:
 - [x] 10-01-PLAN.md — PRIM-01: divisão do estimador (base_normalizada → endpoint Theil-Sen + guard; media_ciclo para o cíclico) + BLIND-03 verde
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 10-02-PLAN.md — PRIM-02 + PRIM-03: roe_valuation = mediana dos ROEs anuais; serie_lucro_normalizada crua (winsor fora da série temporal)
+- [x] 10-02-PLAN.md — PRIM-02 + PRIM-03: roe_valuation = mediana dos ROEs anuais; serie_lucro_normalizada crua (winsor fora da série temporal)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 10-03-PLAN.md — PRIM-04: deflação IPCA do motor cíclico via stamping offline (macro.ipca_deflatores_anuais, espelho do rf_local)
@@ -293,7 +293,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 7. Blindagem processual (BLIND) | v2.4 | 5/5 | Complete (gap WR-04 aberto) | 2026-07-13 |
 | 8. Sanidade dos dados (SAN) | v2.4 | 1/6 | In Progress|  |
 | 9. Ingestão correta (DATA) | v2.4 | 0/5 | Planned | - |
-| 10. Primitivas sem viés (PRIM) | v2.4 | 1/4 | In Progress|  |
+| 10. Primitivas sem viés (PRIM) | v2.4 | 2/4 | In Progress|  |
 | 11. Crescimento / g (GROW) | v2.4 | 0/? | Not started | - |
 | 12. Custo de capital / Ke (KE) | v2.4 | 0/? | Not started | - |
 | 13. Motores + contrato de saída (ENG) | v2.4 | 0/? | Not started | - |

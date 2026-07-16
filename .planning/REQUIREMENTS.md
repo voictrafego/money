@@ -149,9 +149,9 @@ Maior alavancagem por linha do repositório: atinge todos os motores, todos os m
 
 - [x] **PRIM-01**: A base de lucro do valuation deixa de descartar o ano mais recente
   (`normalizacao.py:73-75`: `anos_media=3` cai em `median()` de 3 = **o ano do meio**).
-- [ ] **PRIM-02**: `roe_valuation` deixa de cruzar bases temporais (lucro de 2023 ÷ PL de 2024). Passa
+- [x] **PRIM-02**: `roe_valuation` deixa de cruzar bases temporais (lucro de 2023 ÷ PL de 2024). Passa
   a ser a **mediana da série de ROEs anuais**. ITUB4: 16,1% → 18,0%.
-- [ ] **PRIM-03**: A winsorização não é aplicada a série **temporal** — ela clampa a tendência e
+- [x] **PRIM-03**: A winsorização não é aplicada a série **temporal** — ela clampa a tendência e
   **ressuscita ano de prejuízo**, fabricando `g` de 36% (VULC3) e 47% (CYRE3), exibidos no app.
 - [ ] **PRIM-04**: A base do motor cíclico é **deflacionada** (hoje soma reais de 2015 com reais de
   2024; IPCA acumulado de 58%; CSNA3 sai 31,8% subvalorizada só por isso).
@@ -301,8 +301,8 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | DATA-05 | Phase 9 | Complete |
 | DATA-06 | Phase 9 | Complete |
 | PRIM-01 | Phase 10 | Complete |
-| PRIM-02 | Phase 10 | Pending |
-| PRIM-03 | Phase 10 | Pending |
+| PRIM-02 | Phase 10 | Complete |
+| PRIM-03 | Phase 10 | Complete |
 | PRIM-04 | Phase 10 | Pending |
 | PRIM-05 | Phase 10 | Pending |
 | GROW-01 | Phase 11 | Pending |
