@@ -77,6 +77,13 @@ def cmd_analyze(args, cfg):
     cfg["capm"]["rf_local"] = macro.selic_ciclo_para_capm(
         cfg["capm"]["selic_fallback"], cfg["capm"].get("rf_ciclo_anos", 10)
     )
+    # PRIM-04: resolve os deflatores anuais do IPCA UMA vez aqui (rede no entry point) e os
+    # carimba em cfg — o motor cíclico os lê offline, como o rf_local. MESMA janela do rf
+    # (rf_ciclo_anos): é essa simetria que mantém o valuation invariante à inflação.
+    cfg["macro"] = {
+        **cfg.get("macro", {}),
+        "ipca_deflatores": macro.ipca_deflatores_anuais(cfg["capm"].get("rf_ciclo_anos", 10)),
+    }
     a = report.analisar_acao(c, cfg)
     md = report.relatorio_markdown(c, a, cfg)
     destino = os.path.join(OUT_DIR, f"{c.ticker}.md")

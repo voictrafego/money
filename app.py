@@ -246,6 +246,14 @@ def rf_capm(fallback, anos):
     return macro.selic_ciclo_para_capm(fallback, anos)
 
 
+@st.cache_data(show_spinner=False, ttl=3600)
+def ipca_deflatores_capm(anos):
+    """Deflatores anuais do IPCA (BCB SGS 13522) p/ o motor cíclico — trazem a série de lucro a
+    reais do último ano (PRIM-04). MESMA janela do rf (simetria que mantém o valuation invariante
+    à inflação). Uma chamada de rede por execução (cacheada), como o rf; app.py segue read-only."""
+    return macro.ipca_deflatores_anuais(anos)
+
+
 @st.cache_data(show_spinner=False, ttl=300)
 def frame_intraday(ticker: str, timeframe: str, nonce: int):
     """Wrapper de cache do OHLCV intraday — TTL curto (300s), invalidação por nonce.
@@ -866,6 +874,12 @@ if modo.startswith("Analisar"):
                 CFG["capm"]["rf_local"] = rf_capm(
                     CFG["capm"]["selic_fallback"], CFG["capm"].get("rf_ciclo_anos", 10)
                 )
+                # PRIM-04: carimba os deflatores anuais do IPCA em CFG (a engine os lê offline
+                # no motor cíclico, como o rf_local). MESMA janela do rf (rf_ciclo_anos).
+                CFG["macro"] = {
+                    **CFG.get("macro", {}),
+                    "ipca_deflatores": ipca_deflatores_capm(CFG["capm"].get("rf_ciclo_anos", 10)),
+                }
                 st.write("Calculando valuation (DDM + múltiplos)…")
                 a = report.analisar_acao(c, CFG)
                 _status.update(label=f"Análise de {ticker_ativo} concluída",

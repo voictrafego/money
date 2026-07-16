@@ -215,7 +215,7 @@ _SNAPSHOT = os.path.join(ROOT, "tests", "fixtures", "snapshot_bancos_2026-07-12.
 
 def _cesta_congelada():
     """CompanyData da cesta congelada + cfg com o rf_local carimbado (offline, determinístico)."""
-    empresas, rf_local = carregar_snapshot(_SNAPSHOT)
+    empresas, rf_local, _ipca_defl = carregar_snapshot(_SNAPSHOT)
     cfg = _cfg()
     cfg = {**cfg, "capm": {**cfg["capm"], "rf_local": rf_local}}
     return {c.ticker: c for c in empresas}, cfg

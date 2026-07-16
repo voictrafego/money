@@ -30,7 +30,7 @@ from .report import report
 BANDA_PASS = 0.15
 
 # chaves globais do snapshot que NÃO são tickers (carimbos de captura).
-_CHAVES_GLOBAIS = {"data_base", "rf_local"}
+_CHAVES_GLOBAIS = {"data_base", "rf_local", "ipca_deflatores"}
 
 # séries anuais reconstruídas no CompanyData (obrigatórias + display).
 _SERIES = (
@@ -43,16 +43,19 @@ _SERIES = (
 )
 
 
-def carregar_snapshot(caminho: str) -> Tuple[List[CompanyData], float]:
-    """Lê o snapshot YAML congelado e reconstrói os `CompanyData` + o `rf_local` carimbado.
+def carregar_snapshot(caminho: str) -> Tuple[List[CompanyData], float, dict]:
+    """Lê o snapshot YAML congelado e reconstrói os `CompanyData` + os carimbos globais.
 
     Congela raw fundamentals (não `vpa0/roe0/ke` derivados) → imune a mudança de assinatura
-    interna de `motores.rim`. Devolve `(empresas, rf_local)` para o caller injetar o rf no cfg.
+    interna de `motores.rim`. Devolve `(empresas, rf_local, ipca_deflatores)` para o caller
+    injetar no cfg — o `ipca_deflatores` (PRIM-04) é carimbo global aditivo lido offline como o
+    `rf_local`; ausente/vazio → {} (o motor cíclico degrada para a série nominal, never-raise).
     """
     with open(caminho, encoding="utf-8") as fh:
         snap = yaml.safe_load(fh)
 
     rf_local = float(snap["rf_local"])
+    ipca_deflatores = snap.get("ipca_deflatores") or {}
     empresas: List[CompanyData] = []
     for tk, dados in snap.items():
         if tk in _CHAVES_GLOBAIS:
@@ -72,7 +75,7 @@ def carregar_snapshot(caminho: str) -> Tuple[List[CompanyData], float]:
             for ano, valor in valores.items():
                 destino[int(ano)] = float(valor)
         empresas.append(c)
-    return empresas, rf_local
+    return empresas, rf_local, ipca_deflatores
 
 
 def carregar_fair_values(caminho: str) -> dict:
@@ -106,15 +109,21 @@ def rodar_cesta(
     fair_values: dict,
     cfg: dict,
     rf_local: float,
+    ipca_deflatores: Optional[dict] = None,
 ) -> List[dict]:
     """Roda o RIM calibrado nos bancos (offline) e triangula as 4 âncoras — 1 dict por ticker.
 
-    Injeta `rf_local` congelado em `cfg["capm"]["rf_local"]` numa CÓPIA local do cfg (não muta o
-    dict do chamador — função pura); `analisar_acao` NÃO muta o cfg, então é seguro rodar os 4
-    bancos com o MESMO dict. O intrínseco RIM vem de `analisar_acao(...).intrinseco_motor`
-    (never-raise: None → tratado como fora-da-banda).
+    Injeta `rf_local` e `ipca_deflatores` carimbados numa CÓPIA local do cfg (não muta o dict do
+    chamador — função pura); `analisar_acao` NÃO muta o cfg, então é seguro rodar os 4 bancos com
+    o MESMO dict. O `ipca_deflatores` (PRIM-04) só é consumido pelo motor cíclico — os bancos
+    roteiam para o RIM, então aqui degrada para {} (série nominal, never-raise). O intrínseco RIM
+    vem de `analisar_acao(...).intrinseco_motor` (never-raise: None → fora-da-banda).
     """
-    cfg = {**cfg, "capm": {**cfg.get("capm", {}), "rf_local": rf_local}}
+    cfg = {
+        **cfg,
+        "capm": {**cfg.get("capm", {}), "rf_local": rf_local},
+        "macro": {**cfg.get("macro", {}), "ipca_deflatores": ipca_deflatores or {}},
+    }
 
     # âncora (d): medianas de P/VP e P/L da PRÓPRIA cesta (D-11), agregação do harness.
     pares = [lentes.metricas_par(c) for c in empresas]

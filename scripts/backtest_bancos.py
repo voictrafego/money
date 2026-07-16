@@ -58,9 +58,9 @@ def main() -> int:
     with open(CONFIG_PATH, encoding="utf-8") as fh:
         cfg = yaml.safe_load(fh)
 
-    empresas, rf_local = backtest.carregar_snapshot(SNAPSHOT_PATH)
+    empresas, rf_local, ipca_defl = backtest.carregar_snapshot(SNAPSHOT_PATH)
     fair_values = backtest.carregar_fair_values(FAIR_VALUES_PATH)
-    cesta = backtest.rodar_cesta(empresas, fair_values, cfg, rf_local)
+    cesta = backtest.rodar_cesta(empresas, fair_values, cfg, rf_local, ipca_defl)
 
     linhas = []
     for r in sorted(cesta, key=lambda x: x["ticker"]):

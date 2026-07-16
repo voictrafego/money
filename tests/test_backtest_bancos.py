@@ -57,9 +57,9 @@ def _cfg() -> dict:
 
 def _rodar() -> list[dict]:
     """Roda a cesta congelada via o MESMO harness do script (offline, determinístico)."""
-    empresas, rf_local = carregar_snapshot(_SNAPSHOT)
+    empresas, rf_local, ipca_defl = carregar_snapshot(_SNAPSHOT)
     fair_values = carregar_fair_values(_FAIR_VALUES)
-    return rodar_cesta(empresas, fair_values, _cfg(), rf_local)
+    return rodar_cesta(empresas, fair_values, _cfg(), rf_local, ipca_defl)
 
 
 def test_backtest_cesta_rota_por_ticker():
@@ -138,9 +138,13 @@ def test_backtest_determinismo():
 
 def _analises_por_ticker() -> dict:
     """ResultadoAnalise completo por ticker — expõe `motor_rotulo`, que `rodar_cesta` não retorna."""
-    empresas, rf_local = carregar_snapshot(_SNAPSHOT)
+    empresas, rf_local, ipca_defl = carregar_snapshot(_SNAPSHOT)
     cfg = _cfg()
-    cfg = {**cfg, "capm": {**cfg.get("capm", {}), "rf_local": rf_local}}  # espelha rodar_cesta
+    cfg = {  # espelha rodar_cesta (rf_local + ipca_deflatores carimbados)
+        **cfg,
+        "capm": {**cfg.get("capm", {}), "rf_local": rf_local},
+        "macro": {**cfg.get("macro", {}), "ipca_deflatores": ipca_defl or {}},
+    }
     return {c.ticker: report.analisar_acao(c, cfg) for c in empresas}
 
 

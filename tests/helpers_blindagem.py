@@ -632,7 +632,7 @@ def cfg_e_empresas_do_snapshot():
     """
     from analista.backtest import carregar_snapshot  # import tardio: precisa de src/ no path
 
-    empresas, rf_local = carregar_snapshot(str(SNAPSHOT_BANCOS))
+    empresas, rf_local, _ipca_defl = carregar_snapshot(str(SNAPSHOT_BANCOS))
     cfg = carregar_config_producao()
     cfg["capm"]["rf_local"] = rf_local
     return empresas, cfg
