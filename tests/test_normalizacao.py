@@ -5,45 +5,78 @@ A camada de normalização entrega a base de lucro robusta a UM exercício atíp
 ROE/CAGR/payout/DY do valuation. Espelha o espírito BSD (Cap. 8.4): médias trienais
 + winsorização. Funções puras: recebem números, devolvem números (sem rede, sem I/O).
 
-Regras travadas aqui (documentadas em normalizacao.py):
-- N == 0 válido            -> None (degradação graciosa, série vazia/só-None)
-- N == 1 válido            -> o próprio valor (não há o que suavizar)
-- 2 <= N < 5 válidos       -> mediana (winsor não morde poucos pontos; robusta a 1 outlier)
-- N >= 5 válidos           -> média winsorizada (extremos clampados aos percentis)
+Regras travadas aqui (documentadas em normalizacao.py) — PRIM-01 dividiu o estimador:
+- base_normalizada (base de VALUATION) = ENDPOINT de tendência robusta (Theil-Sen) no ano
+  atual — reflete o crescimento recente e é robusto a UM exercício atípico. Ladder curta
+  (D-01b): vazio -> None; N==1 -> o próprio valor; N==2 -> média dos dois. GUARD de
+  degeneração: endpoint <= 0 -> median(janela) (nunca devolve base negativa).
+- media_ciclo (motor CÍCLICO) = média/mediana through-cycle (o estimador ANTIGO), robusto a
+  UM prejuízo recente: vazio -> None; N==1 -> valor; 2<=N<5 -> mediana; N>=5 -> winsorizada.
 """
+
+from statistics import median
 
 from analista.core import normalizacao as norm
 
 
 # --------------------------------------------------------------------------- #
-# base_normalizada — número-síntese canônico
+# base_normalizada — ENDPOINT de tendência robusta (Theil-Sen), PRIM-01/D-01
 # --------------------------------------------------------------------------- #
-def test_outlier_alto_suavizado_pela_mediana():
-    # [100, 105, 300]: 1 ano 3x os demais. A média (168,3) seria contaminada;
-    # a mediana (105) é robusta ao outlier — é o número que o valuation deve usar.
-    base = norm.base_normalizada([100, 105, 300], anos_media=3, winsor=0.10)
+def test_endpoint_reflete_crescimento_e_nao_pune_o_ano_recente():
+    # ANTES (doença BLIND-03): o median()-de-3 devolvia o ANO-DO-MEIO e punia o crescedor
+    # (haircut fechado -g/(1+g) = -9,1% em g=10%). AGORA: o endpoint da tendência robusta
+    # reflete o ANO ATUAL — fica ACIMA da mediana-do-meio, não abaixo.
+    serie = [100.0, 110.0, 121.0, 133.1, 146.41]  # +10%/ano puro, zero outlier a suavizar
+    base = norm.base_normalizada(serie, anos_media=5, winsor=0.10)
     assert base is not None
-    assert abs(base - 105) < 1e-9
-    # e claramente abaixo da média aritmética contaminada.
-    assert base < (100 + 105 + 300) / 3
+    assert base > median(serie)   # não pune crescimento (mediana-do-meio = 121, seria o haircut)
+    assert 143.0 < base < 146.0   # ~144,15 (endpoint Theil-Sen, janela 5)
 
 
-def test_winsor_clampa_extremos_em_serie_longa():
-    # N>=5: média winsorizada a 10% clampa o outlier alto (1000) ao percentil 90,
-    # então a base fica MUITO abaixo da média crua (que o 1000 explode).
-    serie = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1000]
-    base = norm.base_normalizada(serie, anos_media=10, winsor=0.10)
-    media_crua = sum(serie) / len(serie)  # = 104,5 (explodida pelo 1000)
+def test_endpoint_robusto_a_pico_terminal_na_janela_5():
+    # Um PICO atípico (2x) no penúltimo ano. Na janela de 5, a regressão robusta NÃO persegue
+    # o pico (median-of-slopes o ignora): o endpoint fica na TENDÊNCIA (~145), não em ~266.
+    serie = [100.0, 110.0, 121.0, 266.2, 146.41]
+    base = norm.base_normalizada(serie, anos_media=5, winsor=0.10)
     assert base is not None
-    assert base < media_crua
-    assert base < 50  # o 1000 foi clampado: não sobra rastro do extremo
+    assert base < 170.0          # o pico não estoura a base
+    assert 143.0 < base < 148.0  # ~144,74: robusto ao pico E ainda reflete a tendência
 
 
-def test_none_ignorado_antes_de_normalizar():
-    # Os None não contam como 0: a série efetiva é [100, 105, 300] -> mediana 105.
-    base = norm.base_normalizada([100, None, 105, None, 300], anos_media=5, winsor=0.10)
+def test_guard_endpoint_negativo_degrada_para_mediana():
+    # Série em queda com prejuízo recente: o endpoint da tendência seria NEGATIVO (-40).
+    # O GUARD degrada para median(janela) e NUNCA devolve base negativa (protege RIM/DCF).
+    serie = [100.0, 50.0, -80.0]
+    base = norm.base_normalizada(serie, anos_media=3, winsor=0.10)
     assert base is not None
-    assert abs(base - 105) < 1e-9
+    assert base > 0                  # guard: nunca negativo
+    assert abs(base - 50.0) < 1e-9   # median([100, 50, -80]) = 50 (degradação graciosa)
+
+
+def test_media_ciclo_e_a_media_through_cycle_nao_o_endpoint():
+    # O ESTIMADOR DIVIDIDO (RESEARCH §Estimator split): o motor cíclico quer a força de lucro
+    # do MEIO do ciclo, não o ano atual. media_ciclo devolve a média/mediana (comportamento
+    # ANTIGO), que numa série crescente fica ABAIXO do endpoint que base_normalizada usa.
+    serie = [100.0, 110.0, 121.0, 133.1, 146.41]
+    mc = norm.media_ciclo(serie, anos_media=5, winsor=0.10)
+    bn = norm.base_normalizada(serie, anos_media=5, winsor=0.10)
+    assert mc is not None and bn is not None
+    assert mc < bn                # média through-cycle (~121,8) < endpoint recente (~144,2)
+    assert abs(mc - 121.84) < 0.5  # winsorized-mean preservada no ramo cíclico
+
+
+def test_none_ignorado_e_endpoint_da_serie_limpa():
+    # Os None não contam como 0: a série efetiva é [100, 110, 121].
+    com_none = norm.base_normalizada([100, None, 110, None, 121], anos_media=5, winsor=0.10)
+    sem_none = norm.base_normalizada([100, 110, 121], anos_media=5, winsor=0.10)
+    assert com_none is not None
+    assert abs(com_none - sem_none) < 1e-9  # None puramente ignorado (não é 0 na regressão)
+    assert abs(com_none - 120.5) < 0.5      # endpoint da tendência (não a mediana-do-meio 110)
+
+
+def test_fallback_dois_pontos_e_media():
+    # D-01b: 2 pontos válidos -> média dos dois (Theil-Sen degenera com N=2).
+    assert norm.base_normalizada([40.0, 60.0], anos_media=3, winsor=0.10) == 50.0
 
 
 def test_serie_curta_degrada_para_valor_unico():
@@ -56,13 +89,28 @@ def test_serie_curta_degrada_para_valor_unico():
 
 def test_apenas_os_ultimos_anos_media_entram_na_base():
     # anos_media=3: só os 3 últimos válidos contam. O ano antigo atípico (10) é ignorado.
+    # Série [100,100,100] (tendência plana) -> endpoint = 100.
     base = norm.base_normalizada([10, 100, 100, 100], anos_media=3, winsor=0.10)
     assert abs(base - 100) < 1e-9
 
 
 def test_serie_estavel_base_igual_ao_valor():
-    # Empresa estável (todos os anos iguais) -> base == valor cru (valuation inalterado).
+    # Empresa estável (todos os anos iguais) -> endpoint da tendência plana == valor cru.
     assert norm.base_normalizada([200, 200, 200, 200, 200], anos_media=3) == 200
+
+
+# --------------------------------------------------------------------------- #
+# media_ciclo — winsor/mediana through-cycle para o motor cíclico (PRIM-01, split)
+# --------------------------------------------------------------------------- #
+def test_winsor_clampa_extremos_em_serie_longa():
+    # N>=5: a média winsorizada a 10% (agora em media_ciclo) clampa o outlier alto (1000)
+    # ao percentil 90, então a base fica MUITO abaixo da média crua (que o 1000 explode).
+    serie = [1, 2, 3, 4, 5, 6, 7, 8, 9, 1000]
+    base = norm.media_ciclo(serie, anos_media=10, winsor=0.10)
+    media_crua = sum(serie) / len(serie)  # = 104,5 (explodida pelo 1000)
+    assert base is not None
+    assert base < media_crua
+    assert base < 50  # o 1000 foi clampado: não sobra rastro do extremo
 
 
 # --------------------------------------------------------------------------- #
