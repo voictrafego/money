@@ -293,7 +293,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 7. Blindagem processual (BLIND) | v2.4 | 5/5 | Complete (gap WR-04 aberto) | 2026-07-13 |
 | 8. Sanidade dos dados (SAN) | v2.4 | 1/6 | In Progress|  |
 | 9. Ingestão correta (DATA) | v2.4 | 0/5 | Planned | - |
-| 10. Primitivas sem viés (PRIM) | v2.4 | 4/4 | Complete   | 2026-07-16 |
+| 10. Primitivas sem viés (PRIM) | v2.4 | 4/4 | Complete    | 2026-07-16 |
 | 11. Crescimento / g (GROW) | v2.4 | 0/? | Not started | - |
 | 12. Custo de capital / Ke (KE) | v2.4 | 0/? | Not started | - |
 | 13. Motores + contrato de saída (ENG) | v2.4 | 0/? | Not started | - |
