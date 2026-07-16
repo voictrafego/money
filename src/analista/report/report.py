@@ -261,14 +261,27 @@ def _intrinseco_por_motor(
             # antigo). O estimador continua a MÉDIA through-cycle (media_ciclo), NÃO o endpoint
             # Theil-Sen de base_normalizada: uma cíclica com prejuízo recente vale pela força de
             # lucro do meio do ciclo, não pelo ano atual (RESEARCH §Estimator split, PRIM-01).
-            defl = (cfg or {}).get("macro", {}).get("ipca_deflatores") or {}
-            if defl:
-                serie_lucro = [
-                    c.lucro_liquido[an] * defl[an]
-                    for an in c.anos_ordenados()
-                    if an in c.lucro_liquido and an in defl
-                ]
-            else:
+            # WR-02: coage as chaves do carimbo para int (um round-trip YAML pode entregá-las
+            # como string) — sem isso `an in defl` (an inteiro) casa ZERO anos e a série sai
+            # vazia, matando o motor cíclico em silêncio. never-raise: chave não-inteira é
+            # ignorada.
+            _defl_raw = (cfg or {}).get("macro", {}).get("ipca_deflatores") or {}
+            defl = {}
+            for _ano, _fator in _defl_raw.items():
+                try:
+                    defl[int(_ano)] = float(_fator)
+                except (TypeError, ValueError):
+                    continue
+            serie_lucro = [
+                c.lucro_liquido[an] * defl[an]
+                for an in c.anos_ordenados()
+                if an in c.lucro_liquido and an in defl
+            ]
+            # WR-02 (defesa em profundidade): carimbo presente mas SEM casar nenhum ano da
+            # empresa → série deflacionada vazia → o motor cíclico sumiria (None). Cai na série
+            # nominal (never-raise), o MESMO destino de "deflatores ausentes/vazios", em vez de
+            # o motor morrer em silêncio.
+            if not serie_lucro:
                 serie_lucro = c.serie("lucro_liquido")
             lpa_mid = mult.lpa(
                 norm.media_ciclo(

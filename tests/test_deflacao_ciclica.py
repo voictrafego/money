@@ -67,6 +67,31 @@ def test_base_ciclica_deflacionada_supera_a_nominal():
     assert v_defl > v_nom
 
 
+def test_deflatores_com_chaves_string_ainda_deflacionam_nao_no_opam():
+    # WR-02 (consumidor report.py): um carimbo cujas chaves chegam como STRING (round-trip
+    # YAML) casava ZERO anos (`an in defl` com `an` inteiro) → série vazia → motor cíclico
+    # devolve None em SILÊNCIO, embora o ramo `if defl:` fosse tomado. O ramo deve coagir as
+    # chaves para int e ainda DEFLACIONAR (não no-opar para nominal/None).
+    c, anos = _empresa_ciclica_inflacionaria()
+    cfg = _cfg()
+
+    defl_int = _deflatores_inflacao(anos)
+    defl_str = {str(ano): fator for ano, fator in defl_int.items()}
+    cfg_str = {**cfg, "macro": {"ipca_deflatores": defl_str}}
+    cfg_int = {**cfg, "macro": {"ipca_deflatores": defl_int}}
+    cfg_nom = {**cfg, "macro": {"ipca_deflatores": {}}}
+
+    v_str = report._intrinseco_por_motor("normalizado", c, _analise_com_ke(), cfg_str)
+    v_int = report._intrinseco_por_motor("normalizado", c, _analise_com_ke(), cfg_int)
+    v_nom = report._intrinseco_por_motor("normalizado", c, _analise_com_ke(), cfg_nom)
+
+    assert v_str is not None
+    # chave-string deflaciona IGUAL à chave-int (não some para série vazia/None)
+    assert abs(v_str - v_int) < 1e-9
+    # e realmente deflaciona (série inflacionária) — não caiu na série nominal
+    assert v_str > v_nom
+
+
 def test_fallback_nominal_quando_deflatores_ausentes_never_raise():
     c, _ = _empresa_ciclica_inflacionaria()
     cfg = _cfg()
