@@ -19,7 +19,14 @@ findings:
   warning: 3
   info: 2
   total: 5
-status: issues_found
+status: resolved
+resolved: 2026-07-16
+resolution:
+  WR-01: "docstring-only (contrato real do guard; sem mudança de comportamento) — 9427980"
+  WR-02: "int(ano) no carregar_snapshot + coerção defensiva no consumidor report.py — d68cb52, 657b2a9"
+  WR-03: "cmd_rank carimba rf+ipca_deflatores via fonte única _carimbar_macro — 553f2fd"
+  IN-01: "não alterado (shared-state benigno hoje; deferido)"
+  IN-02: "não alterado (assimetria de janela silenciosa; deferido, sem ação p/ correção)"
 ---
 
 # Phase 10: Code Review Report
@@ -153,6 +160,29 @@ a lucro year is dropped for lacking a deflator.
 
 ---
 
+## Resolution (2026-07-16, gap-closure na Fase 10)
+
+Os 3 warnings foram fechados com testes RED-able (falham antes do fix, passam depois),
+commits atômicos e orçamento de knobs intacto (`git diff config.yaml calibracao.lock.yaml`
+VAZIO). Suíte default **490 passed, 1 skipped, 27 deselected, 1 xfailed, 0 failed** (+4 testes
+novos). Os 2 info items ficaram como registro (sem correção).
+
+- **WR-01 — RESOLVIDO (docstring-only, `9427980`).** O guard `endpoint<=0 → median(janela)`
+  NÃO é clamp de não-negatividade: uma janela majoritariamente deficitária dá base < 0 por
+  design. A docstring (módulo + função) passou a declarar o contrato real; **zero mudança de
+  comportamento numérico** (o "behavior change" alternativo teria blast radius no Ranking e foi
+  descartado, como manda o achado).
+- **WR-02 — RESOLVIDO (`d68cb52` backtest, `657b2a9` report).** `carregar_snapshot` re-chaveia
+  `ipca_deflatores` para `int(ano)` como toda série anual irmã; o consumidor `report._intrinseco_
+  por_motor` coage as chaves para int (defesa) e cai na série nominal quando o carimbo não casa
+  nenhum ano (never-raise), em vez de o motor cíclico morrer em silêncio. Dois testes RED-able:
+  round-trip por YAML com chaves-string na carga, e deflação com chaves-string no consumidor.
+- **WR-03 — RESOLVIDO (`553f2fd`).** `_carimbar_macro` virou fonte única do carimbo (rf +
+  deflatores) para `analyze` E `rank` — elimina o drift entre entry points. Teste RED-able
+  offline prova rf, deflatores e `intrinseco_motor` idênticos entre os dois menus para uma ação
+  cíclica (motor `normalizado`).
+
 _Reviewed: 2026-07-16_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
+_Resolved: 2026-07-16 (executor)_
