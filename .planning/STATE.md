@@ -4,14 +4,14 @@ milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
 stopped_at: Phase 10 context gathered
-last_updated: "2026-07-16T11:58:46.099Z"
+last_updated: "2026-07-16T12:20:29.552Z"
 last_activity: 2026-07-16
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 20
-  completed_plans: 18
-  percent: 90
+  completed_plans: 19
+  percent: 95
 ---
 
 # Project State
@@ -33,13 +33,13 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 10 (primitivas-sem-vi-s-prim) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-07-16
 
-Progress: [█████████░] 90%
+Progress: [██████████] 95%
 
-**Suíte:** `472 passed, 1 skipped, 34 deselected, 1 xfailed` — 0 XPASS. **BLIND-03 curado no 10-01**
+**Suíte:** `483 passed, 1 skipped, 34 deselected, 1 xfailed` — 0 XPASS. **BLIND-03 curado no 10-01**
 (virou invariante normal). Sobra **1 xfailed** = BLIND-02b (vira verde na Fase 12) e **1 skipped** =
 jackknife (Fase 14). Golden de nível que quebrar deve ser **DELETADO, nunca atualizado** (contrato do
 CLAUDE.md) — o golden ITUB4=32,88 ainda vive: sua deleção é o critério de saída do plano **10-04** (PRIM-05).
@@ -117,10 +117,36 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 | Phase 09 P05 | 256min | 2 tasks | 7 files |
 | Phase 10 P01 | 65 | 3 tasks | 10 files |
 | Phase 10 P02 | 26min | 2 tasks | 9 files |
+| Phase 10 P03 | 12min | 3 tasks | 13 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **PRIM-04 (Fase 10 / plano 10-03) — o motor CÍCLICO consome a série de lucro DEFLACIONADA por
+  IPCA a reais do último ano.** `macro.ipca_deflatores_anuais(anos)` puxa a série anual do IPCA do
+  BCB (SGS **13522 amostrado em dezembro** = IPCA do ano-calendário, sem escolha livre de ano-base;
+  reusa a constante `IPCA_12M`) e a compõe em `{ano: prod(1+ipca[y]) para y in (ano+1..T)}`,
+  `defl[T]=1.0` — com separação limpa **rede** (`_ipca_anual_dezembro`, esqueleto do `_selic_historico`:
+  date-range + 3 retries + degradação graciosa para `{}`) × **pura** (`_compor_deflatores`, testável
+  offline). O ramo `"normalizado"` de `report._intrinseco_por_motor` deflaciona `c.serie('lucro_liquido')`
+  lendo `cfg['macro']['ipca_deflatores']` **OFFLINE** ANTES de `norm.media_ciclo` (a MÉDIA through-cycle,
+  NÃO o endpoint Theil-Sen), com **fallback nominal never-raise** quando os deflatores estão
+  ausentes/vazios. Stamping resolvido UMA vez nos entry points (`cli.py`/`app.py` via `@st.cache_data`,
+  na MESMA janela do `rf` — a simetria que torna o valuation invariante à inflação) e carimbado em `cfg`;
+  `backtest.carregar_snapshot` lê o carimbo do snapshot (`ipca_deflatores` em `_CHAVES_GLOBAIS`,
+  defensivo → `{}`) e `rodar_cesta` o injeta numa CÓPIA do cfg — **disciplina idêntica ao `rf_local`,
+  engine determinística** (`test_backtest_determinismo` verde). **Bloco `macro` NOVO no `config.yaml`,
+  FORA do escopo do lock** (`motores/capm/ddm/normalizacao`): dado objetivo do BCB (como o `rf`), NÃO
+  grau de liberdade — **orçamento de 3 knobs intacto** (`git diff calibracao.lock.yaml` VAZIO;
+  `motores.ciclica.anos_media/winsor` congelados intocados). **ZERO dependência nova.** **Nenhum snapshot
+  modificado** (o de bancos roteia 100% p/ RIM/seguradora — não exercita o motor cíclico; `carregar_snapshot`
+  lê o carimbo defensivamente). **Desvio mecânico:** `carregar_snapshot` virou 3-tupla → 4 call sites
+  atualizados (bancos degradam a `{}`). **4 golden_nivel vermelhos são TODOS pré-10-03** (verificado por
+  execução no commit `abeab5a`, fim do 10-02): ITUB4 32,88 + BBSE3 (seguradora) + 2 de `g`
+  (`test_growth_reconciliacao`) — nenhum passa pelo ramo `"normalizado"` alterado; ficam intactos/
+  quarentenados (10-04 / Fase 11). Suíte default **483 passed, 1 skipped, 34 deselected, 1 xfailed,
+  0 failed**. Commits: `0f44dae`/`69766c2` (Task 1), `701d6ea`/`c14aee5` (Task 2), `5528819` (Task 3).
 
 - **PRIM-02/PRIM-03 (Fase 10 / plano 10-02) — `roe_valuation` virou a MEDIANA da série de `roe(a)`
   e `serie_lucro_normalizada` virou CRUA, com um SIGNAL SPLIT do ROE (Option A).** `roe_valuation`
@@ -440,7 +466,7 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 
 ## Session Continuity
 
-Last session: 2026-07-16T11:57:59.681Z
+Last session: 2026-07-16T12:19:45.788Z
 Stopped at: Phase 10 context gathered
 Resume file: None
 
