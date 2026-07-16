@@ -76,6 +76,8 @@
 'tests/test_macro_ipca.py::test_serie_de_ipca_vazia_degrada_para_dict_vazio_never_raise': contrato
 'tests/test_macro_ipca.py::test_deflatores_anuais_compoe_a_serie_carimbada_sem_tocar_a_rede': contrato
 'tests/test_macro_ipca.py::test_deflatores_anuais_falha_de_rede_degrada_gracioso': contrato
+'tests/test_deflacao_ciclica.py::test_base_ciclica_deflacionada_supera_a_nominal': invariante
+'tests/test_deflacao_ciclica.py::test_fallback_nominal_quando_deflatores_ausentes_never_raise': contrato
 'tests/test_comparables.py::test_preco_alvo_cteep': invariante
 'tests/test_comparables.py::test_preco_alvo_clampa_payout_acima_de_1': invariante
 'tests/test_comparables.py::test_preco_alvo_clampa_payout_negativo': invariante
