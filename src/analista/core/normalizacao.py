@@ -19,7 +19,12 @@ consumidores da base querem estimadores OPOSTOS:
     (Theil-Sen)** avaliado no ano atual. Reflete o crescimento recente e é robusto a UM
     exercício atípico — sem o haircut -g/(1+g) que a mediana-do-meio impunha (BLIND-03).
     Ladder curta (D-01b): vazio -> None; N==1 -> valor; N==2 -> média dos dois. GUARD de
-    degeneração: endpoint <= 0 (prejuízo recente) -> median(janela) (nunca base negativa).
+    degeneração: endpoint <= 0 (prejuízo recente) -> median(janela). O guard só remove o
+    ARTEFATO de extrapolação negativa do endpoint (a reta Theil-Sen projetada para baixo do
+    zero num ano ruim); NÃO é um clamp de não-negatividade — uma janela majoritariamente
+    deficitária tem median(janela) < 0 e a base sai negativa POR DESIGN (empresa em prejuízo
+    estrutural). Os consumidores a jusante toleram (Gordon/DCF degradam, a camada de
+    relatório guarda `intrinseco <= 0`); quem exige base > 0 clampa no seu lado.
   - `media_ciclo` (motor CÍCLICO, janela longa) = a **média/mediana through-cycle** ANTIGA.
     Uma cíclica com prejuízo recente vale pela força de lucro do MEIO do ciclo, não pelo
     endpoint (que seria negativo). N >= 5 -> média winsorizada; 2<=N<5 -> mediana; N==1 ->
@@ -73,8 +78,14 @@ def base_normalizada(
 
     Ladder de série curta (D-01b): vazio -> None; N==1 -> o próprio valor; N==2 -> média dos
     dois (Theil-Sen degenera com 2 pontos). GUARD de degeneração: se o endpoint <= 0 (série
-    de prejuízo recente) degrada para median(janela) — nunca devolve base negativa que
-    quebraria RIM/DCF a jusante.
+    de prejuízo recente) degrada para median(janela). CONTRATO REAL do guard: ele elimina o
+    ARTEFATO específico da extrapolação — a reta robusta projetada ABAIXO de zero no ano atual
+    por causa de um exercício ruim — devolvendo a mediana da janela no lugar. NÃO é um clamp de
+    não-negatividade: numa janela majoritariamente deficitária a própria median(janela) é
+    negativa, e a base sai negativa POR DESIGN (a empresa realmente teve prejuízo no ciclo).
+    RIM/DCF a jusante degradam sem levantar (Gordon/DCF caem, a camada de relatório guarda
+    `intrinseco <= 0`); consumidores que exigem base estritamente positiva devem clampar no
+    próprio lado.
 
     `winsor` permanece na assinatura por integridade do orçamento de knobs (inerte aqui —
     é consumido por `media_ciclo`). `anos_media` é a janela do Theil-Sen.
