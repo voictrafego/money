@@ -55,7 +55,12 @@ def carregar_snapshot(caminho: str) -> Tuple[List[CompanyData], float, dict]:
         snap = yaml.safe_load(fh)
 
     rf_local = float(snap["rf_local"])
-    ipca_deflatores = snap.get("ipca_deflatores") or {}
+    # WR-02: re-chaveia para int(ano) como TODA série anual irmã abaixo — um YAML round-trip
+    # pode devolver os anos como string ("2020"), e o consumidor filtra por `an in defl` com
+    # `an` inteiro; sem esta normalização a interseção é vazia e o motor cíclico morre em
+    # silêncio (série deflacionada []), embora o ramo `if defl:` seja tomado.
+    _defl_raw = snap.get("ipca_deflatores") or {}
+    ipca_deflatores = {int(ano): float(fator) for ano, fator in _defl_raw.items()}
     empresas: List[CompanyData] = []
     for tk, dados in snap.items():
         if tk in _CHAVES_GLOBAIS:
