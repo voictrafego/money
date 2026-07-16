@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import datetime
 import time
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import requests
 
@@ -82,6 +82,79 @@ def _selic_historico(anos: int = 10) -> List[float]:
         if tentativa < 2:
             time.sleep(0.5 * (tentativa + 1))
     return []
+
+
+def _compor_deflatores(ipca_por_ano: Dict[int, float]) -> Dict[int, float]:
+    """Compõe os deflatores anuais a partir do IPCA anual em fração (função PURA, sem rede).
+
+    Devolve `{ano: fator para o último ano T}` = `prod(1 + ipca[y]) para y in (ano+1..T)`,
+    com `defl[T] = 1.0` (D-03: reais do ÚLTIMO ano, NÃO ano-base fixo). Para IPCA positivo,
+    quanto mais antigo o ano, MAIOR o fator. Série vazia → {} (never-raise; espelha o
+    `_selic_historico → []`). É esta a matemática que o teste OFFLINE trava — independente de
+    qual série legítima do SGS alimentou (a escolha da série só afeta a precisão numérica).
+    """
+    if not ipca_por_ano:
+        return {}
+    anos = sorted(ipca_por_ano)
+    T = anos[-1]
+    defl: Dict[int, float] = {}
+    for ano in anos:
+        fator = 1.0
+        for y in range(ano + 1, T + 1):
+            fator *= 1.0 + ipca_por_ano.get(y, 0.0)
+        defl[ano] = fator
+    return defl
+
+
+def _ipca_anual_dezembro(anos: int = 10) -> Dict[int, float]:
+    """IPCA acumulado 12m no fechamento de DEZEMBRO de cada ano, em fração — `{ano: ipca}`.
+
+    Esqueleto copiado de `_selic_historico`: consulta por intervalo de datas (dataInicial/
+    dataFinal), 3 retries com backoff, degradação graciosa para {} em qualquer falha. Usa a
+    série TRAVADA SGS 13522 (`IPCA_12M`): o acumulado 12m no fechamento de dezembro É, por
+    definição, o IPCA do ano-calendário — sem escolha livre de ano-base (RESEARCH Open Q2
+    RESOLVED/LOCKED; A1). Filtra os pontos de dezembro (mês 12) da série mensal 13522.
+    """
+    hoje = datetime.date.today()
+    ini = hoje - datetime.timedelta(days=anos * 365)  # < 10 anos exatos (trava do BCB)
+    url = (
+        f"https://api.bcb.gov.br/dados/serie/bcdata.sgs.{IPCA_12M}/dados"
+        f"?formato=json&dataInicial={ini.strftime('%d/%m/%Y')}&dataFinal={hoje.strftime('%d/%m/%Y')}"
+    )
+    for tentativa in range(3):
+        try:
+            resp = requests.get(url, timeout=30)
+            resp.raise_for_status()
+            dados = resp.json()
+            if isinstance(dados, list) and dados:
+                por_ano: Dict[int, float] = {}
+                for d in dados:
+                    _dia, mes, ano = d["data"].split("/")
+                    if int(mes) == 12:
+                        por_ano[int(ano)] = float(d["valor"].replace(",", ".")) / 100.0
+                return por_ano
+        except (requests.RequestException, ValueError, KeyError, TypeError, IndexError):
+            pass
+        if tentativa < 2:
+            time.sleep(0.5 * (tentativa + 1))
+    return {}
+
+
+def ipca_deflatores_anuais(anos: int = 10) -> Dict[int, float]:
+    """Deflatores anuais do IPCA (BCB SGS 13522) → `{ano: fator para o último ano}`.
+
+    Traz cada ano da série de lucro a **reais do último ano** (D-03), para o motor CÍCLICO
+    parar de somar reais nominais de anos diferentes (PRIM-04). Dado macro OBJETIVO do BCB
+    (como o `rf`), NÃO um knob de valuation — sem escolha livre de ano-base, sem grau de
+    liberdade novo. Degradação graciosa: rede falha → {} (a engine cai na série nominal).
+
+    Pureza da engine (FIX-03, espelha `selic_ciclo_para_capm`): chamado SÓ nos entry points
+    (cli/app), que resolvem os deflatores UMA vez e os carimbam em `cfg["macro"]
+    ["ipca_deflatores"]`. `analisar_acao` NÃO chama esta função — lê o valor já carimbado e
+    permanece offline/determinística. A rede vive só em `_ipca_anual_dezembro`; a composição
+    (`_compor_deflatores`) é pura e testável sem rede.
+    """
+    return _compor_deflatores(_ipca_anual_dezembro(anos))
 
 
 def selic_ciclo_para_capm(fallback: float, anos: int = 10) -> float:
