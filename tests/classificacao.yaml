@@ -58,9 +58,8 @@
 'tests/test_arquetipo_roteamento.py::test_nao_fronteirico_nao_aciona_ver02': contrato
 'tests/test_arquetipo_roteamento.py::test_render_fronteirico_exibe_candidatos_e_range': contrato
 'tests/test_arquetipo_roteamento.py::test_render_nao_fronteirico_sem_bloco_incerto': contrato
-'tests/test_backtest_bancos.py::test_backtest_cesta_rota_por_ticker': golden_nivel  # ITUB4 banda 30-40 (_ITUB4_RIM_MIN/MAX) -> DELETAR na Fase 10 (PRIM-05), NUNCA atualizar
-'tests/test_backtest_bancos.py::test_backtest_gate_quorum_e_anotacao': golden_nivel  # quorum sobre fair_values_bancos -> DELETAR na Fase 10 (PRIM-05), NUNCA atualizar
-'tests/test_backtest_bancos.py::test_backtest_alvos_recalibrados': golden_nivel  # ITUB4 32,88 +-0,20 -> DELETAR na Fase 10 (PRIM-05), NUNCA atualizar
+'tests/test_backtest_bancos.py::test_nenhuma_rota_diferente_de_rim_e_silenciosa': invariante  # WR-04: D-08 rota nao-silenciosa, extraido de test_backtest_cesta_rota_por_ticker (banda 30-40 DELETADA na Fase 10 PRIM-05); SOBREVIVE
+'tests/test_backtest_bancos.py::test_nenhuma_reprovacao_de_banda_e_silenciosa': invariante  # WR-04: D-08 FAIL nao-silencioso, extraido de test_backtest_gate_quorum_e_anotacao (contador de quorum de NIVEL DELETADO na Fase 10 PRIM-05); SOBREVIVE
 'tests/test_backtest_bancos.py::test_backtest_determinismo': invariante
 'tests/test_backtest_bancos.py::test_backtest_rotulo_do_motor_consistente': contrato
 'tests/test_capm_local.py::test_config_capm_local_documentado': contrato
@@ -340,8 +339,6 @@
 'tests/test_lentes.py::test_normalizar_tickers_dedup_preserva_ordem': golden_nivel
 'tests/test_lentes.py::test_normalizar_tickers_cap': contrato
 'tests/test_lentes.py::test_normalizar_tickers_degenerado_never_raise': contrato
-'tests/test_motores.py::test_rim_itub4_honesto_maior_que_ddm': golden_nivel  # ITUB4 banda 36-42 (4a trava) -> DELETAR na Fase 10 (PRIM-05), NUNCA atualizar
-'tests/test_motores.py::test_rim_itub4_live_alvo_32_40': golden_nivel  # ITUB4 banda 32-40 (5a trava) -> DELETAR na Fase 10 (PRIM-05), NUNCA atualizar
 'tests/test_motores.py::test_rim_terminal_normalizado': invariante
 'tests/test_motores.py::test_rim_bad_bank_abaixo_do_book': invariante
 'tests/test_motores.py::test_rim_roe_igual_ke_ancora_no_vpa': invariante
@@ -356,7 +353,7 @@
 'tests/test_motores.py::test_nav_contabil_igual_vpa': invariante
 'tests/test_motores.py::test_nav_contabil_never_raise': contrato
 'tests/test_motores.py::test_rota_seguradora_bbse3_gordon_franquia': golden_nivel
-'tests/test_motores.py::test_rota_seguradora_nao_pega_banco': golden_nivel  # ITUB4 banda 30-40 -> DELETAR na Fase 10 (PRIM-05), NUNCA atualizar
+'tests/test_motores.py::test_setor_de_banco_nao_casa_o_token_seguradora': invariante  # WR-04: roteamento-negativo (setor de banco nao casa token seguradora), extraido de test_rota_seguradora_nao_pega_banco (banda 30-40 DELETADA na Fase 10 PRIM-05); SOBREVIVE
 'tests/test_multiples.py::test_margem_liquida_cielo': invariante
 'tests/test_multiples.py::test_roe_petrobras': invariante
 'tests/test_multiples.py::test_roe_pl_negativo_invalido': contrato
@@ -479,7 +476,6 @@
 'tests/test_setup_report.py::test_e2e_calcular_integra': contrato
 'tests/test_vulc3_regressao.py::test_vulc3_cascata_domada_regressao': golden_nivel  # niveis de ke/g/vmax da VULC3 via engine -> Fases 10-12
 'tests/test_vulc3_regressao.py::test_vulc3_normalizacao_doma_roe_e_dy': invariante
-'tests/test_vulc3_regressao.py::test_rim_itub4_dispatch_banda': golden_nivel  # ITUB4 intrinseco > 30 (6a trava) -> DELETAR na Fase 10 (PRIM-05), NUNCA atualizar
 'tests/test_vulc3_regressao.py::test_capstone_itub4_sem_evitar_motor_rim_ddm_como_lente': contrato
 'tests/test_vulc3_regressao.py::test_capstone_taee11_baseline_ddm_identico': contrato
 'tests/test_vulc3_regressao.py::test_capstone_vale3_motor_normalizado': contrato

@@ -157,37 +157,6 @@ def _itub4_financeira() -> CompanyData:
     return c
 
 
-def _itub4_live_like() -> CompanyData:
-    """ITUB4 com MAGNITUDES live (CAL-01): VPA~19, ROE~19,3%, payout~46,7%, beta 1,0. Roda o
-    caminho de DISPATCH real (analisar_acao → _intrinseco_por_motor motor='rim'), provando que
-    os novos knobs de config CHEGAM ao motor. Se o dispatch ler uma key errada, degrada
-    silenciosamente para ~R$23 e este gate (>30) pega — o capstone com VPA=5 só checa > 0."""
-    c = CompanyData(ticker="ITUB4", nome="Itaú (live-like)", setor="Bancos", anos=_anos())
-    for a in _anos():
-        c.lucro_liquido[a] = 3667.0        # ROE = 3667/19000 ≈ 0,193
-        c.patrimonio_liquido[a] = 19000.0  # VPA = 19000/1000 = 19,0
-        c.dividendos[a] = 1712.0           # payout ≈ 0,467 → retenção ≈ 0,533
-        c.num_acoes[a] = 1000.0
-        c.vendas_liquidas[a] = 14000.0
-        c.fco[a] = 4400.0
-    c.preco_atual = 44.30
-    c.beta = 1.0
-    return c
-
-
-def test_rim_itub4_dispatch_banda():
-    """GATE DE INTEGRAÇÃO (CAL-01, fecha o key_link report→motores.rim): com insumos ITUB4 de
-    magnitude live, o intrínseco do motor RIM cai MATERIALMENTE acima do teto D-02 antigo
-    (>R$30, não só >0). Prova que excesso_sustentavel/g_terminal/ke_teto chegam ao funil."""
-    cfg = _cfg()
-    a = report.analisar_acao(_itub4_live_like(), cfg)
-    assert a.arquetipo == "financeira"
-    assert a.motor == "rim"
-    assert a.intrinseco_motor is not None
-    # Acima do teto D-02 antigo (~R$23): prova que o valor terminal chegou pelo dispatch.
-    assert a.intrinseco_motor > 30.0
-
-
 def _taee11_regulada() -> CompanyData:
     """TAEE11-âncora: utility regulada (Energia Elétrica, eh_concessionaria) → pagadora
     regulada → motor DDM. É o baseline que NÃO pode mexer: veredito DDM, sem suspensão,

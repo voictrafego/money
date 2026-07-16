@@ -29,7 +29,6 @@ import yaml
 
 from analista.report import report
 from analista.backtest import (
-    BANDA_PASS,  # D-07: reusa a MESMA banda do harness (fonte única, zero número solto)
     carregar_fair_values,
     carregar_snapshot,
     rodar_cesta,
@@ -38,16 +37,8 @@ from analista.core import motores
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# D-08: quórum de bancos dentro da banda ±15% para a calibração "generalizar" na cesta.
-QUORUM_MIN = 3
-
 _SNAPSHOT = os.path.join(ROOT, "tests", "fixtures", "snapshot_bancos_2026-07-12.yaml")
 _FAIR_VALUES = os.path.join(ROOT, "tests", "fixtures", "fair_values_bancos.yaml")
-
-# Piso/teto absolutos do RIM calibrado do ITUB4 (Fase 4: live R$32,87, gate duro 30–40).
-# Convenção de tolerância do repo = bounds absolutos, NÃO pytest.approx.
-_ITUB4_RIM_MIN = 30.0
-_ITUB4_RIM_MAX = 40.0
 
 
 def _cfg() -> dict:
@@ -62,67 +53,37 @@ def _rodar() -> list[dict]:
     return rodar_cesta(empresas, fair_values, _cfg(), rf_local, ipca_defl)
 
 
-def test_backtest_cesta_rota_por_ticker():
-    """Roteamento por ticker: ITUB4 → arquétipo financeira, motor RIM na faixa 30–40.
+def test_nenhuma_rota_diferente_de_rim_e_silenciosa():
+    """INVARIANTE (WR-04 / D-08): nenhum roteamento ≠ 'rim' na cesta pode ser SILENCIOSO — todo
+    motor diferente de RIM exige uma nota de exceção documentada. Estrutural: não depende de NÍVEL
+    de R$ nenhum.
 
-    NÃO assume RIM cegamente para os demais: se algum ticker rotear ≠ rim, tolera SÓ se a FV
-    daquele ticker tiver `excecao_nota` (D-08). Hoje os 4 roteiam para RIM (snapshot).
+    Extraído do golden de nível `test_backtest_cesta_rota_por_ticker` (banda R$30–40,
+    `_ITUB4_RIM_MIN/MAX`), DELETADO na Fase 10 (PRIM-05): a banda de nível morreu, a guarda de
+    roteamento-não-silencioso SOBREVIVE (WR-04). Sem ticker literal, sem constante em reais.
     """
-    res = _rodar()
-    por_ticker = {r["ticker"]: r for r in res}
-
-    itub = por_ticker["ITUB4"]
-    assert itub["arquetipo"] == "financeira"
-    assert itub["motor"] == "rim"
-    assert itub["rim"] is not None
-    assert _ITUB4_RIM_MIN <= itub["rim"] <= _ITUB4_RIM_MAX
-
-    # Nenhum roteamento ≠ rim pode ser silencioso: exige nota de exceção documentada (D-08).
-    for r in res:
+    for r in _rodar():
         if r["motor"] != "rim":
             assert r["excecao_nota"], (
                 f"{r['ticker']} roteado para '{r['motor']}' (≠ rim) sem nota de exceção → rota silenciosa"
             )
 
 
-def test_backtest_gate_quorum_e_anotacao():
-    """Gate D-06/D-07/D-08: quórum 3/4 dentro da banda ±15% + regra de anotação da 4ª exceção.
+def test_nenhuma_reprovacao_de_banda_e_silenciosa():
+    """INVARIANTE (WR-04 / D-08): uma REPROVAÇÃO de banda nunca pode ser silenciosa — todo ticker
+    fora da sua faixa de consenso exige `excecao_nota`.
 
-    Trava as 4 situações: 4/4 PASS → verde trivial; 3 PASS + 1 anotada → verde (exceção documentada);
-    3 PASS + 1 silenciosa → FAIL do assert da nota (FAIL silencioso barrado, D-08); ≤2 PASS → FAIL do
-    quórum (calibração não generaliza → loop D-12). O teste NÃO julga o texto da nota, só exige presença.
+    É a metade ESTRUTURAL do antigo gate de quórum (`test_backtest_gate_quorum_e_anotacao`,
+    DELETADO na Fase 10 PRIM-05). O CONTADOR de quórum (`len(passes) >= QUORUM_MIN`) era um golden
+    de NÍVEL — dependia dos alvos de consenso do `fair_values_bancos`, exatamente o que as
+    primitivas consertadas movem — e morre. A disciplina de anotação (nenhum FAIL passa
+    despercebido, D-08) não depende de nível e SOBREVIVE. Sem ticker literal, sem constante em reais.
     """
-    res = _rodar()
-
-    passes = [r for r in res if r["passa"]]
-    falhas = [r for r in res if not r["passa"]]
-
-    # Quórum numérico: a maioria da cesta precisa cair na banda ±15% da faixa de consenso (D-08).
-    assert len(passes) >= QUORUM_MIN, (
-        f"quórum não atingido: {len(passes)}/{len(res)} na banda ±{BANDA_PASS:.0%} "
-        f"(reprovam: {sorted(r['ticker'] for r in falhas)}) → loop D-12"
-    )
-
-    # Cada falha DEVE estar anotada — desvio sem nota = FAIL silencioso (D-08).
-    for r in falhas:
-        assert r["excecao_nota"], (
-            f"{r['ticker']} fora da banda sem nota de exceção → FAIL silencioso"
-        )
-
-
-def test_backtest_alvos_recalibrados():
-    """Alavanca 2 (CAL-01/D-01): a normalização through-cycle do ROE terminal crava os alvos.
-
-    Sobre o snapshot congelado, via o MESMO harness `rodar_cesta`, o RIM recalibrado aterrissa em
-    ITUB4 ≈ 32,88 (INALTERADO — o cap satura, não regride), BBAS3 ≈ 43,89 (dentro de 17,00–44,85) e
-    BBDC4 ≈ 13,37 (dentro de 12,75–27,60). Bounds absolutos ±R$0,20 (convenção do repo, NÃO approx).
-    """
-    por_ticker = {r["ticker"]: r for r in _rodar()}
-    alvos = {"ITUB4": 32.88, "BBAS3": 43.89, "BBDC4": 13.37}
-    for tk, alvo in alvos.items():
-        rim = por_ticker[tk]["rim"]
-        assert rim is not None, f"{tk}: RIM None"
-        assert abs(rim - alvo) <= 0.20, f"{tk}: RIM {rim:.2f} != alvo {alvo:.2f} (±0,20)"
+    for r in _rodar():
+        if not r["passa"]:
+            assert r["excecao_nota"], (
+                f"{r['ticker']} fora da banda sem nota de exceção → FAIL silencioso"
+            )
 
 
 def test_backtest_determinismo():

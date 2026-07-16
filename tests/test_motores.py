@@ -29,41 +29,6 @@ def _cfg() -> dict:
 # --------------------------------------------------------------------------- #
 # RIM (ENG-02 / CAL-01) — o crítico: destrava o ITUB4 com valor terminal
 # --------------------------------------------------------------------------- #
-def test_rim_itub4_honesto_maior_que_ddm():
-    # Golden fixo tipo-ITUB4: VPA~22, ROE~19,3%, Ke estrutural~12,5%, retenção~0,53, n=10.
-    # RIM híbrido com valor terminal (perpetuidade de Gordon sobre o RI terminal): fade parcial
-    # a um excesso sustentável limitado + continuing value. Rende ~R$39,2 — verificado.
-    res = motores.rim(
-        vpa0=22.0, roe0=0.193, ke=0.125, retencao=0.53, n=10,
-        excesso_sustentavel=0.045, g_terminal=0.025,
-    )
-    assert res is not None
-    # Faixa-alvo do golden fixo (VPA=22, ke=12,5%): R$36–42.
-    assert 36.0 <= res.valor_intrinseco <= 42.0
-    # Agora HÁ prêmio terminal: o valor terminal descontado é positivo.
-    assert res.vp_terminal > 0
-    # O Residual Income terminal deixou de ser ≈0 — alimenta a perpetuidade (é POSITIVO).
-    assert res.ri_por_ano[-1] > 0
-    assert res.vpa_base == 22.0
-
-
-def test_rim_itub4_live_alvo_32_40():
-    # GATE DURO (CAL-01/CAL-02, nível UNIT): lê os knobs de config (prova parametrização, zero
-    # constante mágica) e o ke via ke_rim (prova ke_teto revisado 0.14→0.13). ITUB4 live ≈ R$32,9.
-    cfg = _cfg()
-    ke = motores.ke_rim(1.29, cfg)
-    # CAL-02: o teto revisado 0.13 é o clamp ativo (ke_live > 0.13).
-    assert abs(ke - 0.13) < 1e-9
-    rc = cfg["motores"]["rim"]
-    res = motores.rim(
-        vpa0=19.0, roe0=0.193, ke=ke, retencao=0.533, n=rc["n_fade"],
-        excesso_sustentavel=rc["excesso_sustentavel"], g_terminal=rc["g_terminal"],
-    )
-    assert res is not None
-    assert 32.0 <= res.valor_intrinseco <= 40.0
-    assert res.vp_terminal > 0
-
-
 def test_rim_terminal_normalizado():
     # Alavanca 2 (CAL-01/D-01): normalização through-cycle do ROE ENTRA SÓ no RI terminal.
     # Prova as duas metades da tese: (a) roe_terminal abaixo do cap MOVE o valor; (b) roe_terminal
@@ -243,13 +208,16 @@ def test_rota_seguradora_bbse3_gordon_franquia():
     assert abs(a.intrinseco_motor - esperado) < 1e-9
 
 
-def test_rota_seguradora_nao_pega_banco():
-    # Regressão negativa: um banco (ITUB4, setor "Bancos") NÃO casa o token "seguradora" →
-    # segue pelo RIM inalterado (≈R$32,88, dentro da faixa 30–40).
-    por_ticker, cfg = _cesta_congelada()
-    c = por_ticker["ITUB4"]
-    assert not arquetipo._setor_casa_token((c.setor or "").lower(), ["seguradora"])
-    a = report.analisar_acao(c, cfg)
-    assert a.motor == "rim"
-    assert a.intrinseco_motor is not None
-    assert 30.0 <= a.intrinseco_motor <= 40.0
+def test_setor_de_banco_nao_casa_o_token_seguradora():
+    """INVARIANTE (WR-04): o roteamento de seguradora é ancorado em FRONTEIRA DE PALAVRA — um setor
+    de banco NÃO casa o token 'seguradora', logo um banco jamais é desviado para a rota
+    Gordon-franquia da seguradora.
+
+    Extraído do golden de nível `test_rota_seguradora_nao_pega_banco` (banda R$30–40), DELETADO na
+    Fase 10 (PRIM-05): a banda de nível morreu, a guarda estrutural de roteamento-negativo SOBREVIVE
+    (WR-04). Puro: sem engine, sem ticker, sem constante em reais — só a álgebra do casador de token.
+    """
+    # Negativo: um setor de banco não pode casar o token da seguradora (sem over-match de substring).
+    assert not arquetipo._setor_casa_token("bancos", ["seguradora"])
+    # Controle positivo: o token casa o próprio setor de seguros (fronteira de palavra + plural).
+    assert arquetipo._setor_casa_token("seguradoras", ["seguradora"])
