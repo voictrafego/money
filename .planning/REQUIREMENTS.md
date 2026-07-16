@@ -155,7 +155,7 @@ Maior alavancagem por linha do repositório: atinge todos os motores, todos os m
   **ressuscita ano de prejuízo**, fabricando `g` de 36% (VULC3) e 47% (CYRE3), exibidos no app.
 - [x] **PRIM-04**: A base do motor cíclico é **deflacionada** (hoje soma reais de 2015 com reais de
   2024; IPCA acumulado de 58%; CSNA3 sai 31,8% subvalorizada só por isso).
-- [ ] **PRIM-05**: **CRITÉRIO DE SAÍDA — o golden `ITUB4: 32.88 ± 0.20` QUEBRA e é DELETADO, não
+- [x] **PRIM-05**: **CRITÉRIO DE SAÍDA — o golden `ITUB4: 32.88 ± 0.20` QUEBRA e é DELETADO, não
   atualizado.** Atualizar mantém vivo o reflexo que causou o overfit. Vai parecer errado no momento;
   é o conserto funcionando.
 
@@ -304,7 +304,7 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | PRIM-02 | Phase 10 | Complete |
 | PRIM-03 | Phase 10 | Complete |
 | PRIM-04 | Phase 10 | Complete |
-| PRIM-05 | Phase 10 | Pending |
+| PRIM-05 | Phase 10 | Complete |
 | GROW-01 | Phase 11 | Pending |
 | GROW-02 | Phase 11 | Pending |
 | GROW-03 | Phase 11 | Pending |

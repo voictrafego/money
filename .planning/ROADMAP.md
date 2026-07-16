@@ -79,7 +79,7 @@ quarentenados/deletados; **isso é a correção, não regressão.**
 - [x] **Phase 7: Blindagem processual (BLIND)** - quarentena dos 38 goldens de nível + invariantes algébricos que knob nenhum satisfaz; redefine o que "suíte verde" significa ANTES de tocar código. **Gap aberto (WR-04): 21 funções quarentenadas carregam invariantes estruturais presos — cindir ANTES da Fase 10, que deleta os goldens e mataria esses invariantes em silêncio.**
 - [ ] **Phase 8: Sanidade dos dados (SAN)** - os asserts vêm ANTES dos consertos, de propósito: eles SÃO o teste de regressão da Fase 9
 - [ ] **Phase 9: Ingestão correta (DATA)** - JCP, base do controlador, duplo split, `impliedSharesOutstanding`; os asserts da Fase 8 viram verde ticker a ticker
-- [ ] **Phase 10: Primitivas sem viés (PRIM)** - maior alavancagem por linha do repo; **critério de saída: o golden ITUB4 32.88 quebra e é DELETADO**
+- [x] **Phase 10: Primitivas sem viés (PRIM)** - maior alavancagem por linha do repo; **critério de saída: o golden ITUB4 32.88 quebra e é DELETADO** (completed 2026-07-16)
 - [ ] **Phase 11: Crescimento / `g` (GROW)** - `g_cap = (1+π_ciclo)(1+PIB_real)−1 = 7,28%`; metade da Doença 1 (o `g`) — o teste de invariância (BLIND-02) só vira verde na Fase 12, quando o `ke_teto` sai
 - [ ] **Phase 12: Custo de capital / `Ke` (KE)** - ERP único 4,5%, beta setorial + Blume, `ke_teto`/`ke_piso` deletados; **separada da Fase 11 de propósito**
 - [ ] **Phase 13: Motores + contrato de saída (ENG)** - os 4 motores colapsam num RIM único com políticas de input; contrato do livro (tríade + MS do usuário + matriz Ke×g); `motores:` ~20 → ≤5 chaves
@@ -199,7 +199,7 @@ Plans:
 - [x] 10-03-PLAN.md — PRIM-04: deflação IPCA do motor cíclico via stamping offline (macro.ipca_deflatores_anuais, espelho do rf_local)
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 10-04-PLAN.md — PRIM-05: **critério de saída** — deleta o golden ITUB4 32,88 (função + linha classificacao.yaml)
+- [x] 10-04-PLAN.md — PRIM-05: **critério de saída** — deleta o golden ITUB4 32,88 (função + linha classificacao.yaml)
 
 ### Phase 11: Crescimento / `g` (GROW)
 **Goal**: Curar **metade da Doença 1** — a metade que precede o `Ke`. Fechar a identidade do `g`:
@@ -293,7 +293,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 7. Blindagem processual (BLIND) | v2.4 | 5/5 | Complete (gap WR-04 aberto) | 2026-07-13 |
 | 8. Sanidade dos dados (SAN) | v2.4 | 1/6 | In Progress|  |
 | 9. Ingestão correta (DATA) | v2.4 | 0/5 | Planned | - |
-| 10. Primitivas sem viés (PRIM) | v2.4 | 3/4 | In Progress|  |
+| 10. Primitivas sem viés (PRIM) | v2.4 | 4/4 | Complete   | 2026-07-16 |
 | 11. Crescimento / g (GROW) | v2.4 | 0/? | Not started | - |
 | 12. Custo de capital / Ke (KE) | v2.4 | 0/? | Not started | - |
 | 13. Motores + contrato de saída (ENG) | v2.4 | 0/? | Not started | - |

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
-status: executing
+status: verifying
 stopped_at: Phase 10 context gathered
-last_updated: "2026-07-16T12:20:29.552Z"
+last_updated: "2026-07-16T12:44:29.834Z"
 last_activity: 2026-07-16
 progress:
   total_phases: 8
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 20
-  completed_plans: 19
-  percent: 95
+  completed_plans: 20
+  percent: 100
 ---
 
 # Project State
@@ -32,22 +32,27 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 ## Current Position
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
-Phase: 10 (primitivas-sem-vi-s-prim) — EXECUTING
+Phase: 10 (primitivas-sem-vi-s-prim) — COMPLETE (ready for verification)
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-16
 
-Progress: [██████████] 95%
+Progress: [██████████] 100%
 
-**Suíte:** `483 passed, 1 skipped, 34 deselected, 1 xfailed` — 0 XPASS. **BLIND-03 curado no 10-01**
-(virou invariante normal). Sobra **1 xfailed** = BLIND-02b (vira verde na Fase 12) e **1 skipped** =
-jackknife (Fase 14). Golden de nível que quebrar deve ser **DELETADO, nunca atualizado** (contrato do
-CLAUDE.md) — o golden ITUB4=32,88 ainda vive: sua deleção é o critério de saída do plano **10-04** (PRIM-05).
+**Suíte:** `486 passed, 1 skipped, 27 deselected, 1 xfailed` — 0 XPASS (era 483/34: +3 invariantes
+extraídos WR-04, −7 goldens de nível ITUB4 deletados). Sobra **1 xfailed** = BLIND-02b (vira verde na
+Fase 12) e **1 skipped** = jackknife (Fase 14). **PRIM-05 cumprido: o golden ITUB4=32,88 NÃO existe
+mais no repo** (DELETADO, nunca atualizado — critério de saída da Fase 10). Nenhum assert vivo de nível
+ITUB4 sobra (só prosa BLIND-02b/Fase-12 e os honeypots do detector BLIND-04a).
 
-**⚠ DÍVIDA OBRIGATÓRIA ANTES DA FASE 10 (gap WR-04):** 21 das 38 funções quarentenadas carregam
-invariantes estruturais presos (`a.motor == 'rim'`, contratos de roteamento, reetiquetagem SAN-01).
-Já não rodam. A Fase 10 deleta esses goldens — os invariantes morreriam junto, em silêncio.
-Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
+**⚠ DÍVIDA WR-04 — PARCIALMENTE CURADA (7 dos goldens de nível ITUB4, no plano 10-04):** o Phase 7
+cindiu só 2 de ~20 funções mistas; o 10-04 curou as 3 mistas dentre os 7 goldens de nível ITUB4 que
+deletou — extraiu os invariantes estruturais presos (no-silent-routing D-08, no-silent-FAIL D-08 do
+gate de quórum, roteamento-negativo por token) como testes `invariante` BLIND-04a-safe ANTES de apagar
+a banda, no MESMO diff (superfície de constrangimento AUMENTOU, não encolheu). **Ainda ABERTO para as
+demais funções mistas** que as Fases 11/12/13 vão deletar (`test_growth_reconciliacao`, SAN-01
+reetiqueta, `test_financeira_rim_destrava`, VULC3 cascata etc.) — aplicar o mesmo padrão
+split-before-delete. Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 **⚠ `core.hooksPath` é estado local por clone.** Todo clone novo nasce sem a proteção do BLIND-05;
 `test_hook_do_blind05_esta_instalado` é o que torna isso vermelho em vez de proteção fantasma.
@@ -118,10 +123,33 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 | Phase 10 P01 | 65 | 3 tasks | 10 files |
 | Phase 10 P02 | 26min | 2 tasks | 9 files |
 | Phase 10 P03 | 12min | 3 tasks | 13 files |
+| Phase 10 P04 | 40min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **PRIM-05 (Fase 10 / plano 10-04) — CRITÉRIO DE SAÍDA CUMPRIDO: o golden ITUB4=32,88 foi DELETADO,
+  não atualizado; a Fase 10 está CONCLUÍDA.** `test_backtest_bancos.py::test_backtest_alvos_recalibrados`
+  (o golden soberano `ITUB4 32,88 ±0,20`) e mais 6 goldens de nível ITUB4 puros (banda RIM ×3, gate de
+  quórum, cesta-rota-por-ticker, rota-seguradora-não-pega-banco, dispatch-banda) foram removidos —
+  função E linha do `classificacao.yaml` no MESMO diff (Pitfall 5, zero órfão). **Deletar, nunca
+  atualizar** (Armadilha 3: o `32,88` existe para cancelar o haircut de −9,1% da normalização — dois
+  erros se anulando; atualizar o número mantém o reflexo do overfit do v2.3 vivo). **WR-04 curado para
+  os 3 mistos (checkpoint:decision → Option A):** a §Golden Disambiguation da RESEARCH chamava os 7 de
+  "bandas puras", mas a auditoria AST do WR-04 (07-VERIFICATION Gap 2) prova invariantes estruturais
+  presos em 2/3/6 sem sobrevivente equivalente — a dívida "OBRIGATÓRIA ANTES DA FASE 10" que o Phase 7
+  não fechou. Antes de apagar cada banda, o invariante foi EXTRAÍDO para uma função `invariante`
+  (BLIND-04a-safe, sem ticker/reais): `test_nenhuma_rota_diferente_de_rim_e_silenciosa` (D-08
+  no-silent-routing), `test_nenhuma_reprovacao_de_banda_e_silenciosa` (D-08 no-silent-FAIL — o CONTADOR
+  de quórum era o golden de nível e morreu; a disciplina de anotação sobrevive), e
+  `test_setor_de_banco_nao_casa_o_token_seguradora` (roteamento-negativo, puro no casador de token).
+  Itens 1,4,5,7 deletados direto (item 1 é banda pura; 4/5/7 já cobertos por sobreviventes). **Itens
+  8-9 → adiar Fase 13** (RESEARCH A3: item 1 é o único requisito DURO; 8-9 são guardas cujas substitutas
+  nascem na 13). Suíte default **486 passed, 1 skipped, 27 deselected, 1 xfailed, 0 failed**; orçamento
+  de 3 knobs intacto (`git diff config.yaml calibracao.lock.yaml` VAZIO); meta-teste BLIND-04a verde;
+  nenhum assert vivo de nível ITUB4 sobra (só prosa BLIND-02b/Fase-12 e honeypots do detector).
+  Commit: `abcb584` (test). **ZERO código de produção tocado** (4 arquivos, todos de teste).
 
 - **PRIM-04 (Fase 10 / plano 10-03) — o motor CÍCLICO consome a série de lucro DEFLACIONADA por
   IPCA a reais do último ano.** `macro.ipca_deflatores_anuais(anos)` puxa a série anual do IPCA do
@@ -466,8 +494,8 @@ Cindir as funções mistas antes. Fila de triagem e varredor AST: `07-VERIFICATI
 
 ## Session Continuity
 
-Last session: 2026-07-16T12:19:45.788Z
-Stopped at: Phase 10 context gathered
+Last session: 2026-07-16T13:10:00.000Z
+Stopped at: Completed 10-04-PLAN.md (PRIM-05 — golden ITUB4 32,88 DELETADO; Fase 10 CONCLUÍDA)
 Resume file: None
 
 ## Operator Next Steps
