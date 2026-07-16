@@ -119,7 +119,7 @@
 'tests/test_fundamentals_consistencia.py::test_dy_atual_fallback_para_ano_base': contrato
 'tests/test_fundamentals_consistencia.py::test_company_data_expoe_ano_dpa': contrato
 'tests/test_fundamentals_consistencia.py::test_roe_valuation_igual_ao_cru_quando_lucro_estavel': invariante
-'tests/test_fundamentals_consistencia.py::test_roe_valuation_suaviza_ano_atipico': invariante
+'tests/test_fundamentals_consistencia.py::test_roe_valuation_reflete_endpoint_nao_a_mediana_do_meio': invariante
 'tests/test_fundamentals_consistencia.py::test_lpa_valuation_usa_base_normalizada': invariante
 'tests/test_fundamentals_consistencia.py::test_roe_valuation_none_sem_pl_inicial': contrato
 'tests/test_fundamentals_consistencia.py::test_metodos_crus_por_ano_permanecem_intactos': contrato

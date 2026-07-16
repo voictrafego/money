@@ -54,8 +54,8 @@ screening:
 # (Cap. 8, elegibilidade per-ano); este parametriza o VALUATION (Cap. 13-17). Mantê-los
 # desacoplados evita que afinar o screening mexa, sem querer, no número intrínseco.
 normalizacao:
-  anos_media: 3             # médias trienais (espírito BSD Cap. 8.4)
-  winsor: 0.10              # winsorização a 10% nos extremos (>=5 pontos)
+  anos_media: 5             # janela do endpoint de tendência robusta (Theil-Sen) da base de valuation
+  winsor: 0.10              # inerte na base (endpoint); consumido por media_ciclo (motor cíclico)
 
 # --- Cap. 16/17: CAPM (custo de capital do acionista) ---
 capm:

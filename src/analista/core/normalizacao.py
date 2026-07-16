@@ -10,15 +10,20 @@ winsorização a 10%. Reaproveitamos esse espírito como base de qualidade do va
 
 **Primitiva pura:** recebe sequências de números (podendo conter None) + a janela/winsor
 de config e devolve número(s). NÃO importa nada da engine de fundamentos/relatório
-(sem ciclo de import) — só numpy/statistics.
+(sem ciclo de import) — só numpy/statistics/scipy.
 
-Método escolhido (e por quê):
-  - N >= 5 válidos    -> **média winsorizada** aos percentis `winsor`/`1-winsor`. Com pontos
-    suficientes a winsorização clampa só os extremos e preserva o centro — espelha o BSD.
-  - 2 <= N < 5        -> **mediana**. Com poucos pontos a winsorização percentil mal desloca
-    os extremos (o outlier ainda pesaria na média); a mediana é o estimador robusto correto.
-  - N == 1            -> o próprio valor (nada a suavizar).
-  - N == 0            -> None (degradação graciosa; série vazia/só-None — T-08-01).
+Dois estimadores DIVIDIDOS de propósito (PRIM-01 / RESEARCH §Estimator split) — os dois
+consumidores da base querem estimadores OPOSTOS:
+
+  - `base_normalizada` (base de VALUATION, janela curta) = **ENDPOINT de tendência robusta
+    (Theil-Sen)** avaliado no ano atual. Reflete o crescimento recente e é robusto a UM
+    exercício atípico — sem o haircut -g/(1+g) que a mediana-do-meio impunha (BLIND-03).
+    Ladder curta (D-01b): vazio -> None; N==1 -> valor; N==2 -> média dos dois. GUARD de
+    degeneração: endpoint <= 0 (prejuízo recente) -> median(janela) (nunca base negativa).
+  - `media_ciclo` (motor CÍCLICO, janela longa) = a **média/mediana through-cycle** ANTIGA.
+    Uma cíclica com prejuízo recente vale pela força de lucro do MEIO do ciclo, não pelo
+    endpoint (que seria negativo). N >= 5 -> média winsorizada; 2<=N<5 -> mediana; N==1 ->
+    valor; N==0 -> None.
 """
 
 from __future__ import annotations
@@ -27,6 +32,7 @@ from statistics import median
 from typing import List, Optional, Sequence
 
 import numpy as np
+from scipy.stats import theilslopes
 
 Number = Optional[float]
 
@@ -58,10 +64,49 @@ def media_winsorizada(valores: Sequence[Number], winsor: float = 0.10) -> Number
 def base_normalizada(
     valores: Sequence[Number], anos_media: int = 3, winsor: float = 0.10
 ) -> Number:
-    """Base de lucro normalizada sobre os últimos `anos_media` valores válidos.
+    """Base de lucro de VALUATION = ENDPOINT de tendência robusta (Theil-Sen) no ano atual.
 
-    Número-síntese ÚNICO de qualidade que alimenta `roe_valuation`/`lpa_valuation`.
-    Mediana p/ 2<=N<5, média winsorizada p/ N>=5, valor único p/ N=1, None p/ vazio.
+    Número-síntese ÚNICO de qualidade que alimenta `roe_valuation`/`lpa_valuation` (PRIM-01).
+    Substitui o `median()`-de-N (o ano-do-meio, que PUNIA crescimento pelo haircut fechado
+    -g/(1+g)) pelo valor da tendência robusta AVALIADA NO ANO ATUAL — reflete o crescimento
+    recente e é robusto a UM exercício atípico (Theil-Sen ignora o outlier na janela).
+
+    Ladder de série curta (D-01b): vazio -> None; N==1 -> o próprio valor; N==2 -> média dos
+    dois (Theil-Sen degenera com 2 pontos). GUARD de degeneração: se o endpoint <= 0 (série
+    de prejuízo recente) degrada para median(janela) — nunca devolve base negativa que
+    quebraria RIM/DCF a jusante.
+
+    `winsor` permanece na assinatura por integridade do orçamento de knobs (inerte aqui —
+    é consumido por `media_ciclo`). `anos_media` é a janela do Theil-Sen.
+    """
+    limpos = _limpar(valores)
+    if not limpos:
+        return None
+    janela = limpos[-anos_media:] if anos_media else limpos
+    n = len(janela)
+    if n == 1:
+        return janela[0]
+    if n == 2:
+        return float(sum(janela) / 2.0)
+    slope, intercept, *_ = theilslopes(janela, np.arange(n))
+    endpoint = intercept + slope * (n - 1)
+    if endpoint <= 0:
+        return float(median(janela))
+    return float(endpoint)
+
+
+def media_ciclo(
+    valores: Sequence[Number], anos_media: int = 10, winsor: float = 0.10
+) -> Number:
+    """Força de lucro do MEIO do ciclo (motor cíclico) = média/mediana through-cycle.
+
+    É o estimador que o motor `lucro_normalizado` (`anos_media=10`) precisa — a média
+    through-cycle, robusta a UM ano de prejuízo recente. NÃO usa o endpoint de tendência
+    (esse é `base_normalizada`, para a base de valuation de janela curta): numa cíclica com
+    prejuízo recente o endpoint seria negativo, mas a força de lucro do ciclo é positiva.
+
+    É EXATAMENTE a ladder que `base_normalizada` tinha antes do PRIM-01 (a divisão do
+    estimador): vazio -> None; N==1 -> valor; 2<=N<5 -> mediana; N>=5 -> média winsorizada.
     """
     limpos = _limpar(valores)
     if not limpos:

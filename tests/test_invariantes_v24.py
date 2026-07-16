@@ -12,8 +12,10 @@ afrouxar o assert.
     A DIFERENCA ENTRE (a) E (b) E' A DOENCA. (a) prova que a invariancia a inflacao e'
     POSSIVEL; (b) prova que a engine de hoje nao a tem.
 
-  BLIND-03 (a normalizacao pune crescimento)
-    test_normalizacao_nao_pune_crescimento           -> xfail. Vira verde na FASE 10.
+  BLIND-03 (a normalizacao pune crescimento) — CURADO na Fase 10 (PRIM-01).
+    test_normalizacao_nao_pune_crescimento           -> INVARIANTE NORMAL (era xfail).
+    `base_normalizada` trocou o median()-do-meio pelo endpoint Theil-Sen; o haircut
+    -g/(1+g) sumiu e o xfail foi REMOVIDO (nunca trocado por skip, nunca afrouxado).
 
 PROIBIDO (Pitfall 5 / post-mortem do v2.3): afrouxar tolerancia, trocar `xfail` por `skip`,
 deletar assert, ou mexer num limiar DEPOIS que o teste ficou vermelho.
@@ -158,13 +160,6 @@ G_SERIE = 0.10  # crescimento da serie de teste: +10%/ano, PURA (zero outlier a 
 
 
 @pytest.mark.invariante
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "Doenca da normalizacao: haircut de -9,09% = -g/(1+g). Vira VERDE sozinho na "
-        "FASE 10 (PRIM-01)."
-    ),
-)
 def test_normalizacao_nao_pune_crescimento():
     """BLIND-03: uma serie de lucro de +10%/ano PURA nao pode virar uma base ABAIXO do
     ultimo ano menos inflacao. FALHA HOJE — o modelo pune o crescedor por crescer.

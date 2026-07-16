@@ -191,8 +191,12 @@ congelados:
     # para que a particao do escopo seja COMPLETA (nenhuma folha orfa). Lista = UMA folha.
 
   # --- normalizacao (2) ---
-  normalizacao.anos_media: 3
-    # PRIM-01, Fase 10. **NAO E' GRAU DE LIBERDADE — E' A TRAVA DO BLIND-03.**
+  normalizacao.anos_media: 5
+    # PRIM-01, Fase 10: janela do endpoint de tendencia robusta (Theil-Sen). Passou de 3 para
+    # 5 para separar UM exercicio atipico terminal da tendencia (com 3 pontos a regressao
+    # robusta persegue o pico; com 5 ela o ignora). Mudanca de valor congelado VISIVEL,
+    # co-commit com config.yaml (caminho sancionado do BLIND-05).
+    # **NAO E' GRAU DE LIBERDADE — E' A TRAVA DO BLIND-03.**
     # `test_normalizacao_nao_pune_crescimento` le este knob do config de PRODUCAO. Mudar
     # para 1 faria aquele teste passar SEM CONSERTAR `normalizacao.py` (com n=1 nao ha
     # mediana a puxar a base para baixo). E' a fuga do Pitfall 5, e ela esta fechada aqui:

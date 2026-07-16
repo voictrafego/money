@@ -102,26 +102,31 @@ def test_roe_valuation_igual_ao_cru_quando_lucro_estavel():
     assert abs(c.roe_valuation() - c.roe(ult)) < 1e-9
 
 
-def test_roe_valuation_suaviza_ano_atipico():
-    # Último ano com lucro 3x os demais: o ROE cru dispara, mas a base normalizada
-    # (mediana dos 3 últimos = 100) segura o roe_valuation MUITO abaixo do cru.
+def test_roe_valuation_reflete_endpoint_nao_a_mediana_do_meio():
+    # PRIM-01: a base de valuation trocou o median()-do-meio pelo ENDPOINT de tendência robusta.
+    # Último ano 3x os demais: o endpoint REFLETE a subida recente (base=200, acima da
+    # mediana-do-meio=100), mas continua ROBUSTO ao pulo único (não vira o cru 300).
     c = CompanyData(ticker="X", anos=[2021, 2022, 2023, 2024])
     c.lucro_liquido = {2021: 100, 2022: 100, 2023: 100, 2024: 300}
     for a in c.anos:
         c.patrimonio_liquido[a] = 1000
     ult = c.ultimo_ano()
-    # base = mediana([100,100,300]) = 100; roe_valuation = 100/PL_medio.
-    assert c.roe_valuation() < c.roe(ult)
-    assert abs(c.roe_valuation() - c.roe(ult) / 3) < 1e-9  # 100 vs 300 sobre o mesmo PL
+    # base = endpoint Theil-Sen([100,100,300]) = 200; roe_valuation = 200/PL_medio(1000) = 0,20.
+    assert c.roe_valuation() < c.roe(ult)      # robusto: abaixo do ROE cru do ano de pico (0,30)
+    assert c.roe_valuation() > c.roe(ult) / 3  # reflete a subida: ACIMA da mediana-do-meio (0,10)
+    assert abs(c.roe_valuation() - 0.20) < 1e-9  # endpoint exato
 
 
 def test_lpa_valuation_usa_base_normalizada():
-    # LPA de valuation = base normalizada / nº ações do último ano (não o lucro cru de 1 ano).
+    # LPA de valuation = base normalizada (ENDPOINT Theil-Sen) / nº ações do último ano.
     c = CompanyData(ticker="X", anos=[2022, 2023, 2024])
     c.lucro_liquido = {2022: 100, 2023: 100, 2024: 300}
     c.num_acoes = {2022: 100, 2023: 100, 2024: 100}
-    # base = mediana([100,100,300]) = 100 => LPA valuation = 100/100 = 1.0 (não 3.0 do cru).
-    assert abs(c.lpa_valuation() - 1.0) < 1e-9
+    # base = endpoint([100,100,300]) = 200 => LPA valuation = 200/100 = 2,0: reflete a subida
+    # recente, robusto ao pulo único (NÃO é o cru 3,0 nem a mediana-do-meio 1,0).
+    assert abs(c.lpa_valuation() - 2.0) < 1e-9
+    assert c.lpa_valuation() < 300 / 100  # robusto: abaixo do LPA cru do ano de pico
+    assert c.lpa_valuation() > 100 / 100  # reflete a subida: acima da mediana-do-meio
 
 
 def test_roe_valuation_none_sem_pl_inicial():

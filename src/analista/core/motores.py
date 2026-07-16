@@ -177,8 +177,9 @@ def lucro_normalizado(lpa_normalizado: float, ke: float, g_estavel: float) -> Nu
 
     Retorna `lpa_normalizado × fair_PE`, com `fair_PE = (1+g)/(Ke−g)` implícito no Gordon
     (`ddm.valor_gordon`). O lucro médio 7–10a é resolvido pelo CHAMADOR via
-    `norm.base_normalizada(serie, anos_media=cfg["motores"]["ciclica"]["anos_media"])` — aqui
-    a função já recebe o LPA normalizado (fronteira FIX-04). None se `ke−g_estavel<=0` ou input None.
+    `norm.media_ciclo(serie, anos_media=cfg["motores"]["ciclica"]["anos_media"])` — a média
+    through-cycle, NÃO o endpoint Theil-Sen de base_normalizada (PRIM-01, split do estimador);
+    aqui a função já recebe o LPA normalizado (fronteira FIX-04). None se `ke−g_estavel<=0` ou input None.
     """
     return ddm.valor_gordon(dpa1=lpa_normalizado, ke=ke, g=g_estavel)
 

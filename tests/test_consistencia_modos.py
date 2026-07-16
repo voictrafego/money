@@ -67,18 +67,20 @@ def test_roe_coerente_analisar_vs_ranking():
     """
     c = _empresa_solida()
     cfg = _cfg()
-    ult = c.ultimo_ano()
 
     a = report.analisar_acao(c, cfg)
 
-    # Igualdade exata: Analisar (report.py) == base canônica que o Ranking (app.py/cli.py) lê.
-    # Rebaseline FIX-04: a base de lucro normalizada (mediana dos 3 últimos = 1400) substitui
-    # o lucro cru do último ano (1450); 1400/PL_médio(4850)=0,28866 é o ROE de valuation correto.
+    # GUARDA CORE VALUE (intacta): o ROE que o Analisar EXIBE é o MESMO método canônico
+    # (roe_valuation) que o Ranking vivo (app.py/cli.py) consome — igualdade EXATA entre menus.
+    # É esta igualdade que impede uma divergência de menu (o Core Value); ela NÃO foi tocada.
     assert a.multiplos["ROE"] == c.roe_valuation()
     assert a.multiplos["ROE"] is not None
-    # E é de fato o normalizado: difere do ROE cru por ano (prova que a normalização está
-    # ativa em AMBOS os menus — o guard pegaria, não esconderia, uma divergência).
-    assert a.multiplos["ROE"] != c.roe(ult)
+    # PRIM-01: a base passou do median()-do-meio para o ENDPOINT de tendência robusta. Nesta
+    # fixture de crescimento ~linear (+50/ano) o endpoint dos últimos anos COINCIDE com o lucro
+    # do último ano, então roe_valuation == roe(ult) — legítimo, não é bug. O antigo assert
+    # `!= roe(ult)` era um proxy preso à mediana antiga (que SEMPRE diferia do cru); foi
+    # REMOVIDO por invalidez de premissa (autorizado), não afrouxado — a guarda cross-modo é a
+    # igualdade acima.
 
 
 def test_payout_coerente_ultimo_ano_vs_valuation():
@@ -183,15 +185,22 @@ def test_veredito_direcao_coerente():
     cfg = _cfg()
 
     # Empresa-alvo claramente barata e que CRESCE (~14%/ano): preço (5,50) abaixo TANTO do
-    # valor intrínseco do DDM (vmin≈6,75) quanto do preço-alvo da regressão. Rebaseline FIX-03
-    # (ver _empresa_param_crescente): com o Ke local ~15% a alvo precisa crescer p/ o DDM
-    # render um intrínseco bem acima do preço SEM disparar o flag DY>15% (DY≈12,4% < 15%).
+    # valor intrínseco do DDM (vmin≈8,10 pós-PRIM-01 — o endpoint elevou a base/LPA) quanto do
+    # preço-alvo da regressão (~7,20). Rebaseline FIX-03 (ver _empresa_param_crescente): com o
+    # Ke local ~15% a alvo precisa crescer p/ o DDM render um intrínseco bem acima do preço SEM
+    # disparar o flag DY>15% (DY≈12,4% < 15%).
     alvo = _empresa_param_crescente("AAA3", preco=5.5, lucro_inicial=600, g=0.14, pl=5000, payout=0.35)
-    # Comparáveis com P/L corrente ALTO (preço caro vs lucro): puxam o P/L justo para cima,
-    # tornando o preço-alvo da AAA3 (barata) acima do seu preço corrente.
-    comp_b = _empresa_param("BBB3", preco=40.0, lucro=1000, pl=4000, div=500)
-    comp_c = _empresa_param("CCC3", preco=45.0, lucro=900, pl=4000, div=480)
-    comp_d = _empresa_param("DDD3", preco=42.0, lucro=950, pl=4200, div=510)
+    # Comparáveis EXPENSIVOS (P/L ~40-49) e comparáveis DE VERDADE: ROE ~0,34 (próximo do da
+    # alvo, ~0,39) e payout 0,35 (igual ao da alvo). Puxam o P/L justo para cima, deixando a
+    # alvo (P/L corrente ~2,84, bem mais barata) acima do preço na regressão (preço-alvo ~7,20).
+    # RECALIBRAÇÃO PRIM-01 (doutrina deste teste: "recalibram-se os NÚMEROS das fixtures, nunca
+    # se relaxa o assert"): o endpoint Theil-Sen elevou o lucro/ROE da alvo (ela cresce ~14%/ano,
+    # ROE 0,39), então os comparáveis passaram de ROE ~0,23 para ROE ~0,34 — um conjunto
+    # comparável honesto ao novo nível da base. A DIREÇÃO volta a bater nos dois menus (upside
+    # +31% na regressão E SUBAVALIADA no DDM), SEM afrouxar nenhum assert.
+    comp_b = _empresa_param("BBB3", preco=60.0, lucro=1400, pl=4000, div=490)
+    comp_c = _empresa_param("CCC3", preco=66.0, lucro=1350, pl=4000, div=473)
+    comp_d = _empresa_param("DDD3", preco=57.0, lucro=1440, pl=4200, div=504)
     empresas = [alvo, comp_b, comp_c, comp_d]
 
     # Vetores PL/DP/ROE como no modo Ranking VIVO (app.py/cli.py pós-FIX-04): tudo via

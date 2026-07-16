@@ -252,8 +252,11 @@ def _intrinseco_por_motor(
             return res_rim.valor_intrinseco if res_rim else None
         if motor == "normalizado":
             cic = mot_cfg.get("ciclica", {})
+            # Motor cíclico usa a MÉDIA through-cycle (media_ciclo), NÃO o endpoint Theil-Sen
+            # de base_normalizada: uma cíclica com prejuízo recente vale pela força de lucro do
+            # meio do ciclo, não pelo ano atual (RESEARCH §Estimator split, PRIM-01).
             lpa_mid = mult.lpa(
-                norm.base_normalizada(
+                norm.media_ciclo(
                     c.serie("lucro_liquido"),
                     anos_media=cic.get("anos_media", 10), winsor=cic.get("winsor", 0.10),
                 ),
