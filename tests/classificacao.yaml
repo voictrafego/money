@@ -123,6 +123,11 @@
 'tests/test_fundamentals_consistencia.py::test_lpa_valuation_usa_base_normalizada': invariante
 'tests/test_fundamentals_consistencia.py::test_roe_valuation_none_sem_pl_inicial': contrato
 'tests/test_fundamentals_consistencia.py::test_metodos_crus_por_ano_permanecem_intactos': contrato
+'tests/test_fundamentals_valuation.py::test_roe_valuation_e_a_mediana_da_serie_de_roe_anuais': invariante
+'tests/test_fundamentals_valuation.py::test_roe_valuation_usa_a_mesma_estatistica_que_roe_through_cycle': invariante
+'tests/test_fundamentals_valuation.py::test_roe_valuation_ignora_ano_de_prejuizo_pela_mediana': invariante
+'tests/test_fundamentals_valuation.py::test_roe_valuation_none_sem_roe_valido_e_chamavel_sem_args': contrato
+'tests/test_fundamentals_valuation.py::test_serie_lucro_normalizada_e_a_serie_crua_sem_winsor': invariante
 'tests/test_glossario.py::test_chaves_tec_presentes': contrato
 'tests/test_glossario.py::test_tom_consultivo': contrato
 'tests/test_grafico_ui.py::test_estado_padrao_tudo_off': contrato
