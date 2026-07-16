@@ -63,6 +63,29 @@ def _montar(tickers: List[str], cfg: dict):
     return empresas
 
 
+def _carimbar_macro(cfg: dict) -> None:
+    """Resolve os macro-inputs de rede (rf Selic-ciclo + deflatores do IPCA) UMA vez e os
+    carimba em `cfg` ANTES da engine — FONTE ÚNICA do carimbo para TODOS os entry points do CLI.
+
+    A rede vive aqui, no entry point; `analisar_acao` permanece offline lendo `cfg["capm"]
+    ["rf_local"]` e `cfg["macro"]["ipca_deflatores"]`. Rf = Selic through-the-cycle (média ~10
+    anos), não a spot: numa perpetuidade a taxa reflete o juro de LP, não o pico de ciclo. Os
+    deflatores usam a MESMA janela do rf (`rf_ciclo_anos`) — é essa simetria que mantém o
+    valuation invariante à inflação (PRIM-04).
+
+    WR-03: `analyze` E `rank` chamam este MESMO carimbo — sem a fonte única, os entry points
+    DRIFTAM no que carimbam e a MESMA ação cíclica mostra intrínseco diferente entre os menus
+    (o Core Value cross-modo). Muta `cfg` in-place (cada comando trabalha sobre seu próprio
+    `cfg` recém-carregado de `carregar_config`)."""
+    cfg["capm"]["rf_local"] = macro.selic_ciclo_para_capm(
+        cfg["capm"]["selic_fallback"], cfg["capm"].get("rf_ciclo_anos", 10)
+    )
+    cfg["macro"] = {
+        **cfg.get("macro", {}),
+        "ipca_deflatores": macro.ipca_deflatores_anuais(cfg["capm"].get("rf_ciclo_anos", 10)),
+    }
+
+
 def cmd_analyze(args, cfg):
     os.makedirs(OUT_DIR, exist_ok=True)
     empresas = _montar([args.ticker.upper()], cfg)
@@ -70,20 +93,7 @@ def cmd_analyze(args, cfg):
         print("Não foi possível montar a empresa (verifique ticker e conexão).")
         return 1
     c = empresas[0]
-    # FIX-03: resolve o rf do CAPM uma vez e injeta em cfg ANTES da engine — a rede vive aqui,
-    # no entry point; analisar_acao permanece offline lendo cfg["capm"]["rf_local"]. Rf =
-    # Selic through-the-cycle (média ~10 anos), não a spot: numa perpetuidade a taxa reflete o
-    # juro de LP, não o pico de ciclo (o corte do DY, abaixo, segue na Selic spot).
-    cfg["capm"]["rf_local"] = macro.selic_ciclo_para_capm(
-        cfg["capm"]["selic_fallback"], cfg["capm"].get("rf_ciclo_anos", 10)
-    )
-    # PRIM-04: resolve os deflatores anuais do IPCA UMA vez aqui (rede no entry point) e os
-    # carimba em cfg — o motor cíclico os lê offline, como o rf_local. MESMA janela do rf
-    # (rf_ciclo_anos): é essa simetria que mantém o valuation invariante à inflação.
-    cfg["macro"] = {
-        **cfg.get("macro", {}),
-        "ipca_deflatores": macro.ipca_deflatores_anuais(cfg["capm"].get("rf_ciclo_anos", 10)),
-    }
+    _carimbar_macro(cfg)
     a = report.analisar_acao(c, cfg)
     md = report.relatorio_markdown(c, a, cfg)
     destino = os.path.join(OUT_DIR, f"{c.ticker}.md")
@@ -153,6 +163,11 @@ def cmd_rank(args, cfg):
     empresas = _montar(tickers, cfg)
     if not empresas:
         return 1
+
+    # WR-03: carimba rf + deflatores UMA vez (MESMA fonte de `cmd_analyze`) ANTES do loop —
+    # a 2ª lente do ranque (ensemble motor×DDM via `analisar_acao`, abaixo) precisa ler os
+    # MESMOS macro-inputs que `Analisar`, senão a mesma ação cíclica diverge entre os menus.
+    _carimbar_macro(cfg)
 
     nomes, ML, ROE, PL, EY, DP = [], [], [], [], [], []
     for c in empresas:
