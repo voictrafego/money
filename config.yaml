@@ -57,6 +57,13 @@ normalizacao:
   anos_media: 5             # janela do endpoint de tendência robusta (Theil-Sen) da base de valuation
   winsor: 0.10              # inerte na base (endpoint); consumido por media_ciclo (motor cíclico)
 
+# --- PRIM-04: deflatores anuais do IPCA (dado macro do BCB, NÃO knob de valuation) ---
+# Default VAZIO: os entry points (cli/app) resolvem macro.ipca_deflatores_anuais e sobrescrevem;
+# a engine LÊ este valor offline (nunca chama a rede). É dado objetivo do BCB (como o rf), sem
+# escolha livre de ano-base (reais do último ano) — fora do escopo do orçamento de knobs.
+macro:
+  ipca_deflatores: {}       # {ano: fator para o último ano}; carimbado no entry point / snapshot
+
 # --- Cap. 16/17: CAPM (custo de capital do acionista) ---
 capm:
   abordagem: "local"          # FIX-03: CAPM local (Cap. 17.2) com Selic ao vivo do BCB (rf)

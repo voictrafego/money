@@ -252,12 +252,27 @@ def _intrinseco_por_motor(
             return res_rim.valor_intrinseco if res_rim else None
         if motor == "normalizado":
             cic = mot_cfg.get("ciclica", {})
-            # Motor cíclico usa a MÉDIA through-cycle (media_ciclo), NÃO o endpoint Theil-Sen
-            # de base_normalizada: uma cíclica com prejuízo recente vale pela força de lucro do
-            # meio do ciclo, não pelo ano atual (RESEARCH §Estimator split, PRIM-01).
+            # PRIM-04: a série de lucro é trazida a REAIS DO ÚLTIMO ANO (deflacionada por IPCA)
+            # ANTES da média through-cycle — o motor cíclico parava de somar reais nominais de
+            # anos diferentes (IPCA acumulado ~58% em 10 anos subvalorizava cíclicas só por
+            # nominalidade). Os deflatores são LIDOS de cfg (carimbados nos entry points, como o
+            # rf_local) — a engine permanece offline/determinística, NUNCA chama macro/requests.
+            # Fallback never-raise: deflatores ausentes/vazios → série nominal (comportamento
+            # antigo). O estimador continua a MÉDIA through-cycle (media_ciclo), NÃO o endpoint
+            # Theil-Sen de base_normalizada: uma cíclica com prejuízo recente vale pela força de
+            # lucro do meio do ciclo, não pelo ano atual (RESEARCH §Estimator split, PRIM-01).
+            defl = (cfg or {}).get("macro", {}).get("ipca_deflatores") or {}
+            if defl:
+                serie_lucro = [
+                    c.lucro_liquido[an] * defl[an]
+                    for an in c.anos_ordenados()
+                    if an in c.lucro_liquido and an in defl
+                ]
+            else:
+                serie_lucro = c.serie("lucro_liquido")
             lpa_mid = mult.lpa(
                 norm.media_ciclo(
-                    c.serie("lucro_liquido"),
+                    serie_lucro,
                     anos_media=cic.get("anos_media", 10), winsor=cic.get("winsor", 0.10),
                 ),
                 c.num_acoes.get(ult),
