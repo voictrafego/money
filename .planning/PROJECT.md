@@ -32,7 +32,7 @@ Auditoria de milestone **passed** — blocker da aba Ranking do Streamlit (parid
 fechado por quick task `260712-p6r` antes do arquivamento. Suíte **437 testes verdes**; firewall
 selo↛report intacto. Marco arquivado em `.planning/milestones/v2.2-*`.
 
-**Agora: v2.4 Fidelidade do Valuation em andamento. Fase 9 (Ingestão correta / DATA) completa 2026-07-15.**
+**v2.4 Fidelidade do Valuation em andamento. Fase 9 (Ingestão correta / DATA) completa 2026-07-15.**
 A Doença 2 (dispersão) está curada na entrada: `c.dividendos` sai do filtro amplo (JCP capturado,
 DATA-01); `lucro`/`PL` na base do controlador (DATA-02); `num_acoes` vem da contagem oficial da CVM
 (`composicao_capital`, ON+PN − tesouraria, join CNPJ→CD_CVM), aposentando a derivação `LL/LPA` —
@@ -45,8 +45,22 @@ Dois goldens do método `LL/LPA` removido foram **deletados** (doutrina "DELETE,
 knobs (orçamento de 3) ficaram intocados. 10/10 must-haves verificados; suíte **467 verdes**.
 Code review: WR-01/WR-03 corrigidos (0-change medido); WR-02 (heurística de escala indistinguível),
 WR-04, WR-05 e um comentário obsoleto em `build.py` seguem como dívida técnica documentada.
-Próximo: Fase 10 (Primitivas sem viés / PRIM) — inclui o critério de saída de deletar o golden
-`ITUB4 = 32,88`.
+Fase 10 (Primitivas sem viés / PRIM) — que incluiu o critério de saída de deletar o golden
+`ITUB4 = 32,88` — e Fase 11 (Crescimento / `g` / GROW) concluídas na sequência.
+
+**Agora: Fase 12 (Custo de capital / `Ke` / KE) completa 2026-07-17.** A outra metade da Doença 1
+(o `Ke`) está curada. O sistema passou a ter um **`Ke` único** — o exibido é o calculado, e a matriz
+de sensibilidade é construída em torno dele (antes o usuário via um `Ke` que não era o do cálculo, e
+havia dois `Ke` simultâneos: 17,3% no DDM, 13,0% no RIM). `ke_piso`/`ke_teto`/`erp_banco` foram
+**removidos do código e do config**, com a convergência da perpetuidade garantida por **aritmética**
+(`Ke_min` do Blume 11,07% > `g_cap` 7,28%) — nenhum clamp reintroduzido sob outro nome. ERP unificado
+em **4,5%** (Damodaran mercado maduro, sem prêmio small-cap); beta **setorial + Blume** (`0,33 + 0,67 × β`)
+fazendo BB e Bradesco (mesmo risco de negócio) receberem o mesmo `Ke`, dissolvendo o ruído que produzia
+2,7× de espalhamento. `BLIND-02b` (a metade-`Ke` da Doença 1 escrita como `xfail` estrito) virou verde
+**sozinho** porque o código passou a satisfazê-lo — não porque alguém o afrouxou. Suíte **519 verdes** /
+0 failed / 0 xfailed; orçamento de knobs intacto em **3 graus** (ERP, n_fade, PIB_real), com o corte do
+ERP acoplado ao `calibracao.lock.yaml` no mesmo commit; 9/9 must-haves verificados por execução.
+Próximo: Fase 13 (Motores + contrato de saída / ENG).
 
 <details>
 <summary>Histórico v1.7 (Swing Trade / Modo Trading / Home / Lentes-Selo-Comparador) — shipped 2026-07-04</summary>
@@ -373,4 +387,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-15 — v2.4 Fidelidade do Valuation em andamento: Fase 8 (Sanidade dos Dados / SAN) completa — o pipeline detecta dado sujo (5 checks + JCP + clean surplus em `core/sanidade.py`, never-raise), spike SAN-07 fecha o 3º bug de dados como inexistente, baseline de regressão dos sujos (62 tickers) congelado para a Fase 9. Zero conserto de dado (de propósito). Próximo: Fase 9 (Ingestão correta / DATA).*
+*Last updated: 2026-07-17 — v2.4 Fidelidade do Valuation em andamento: Fase 12 (Custo de capital / `Ke` / KE) completa — `Ke` único (exibido = calculado, centro da matriz), `ke_piso`/`ke_teto`/`erp_banco` removidos com convergência por aritmética (`Ke_min` 11,07% > `g_cap` 7,28%, sem clamp), ERP 4,5%, beta setorial+Blume, `BLIND-02b` verde sozinho. Suíte 519 verdes / 0 failed / 0 xfailed; orçamento de knobs em 3 graus; 9/9 must-haves verificados por execução. Próximo: Fase 13 (Motores + contrato de saída / ENG).*
