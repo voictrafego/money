@@ -249,9 +249,12 @@ def _intrinseco_por_motor(
             # cresce ao MENOR entre o g sustentável do próprio ticker (ROE_T × retenção) e o
             # teto macro g_cap (≤ PIB nominal). Satura em g_cap quando ROE_T×ret é alto; usa
             # g_cap quando o ROE through-cycle degrada (None). Substitui o antigo g_terminal fixo.
+            # Piso 0 (WR-01): payout_valuation NÃO é capado em 1.0 (TAEE11 ≈ 216%), então a
+            # retenção pode ser negativa; sem o piso, um g_T < 0 encolheria — e a g_T < −1
+            # inverteria o sinal — do RI terminal (número silenciosamente errado). g_T ∈ [0, g_cap].
             _retencao = (1.0 - (c.payout_valuation() or 0.0))
             _roe_term = _roe_through_cycle(c, rim_cfg)
-            _g_T = min(_roe_term * _retencao, g_cap) if _roe_term is not None else g_cap
+            _g_T = max(0.0, min(_roe_term * _retencao, g_cap)) if _roe_term is not None else g_cap
             res_rim = motores.rim(
                 vpa0=lentes.vpa(c.patrimonio_liquido.get(ult), c.num_acoes.get(ult)),
                 roe0=c.roe_valuation(),
