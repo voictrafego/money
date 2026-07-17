@@ -241,7 +241,7 @@ produz o número da manchete nunca é exibido**. Alvo do livro: `Ke` = 12,48%.
 **Plans**: 4 plans (4 waves — sequenciais por acoplamento de arquivo e fronteira de suíte-verde)
 - [x] 12-01-PLAN.md — β setorial: artefato versionado + carimbo nos 3 entry points + helper beta_blume (KE-03 infra, aditivo)
 - [x] 12-02-PLAN.md — Unificação do Ke: consumir β setorial no a.ke, deletar ke_rim, RIM lê a.ke, destravar BLIND-02b (KE-01/03/04/05)
-- [ ] 12-03-PLAN.md — Knob sancionado: ERP 0,045 + remover erp_banco/ke_piso/ke_teto (config+lock, mesmo commit) (KE-02/04)
+- [x] 12-03-PLAN.md — Knob sancionado: ERP 0,045 + remover erp_banco/ke_piso/ke_teto (config+lock, mesmo commit) (KE-02/04)
 - [ ] 12-04-PLAN.md — Validação sem clamp: invariante estrutural Ke_min>g_cap + regressão dos 104 tickers (KE-04)
 
 ### Phase 13: Motores + contrato de saída (ENG)
@@ -302,7 +302,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 9. Ingestão correta (DATA) | v2.4 | 0/5 | Planned | - |
 | 10. Primitivas sem viés (PRIM) | v2.4 | 4/4 | Complete    | 2026-07-16 |
 | 11. Crescimento / g (GROW) | v2.4 | 3/3 | Complete   | 2026-07-17 |
-| 12. Custo de capital / Ke (KE) | v2.4 | 2/4 | In Progress|  |
+| 12. Custo de capital / Ke (KE) | v2.4 | 3/4 | In Progress|  |
 | 13. Motores + contrato de saída (ENG) | v2.4 | 0/? | Not started | - |
 | 14. Validação honesta (VAL) | v2.4 | 0/? | Not started | - |
 

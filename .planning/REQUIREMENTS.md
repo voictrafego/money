@@ -181,7 +181,7 @@ prova que a ordem importa: consertar o `Ke` antes do `g` **piora** (ITUB4 0,75 �
 
 - [x] **KE-01**: Um único `Ke` no sistema. Hoje há dois simultâneos (17,3% no DDM, 13,0% no RIM) e **o
   que produz o número da manchete nunca é exibido**.
-- [ ] **KE-02**: ERP de 4,5% (Damodaran mature market), **sem** o prêmio small-cap de 1,5% —
+- [x] **KE-02**: ERP de 4,5% (Damodaran mature market), **sem** o prêmio small-cap de 1,5% —
   injustificável num universo filtrado por liquidez de R$ 15M/dia.
 - [x] **KE-03**: Beta **setorial + Blume** (`0,33 + 0,67 × β`), não individual bruto. BB e Bradesco têm
   o mesmo risco de negócio e hoje recebem `Ke` com 1,7 pp de diferença — ruído que produz **2,7× de
@@ -311,7 +311,7 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | GROW-04 | Phase 11 | Complete |
 | GROW-05 | Phase 11 | Complete |
 | KE-01 | Phase 12 | Complete |
-| KE-02 | Phase 12 | Pending |
+| KE-02 | Phase 12 | Complete |
 | KE-03 | Phase 12 | Complete |
 | KE-04 | Phase 12 | Complete |
 | KE-05 | Phase 12 | Complete |

@@ -4,14 +4,14 @@ milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
 stopped_at: Completed 12-02-PLAN.md
-last_updated: "2026-07-17T18:25:54.671Z"
+last_updated: "2026-07-17T18:36:13.245Z"
 last_activity: 2026-07-17
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 27
-  completed_plans: 25
-  percent: 93
+  completed_plans: 26
+  percent: 96
 ---
 
 # Project State
@@ -33,11 +33,11 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 12 (Custo de capital / Ke (KE)) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-07-17
 
-Progress: [█████████░] 93%
+Progress: [██████████] 96%
 
 **Suíte:** `517 passed, 1 skipped, 20 deselected, 0 failed, 0 xfailed, 0 XPASS` (era 517 do 12-01, mas
 com 1 xfailed → agora **0 xfailed**: BLIND-02b flipou para invariante NORMAL no 12-02; 22 → 20
@@ -46,6 +46,12 @@ deselected = 2 goldens de banda de Ke DELETADOS). `-m golden_nivel` **20 passed,
 == **0**; a guarda de seleção foi reconciliada à cura (0 pendentes é válido; as ex-doenças rodam como
 invariantes selecionadas). Sobra só **1 skipped** = jackknife (Fase 14). **PRIM-05 cumprido: o golden
 ITUB4=32,88 NÃO existe mais no repo** (DELETADO — critério de saída da Fase 10).
+
+**12-03 (commit de knob SANCIONADO):** `config.yaml` + `calibracao.lock.yaml` mudaram JUNTOS —
+`capm.erp_local` 0,06 → **0,045** (ERP unificado) e as folhas do clamp (`erp_banco`/`ke_piso`/`ke_teto`)
+REMOVIDAS de config+lock; escopo do lock **29 → 26 folhas** (motores 10 → 7), congelados 26 → 23,
+**orçamento intacto em 3 graus**. A suíte NÃO se moveu (a invariância do BLIND-02b independe do nível
+do ERP). Commit `615843f`, trailer sem ticker, sem `--no-verify`. **KE-02 e KE-04 completos.**
 
 **⚠ DÍVIDA WR-04 — MAIS AVANÇADA (10-04 + 11-03):** o Phase 7 cindiu só 2 de ~20 funções mistas; o
 10-04 curou as 3 mistas dentre os 7 goldens de nível ITUB4; o **11-03 curou `test_growth_reconciliacao`
@@ -131,10 +137,30 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | Phase 11 P03 | 35min | 3 tasks | 5 files |
 | Phase 12 P01 | 15min | 2 tasks | 10 files |
 | Phase 12 P02 | 30min | 3 tasks | 9 files |
+| Phase 12 P03 | 15min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **KE-02/KE-04 (Fase 12 / plano 12-03) — o commit de knob SANCIONADO: ERP unificado em 4,5% e o
+  clamp removido do ORÇAMENTO.** `capm.erp_local` **0,06 → 0,045** (ERP de mercado maduro puro,
+  Damodaran; o prêmio small-cap/iliquidez de +1,5% do config antigo removido — a Selic já precifica
+  risco-país/inflação) em `config.yaml` E no grau `ERP` do `calibracao.lock.yaml` (`valor: 0.045`),
+  no MESMO commit. As três folhas do clamp (`erp_banco`/`ke_piso`/`ke_teto`) **DELETADAS de config+lock**,
+  **sem nenhuma menção stale** (grep dos tokens proibidos == 0 nos dois arquivos; a citação de `ke_piso`
+  no comentário de `ke_g_spread_min` foi scrubada — folha e valor `0.03` intactos). Escopo do lock
+  **29 → 26 folhas** (motores 10 → 7); congelados 26 → 23; comentários de contagem coerentes nos 3
+  lugares (escopo/header/partição). **Orçamento intacto em 3 graus** (ERP, n_fade, PIB_real):
+  `test_orcamento_de_knobs_e_exatamente_3` (partição `folhas == graus | congelados`) e
+  `test_knobs_batem_com_o_lock` verdes porque config e lock mudaram juntos. **Nenhum clamp
+  reintroduzido sob outro nome** — a perpetuidade converge pelo **piso do Blume** (`β_blume ≥ 0,33 ⇒
+  Ke_min 11,07% > g_cap 7,28%`) por aritmética; se um V explodir sem clamp, o bug é `ROE_T`/spread
+  (Fase 13), não o Ke. Trailer `Knob-Change-Justification:` de razão econômica **sem ticker**; hook
+  BLIND-05 (par config+lock sancionado) e teste `-k justificativa` passaram **sem `--no-verify`**.
+  **Fronteira respeitada:** g_cap da Fase 11 NÃO recalibrado; nenhum motor tocado (corte `motores:`
+  ~11 → ≤5 é a Fase 13). Suíte default **517 passed, 1 skipped, 20 deselected, 0 failed, 0 xfailed**
+  (idêntica ao pós-12-02: a invariância do BLIND-02b independe do NÍVEL do ERP). Commit: `615843f`.
 
 - **KE-01/KE-04/KE-05 (Fase 12 / plano 12-02) — o Ke COLAPSA num só, o clamp SAI por código e a
   metade Ke da Doença 1 morre (BLIND-02b curado).** `a.ke = ke_local(beta_blume(c.beta, c.setor,
@@ -597,7 +623,7 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-17T18:25:54.656Z
+Last session: 2026-07-17T18:35:24.295Z
 Stopped at: Completed 12-02-PLAN.md
 Resume file: None
 
