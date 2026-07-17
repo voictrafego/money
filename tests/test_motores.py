@@ -4,8 +4,8 @@ Offline/síncrono (padrão do repo): inputs fixos de livro + tolerância absolut
 motor. O crítico é o RIM (ENG-02 / CAL-01): RIM híbrido com valor terminal (perpetuidade de
 Gordon sobre o RI terminal). Com inputs tipo-ITUB4 devolve ~R$32,9 (live VPA~19, ke~13%) /
 ~R$39,2 (golden VPA~22, ke~12,5%), terminal ≈17% do valor — materialmente acima do DDM ao vivo
-(~R$16), destravando o ITUB4 do "evitar". `ke_rim` (CAL-02, ke_teto revisado 0.14→0.13) é o
-ajuste fino secundário; a alavanca principal é o valor terminal.
+(~R$16), destravando o ITUB4 do "evitar". O Ke que alimenta o RIM é o Ke ÚNICO do sistema
+(`a.ke`, β setorial+Blume — KE-01/Fase 12); a alavanca principal é o valor terminal.
 """
 
 import math
@@ -14,8 +14,9 @@ import os
 import yaml
 
 from analista.backtest import carregar_snapshot
-from analista.core import arquetipo, capm, motores
+from analista.core import arquetipo, motores
 from analista.core import normalizacao as norm
+from analista.core.fundamentals import CompanyData
 from analista.report import report
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -86,37 +87,46 @@ def test_rim_never_raise():
 
 
 # --------------------------------------------------------------------------- #
-# ke_rim (D-01) — a alavanca do critério #1
+# Ke ÚNICO (KE-01) — o RIM consome `a.ke`, não recomputa
 # --------------------------------------------------------------------------- #
-def test_ke_rim_menor_que_ke_live_de_banco():
-    """INVARIANTE (WR-04): o Ke estrutural do RIM é ESTRITAMENTE MENOR que o Ke do CAPM ao
-    vivo. É o coração do critério #1 — e não depende de NÍVEL nenhum: nenhum knob o satisfaz,
-    ele é a relação entre dois motores.
+def test_o_ke_que_alimenta_o_rim_e_o_a_ke_unico(monkeypatch):
+    """INVARIANTE DA UNIFICAÇÃO (WR-04, KE-01): o Ke que alimenta o RIM É `a.ke` — o Ke ÚNICO
+    do CAPM (β setorial+Blume). O antigo Ke estrutural do RIM (função separada, clampada a
+    [ke_piso, ke_teto] e teto ke_live) foi DELETADO; o RIM não recomputa mais um Ke próprio.
 
-    Estava PRESO dentro do golden da banda [0,11; 0,14] (função única, classificada
-    `golden_nivel` ⇒ deselecionada do run default). Hoje ele já não guardava nada, e a
-    Fase 12 iria DELETAR a função inteira junto com a banda — levando o invariante embora
-    sem ninguém notar. Quarentenar dívida é certo; quarentenar a proteção junto, não.
+    O espírito do criério #1 ("o Ke do RIM não excede o Ke ao vivo") fica trivialmente
+    verdadeiro porque agora são o MESMO número — relação entre motores, sem depender de NÍVEL.
+    Prova por espionagem: roda `analisar_acao` num banco (rota RIM) e assevera que o `ke` passado
+    a `motores.rim` é idêntico ao `a.ke` computado/exibido.
     """
     cfg = _cfg()
-    kr = motores.ke_rim(1.0, cfg)
-    ke_live = capm.ke_local(1.0, cfg["capm"]["rf_local"], cfg["capm"]["erp_local"])
-    assert kr < ke_live
+    capturado = {}
+    original_rim = motores.rim
 
+    def _spy(*args, **kwargs):
+        capturado["ke"] = kwargs.get("ke")
+        return original_rim(*args, **kwargs)
 
-def test_ke_rim_na_banda_estrutural():
-    """GOLDEN DE NÍVEL: a banda [0,11; 0,14] é literalmente `ke_piso`/`ke_teto` do config.
+    monkeypatch.setattr(motores, "rim", _spy)
 
-    Trava um NÚMERO ⇒ trava o método atual. MORRE na Fase 12 (KE-04), quando o `ke_teto` sair
-    — DELETAR, nunca atualizar. O invariante relacional que morava aqui foi extraído para
-    `test_ke_rim_menor_que_ke_live_de_banco`, que SOBREVIVE a esta deleção (WR-04).
-    """
-    kr = motores.ke_rim(1.0, _cfg())
-    assert 0.11 <= kr <= 0.14
+    anos = list(range(2015, 2025))
+    c = CompanyData(ticker="BANK4", nome="Banco Sintético", setor="Bancos", anos=anos)
+    for a in anos:
+        c.lucro_liquido[a] = 1000
+        c.patrimonio_liquido[a] = 4000
+        c.dividendos[a] = 500
+        c.num_acoes[a] = 1000
+        c.vendas_liquidas[a] = 5000
+        c.fco[a] = 1200
+    c.preco_atual = 10.0
+    c.beta = 1.0
 
+    a = report.analisar_acao(c, cfg)
 
-def test_ke_rim_never_raise():
-    assert motores.ke_rim(None, _cfg()) is None
+    assert a.motor == "rim"           # a rota RIM foi exercitada
+    assert capturado.get("ke") is not None
+    assert a.ke is not None
+    assert capturado["ke"] == a.ke    # o RIM recebe o Ke ÚNICO, não recomputa
 
 
 # --------------------------------------------------------------------------- #

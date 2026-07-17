@@ -41,29 +41,18 @@ def test_config_capm_local_documentado():
 
 def test_ke_local_materialmente_acima_do_ke_de_2019():
     """INVARIANTE (WR-04): a abordagem `local` produz um Ke materialmente ACIMA dos literais
-    de 2019 (9,43%) — que é a razão de ela existir. Sobrevive à cura: mesmo com o ERP do KE-02
-    (0,06 → 0,045), o `rf_local` sozinho (10,5%) já está acima dos 9,4%.
+    de 2019 (9,43%) — que é a razão de ela existir. Sobrevive à cura: mesmo com o β de entrada
+    ajustado por Blume (KE-03) e o ERP do KE-02 (0,06 → 0,045), o `rf_local` sozinho (10,5%) já
+    está acima dos 9,4%.
 
-    Estava PRESO dentro do golden da faixa 0,13–0,22 (função única, `golden_nivel` ⇒ fora do
-    run default). A Fase 12 deletaria a função inteira e levaria este invariante junto.
+    Estava PRESO dentro do golden da faixa 0,13–0,22 (função única, `golden_nivel`) DELETADO na
+    Fase 12; este invariante relacional foi extraído e SOBREVIVE.
     """
     cap = _cfg()["capm"]
-    ke = capm.ke_local(0.88, cap["rf_local"], cap["erp_local"])
+    # β de entrada Blume-ajustado (KE-03): o Ke ÚNICO consome o β setorial+Blume, não o cru.
+    beta_in = capm.beta_blume(0.88, "Calçados", cap.get("beta_setorial"))
+    ke = capm.ke_local(beta_in, cap["rf_local"], cap["erp_local"])
     assert ke > 0.094          # materialmente acima do Ke de 2019 (9,43%)
-
-
-def test_ke_local_na_faixa_small_cap_br():
-    """GOLDEN DE NÍVEL: a faixa 0,13–0,22 é função direta dos knobs `rf_local`/`erp_local`.
-
-    Trava um NÚMERO ⇒ trava o método atual. MORRE na Fase 12 (KE) — DELETAR, nunca atualizar.
-    O invariante que morava aqui foi extraído para
-    `test_ke_local_materialmente_acima_do_ke_de_2019`, que SOBREVIVE a esta deleção (WR-04).
-
-    Caso VULC3, beta 0,88: com rf de fallback (0,105) e erp 0,06 ⇒ 0,105 + 0,88×0,06 = 0,1578.
-    """
-    cap = _cfg()["capm"]
-    ke = capm.ke_local(0.88, cap["rf_local"], cap["erp_local"])
-    assert 0.13 < ke < 0.22    # faixa small cap BR
 
 
 def test_resolvedor_rf_usa_selic_ao_vivo(monkeypatch):
@@ -104,8 +93,10 @@ def test_config_tem_rf_ciclo_anos():
 def test_engine_offline_ke_determinístico():
     """`analisar_acao` consome o rf_local do cfg (fallback) SEM tocar a rede ⇒ Ke determinístico.
 
-    Prova a pureza/offline da engine: o Ke calculado é exatamente rf_local + beta×erp_local
-    do config, sem nenhuma chamada ao BCB dentro de analisar_acao.
+    Prova a pureza/offline da engine: o Ke calculado é exatamente rf_local + β_blume×erp_local
+    do config, sem nenhuma chamada ao BCB dentro de analisar_acao. O β de entrada é o setorial+
+    Blume (KE-03): "Calçados" não agrupa (n<3) ⇒ cai no fallback individual (β_blume = 0,33 +
+    0,67×0,88). Atualizar a fórmula ao novo modelo de Ke é legítimo (mudança de método, não de nível).
     """
     cfg = _cfg()
     anos = list(range(2015, 2025))
@@ -122,6 +113,7 @@ def test_engine_offline_ke_determinístico():
 
     a = report.analisar_acao(c, cfg)
 
-    esperado = cfg["capm"]["rf_local"] + 0.88 * cfg["capm"]["erp_local"]
+    beta_in = capm.beta_blume(0.88, "Calçados", cfg["capm"].get("beta_setorial"))
+    esperado = cfg["capm"]["rf_local"] + beta_in * cfg["capm"]["erp_local"]
     assert a.ke is not None
     assert abs(a.ke - esperado) < 1e-9

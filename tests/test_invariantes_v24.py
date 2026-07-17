@@ -265,9 +265,13 @@ def test_terminal_load_bearing_nao_explode_e_degrada_para_fade_only():
     # g_cap DERIVADO dos insumos de cfg (não digitado).
     g_cap = (1.0 + cfg["macro"]["pi_ciclo"]) * (1.0 + cfg["ddm"]["pib_real"]) - 1.0
 
-    # Ke estrutural do RIM no teto de banco large-cap (ke_teto): spread Ke − g_cap ≈ 5,7pp — o
-    # spread apertado que a Fase 11 produz (era ~10,5pp). Acima do piso ⇒ terminal LIBERADO.
-    ke = rim_cfg["ke_teto"]
+    # Ke ÚNICO de um banco large-cap, derivado ESTRUTURALMENTE do CAPM local (KE-01), NÃO das
+    # folhas condenadas (ke_teto/ke_piso/erp_banco, que o Plano 03 apaga): rf_local + β×erp_local
+    # com β ≈ 1,0 (β_blume de banco large-cap/líquido ~1,0, sem prêmio small-cap). O spread
+    # Ke − g_cap fica confortavelmente acima do piso ⇒ terminal LIBERADO — a mesma doutrina do
+    # teste (não explode / degrada para fade-only), agora imune à remoção das folhas do Plano 03.
+    cap = cfg["capm"]
+    ke = cap["rf_local"] + 1.0 * cap["erp_local"]
     assert ke - g_cap >= ke_g_spread_min   # pré-condição: o terminal é liberado
 
     liberado = motores.rim(
