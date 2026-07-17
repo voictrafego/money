@@ -402,6 +402,12 @@
 'tests/test_presentation_multiticker.py::test_selo_badge_cor_none_degrada_para_em_dash': contrato
 'tests/test_presentation_multiticker.py::test_selo_badge_nunca_e_imperativo': contrato
 
+# --- Fase 11 / plano 11-03: GROW nao-regressao contra o MAPA REAL dos 104 (snapshot LIMPO).
+# `contrato` (never-raise/finitude/sanidade, offline, zero nivel em reais): a cura do g nao
+# regride TAEE11/BBSE3/VULC3 e nenhum dos 104 vira NaN/inf/excecao (None aceitavel).
+'tests/test_nao_regressao_grow.py::test_tickers_sensiveis_nao_regridem_sob_o_g_novo': contrato
+'tests/test_nao_regressao_grow.py::test_varredura_dos_104_sem_nan_inf_ou_excecao': contrato
+
 # DATA-05 — o DY declara sua base BRUTA (contrato de string; sem nivel de mercado).
 'tests/test_dy_base.py::test_header_dy_recorrente_declara_base_bruta': contrato
 'tests/test_dy_base.py::test_header_dy_fallback_declara_base_bruta': contrato
