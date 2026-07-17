@@ -405,6 +405,10 @@
 'tests/test_nao_regressao_grow.py::test_tickers_sensiveis_nao_regridem_sob_o_g_novo': contrato
 'tests/test_nao_regressao_grow.py::test_varredura_dos_104_sem_nan_inf_ou_excecao': contrato
 
+# --- Fase 12 / plano 12-04: KE-04 — prova por EXECUCAO de que "nada explode sem clamp".
+# `invariante`: desigualdade estrutural Ke_min (piso do Blume) > g_cap, sem cravar 11,07%.
+'tests/test_ke_validacao.py::test_ke_min_estrutural_acima_do_g_cap': invariante
+
 # DATA-05 — o DY declara sua base BRUTA (contrato de string; sem nivel de mercado).
 'tests/test_dy_base.py::test_header_dy_recorrente_declara_base_bruta': contrato
 'tests/test_dy_base.py::test_header_dy_fallback_declara_base_bruta': contrato
