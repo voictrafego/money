@@ -157,6 +157,29 @@ def ipca_deflatores_anuais(anos: int = 10) -> Dict[int, float]:
     return _compor_deflatores(_ipca_anual_dezembro(anos))
 
 
+def ipca_ciclo_para_g(fallback: float, anos: int = 10) -> float:
+    """π_ciclo do `g_cap` = IPCA MÉDIO dos últimos `anos` anos (through-the-cycle).
+
+    Irmão EXATO de `selic_ciclo_para_capm`: média ARITMÉTICA (`sum/len`) da série anual do
+    IPCA (BCB SGS 13522), medida na MESMA janela do `rf` (`capm.rf_ciclo_anos`). É essa
+    simetria de janela rf↔π_ciclo — e nada mais — que torna o valuation invariante à
+    inflação (GROW-02): o `g_cap = (1+π_ciclo)(1+PIB_real)−1` cresce com a inflação na mesma
+    medida em que o `rf` do Ke cresce. Reusa a MESMA série SGS 13522 já usada pelos deflatores
+    (PRIM-04) — zero fonte de rede nova, zero grau de liberdade novo (dado objetivo do BCB,
+    NÃO knob de valuation).
+
+    Pureza da engine (FIX-03, espelha `selic_ciclo_para_capm`/`ipca_deflatores_anuais`):
+    chamado SÓ nos entry points (cli/app), que resolvem o π_ciclo UMA vez e o carimbam em
+    `cfg["macro"]["pi_ciclo"]`. `analisar_acao` NÃO chama esta função — lê o valor já
+    carimbado e permanece offline/determinística. Degradação graciosa: rede falha → fallback
+    (o default `macro.pi_ciclo` do config); a engine ainda deriva um `g_cap` determinístico.
+    """
+    por_ano = _ipca_anual_dezembro(anos)
+    if por_ano:
+        return sum(por_ano.values()) / len(por_ano)  # aritmética, = rf (sum(hist)/len(hist))
+    return fallback
+
+
 def selic_ciclo_para_capm(fallback: float, anos: int = 10) -> float:
     """rf do CAPM/DDM = Selic MÉDIA dos últimos `anos` anos (through-the-cycle).
 

@@ -63,6 +63,10 @@ normalizacao:
 # escolha livre de ano-base (reais do último ano) — fora do escopo do orçamento de knobs.
 macro:
   ipca_deflatores: {}       # {ano: fator para o último ano}; carimbado no entry point / snapshot
+  # GROW-01/02: π_ciclo = IPCA MÉDIO 10a (SGS 13522), MESMA janela do rf. Default OFFLINE/
+  # determinístico (mirror do selic_fallback): os entry points o SOBRESCREVEM com o valor ao
+  # vivo do BCB (D-06a). Dado objetivo do BCB, NÃO knob de valuation — fora do escopo do lock.
+  pi_ciclo: 0.0518          # IPCA médio 10a medido; insumo do g_cap = (1+π_ciclo)(1+PIB_real)−1
 
 # --- Cap. 16/17: CAPM (custo de capital do acionista) ---
 capm:
