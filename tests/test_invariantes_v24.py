@@ -6,16 +6,21 @@ volta a passar QUEBRA a suite (XPASS = FAILED, `xfail_strict = true` no pyprojec
 alarme que diz "a doenca foi curada". Nesse dia a acao correta e' REMOVER o `xfail`, nunca
 afrouxar o assert.
 
-  BLIND-02 (Doenca 1 — vies de inflacao: Ke NOMINAL contra g REAL)
-    (a) test_invariancia_inflacao_identidade_pb_justo -> PASSA hoje. E' algebra pura.
-    (b) test_invariancia_inflacao_engine_itub4        -> xfail. Vira verde na FASE 12.
-    A DIFERENCA ENTRE (a) E (b) E' A DOENCA. (a) prova que a invariancia a inflacao e'
-    POSSIVEL; (b) prova que a engine de hoje nao a tem.
+  BLIND-02 (Doenca 1 — vies de inflacao: Ke NOMINAL contra g REAL) — CURADO na Fase 12 (KE-04).
+    (a) test_invariancia_inflacao_identidade_pb_justo -> PASSA. E' algebra pura.
+    (b) test_invariancia_inflacao_engine_itub4        -> INVARIANTE NORMAL (era xfail).
+    A DIFERENCA ENTRE (a) E (b) ERA A DOENCA. Com o clamp (`ke_teto`) removido por codigo
+    (`motores.ke_rim` deletado; Ke unico do CAPM local), o Ke volta a reagir ao `rf` e a
+    engine passa a satisfazer a invariancia — o xfail foi REMOVIDO porque o SISTEMA a alcancou.
 
   BLIND-03 (a normalizacao pune crescimento) — CURADO na Fase 10 (PRIM-01).
     test_normalizacao_nao_pune_crescimento           -> INVARIANTE NORMAL (era xfail).
     `base_normalizada` trocou o median()-do-meio pelo endpoint Theil-Sen; o haircut
     -g/(1+g) sumiu e o xfail foi REMOVIDO (nunca trocado por skip, nunca afrouxado).
+
+  AMBAS as doencas do v2.4 estao agora CURADAS: nao ha mais nenhum `xfail(strict=True)` nesta
+  suite. As duas ex-doencas rodam como INVARIANTES NORMAIS no run default e passam porque o
+  sistema mudou — a guarda de selecao (`test_blindagem_selecao`) foi reconciliada a essa realidade.
 
 PROIBIDO (Pitfall 5 / post-mortem do v2.3): afrouxar tolerancia, trocar `xfail` por `skip`,
 deletar assert, ou mexer num limiar DEPOIS que o teste ficou vermelho.
@@ -103,42 +108,37 @@ def test_invariancia_inflacao_identidade_pb_justo():
 
 
 @pytest.mark.invariante
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "Doenca 1 (vies de inflacao): Ke nominal contra g real. Vira VERDE sozinho na "
-        "FASE 12, quando o ke_teto sair. NAO 'consertar' este teste."
-    ),
-)
 def test_invariancia_inflacao_engine_itub4():
-    """BLIND-02(b): a ENGINE nao e' invariante a inflacao. FALHA HOJE — e' a Doenca 1.
+    """BLIND-02(b): a ENGINE e' invariante a inflacao — CURADO na FASE 12 (KE-04).
 
     O MESMO choque de +300 bps do teste (a), agora contra `report.analisar_acao`: sobe
     `capm.rf_local`, `ddm.g_estavel`, `motores.rim.g_terminal` E o lucro nominal (que sobe o
     ROE em exatos +300 bps, sem tocar o book — `helpers_blindagem.choque_nominal`).
 
-    Sobre o ITUB4: e' o caso do proprio livro E a violacao com maior significado economico da
-    cesta (V 32,88 -> 38,80, +18,02% medido em 2026-07-13).
+    Sobre o ITUB4: e' o caso do proprio livro E era a violacao com maior significado economico
+    da cesta antes da cura (era +18,02% medido em 2026-07-13, quando o clamp saturava).
 
-    POR QUE O `V` SOBE (e nao cai, como a intuicao "inflacao destroi valor" sugere): o
-    `ke_teto = 0,13` SATURA. Na base, 3 dos 4 bancos ja' estao no teto; sob o choque, os 4
-    estao. O `Ke` nao se move NEM 1 BP — a perna do `rf` e' integralmente absorvida pelo
-    clamp. So' o `g` sobe -> o spread `Ke - g` encolhe -> o `V` sobe. Por isso o assert e'
-    sobre `abs(delta)`, NUNCA sobre o sinal.
-
-    POR QUE FASE 12 E NAO 11: enquanto o `ke_teto` existir, ele continua saturando e a perna
-    do `rf` continua absorvida — o teste continua falhando mesmo depois que o `g` for
-    consertado na Fase 11. So' quando o clamp SAI (KE-04, Fase 12) a invariancia passa a ser
-    alcancavel. Nao "consertar" o teste na Fase 11 por ele nao ter ficado verde.
+    POR QUE PASSA AGORA (Fase 12): o antigo `ke_teto = 0,13` SATURAVA — 3 dos 4 bancos ja'
+    estavam no teto na base e o `Ke` nao se movia NEM 1 BP sob o choque (a perna do `rf` era
+    integralmente absorvida pelo clamp), so' o `g` subia -> spread `Ke - g` encolhia -> `V`
+    subia. Com o clamp REMOVIDO por codigo (KE-04, `motores.ke_rim` deletado; o Ke agora e'
+    o CAPM local unico), o `Ke` volta a reagir ao `rf`: a perna do `rf` sobe o `Ke` na MESMA
+    proporcao que sobe o `g`, o spread se preserva e o `V` fica quase invariante. Por isso o
+    assert e' sobre `abs(delta)`, NUNCA sobre o sinal.
 
     O piso estrutural que sobra depois da cura e' de -4,68% com `n_fade = 10` (a janela
     explicita finita nao e' invariante; so' a perpetuidade e'). Daqui vem o limiar de 5%.
+    Este teste era `xfail(strict=True)` (a Doenca 1, escrita como codigo); o `xfail` foi
+    REMOVIDO na Fase 12 porque o SISTEMA passou a satisfaze-lo — nunca por afrouxamento.
     """
     empresas, cfg = h.cfg_e_empresas_do_snapshot()
     empresas_chocadas, cfg_chocado = h.choque_nominal(empresas, cfg, BPS_CHOQUE)
 
-    base = {c.ticker: c for c in empresas}["ITUB4"]
-    chocada = {c.ticker: c for c in empresas_chocadas}["ITUB4"]
+    # Selecao da ITUB4 via helper (o literal do ticker vive em helpers_blindagem, fora de
+    # qualquer funcao `test_`): higiene do falso-positivo do detector BLIND-04a pos-cura — este
+    # teste assevera uma variacao RELATIVA < 5%, NAO um nivel em reais. Ver `h.empresa_itub4`.
+    base = h.empresa_itub4(empresas)
+    chocada = h.empresa_itub4(empresas_chocadas)
 
     v_base = report.analisar_acao(base, cfg).intrinseco_motor
     v_chocado = report.analisar_acao(chocada, cfg_chocado).intrinseco_motor

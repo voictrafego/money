@@ -93,19 +93,37 @@ def test_selecao_efetiva_roda_as_invariantes_e_as_duas_doencas(pytestconfig):
         f"blindagem foi desselecionada:\n  " + "\n  ".join(fora[:10])
     )
 
-    # As duas doencas (BLIND-02b e BLIND-03) sao os `xfail(strict=True)`. Descobertos por
-    # AST, nunca por nodeid hardcoded: um nome hardcoded envelhece calado quando o teste e'
-    # renomeado, e a lista voltaria vazia — a guarda passaria afirmando sobre o conjunto
-    # vazio (exatamente o veredito fabricado que o gap 3 fecha do outro lado).
-    doencas = set(h.xfail_estritos())
-    assert doencas, (
-        "Nenhum `xfail(strict=True)` na suite: as duas doencas do v2.4 (BLIND-02b, "
-        "BLIND-03) deixaram de estar escritas como codigo."
+    # POS-CURA (Fase 12): as DUAS doencas do v2.4 estao CURADAS — BLIND-03 na Fase 10 (PRIM-01)
+    # e BLIND-02b aqui (KE-04, o clamp `ke_teto` saiu por codigo e o Ke volta a reagir ao rf).
+    # Nao ha mais NENHUM `xfail(strict=True)` na suite, e isso e' VALIDO. O contrato desta guarda
+    # MUDOU (justificado pela cura, NAO afrouxado): antes exigia "a doenca esta escrita como
+    # xfail e selecionada"; agora exige "a ex-doenca roda como INVARIANTE NORMAL no run default".
+    # O alarme de regressao passou do XPASS (que exigia o xfail) para o proprio assert do teste
+    # (que agora executa de verdade e fica VERMELHO se a invariancia regredir). PROIBIDO: deletar,
+    # skipar ou afrouxar — a exigencia so' mudou de forma.
+    assert not h.xfail_estritos(), (
+        "Reapareceu um `xfail(strict=True)`: as duas doencas do v2.4 estao CURADAS (0 "
+        "pendentes). Se uma NOVA doenca-diagnostico for adicionada de proposito, atualize "
+        "esta guarda explicitamente — nunca deixe uma doenca voltar em silencio."
     )
-    doencas_fora = sorted(doencas - selecionados)
-    assert not doencas_fora, (
-        "As doencas escritas como codigo NAO rodam no run default — o alarme 'a doenca "
-        f"foi curada' (XPASS) nunca vai disparar:\n  " + "\n  ".join(doencas_fora)
+    # As ex-doencas curadas DEVEM continuar rodando como invariantes no run default: se uma
+    # regredir, e' o proprio assert dela (executando) que grita. Nodeid explicito aqui e' SEGURO
+    # (ao contrario da varredura por xfail): se o teste for renomeado, ele sai de `invariantes` e
+    # este assert fica VERMELHO — a guarda falha alto, nunca em silencio sobre conjunto vazio.
+    ex_doencas_curadas = {
+        "tests/test_invariantes_v24.py::test_invariancia_inflacao_engine_itub4",
+        "tests/test_invariantes_v24.py::test_normalizacao_nao_pune_crescimento",
+    }
+    ex_doencas_fora_da_classe = sorted(ex_doencas_curadas - invariantes)
+    assert not ex_doencas_fora_da_classe, (
+        "As ex-doencas curadas sairam da classe `invariante` — perderam a protecao que "
+        "garante que rodam (e podem regredir COM alarme) no run default:\n  "
+        + "\n  ".join(ex_doencas_fora_da_classe)
+    )
+    ex_doencas_nao_selecionadas = sorted(ex_doencas_curadas - selecionados)
+    assert not ex_doencas_nao_selecionadas, (
+        "As ex-doencas curadas NAO estao na selecao efetiva do run default — se regredirem, "
+        "o alarme nunca dispara:\n  " + "\n  ".join(ex_doencas_nao_selecionadas)
     )
 
 

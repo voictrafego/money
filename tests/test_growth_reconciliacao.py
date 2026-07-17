@@ -117,8 +117,11 @@ def test_g_alto_respeita_o_teto_absoluto_de_025():
     # Crescimento ~40% a.a. (CAGR > 0,25); ROE_val alto + payout baixo ⇒ g_fund > 0,25.
     lucros = [100, 140, 196, 274, 384, 538, 753, 1054, 1476, 2066]
     divs = [round(0.2 * x) for x in lucros]
-    # PL baixo ⇒ mediana(ROE) alta ⇒ g_fund ≈ 0,36 (> 0,25); beta 3,0 ⇒ Ke ≈ 0,285 (> 0,25).
-    c = _mk("TETO", lucros, [1200] * 10, divs=divs, beta=3.0)
+    # PL baixo ⇒ mediana(ROE) alta ⇒ g_fund ≈ 0,36 (> 0,25). O β de entrada agora é Blume-ajustado
+    # (KE-01/Fase 12): β 5,0 ⇒ β_blume = 0,33+0,67×5 = 3,68 ⇒ Ke ≈ 0,326 (> 0,25). É recalibração
+    # do INPUT da fixture ao novo modelo de Ke (a doutrina — teto absoluto 0,25 vence — é intacta),
+    # NÃO um afrouxamento: o β cru 3,0 do modelo antigo dava Ke 0,285; sob Blume ele daria 0,245.
+    c = _mk("TETO", lucros, [1200] * 10, divs=divs, beta=5.0)
 
     a = report.analisar_acao(c, cfg)
 

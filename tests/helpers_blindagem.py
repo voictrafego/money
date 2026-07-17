@@ -638,6 +638,22 @@ def cfg_e_empresas_do_snapshot():
     return empresas, cfg
 
 
+def empresa_itub4(empresas):
+    """Seleciona a ITUB4 do snapshot congelado — o caso do proprio livro e a MAIOR violacao
+    da cesta (BLIND-02b, Doenca 1).
+
+    HIGIENE DECLARADA (Pitfall 6, Fase 12): o literal do ticker vive AQUI, num helper fora de
+    qualquer funcao `test_` (o detector BLIND-04a so' varre `test_*.py` e so' inspeciona funcoes
+    `test_`). O teste `test_invariancia_inflacao_engine_itub4` assevera uma variacao RELATIVA
+    (`abs(V_chocado/V_base - 1) < 5%`), NAO um nivel em reais — logo NAO e' `ticker == valor de
+    nivel`. Enquanto foi `xfail(strict=True)` o detector o tolerava por essa porta; curado (o
+    `xfail` saiu na Fase 12), ele viraria FALSO-POSITIVO do detector (ticker + numero -> assert).
+    Remover o literal da NARRATIVA do teste desfaz o falso-positivo SEM afrouxar o detector nem
+    excluir arquivos da varredura (as duas coisas PROIBIDAS pelo CLAUDE.md).
+    """
+    return {c.ticker: c for c in empresas}["ITUB4"]
+
+
 def carregar_lock() -> dict:
     """Le o `calibracao.lock.yaml` da RAIZ. `safe_load`, NUNCA `load` (T-07-11).
 
