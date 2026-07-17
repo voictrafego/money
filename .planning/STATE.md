@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
-stopped_at: Phase 12 context gathered
-last_updated: "2026-07-17T16:17:25.109Z"
-last_activity: 2026-07-17 -- Phase 12 planning complete
+stopped_at: Completed 12-01-PLAN.md
+last_updated: "2026-07-17T18:03:47.827Z"
+last_activity: 2026-07-17
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 27
-  completed_plans: 23
-  percent: 85
+  completed_plans: 24
+  percent: 89
 ---
 
 # Project State
@@ -27,17 +27,17 @@ entre si** — a mesma ação não pode parecer barata num menu e cara/ausente e
 ITUB4, Cap. 17 (Tabelas 41/43): `g` = 10,24% · `Ke` = 12,48% → **V = R$ 37,22** (região R$ 35–39,
 MS ±5%). **Hoje o app entrega R$ 16,13.**
 
-**Current focus:** Phase 11 — crescimento-g-grow
+**Current focus:** Phase 12 — Custo de capital / Ke (KE)
 
 ## Current Position
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
-Phase: 11 (crescimento-g-grow) — EXECUTING
-Plan: 3 of 3 (11-01 ✓, 11-02 ✓ · `a461147` · 11-03 ✓ · `20bb97d`)
+Phase: 12 (Custo de capital / Ke (KE)) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-07-17 -- Phase 12 planning complete
+Last activity: 2026-07-17
 
-Progress: [██████████] 96%
+Progress: [█████████░] 89%
 
 **Suíte:** `499 passed, 1 skipped, 22 deselected, 1 xfailed, 0 failed` — 0 XPASS (era 490: +9 do 11-03
 = 3 invariantes de `g_alto` + 1 contrato seguradora + 1 invariante VULC3 estrutural [ex-goldens de
@@ -129,10 +129,31 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | Phase 10 P04 | 40min | 2 tasks | 4 files |
 | Phase 11 P01 | 14min | 2 tasks | 4 files |
 | Phase 11 P03 | 35min | 3 tasks | 5 files |
+| Phase 12 P01 | 15min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **KE-03 infra (Fase 12 / plano 12-01) — beta setorial+Blume montado, PURAMENTE ADITIVO (a.ke
+  inalterado).** Gerador offline (`scripts/gerar_beta_setorial.py`) + artefato versionado
+  `data/beta_setorial.yaml` (14 setores, **mediana do beta CRU**, limiar estrutural **n>=3** — a
+  propriedade da mediana que rejeita 1 outlier, nunca alvo de ticker; `_normalizar_setor` strip do
+  prefixo "Emp. Adm. Part. - " agrupa holding+operadora, fallback 42→24 de 104). `capm.beta_blume`
+  aplica Blume `0,33+0,67×base` **uma vez** (setorial > individual, fallback D-04 ao β cru), com
+  contrato de borda **`β None → None`** (never-raise, como `ke_rim`) — decidido a favor do
+  `<behavior>` do plano sobre o pseudo-código do RESEARCH. Carimbo de **fonte única** nos **3** entry
+  points (`cli._carimbar_macro`, `app.py`, `backtest._CHAVES_GLOBAIS`+`rodar_cesta`); `report/setup.py`
+  **NÃO** (Correção #2). **D-06 provado por teste DURO cross-menu:** `test_cli_rank_consistencia`
+  assevera `beta_setorial` **E** `a.ke` idênticos entre `analyze` e `rank`. **Fronteira respeitada:**
+  NADA consome `beta_blume` ainda (a engine segue `capm.ke_local(c.beta,…)` com β cru e ERP 0,06) —
+  a mudança de Ke é o **plano 12-02**; `BLIND-02b permanece xfailed` (viraria XPASS=FAIL se `a.ke`
+  tivesse mudado). `capm` importa `ingest.macro` para a normalização (sem ciclo, sem acoplar à rede).
+  Suíte default **517 passed, 1 skipped, 22 deselected, 1 xfailed, 0 failed** (+18 testes; base
+  inalterada); `-m golden_nivel` **22 passed, 0 ORFA**; `git diff config.yaml calibracao.lock.yaml`
+  **VAZIO** (β setorial é DADO fora do lock, D-07; orçamento de 3 knobs intacto). **KE-03 fica
+  Pending** — co-reivindicado por 12-02, onde a behavior (Ke muda) de fato aterrissa. Commits:
+  `d0af0ac`/`8804622` (T1), `17b43c2`/`5a03a40` (T2).
 
 - **GROW-04/05 (Fase 11 / plano 11-03) — o método antigo do `g` SAI do repo (split-before-delete)
   e os 2 knobs decorativos viram load-bearing por COBERTURA; a fase fecha.** **(1) Goldens de nível
@@ -546,9 +567,9 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-17T13:53:01.550Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-custo-de-capital-ke-ke/12-CONTEXT.md
+Last session: 2026-07-17T18:02:55.337Z
+Stopped at: Completed 12-01-PLAN.md
+Resume file: None
 
 ## Operator Next Steps
 
