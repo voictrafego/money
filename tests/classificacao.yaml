@@ -491,6 +491,11 @@
 'tests/test_invariantes_v24.py::test_invariancia_inflacao_identidade_pb_justo': invariante
 'tests/test_invariantes_v24.py::test_invariancia_inflacao_engine_itub4': invariante
 'tests/test_invariantes_v24.py::test_normalizacao_nao_pune_crescimento': invariante
+# --- Fase 11 / plano 11-03: D-07 (GROW-05). Cobertura que torna excesso_sustentavel e
+# ke_g_spread_min LOAD-BEARING sob o spread apertado do g_cap (Armadilha 5, "prever nao
+# descobrir"). Knobs LIDOS de config; assert estrutural (derivacao/finito/fade-only), NAO nivel.
+'tests/test_invariantes_v24.py::test_g_cap_derivado_e_adocao_de_g_alto_no_itub4': invariante
+'tests/test_invariantes_v24.py::test_terminal_load_bearing_nao_explode_e_degrada_para_fade_only': invariante
 
 # --- Fase 7 / plano 07-03: BLIND-04. Meta-testes (testam OS TESTES, nao a engine) + harness
 # do jackknife. Nenhum deles crava nivel: rodam no default, para sempre.

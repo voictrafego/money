@@ -23,10 +23,12 @@ deletar assert, ou mexer num limiar DEPOIS que o teste ficou vermelho.
 
 from __future__ import annotations
 
+import math
+
 import pytest
 
 import helpers_blindagem as h
-from analista.core import normalizacao
+from analista.core import ddm, motores, normalizacao
 from analista.report import report
 
 # Inflacao do ciclo: IPCA medio de 10 anos (Banco Central, serie SGS 13522). MESMA JANELA do
@@ -199,3 +201,99 @@ def test_normalizacao_nao_pune_crescimento():
         f"Haircut medido: {base / ultimo - 1:+.2%} — forma fechada -g/(1+g) = "
         f"{-G_SERIE / (1 + G_SERIE):+.2%}."
     )
+
+
+# --------------------------------------------------------------------------- #
+# D-07 (GROW-05) — os dois knobs decorativos viram LOAD-BEARING por COBERTURA.
+#
+# O `g_cap` (~7,28%) da Fase 11 encolhe o spread `Ke − g` da perpetuidade de ~10,5pp para
+# ~5,5pp; o peso do valor terminal quase DOBRA (Armadilha 5). `excesso_sustentavel` (0,045) e
+# `ke_g_spread_min` (0,03) — hoje decorativos — tornam-se binding. Estes testes os exercem por
+# COBERTURA, NÃO por recalibração: "prever, não descobrir". Os knobs são LIDOS de config
+# (nunca hardcoded); mexê-los MOVE a fronteira que estes testes exercitam. NÃO são golden_nivel:
+# o assert é estrutural (finito/não-explode/degrada para fade-only), não um nível em reais.
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.invariante
+def test_g_cap_derivado_e_adocao_de_g_alto_no_itub4():
+    """GROW-01/03/04: o `g_cap` é DERIVADO (não digitado) e o ITUB4 ADOTA o g por fundamentos.
+
+    (a) `g_cap = (1 + π_ciclo)(1 + PIB_real) − 1` — derivado na engine dos insumos carimbados
+        (π_ciclo ≈ 5,18% medido do BCB + PIB_real = 2,0% estrutural), medido ≈ 7,28%. O assert é
+        a IGUALDADE EXATA com a recomposição a partir dos mesmos insumos LIDOS de cfg — não um
+        nível cravado (sem tolerância, sem 0,0728 hardcoded).
+    (b) ITUB4 (o caso do livro): `g_alto == min(g_fundamentos, ke)` — a fase explícita ADOTA o g
+        por fundamentos (medido ≈ 9,59% no snapshot; ~10,29% é o alvo do livro), travado pelo Ke
+        (FIX-01). Estrutural (== min), sem nível. O intrínseco do RIM é finito e positivo (o g
+        novo não quebra o caso soberano). Sem nenhuma constante numérica não-trivial no assert.
+    """
+    empresas, cfg = h.cfg_e_empresas_do_snapshot()
+    pi_ciclo = cfg["macro"]["pi_ciclo"]
+    pib_real = cfg["ddm"]["pib_real"]
+    g_cap_esperado = (1.0 + pi_ciclo) * (1.0 + pib_real) - 1.0
+
+    itub4 = {c.ticker: c for c in empresas}["ITUB4"]
+    a = report.analisar_acao(itub4, cfg)
+
+    # (a) derivação exata (g_cap é carregado em a.g_estavel para os rótulos) — DERIVADO, não digitado.
+    assert a.g_estavel == g_cap_esperado
+
+    # (b) ADOÇÃO travada pelo Ke: g_alto = min(g_fundamentos, ke) — estrutural, sem nível.
+    assert a.g_fundamentos is not None and a.ke is not None
+    assert a.g_alto == min(a.g_fundamentos, a.ke)
+    # o caso soberano não quebra sob o g novo: intrínseco finito e positivo.
+    assert a.intrinseco_motor is not None
+    assert math.isfinite(a.intrinseco_motor) and a.intrinseco_motor > 0
+
+
+@pytest.mark.invariante
+def test_terminal_load_bearing_nao_explode_e_degrada_para_fade_only():
+    """D-07/GROW-05/Armadilha 5: sob o spread `Ke − g` apertado que o g_cap produz, o RI terminal
+    do RIM (a) NÃO explode e (b) DEGRADA honestamente para fade-only quando o spread cai abaixo do
+    piso — com `excesso_sustentavel` e `ke_g_spread_min` LIDOS de config (load-bearing por
+    cobertura, nunca hardcoded). Sem ticker: inputs sintéticos + g_cap derivado dos knobs de cfg.
+
+    Exercita EXATAMENTE o ramo `motores.py:128` (`ke − g_terminal >= ke_g_spread_min` libera o
+    terminal) e o never-raise de `ddm.valor_gordon` (None em `ke − g <= 0`, ddm.py:44).
+    """
+    cfg = h.carregar_config_producao()
+    rim_cfg = cfg["motores"]["rim"]
+    # KNOBS LIDOS DE CONFIG (load-bearing): mexer neles MOVE a fronteira exercitada aqui.
+    excesso_sustentavel = rim_cfg["excesso_sustentavel"]
+    ke_g_spread_min = rim_cfg["ke_g_spread_min"]
+    # g_cap DERIVADO dos insumos de cfg (não digitado).
+    g_cap = (1.0 + cfg["macro"]["pi_ciclo"]) * (1.0 + cfg["ddm"]["pib_real"]) - 1.0
+
+    # Ke estrutural do RIM no teto de banco large-cap (ke_teto): spread Ke − g_cap ≈ 5,7pp — o
+    # spread apertado que a Fase 11 produz (era ~10,5pp). Acima do piso ⇒ terminal LIBERADO.
+    ke = rim_cfg["ke_teto"]
+    assert ke - g_cap >= ke_g_spread_min   # pré-condição: o terminal é liberado
+
+    liberado = motores.rim(
+        vpa0=20.0, roe0=0.18, ke=ke, retencao=0.5, n=rim_cfg["n_fade"],
+        excesso_sustentavel=excesso_sustentavel, g_terminal=g_cap,
+        ke_g_spread_min=ke_g_spread_min, roe_terminal=0.18,
+    )
+    assert liberado is not None
+    # (a) NÃO explode: valor e terminal finitos, positivos; o terminal é LOAD-BEARING (peso > 0)
+    # mas NUNCA supera o valor total (não é perpetuidade explosiva).
+    assert math.isfinite(liberado.valor_intrinseco) and liberado.valor_intrinseco > 0
+    assert liberado.vp_terminal > 0                      # terminal liberado carrega peso real
+    assert liberado.vp_terminal < liberado.valor_intrinseco   # mas não explode
+
+    # (b) DEGRADAÇÃO HONESTA: g_terminal alto o bastante para o spread cair ABAIXO do piso lido
+    # de config ⇒ o terminal NÃO é liberado (vp_terminal == 0, fade-only) e a chamada NÃO levanta.
+    g_terminal_apertado = ke - ke_g_spread_min / 2.0     # spread < ke_g_spread_min
+    assert ke - g_terminal_apertado < ke_g_spread_min    # pré-condição: abaixo do piso
+    fade_only = motores.rim(
+        vpa0=20.0, roe0=0.18, ke=ke, retencao=0.5, n=rim_cfg["n_fade"],
+        excesso_sustentavel=excesso_sustentavel, g_terminal=g_terminal_apertado,
+        ke_g_spread_min=ke_g_spread_min, roe_terminal=0.18,
+    )
+    assert fade_only is not None                         # never-raise
+    assert fade_only.vp_terminal == 0.0                  # degrada para fade-only, sem terminal
+    assert math.isfinite(fade_only.valor_intrinseco) and fade_only.valor_intrinseco > 0
+
+    # o never-raise da primitiva Gordon: ke − g <= 0 devolve None (não explode), como a rim confia.
+    assert ddm.valor_gordon(dpa1=1.0, ke=g_cap, g=ke) is None
