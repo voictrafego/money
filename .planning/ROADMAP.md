@@ -81,7 +81,7 @@ quarentenados/deletados; **isso é a correção, não regressão.**
 - [ ] **Phase 9: Ingestão correta (DATA)** - JCP, base do controlador, duplo split, `impliedSharesOutstanding`; os asserts da Fase 8 viram verde ticker a ticker
 - [x] **Phase 10: Primitivas sem viés (PRIM)** - maior alavancagem por linha do repo; **critério de saída: o golden ITUB4 32.88 quebra e é DELETADO** (completed 2026-07-16)
 - [x] **Phase 11: Crescimento / `g` (GROW)** - `g_cap = (1+π_ciclo)(1+PIB_real)−1 = 7,28%`; metade da Doença 1 (o `g`) — o teste de invariância (BLIND-02) só vira verde na Fase 12, quando o `ke_teto` sai (completed 2026-07-17)
-- [ ] **Phase 12: Custo de capital / `Ke` (KE)** - ERP único 4,5%, beta setorial + Blume, `ke_teto`/`ke_piso` deletados; **separada da Fase 11 de propósito**
+- [x] **Phase 12: Custo de capital / `Ke` (KE)** - ERP único 4,5%, beta setorial + Blume, `ke_teto`/`ke_piso` deletados; **separada da Fase 11 de propósito** (completed 2026-07-17)
 - [ ] **Phase 13: Motores + contrato de saída (ENG)** - os 4 motores colapsam num RIM único com políticas de input; contrato do livro (tríade + MS do usuário + matriz Ke×g); `motores:` ~20 → ≤5 chaves
 - [ ] **Phase 14: Validação honesta (VAL)** - **o caso do livro passa (V ≈ R$ 37,22)**; hold-out roda uma vez, 3 graus de liberdade, distribuição + jackknife
 
@@ -242,7 +242,7 @@ produz o número da manchete nunca é exibido**. Alvo do livro: `Ke` = 12,48%.
 - [x] 12-01-PLAN.md — β setorial: artefato versionado + carimbo nos 3 entry points + helper beta_blume (KE-03 infra, aditivo)
 - [x] 12-02-PLAN.md — Unificação do Ke: consumir β setorial no a.ke, deletar ke_rim, RIM lê a.ke, destravar BLIND-02b (KE-01/03/04/05)
 - [x] 12-03-PLAN.md — Knob sancionado: ERP 0,045 + remover erp_banco/ke_piso/ke_teto (config+lock, mesmo commit) (KE-02/04)
-- [ ] 12-04-PLAN.md — Validação sem clamp: invariante estrutural Ke_min>g_cap + regressão dos 104 tickers (KE-04)
+- [x] 12-04-PLAN.md — Validação sem clamp: invariante estrutural Ke_min>g_cap + regressão dos 104 tickers (KE-04)
 
 ### Phase 13: Motores + contrato de saída (ENG)
 **Goal**: Colapsar os 4 motores num **RIM único**. Sob clean surplus (Ohlson 1995), RIM ≡ DDM ≡
@@ -302,7 +302,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 9. Ingestão correta (DATA) | v2.4 | 0/5 | Planned | - |
 | 10. Primitivas sem viés (PRIM) | v2.4 | 4/4 | Complete    | 2026-07-16 |
 | 11. Crescimento / g (GROW) | v2.4 | 3/3 | Complete   | 2026-07-17 |
-| 12. Custo de capital / Ke (KE) | v2.4 | 3/4 | In Progress|  |
+| 12. Custo de capital / Ke (KE) | v2.4 | 4/4 | Complete   | 2026-07-17 |
 | 13. Motores + contrato de saída (ENG) | v2.4 | 0/? | Not started | - |
 | 14. Validação honesta (VAL) | v2.4 | 0/? | Not started | - |
 

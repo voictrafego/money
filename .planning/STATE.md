@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
-status: executing
+status: verifying
 stopped_at: Completed 12-02-PLAN.md
-last_updated: "2026-07-17T18:36:13.245Z"
+last_updated: "2026-07-17T18:48:38.910Z"
 last_activity: 2026-07-17
 progress:
   total_phases: 8
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 27
-  completed_plans: 26
-  percent: 96
+  completed_plans: 27
+  percent: 100
 ---
 
 # Project State
@@ -34,14 +34,13 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 12 (Custo de capital / Ke (KE)) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-17
 
-Progress: [██████████] 96%
+Progress: [██████████] 100%
 
-**Suíte:** `517 passed, 1 skipped, 20 deselected, 0 failed, 0 xfailed, 0 XPASS` (era 517 do 12-01, mas
-com 1 xfailed → agora **0 xfailed**: BLIND-02b flipou para invariante NORMAL no 12-02; 22 → 20
-deselected = 2 goldens de banda de Ke DELETADOS). `-m golden_nivel` **20 passed, 0 CLASSIFICACAO ORFA**.
+**Suíte:** `519 passed, 1 skipped, 20 deselected, 0 failed, 0 xfailed, 0 XPASS` (517 do pós-12-03 +
+os 2 testes de validação KE-04 do 12-04). `-m golden_nivel` **20 passed, 0 CLASSIFICACAO ORFA**.
 **AS DUAS DOENÇAS DO v2.4 ESTÃO CURADAS** (BLIND-03 na Fase 10, BLIND-02b no 12-02): `xfail_estritos()`
 == **0**; a guarda de seleção foi reconciliada à cura (0 pendentes é válido; as ex-doenças rodam como
 invariantes selecionadas). Sobra só **1 skipped** = jackknife (Fase 14). **PRIM-05 cumprido: o golden
@@ -138,10 +137,33 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | Phase 12 P01 | 15min | 2 tasks | 10 files |
 | Phase 12 P02 | 30min | 3 tasks | 9 files |
 | Phase 12 P03 | 15min | 1 tasks | 2 files |
+| Phase 12 P04 | 20min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **KE-04 (Fase 12 / plano 12-04) — "nada explode sem clamp" PROVADO POR EXECUÇÃO; o gate final da
+  fase.** `tests/test_ke_validacao.py` (2 testes `invariante`, arquivo novo) fecha a Doença 3 com
+  evidência de RODAR a regressão, não com "suíte verde" genérica (memória `guardrails-devem-ser-
+  provados-por-execucao`). **(a)** `test_ke_min_estrutural_acima_do_g_cap`: a DESIGUALDADE `rf +
+  0,33 × erp_local > g_cap` lida do config DINAMICAMENTE (robusta ao drift do rf; passaria com ERP
+  0,06 e com 0,045) — o **11,07%** (Ke_min no rf AO VIVO ~9,58%) aparece só em comentário, NUNCA
+  cravado num assert; offline dá ~11,99% > 7,28%. O **piso do Blume 0,33** asseverado no INTERCEPTO
+  (`beta_blume(0)==0,33` + monotonicidade), provando que `Ke_min` INDEPENDE de outlier de β.
+  **(b)** `test_regressao_104_sem_explosao`: roda `report.analisar_acao` sobre os **104 REAIS**
+  (`hs.CAMINHO_SNAPSHOT_LIMPO`) com o **β setorial carimbado** (`macro.carimbar_beta_setorial` —
+  Ke offline idêntico ao app, D-06); **93 tickers com Ke, ZERO ofensor:** todo `Ke ≥ Ke_min > g_cap`,
+  `intrinseco_motor` finito e `> 0`, spread `Ke − g_T > 0` (`g_T = max(0, min(ROE_T×ret, g_cap))`),
+  e `V < 50× preço` (max medido 4,7×). `None` aceitável (never-raise). **NENHUM guard novo, nenhum
+  clamp sob outro nome** — a perpetuidade converge pela aritmética do piso do Blume; se explodisse,
+  o bug seria ROE_T/spread (Fase 13). **BLIND-04a limpo** (sem `ticker==nível`; `test_blindagem_meta`
+  verde na varredura AST). **Fronteira: validação PURA** — `git diff config.yaml calibracao.lock.yaml`
+  VAZIO (o commit sancionado foi o 12-03), orçamento em 3 graus, g_cap da Fase 11 não recalibrado,
+  nenhum motor tocado. Ambas as entradas em `classificacao.yaml` no mesmo diff (0 órfão). Suíte
+  **519 passed, 1 skipped, 20 deselected, 0 failed, 0 xfailed, 0 xpassed**; `-m golden_nivel` 20
+  passed, 0 ORFA. **KE-04 completo por validação — a Fase 12 está pronta para fechar.** Commits:
+  `7d85b65` (T1), `6f008d0` (T2).
 
 - **KE-02/KE-04 (Fase 12 / plano 12-03) — o commit de knob SANCIONADO: ERP unificado em 4,5% e o
   clamp removido do ORÇAMENTO.** `capm.erp_local` **0,06 → 0,045** (ERP de mercado maduro puro,
@@ -623,7 +645,7 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-17T18:35:24.295Z
+Last session: 2026-07-17T18:47:58.384Z
 Stopped at: Completed 12-02-PLAN.md
 Resume file: None
 
