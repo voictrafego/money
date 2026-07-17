@@ -4,14 +4,14 @@ milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
 stopped_at: Phase 11 context gathered
-last_updated: "2026-07-17T00:08:17.382Z"
-last_activity: 2026-07-17 -- Phase 11 execution started
+last_updated: "2026-07-17T00:14:25.018Z"
+last_activity: 2026-07-17
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 23
-  completed_plans: 20
-  percent: 87
+  completed_plans: 21
+  percent: 91
 ---
 
 # Project State
@@ -33,11 +33,11 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 11 (crescimento-g-grow) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 11
-Last activity: 2026-07-17 -- Phase 11 execution started
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-07-17
 
-Progress: [██████████] 100%
+Progress: [█████████░] 91%
 
 **Suíte:** `486 passed, 1 skipped, 27 deselected, 1 xfailed` — 0 XPASS (era 483/34: +3 invariantes
 extraídos WR-04, −7 goldens de nível ITUB4 deletados). Sobra **1 xfailed** = BLIND-02b (vira verde na
@@ -125,10 +125,30 @@ split-before-delete. Fila de triagem e varredor AST: `07-VERIFICATION.md` (apên
 | Phase 10 P02 | 26min | 2 tasks | 9 files |
 | Phase 10 P03 | 12min | 3 tasks | 13 files |
 | Phase 10 P04 | 40min | 2 tasks | 4 files |
+| Phase 11 P01 | 14min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **GROW-01/02 (Fase 11 / plano 11-01) — o insumo `π_ciclo` está CARIMBADO; a engine segue intocada.**
+  `macro.ipca_ciclo_para_g(fallback, anos=10)` é o **irmão exato** de `selic_ciclo_para_capm`: **média
+  ARITMÉTICA** de `_ipca_anual_dezembro(anos).values()` (SGS 13522 reusada da PRIM-04 — zero fonte de
+  rede nova), degradação graciosa → `fallback`. Resolvido UMA vez nos entry points e carimbado em
+  `cfg["macro"]["pi_ciclo"]` na **MESMA janela `rf_ciclo_anos`** do rf/deflatores (a simetria rf↔π_ciclo
+  do GROW-02 — o que torna o valuation invariante à inflação). `cli._carimbar_macro` é a fonte única
+  (analyze+rank, WR-03); `app.py` ganhou o wrapper cacheado `pi_ciclo_capm` (@st.cache_data ttl=3600,
+  espelha `ipca_deflatores_capm`) + o carimbo no fluxo analyze (read-only preservado). `config.yaml`
+  ganhou o default offline `macro.pi_ciclo: 0.0518` (mirror do `selic_fallback`). **Bloco `macro` FORA
+  do escopo do lock** (motores/capm/ddm/normalizacao), como `ipca_deflatores` — dado objetivo do BCB,
+  NÃO knob: **orçamento de 3 graus intacto** (`git diff calibracao.lock.yaml` VAZIO; `config.yaml` só
+  adiciona `macro.pi_ciclo`). **Pureza:** `grep ipca_ciclo_para_g src/analista/report/` VAZIO — a engine
+  não chama o helper. **Fronteira respeitada:** ZERO derivação de `g_cap` (é o Plano 02), ZERO knob de
+  valuation tocado, **BLIND-02b permanece xfailed** (vira verde só na Fase 12 — se ficasse verde aqui,
+  seria bug). Suíte default **490 passed, 1 skipped, 27 deselected, 1 xfailed, 0 failed**. Nota de
+  ambiente: BCB acessível na execução → a verificação "offline" do helper retornou o valor ao vivo
+  (`0,05138` ≈ default `0,0518`); o ramo de fallback é exercitado por construção. Commits: `47574e6`
+  (Task 1), `9069e3a` (Task 2).
 
 - **PRIM-05 (Fase 10 / plano 10-04) — CRITÉRIO DE SAÍDA CUMPRIDO: o golden ITUB4=32,88 foi DELETADO,
   não atualizado; a Fase 10 está CONCLUÍDA.** `test_backtest_bancos.py::test_backtest_alvos_recalibrados`
@@ -495,9 +515,9 @@ split-before-delete. Fila de triagem e varredor AST: `07-VERIFICATION.md` (apên
 
 ## Session Continuity
 
-Last session: 2026-07-16T21:54:12.367Z
+Last session: 2026-07-17T00:13:49.871Z
 Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-crescimento-g-grow/11-CONTEXT.md
+Resume file: None
 
 ## Operator Next Steps
 

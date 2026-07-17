@@ -219,7 +219,7 @@ por fundamentos (10,24% no Itaú) — o app calcula 10,29% e **descarta**, adota
   - **NÃO fundir esta fase com a Fase 12 "para economizar tempo".** A tentação vai ser forte e está errada: fundir dá **um número e zero diagnóstico**; separar dá duas medições limpas contra o mapa de 104 tickers.
   - **NÃO calibrar `PIB_real`** contra resultado — é 1 dos 3 graus de liberdade e é constante estrutural (2,0%), não série ajustável.
 **Plans**: 3 plans
-- [ ] 11-01-PLAN.md — π_ciclo: helper `ipca_ciclo_para_g` + carimbo `cfg['macro']['pi_ciclo']` (cli/app) + default offline (GROW-01/02)
+- [x] 11-01-PLAN.md — π_ciclo: helper `ipca_ciclo_para_g` + carimbo `cfg['macro']['pi_ciclo']` (cli/app) + default offline (GROW-01/02)
 - [ ] 11-02-PLAN.md — g_cap derivado + adoção de g_fundamentos + g_T fechado por empresa + migração de knob no MESMO diff (GROW-01/03/04, D-05)
 - [ ] 11-03-PLAN.md — split-before-delete dos goldens do g antigo + cobertura D-07 (spread apertado) + verificação (BLIND-02 xfail, não-regressão) (GROW-04/05)
 
@@ -297,7 +297,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 8. Sanidade dos dados (SAN) | v2.4 | 1/6 | In Progress|  |
 | 9. Ingestão correta (DATA) | v2.4 | 0/5 | Planned | - |
 | 10. Primitivas sem viés (PRIM) | v2.4 | 4/4 | Complete    | 2026-07-16 |
-| 11. Crescimento / g (GROW) | v2.4 | 0/? | Not started | - |
+| 11. Crescimento / g (GROW) | v2.4 | 1/3 | In Progress|  |
 | 12. Custo de capital / Ke (KE) | v2.4 | 0/? | Not started | - |
 | 13. Motores + contrato de saída (ENG) | v2.4 | 0/? | Not started | - |
 | 14. Validação honesta (VAL) | v2.4 | 0/? | Not started | - |

@@ -161,9 +161,9 @@ Maior alavancagem por linha do repositório: atinge todos os motores, todos os m
 
 ## Crescimento (GROW)
 
-- [ ] **GROW-01**: `g_cap` é derivado, não digitado: `(1 + π_ciclo) × (1 + PIB_real) − 1` = **7,28%**
+- [x] **GROW-01**: `g_cap` é derivado, não digitado: `(1 + π_ciclo) × (1 + PIB_real) − 1` = **7,28%**
   (π_ciclo = 5,18%, IPCA médio 10a, BCB SGS 13522 — medido).
-- [ ] **GROW-02**: A janela do IPCA é **a mesma** do `rf`. É isso que torna o valuation invariante à
+- [x] **GROW-02**: A janela do IPCA é **a mesma** do `rf`. É isso que torna o valuation invariante à
   inflação. **BLIND-02 NÃO vira verde aqui** — vira na **Fase 12**, quando o `ke_teto` (que satura
   sob o choque e absorve a perna do `rf`) é removido. Esta fase entrega a **metade `g`** da cura;
   esperar o teste verde aqui faria o executor "consertar" o teste em vez do código.
@@ -305,8 +305,8 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | PRIM-03 | Phase 10 | Complete |
 | PRIM-04 | Phase 10 | Complete |
 | PRIM-05 | Phase 10 | Complete |
-| GROW-01 | Phase 11 | Pending |
-| GROW-02 | Phase 11 | Pending |
+| GROW-01 | Phase 11 | Complete |
+| GROW-02 | Phase 11 | Complete |
 | GROW-03 | Phase 11 | Pending |
 | GROW-04 | Phase 11 | Pending |
 | GROW-05 | Phase 11 | Pending |
