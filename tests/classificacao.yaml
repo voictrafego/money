@@ -598,3 +598,17 @@
 # `contrato` (presenca/ausencia/formato, zero constante de nivel).
 'tests/test_sanidade_baseline.py::test_os_alvos_consertados_sumiram_de_hoje': contrato
 'tests/test_sanidade_baseline.py::test_accept_list_e_disjunta_e_sem_reais': contrato
+
+# --- Fase 12 / plano 12-01: KE-03 infra do beta setorial+Blume (ADITIVO, nao muda a.ke).
+# `invariante` = verdade estrutural (mediana do beta cru, limiar n>=3, agrupamento holding/
+# operadora, artefato == recomputacao do universo). `contrato` = never-raise / formato / borda.
+'tests/test_beta_setorial.py::test_mapa_vazio_never_raise': contrato
+'tests/test_beta_setorial.py::test_setor_com_3_betas_usa_a_mediana_do_beta_cru': invariante
+'tests/test_beta_setorial.py::test_setor_abaixo_do_limiar_fica_ausente': invariante
+'tests/test_beta_setorial.py::test_beta_none_nao_conta_para_o_limiar_nem_para_a_mediana': invariante
+'tests/test_beta_setorial.py::test_normalizar_setor_agrupa_holding_e_operadora': invariante
+'tests/test_beta_setorial.py::test_normalizar_setor_none_never_raise': contrato
+'tests/test_beta_setorial.py::test_holding_e_operadora_agrupam_no_mesmo_setor': invariante
+'tests/test_beta_setorial.py::test_carregar_beta_setorial_devolve_dict_de_floats': contrato
+'tests/test_beta_setorial.py::test_carregar_beta_setorial_arquivo_ausente_degrada_para_vazio': contrato
+'tests/test_beta_setorial.py::test_artefato_e_derivado_do_snapshot_e_respeita_o_limiar': invariante
