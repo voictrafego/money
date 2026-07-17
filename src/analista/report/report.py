@@ -229,7 +229,7 @@ def _intrinseco_por_motor(
         # dividendo, não no book minúsculo (VPA≈5,35) que o RIM ancora — o RIM a subvaloriza.
         # Rota mínima e reusável (D-08, zero knob numérico novo): Gordon de estágio único sobre o
         # dividendo SUSTENTÁVEL (`dpa_recorrente`, NÃO trailing — Pitfall 4) com o Ke do CAPM ao
-        # vivo (`a.ke`, NÃO o ke_rim de balanço large-cap — Pitfall 3) e g = g_cap (~7,28%, derivado).
+        # vivo (`a.ke`, o Ke único setorial+Blume — Pitfall 3) e g = g_cap (~7,28%, derivado).
         # Detecção reusa `arquetipo._setor_casa_token` (limite de palavra), NÃO reimplementa match.
         # Never-raise: dpa/ke None ou valor_gordon None (ke−g ≤ 0) → NÃO força a rota, degrada para
         # o RIM legado. Rótulo honesto `a.motor="seguradora"` (exige `excecao_nota` no gate, D-05).
@@ -258,7 +258,7 @@ def _intrinseco_por_motor(
             res_rim = motores.rim(
                 vpa0=lentes.vpa(c.patrimonio_liquido.get(ult), c.num_acoes.get(ult)),
                 roe0=c.roe_valuation(),
-                ke=motores.ke_rim(c.beta, cfg),
+                ke=a.ke,  # KE-01/D-09: o RIM recebe o Ke ÚNICO já pronto (β setorial+Blume), não recomputa
                 retencao=_retencao,
                 n=rim_cfg.get("n_fade", 10),
                 excesso_sustentavel=rim_cfg.get("excesso_sustentavel", 0.0),
@@ -467,7 +467,18 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             # (cap["rf_local"]) é a Selic ao vivo do BCB, JÁ injetada pelos entry points
             # (cli/app); offline (testes) ele vale o selic_fallback do config. A engine NÃO
             # toca a rede aqui — lê apenas o rf resolvido em cfg, mantendo-se pura/determinística.
-            a.ke = capm.ke_local(c.beta, cap["rf_local"], cap["erp_local"])
+            # KE-01/KE-03 (Fase 12): Ke ÚNICO — o β de entrada é o setorial+Blume
+            # (capm.beta_blume, carimbado em cfg["capm"]["beta_setorial"] pelos entry
+            # points), não o β cru. Este a.ke é O Ke exibido, o que alimenta o RIM (L261,
+            # não recomputa) e o centro da matriz de sensibilidade — colapsando o antigo Ke
+            # estrutural do RIM (função deletada): a perpetuidade converge pelo piso do Blume, por
+            # aritmética, NÃO por clamp (KE-04). ERP segue 0,06 aqui (o corte p/ 0,045 e a
+            # remoção das folhas erp_banco/ke_piso/ke_teto é o Plano 03, com o lock).
+            a.ke = capm.ke_local(
+                capm.beta_blume(c.beta, c.setor, cap.get("beta_setorial")),
+                cap["rf_local"],
+                cap["erp_local"],
+            )
         else:
             params = capm.CapmParams(
                 rf_us=cap["rf_us"], embi_brasil=cap["embi_brasil"], erp_us=cap["erp_us"],
@@ -500,7 +511,7 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     # já-síntese (*_valuation / base_normalizada / lentes.vpa), NUNCA o cru (Pitfall 2/FIX-04).
     # Motores são never-raise (devolvem None sob dado degenerado). O bloco DDM abaixo continua
     # rodando SEMPRE (agora como lente conservadora onde motor != "ddm") — cálculo intocado.
-    # Leitura defensiva dos knobs do motor (paridade com classificar/ke_rim): config antigo sem
+    # Leitura defensiva dos knobs do motor (paridade com classificar): config antigo sem
     # o bloco `motores:` degrada para os defaults do config.yaml sem quebrar o never-raise (WR-03).
     # Dispatch extraído em `_intrinseco_por_motor` (VER-02 03-03): mesma lógica de antes, agora
     # reutilizada também pelo ramo fronteiriço (um motor por candidato). motor == "ddm": o helper

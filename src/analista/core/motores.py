@@ -10,8 +10,9 @@ Motores (arquétipo → motor primário):
 - RIM (ENG-02 / CAL-01, banco/seguradora): RIM híbrido multiestágio — VPA + janela explícita do
   excesso de ROE sobre Ke + VALOR TERMINAL (perpetuidade de Gordon sobre o RI terminal, via
   `ddm.valor_gordon`). A janela converge a um excesso sustentável limitado; o terminal cresce a
-  `g_terminal` ≤ PIB. O Ke estrutural (`ke_rim`) é MENOR que o CAPM ao vivo de banco — sem prêmio
-  small-cap, impróprio para banco large-cap/líquido (D-01); ke_teto revisado 0.14→0.13 (CAL-02).
+  `g_terminal` ≤ PIB. O Ke é o ÚNICO do sistema (KE-01/Fase 12): o RIM recebe `a.ke` PRONTO do
+  chamador (CAPM local sobre o β setorial+Blume), NÃO recomputa um Ke estrutural nem clampa — a
+  perpetuidade converge pelo piso do Blume, por aritmética.
 - Lucro normalizado (ENG-03, cíclica): P/L justo (Gordon) sobre o lucro médio 7–10a.
 - DCF de crescimento (ENG-04, compounder): reuso PURO de `ddm.ddm_dois_estagios` com LUCRO
   no lugar de dividendo, modelo-H (conservador). "DCF sobre lucro, aproximação capital-light".
@@ -143,33 +144,6 @@ def rim(
         ri_por_ano=ris,
         vp_terminal=vp_terminal,
     )
-
-
-def ke_rim(beta: float, cfg: dict) -> Number:
-    """Ke estrutural do RIM: rf through-the-cycle + ERP de banco (sem prêmio small-cap).
-
-    Espelha `capm.ke_local` (rf + beta×ERP), mas com um ERP MENOR (`motores.rim.erp_banco`):
-    o prêmio small-cap/iliquidez embutido em `capm.erp_local` (~1,5%) é impróprio para banco
-    large-cap/líquido, e comprimir o Ke destrava o ITUB4 (D-01). O resultado é clampado a
-    `[ke_piso, ke_teto]` e nunca excede o Ke ao vivo (`ke_live`) — o RIM jamais herda o Ke
-    ~16,8% que comprime o DDM de banco.
-
-    Never-raise: beta None → None.
-    """
-    if beta is None:
-        return None
-    # Leitura defensiva do config (paridade com classificar): um config antigo sem o bloco
-    # `motores:` não pode quebrar o never-raise na borda (WR-03). Defaults == config.yaml.
-    cap = (cfg or {}).get("capm", {})
-    rim_cfg = (cfg or {}).get("motores", {}).get("rim", {})
-    rf = cap.get("rf_local", 0.105)
-    ke_live = rf + beta * cap.get("erp_local", 0.06)
-    ke = rf + beta * rim_cfg.get("erp_banco", 0.045)
-    # Clampa a [ke_piso, ke_teto] e SÓ ENTÃO aplica o teto ke_live — a trava do Ke ao vivo tem
-    # de vencer mesmo o piso (D-01: o RIM nunca excede o ke_live). Se o piso viesse por fora
-    # (max externo), um ke_live abaixo do ke_piso quebraria o invariante (WR-02).
-    ke_clamp = max(rim_cfg.get("ke_piso", 0.11), min(ke, rim_cfg.get("ke_teto", 0.14)))
-    return min(ke_clamp, ke_live)
 
 
 def lucro_normalizado(lpa_normalizado: float, ke: float, g_estavel: float) -> Number:
