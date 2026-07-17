@@ -7,10 +7,13 @@ API pública: https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados
 from __future__ import annotations
 
 import datetime
+import os
+import statistics
 import time
 from typing import Dict, List, Optional
 
 import requests
+import yaml
 
 SGS_URL = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{codigo}/dados/ultimos/{n}?formato=json"
 
@@ -194,3 +197,78 @@ def selic_ciclo_para_capm(fallback: float, anos: int = 10) -> float:
     if hist:
         return sum(hist) / len(hist)
     return selic_para_capm(fallback)
+
+
+# ---------------------------------------------------------------------------
+# Beta setorial + Blume (KE-03) — DADO derivado do mercado, FORA do lock (D-07).
+# Fonte unica offline (D-05/D-06): gerado por scripts/gerar_beta_setorial.py,
+# versionado em data/beta_setorial.yaml, carimbado em cfg["capm"]["beta_setorial"]
+# nos entry points. A engine LE o mapa e aplica Blume (capm.beta_blume) — nunca
+# recomputa a mediana (analyze monta 1 ticker, sem pares: seria o anti-padrao WR-03).
+# ---------------------------------------------------------------------------
+
+_PREFIXO_HOLDING = "Emp. Adm. Part. - "
+
+_RAIZ_REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+CAMINHO_BETA_SETORIAL = os.path.join(_RAIZ_REPO, "data", "beta_setorial.yaml")
+
+
+def _normalizar_setor(setor: Optional[str]) -> str:
+    """Higieniza a string de setor da CVM para a chave de agrupamento (D-01).
+
+    Remove o prefixo de holding "Emp. Adm. Part. - " para que a holding e a operadora do
+    MESMO negocio (mesmo risco de negocio, premissa do KE-03) caiam no mesmo grupo — ex.:
+    "Emp. Adm. Part. - Energia Eletrica" e "Energia Eletrica". So higieniza a representacao;
+    NAO troca a chave `c.setor` da empresa (D-01). Never-raise: None/"" -> "".
+    """
+    if not setor:
+        return ""
+    s = str(setor).strip()
+    if s.startswith(_PREFIXO_HOLDING):
+        s = s[len(_PREFIXO_HOLDING):].strip()
+    return s
+
+
+def mapa_beta_setorial(empresas, limiar: int = 3) -> Dict[str, float]:
+    """Mapa `setor_normalizado -> mediana(beta cru)` do universo (D-02); so setores n>=limiar.
+
+    Agrupa por `_normalizar_setor(c.setor)`, coleta os `c.beta` NAO-None e emite a mediana
+    apenas para setores com pelo menos `limiar` betas disponiveis. O limiar default 3 e'
+    ESTRUTURAL: e' o menor n em que a mediana rejeita 1 outlier — a propriedade pela qual o
+    D-02 escolheu a mediana (uma propriedade da mediana amostral, NAO um alvo de ticker).
+    Beta None nao entra na mediana nem conta para o limiar. Universo vazio -> {} (never-raise).
+    O valor e' o beta CRU de proposito: o Blume (`0,33 + 0,67 x base`) e' aplicado UMA vez
+    depois, sobre este agregado, por `capm.beta_blume` (D-03).
+    """
+    por_setor: Dict[str, List[float]] = {}
+    for c in empresas or []:
+        beta_cru = getattr(c, "beta", None)
+        if beta_cru is None:
+            continue
+        chave = _normalizar_setor(getattr(c, "setor", ""))
+        if not chave:
+            continue
+        por_setor.setdefault(chave, []).append(float(beta_cru))
+    return {
+        setor: float(statistics.median(betas))
+        for setor, betas in por_setor.items()
+        if len(betas) >= limiar
+    }
+
+
+def carregar_beta_setorial(path: Optional[str] = None) -> Dict[str, float]:
+    """Le o artefato versionado `data/beta_setorial.yaml` -> `{setor: mediana_beta}`.
+
+    Fonte unica carimbada em `cfg["capm"]["beta_setorial"]` pelos entry points (irmao de
+    `ipca_deflatores_anuais`). Arquivo ausente/vazio/malformado -> {} (degradacao graciosa;
+    a engine cai no fallback do beta individual Blume, D-04). Sempre `safe_load`.
+    """
+    caminho = path or CAMINHO_BETA_SETORIAL
+    try:
+        with open(caminho, encoding="utf-8") as fh:
+            dados = yaml.safe_load(fh) or {}
+    except (OSError, yaml.YAMLError):
+        return {}
+    if not isinstance(dados, dict):
+        return {}
+    return {str(k): float(v) for k, v in dados.items() if v is not None}
