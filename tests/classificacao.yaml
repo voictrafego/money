@@ -612,3 +612,11 @@
 'tests/test_beta_setorial.py::test_carregar_beta_setorial_devolve_dict_de_floats': contrato
 'tests/test_beta_setorial.py::test_carregar_beta_setorial_arquivo_ausente_degrada_para_vazio': contrato
 'tests/test_beta_setorial.py::test_artefato_e_derivado_do_snapshot_e_respeita_o_limiar': invariante
+'tests/test_beta_setorial.py::test_beta_blume_usa_o_setorial_quando_disponivel': invariante
+'tests/test_beta_setorial.py::test_beta_blume_setorial_ignora_o_individual': invariante
+'tests/test_beta_setorial.py::test_beta_blume_cai_no_individual_quando_setor_ausente_do_mapa': invariante
+'tests/test_beta_setorial.py::test_beta_blume_setor_none_cai_no_individual': contrato
+'tests/test_beta_setorial.py::test_beta_blume_beta_none_devolve_none': contrato
+'tests/test_beta_setorial.py::test_beta_blume_holding_casa_o_setor_normalizado': invariante
+'tests/test_beta_setorial.py::test_carimbar_beta_setorial_grava_o_mapa_carregado': contrato
+'tests/test_beta_setorial.py::test_carimbar_beta_setorial_cria_o_bloco_capm_ausente': contrato

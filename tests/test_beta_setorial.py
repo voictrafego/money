@@ -12,6 +12,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from analista.core import capm
 from analista.ingest import macro
 
 
@@ -98,3 +99,56 @@ def test_artefato_e_derivado_do_snapshot_e_respeita_o_limiar():
     esperado = macro.mapa_beta_setorial(empresas, limiar=3)
     artefato = macro.carregar_beta_setorial()
     assert artefato == pytest.approx(esperado)
+
+
+# ---------------------------------------------------------------------------
+# capm.beta_blume (D-03/D-04): Blume 0,33+0,67*base UMA vez; setorial > individual; never-raise
+# ---------------------------------------------------------------------------
+
+def test_beta_blume_usa_o_setorial_quando_disponivel():
+    mapa = {"Energia Elétrica": 0.615}
+    assert capm.beta_blume(0.615, "Energia Elétrica", mapa) == pytest.approx(0.33 + 0.67 * 0.615)
+
+
+def test_beta_blume_setorial_ignora_o_individual():
+    """O proposito do KE-03: a base e' a MEDIANA do setor, nao o beta cru do ticker."""
+    mapa = {"Bancos": 1.216}
+    # beta cru individual 1.7, mas a base Blume vem do setor (1.216), nao de 1.7
+    assert capm.beta_blume(1.7, "Bancos", mapa) == pytest.approx(0.33 + 0.67 * 1.216)
+
+
+def test_beta_blume_cai_no_individual_quando_setor_ausente_do_mapa():
+    assert capm.beta_blume(0.88, "Calçados", {}) == pytest.approx(0.33 + 0.67 * 0.88)
+
+
+def test_beta_blume_setor_none_cai_no_individual():
+    mapa = {"Bancos": 1.216}
+    assert capm.beta_blume(0.88, None, mapa) == pytest.approx(0.33 + 0.67 * 0.88)
+
+
+def test_beta_blume_beta_none_devolve_none():
+    # Contrato "beta None -> None" da engine (mesmo do ke_rim): sem dado de mercado, sem Ke.
+    assert capm.beta_blume(None, "Bancos", {"Bancos": 1.216}) is None
+
+
+def test_beta_blume_holding_casa_o_setor_normalizado():
+    mapa = {"Energia Elétrica": 0.62}
+    assert capm.beta_blume(
+        1.0, "Emp. Adm. Part. - Energia Elétrica", mapa
+    ) == pytest.approx(0.33 + 0.67 * 0.62)
+
+
+# ---------------------------------------------------------------------------
+# Carimbo de fonte unica (D-06): carimbar_beta_setorial grava a chave em cfg["capm"]
+# ---------------------------------------------------------------------------
+
+def test_carimbar_beta_setorial_grava_o_mapa_carregado():
+    cfg = {"capm": {}}
+    macro.carimbar_beta_setorial(cfg)
+    assert cfg["capm"]["beta_setorial"] == macro.carregar_beta_setorial()
+
+
+def test_carimbar_beta_setorial_cria_o_bloco_capm_ausente():
+    cfg = {}
+    macro.carimbar_beta_setorial(cfg)
+    assert "beta_setorial" in cfg["capm"]

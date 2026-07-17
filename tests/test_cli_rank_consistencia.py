@@ -69,6 +69,8 @@ def test_rank_e_analyze_carimbam_o_mesmo_macro_e_produzem_o_mesmo_intrinseco(mon
         vistos.append({
             "rf": ccfg.get("capm", {}).get("rf_local"),
             "defl": (ccfg.get("macro") or {}).get("ipca_deflatores"),
+            "beta_setorial": ccfg.get("capm", {}).get("beta_setorial"),
+            "ke": a.ke,
             "motor": a.motor,
             "intr": a.intrinseco_motor,
         })
@@ -85,6 +87,18 @@ def test_rank_e_analyze_carimbam_o_mesmo_macro_e_produzem_o_mesmo_intrinseco(mon
     # O carimbo macro (rf + deflatores) precisa ser IDÊNTICO entre os dois menus.
     assert v_analyze["rf"] == v_rank["rf"] == _RF
     assert v_analyze["defl"] == v_rank["defl"] == _DEFL
+
+    # D-06 (KE-03/KE-05): o mapa beta_setorial carimbado é o MESMO nos dois menus —
+    # analyze monta 1 ticker e rank monta muitos, mas AMBOS leem a fonte única carimbada
+    # (não recomputam a mediana por run: seria o anti-padrão WR-03). O ticker sintético
+    # CICL3 ("Siderurgia e Metalurgia") não bate uma chave n>=3 do mapa real → cai no
+    # fallback do beta individual, mas o fallback é determinístico e IDÊNTICO nos dois menus,
+    # logo a igualdade cross-menu do a.ke vale de qualquer jeito.
+    assert v_analyze["beta_setorial"] == v_rank["beta_setorial"]
+    assert v_analyze["beta_setorial"], "o mapa beta_setorial precisa estar carimbado (não vazio)"
+    # Core Value cross-menu (D-06): o a.ke da MESMA ação é idêntico entre analyze e rank.
+    assert v_analyze["ke"] is not None
+    assert v_analyze["ke"] == v_rank["ke"]
 
     # A ação é cíclica: o intrínseco vem do motor 'normalizado' (deflator-sensível).
     assert v_analyze["motor"] == "normalizado"
