@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
-stopped_at: Completed 12-01-PLAN.md
-last_updated: "2026-07-17T18:03:47.827Z"
+stopped_at: Completed 12-02-PLAN.md
+last_updated: "2026-07-17T18:25:54.671Z"
 last_activity: 2026-07-17
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 27
-  completed_plans: 24
-  percent: 89
+  completed_plans: 25
+  percent: 93
 ---
 
 # Project State
@@ -33,19 +33,19 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 12 (Custo de capital / Ke (KE)) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-07-17
 
-Progress: [█████████░] 89%
+Progress: [█████████░] 93%
 
-**Suíte:** `499 passed, 1 skipped, 22 deselected, 1 xfailed, 0 failed` — 0 XPASS (era 490: +9 do 11-03
-= 3 invariantes de `g_alto` + 1 contrato seguradora + 1 invariante VULC3 estrutural [ex-goldens de
-nível, agora no default] + 2 cobertura D-07 + 2 não-regressão do mapa real; −5 goldens_nivel
-deselecionados). `-m golden_nivel` **22 passed, 0 CLASSIFICACAO ORFA**. Sobra **1 xfailed** = BLIND-02b
-(vira verde na Fase 12) e **1 skipped** = jackknife (Fase 14). **PRIM-05 cumprido: o golden ITUB4=32,88
-NÃO existe mais no repo** (DELETADO — critério de saída da Fase 10). Nenhum assert vivo de nível ITUB4
-sobra (só prosa BLIND-02b/Fase-12 e os honeypots do detector BLIND-04a).
+**Suíte:** `517 passed, 1 skipped, 20 deselected, 0 failed, 0 xfailed, 0 XPASS` (era 517 do 12-01, mas
+com 1 xfailed → agora **0 xfailed**: BLIND-02b flipou para invariante NORMAL no 12-02; 22 → 20
+deselected = 2 goldens de banda de Ke DELETADOS). `-m golden_nivel` **20 passed, 0 CLASSIFICACAO ORFA**.
+**AS DUAS DOENÇAS DO v2.4 ESTÃO CURADAS** (BLIND-03 na Fase 10, BLIND-02b no 12-02): `xfail_estritos()`
+== **0**; a guarda de seleção foi reconciliada à cura (0 pendentes é válido; as ex-doenças rodam como
+invariantes selecionadas). Sobra só **1 skipped** = jackknife (Fase 14). **PRIM-05 cumprido: o golden
+ITUB4=32,88 NÃO existe mais no repo** (DELETADO — critério de saída da Fase 10).
 
 **⚠ DÍVIDA WR-04 — MAIS AVANÇADA (10-04 + 11-03):** o Phase 7 cindiu só 2 de ~20 funções mistas; o
 10-04 curou as 3 mistas dentre os 7 goldens de nível ITUB4; o **11-03 curou `test_growth_reconciliacao`
@@ -130,10 +130,40 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | Phase 11 P01 | 14min | 2 tasks | 4 files |
 | Phase 11 P03 | 35min | 3 tasks | 5 files |
 | Phase 12 P01 | 15min | 2 tasks | 10 files |
+| Phase 12 P02 | 30min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **KE-01/KE-04/KE-05 (Fase 12 / plano 12-02) — o Ke COLAPSA num só, o clamp SAI por código e a
+  metade Ke da Doença 1 morre (BLIND-02b curado).** `a.ke = ke_local(beta_blume(c.beta, c.setor,
+  cfg["capm"]["beta_setorial"]), rf_local, erp_local)` (report.py:470): o Ke exibido (L982) == o que
+  alimenta o RIM (L261, `ke=a.ke`, NÃO recomputa) == o centro da matriz (L540). **`motores.ke_rim`
+  DELETADO inteiro** (clamp `max(ke_piso, min(ke, ke_teto))` + teto `ke_live`), **SEM guard
+  substituto** — a perpetuidade converge pelo **piso do Blume** (`β_blume = 0,33+0,67×base ≥ 0,33`
+  ⇒ `Ke_min > g_cap`) por ARITMÉTICA, não por trava. **BLIND-02b** (`test_invariancia_inflacao_
+  engine_itub4`) vira **invariante NORMAL verde**: sem o clamp, o Ke reage ao `rf` (a perna do `rf`
+  sobe o Ke na mesma proporção que sobe o `g`, o spread `Ke−g` se preserva, o `V` fica quase
+  invariante); `xfail_estritos()` **1→0**, `assert variacao < LIMIAR_INFLACAO` INTOCADO. **Guarda de
+  seleção reconciliada à cura** (BLOQUEADOR Correção #3): de "a doença é `xfail(strict)` selecionado"
+  para "a ex-doença é `invariante` selecionada" — 0 doenças pendentes é VÁLIDO; nada deletado/skipado/
+  afrouxado (o alarme migrou do XPASS para o próprio assert, que agora executa). **Bracket-read
+  condenado** `rim_cfg["ke_teto"]` em `test_terminal_load_bearing` reescrito estruturalmente
+  (`rf_local+1,0×erp_local`) — imune à remoção das folhas no Plano 03; busca global confirma NENHUM
+  consumidor vivo de `ke_teto`/`ke_piso`/`erp_banco` fora de `motores.py`/config/lock. **2 goldens de
+  banda de Ke DELETADOS** (`test_ke_local_na_faixa_small_cap_br`, `test_ke_rim_na_banda_estrutural`) +
+  entradas de `classificacao.yaml` no mesmo diff (0 órfão). **DESVIOS (auto-fix, asserts intactos):**
+  (1) recalibração do β da fixture `TETO` 3,0→5,0 em `test_growth_reconciliacao` (β cru 3,0 dava Ke
+  0,285 no modelo antigo; sob Blume dá 0,245 < 0,25 e quebrava a PRECONDIÇÃO `Ke>0,25` — doutrina teto
+  absoluto 0,25 intacta, mirror PRIM-02); (2) higiene do detector BLIND-04a (Pitfall 6) — literal
+  `"ITUB4"` movido p/ `helpers_blindagem.empresa_itub4` (fora de `test_*`), pois pós-cura o ex-BLIND-02b
+  viraria falso-positivo do detector; detector NÃO afrouxado, varredura não excluída. **Fronteira
+  respeitada:** `git diff config.yaml calibracao.lock.yaml` **VAZIO** (o corte ERP 0,06→0,045 e a
+  remoção das folhas mortas são o **Plano 03**, commit sancionado config+lock; orçamento de 3 graus
+  intacto); g_cap da Fase 11 NÃO recalibrado. Suíte default **517 passed, 1 skipped, 20 deselected,
+  0 failed, 0 xfailed**; `-m golden_nivel` **20 passed, 0 ORFA**. Commits: `d750c34` (T1), `c291ae9`
+  (T2), `94e03d4` (T3).
 
 - **KE-03 infra (Fase 12 / plano 12-01) — beta setorial+Blume montado, PURAMENTE ADITIVO (a.ke
   inalterado).** Gerador offline (`scripts/gerar_beta_setorial.py`) + artefato versionado
@@ -567,8 +597,8 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-17T18:02:55.337Z
-Stopped at: Completed 12-01-PLAN.md
+Last session: 2026-07-17T18:25:54.656Z
+Stopped at: Completed 12-02-PLAN.md
 Resume file: None
 
 ## Operator Next Steps

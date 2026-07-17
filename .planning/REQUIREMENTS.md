@@ -179,17 +179,17 @@ Maior alavancagem por linha do repositório: atinge todos os motores, todos os m
 **Bloco separado do GROW de propósito.** Fundir dá um número e zero diagnóstico — e a Armadilha 1
 prova que a ordem importa: consertar o `Ke` antes do `g` **piora** (ITUB4 0,75 → 0,64).
 
-- [ ] **KE-01**: Um único `Ke` no sistema. Hoje há dois simultâneos (17,3% no DDM, 13,0% no RIM) e **o
+- [x] **KE-01**: Um único `Ke` no sistema. Hoje há dois simultâneos (17,3% no DDM, 13,0% no RIM) e **o
   que produz o número da manchete nunca é exibido**.
 - [ ] **KE-02**: ERP de 4,5% (Damodaran mature market), **sem** o prêmio small-cap de 1,5% —
   injustificável num universo filtrado por liquidez de R$ 15M/dia.
-- [ ] **KE-03**: Beta **setorial + Blume** (`0,33 + 0,67 × β`), não individual bruto. BB e Bradesco têm
+- [x] **KE-03**: Beta **setorial + Blume** (`0,33 + 0,67 × β`), não individual bruto. BB e Bradesco têm
   o mesmo risco de negócio e hoje recebem `Ke` com 1,7 pp de diferença — ruído que produz **2,7× de
   espalhamento** no valor final.
-- [ ] **KE-04**: `ke_piso` e `ke_teto` são **removidos**. Com `Ke_min` = 11,07% (piso estrutural do
+- [x] **KE-04**: `ke_piso` e `ke_teto` são **removidos**. Com `Ke_min` = 11,07% (piso estrutural do
   Blume) > `g_cap` = 7,28%, nenhuma perpetuidade pode explodir — **por aritmética, não por clamp**.
   (O `config.yaml:235` justifica o teto com "Blume" e isso é *aritmeticamente falso*: Blume daria 15,9%.)
-- [ ] **KE-05**: O `Ke` exibido é **o mesmo** que produziu o número exibido, e a matriz de
+- [x] **KE-05**: O `Ke` exibido é **o mesmo** que produziu o número exibido, e a matriz de
   sensibilidade é construída em torno dele.
 
 ## Motores e contrato de saída (ENG)
@@ -310,11 +310,11 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | GROW-03 | Phase 11 | Complete |
 | GROW-04 | Phase 11 | Complete |
 | GROW-05 | Phase 11 | Complete |
-| KE-01 | Phase 12 | Pending |
+| KE-01 | Phase 12 | Complete |
 | KE-02 | Phase 12 | Pending |
-| KE-03 | Phase 12 | Pending |
-| KE-04 | Phase 12 | Pending |
-| KE-05 | Phase 12 | Pending |
+| KE-03 | Phase 12 | Complete |
+| KE-04 | Phase 12 | Complete |
+| KE-05 | Phase 12 | Complete |
 | ENG-01 | Phase 13 | Pending |
 | ENG-02 | Phase 13 | Pending |
 | ENG-03 | Phase 13 | Pending |
