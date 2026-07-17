@@ -1,20 +1,31 @@
-"""Golden da reconciliação g × fundamentos (DDM-FIX-02 — caso VULC3).
+"""Invariantes estruturais da seleção do `g_alto` (GROW-04 / D-01/D-02).
 
-O `g_alto` adotado na fase explícita deixa de ser um haircut do CAGR cru e passa a ser
-SUBORDINADO ao crescimento sustentável por fundamentos, calculado com o MESMO payout do
-valuation: `g_fund = ROE_normalizado × (1 − payout_valuation)` (CONTEXT FIX-02).
+A DOUTRINA MUDOU (Fase 11, GROW-04, D-01): a fase explícita deixou de SUBORDINAR o `g` ao
+histórico (`min(g_historico, g_fundamentos)`) e passou a ADOTAR o `g` por fundamentos — o `g`
+do livro (`g_fund = ROE_valuation × (1 − payout_valuation)`, Cap. 14.3). O `g_historico` (CAGR
+log-linear) NÃO é mais teto: virou número de SANIDADE exibido + FALLBACK (usado só quando
+`g_fundamentos` é None).
 
-Precedência travada por estes goldens:
-  1. g_fund (sustentável) é o teto do g_alto — payout ≥ 100% ⇒ g_fund ≤ 0 ⇒ g_alto = 0
-     (SEM o piso artificial `g_estavel` na fase explícita);
-  2. teto absoluto 0.25;
-  3. trava `g_alto ≤ Ke` (FIX-01, preservada).
+Os goldens de NÍVEL que codificavam a doutrina antiga (`test_g_fund_menor_que_cagr_vira_teto_do
+_g_alto`, `test_teto_absoluto_025_quando_g_fund_e_cagr_explodem`, `test_trava_ke_quando_g_fund
+_supera_ke`) foram DELETADOS na Fase 11 (não atualizados — regra dura do CLAUDE.md). Os
+invariantes ESTRUTURAIS que estavam presos neles foram EXTRAÍDOS ANTES da deleção, no MESMO
+diff (padrão split-before-delete / WR-04):
 
-Tudo offline: CompanyData montada à mão, nenhuma chamada de rede.
+  1. ADOÇÃO (GROW-04/D-01): com `g_fund` em (0, 0.25) e < Ke, `g_alto == g_fundamentos`
+     (o histórico não é mais teto);
+  2. TETO ABSOLUTO 0.25: `g_alto` nunca excede 25% a.a., mesmo com `g_fund`/CAGR/Ke explodindo;
+  3. TRAVA Ke (FIX-01, D-02): `g_alto ≤ Ke` — o teto econômico da fase explícita sobrevive;
+  4. PAYOUT ≥ 100% ⇒ `g_alto = 0` sem piso artificial (contrato de borda, preservado).
+
+Não há mais nenhum NÍVEL em reais/percentual do método antigo travado aqui: as fixtures são
+sintéticas (CompanyData montada à mão, sem ticker, offline) e os asserts são ESTRUTURAIS
+(`== g_fundamentos`, `== 0.25`, `== ke`, `== 0`) — BLIND-04a-safe. Tudo offline, nenhuma rede.
 """
 
 import os
 
+import pytest
 import yaml
 
 from analista.core.fundamentals import CompanyData
@@ -31,8 +42,8 @@ def _cfg() -> dict:
 def _mk(ticker, lucros, pls, divs, *, num_acoes=1000, preco=10.0, beta=0.8):
     """CompanyData de N anos parametrizada (séries explícitas p/ controlar g_fund/CAGR/Ke).
 
-    payout(ano) = div/lucro (num_acoes cancela); roe_valuation = mediana(últimos 3 lucros)
-    / PL médio; g_fund = roe_valuation × (1 − payout_valuation).
+    payout(ano) = div/lucro (num_acoes cancela); roe_valuation = mediana dos ROEs anuais
+    (lucro_t / PL médio(t-1,t)); g_fund = roe_valuation × (1 − payout_valuation).
     """
     anos = list(range(2025 - len(lucros), 2025))
     c = CompanyData(ticker=ticker, nome=ticker, setor="Energia Elétrica", anos=anos)
@@ -51,8 +62,9 @@ def _mk(ticker, lucros, pls, divs, *, num_acoes=1000, preco=10.0, beta=0.8):
 def test_payout_acima_de_100_zera_g_alto_sem_piso():
     """Payout ≥ 100% ⇒ g_fund = ROE × 0 = 0 ⇒ g_alto adotado = 0, mesmo com CAGR > 0.
 
-    O piso artificial `g_estavel` da fase explícita foi REMOVIDO: o g não pode ser
-    sustentado se a empresa distribui todo o lucro (caso VULC3, payout_valuation=100%).
+    O piso artificial `g_estavel` da fase explícita não existe: o g não pode ser sustentado se
+    a empresa distribui todo o lucro (caso VULC3, payout_valuation = 100%). Contrato de borda:
+    a degradação é sem exceção (o DDM ainda calcula um intrínseco finito com g_alto = 0).
     """
     cfg = _cfg()
     # Lucro crescente (CAGR > 0), mas dividendos = lucro todo ano ⇒ payout 100%.
@@ -63,15 +75,23 @@ def test_payout_acima_de_100_zera_g_alto_sem_piso():
 
     assert a.g_fundamentos == 0.0           # ROE_norm × (1 − 1.0) = 0
     assert a.g_historico is not None and a.g_historico > 0  # CAGR cru seria > 0
-    assert a.g_alto == 0.0                  # teto sustentável (0) vence o CAGR; sem piso g_estavel
+    assert a.g_alto == 0.0                  # o g sustentável (0) vence o CAGR; sem piso g_estavel
     # Degradação sem exceção: o DDM ainda calcula um intrínseco finito com g_alto = 0.
     assert a.ddm_constante is not None and a.ddm_constante.valor_intrinseco is not None
 
 
-def test_g_fund_menor_que_cagr_vira_teto_do_g_alto():
-    """0 < g_fund < CAGR ⇒ g_alto adotado == g_fund (teto pelo sustentável, não pelo CAGR cru)."""
+@pytest.mark.invariante
+def test_g_alto_adota_g_fundamentos_nao_subordina_ao_historico():
+    """GROW-04/D-01: com g_fund em (0, 0.25) e < Ke, `g_alto == g_fundamentos` — o g adotado é o
+    SUSTENTÁVEL por fundamentos (o do livro), NÃO o mínimo com o CAGR histórico.
+
+    A doutrina antiga (`min(g_historico, g_fundamentos)`) foi REVERTIDA: mesmo quando o CAGR cru
+    (g_historico) é MAIOR que o g por fundamentos, o histórico não morde — deixou de ser teto e
+    virou apenas número de sanidade/fallback. Invariante estrutural (`g_alto == g_fundamentos`),
+    não um nível: extraído do golden deletado `test_g_fund_menor_que_cagr_vira_teto_do_g_alto`.
+    """
     cfg = _cfg()
-    # ROE_val ≈ 1000/10000 = 0,10; payout 0,8 ⇒ g_fund = 0,10 × 0,2 = 0,02 (< Ke, < CAGR, < 0,25).
+    # ROE_val ≈ 0,17 (mediana); payout 0,8 ⇒ g_fund ≈ 0,017 (< Ke 0,153, < CAGR, < 0,25).
     lucros = [600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050]
     divs = [round(0.8 * x) for x in lucros]
     c = _mk("GFUND", lucros, [10000] * 10, divs=divs)
@@ -82,17 +102,23 @@ def test_g_fund_menor_que_cagr_vira_teto_do_g_alto():
     assert a.g_historico is not None and a.g_historico > a.g_fundamentos   # CAGR cru maior
     assert a.ke is not None and a.g_fundamentos < a.ke                     # Ke não morde aqui
     assert a.g_fundamentos < 0.25                                          # teto absoluto não morde
-    assert a.g_alto == a.g_fundamentos     # o g adotado é o sustentável, não o CAGR
+    assert a.g_alto == a.g_fundamentos     # ADOÇÃO: o g adotado é o sustentável, não o CAGR
 
 
-def test_teto_absoluto_025_quando_g_fund_e_cagr_explodem():
-    """g_fund > 0,25 e CAGR > 0,25 (e Ke > 0,25) ⇒ g_alto == 0,25 (teto absoluto preservado)."""
+@pytest.mark.invariante
+def test_g_alto_respeita_o_teto_absoluto_de_025():
+    """TETO ABSOLUTO: g_fund > 0,25 e CAGR > 0,25 (e Ke > 0,25) ⇒ g_alto == 0,25.
+
+    Invariante estrutural preservado da doutrina antiga (extraído do golden deletado
+    `test_teto_absoluto_025_quando_g_fund_e_cagr_explodem`): nenhum g explícito adotado pode
+    exceder 25% a.a., independentemente do g por fundamentos, do CAGR ou do Ke.
+    """
     cfg = _cfg()
     # Crescimento ~40% a.a. (CAGR > 0,25); ROE_val alto + payout baixo ⇒ g_fund > 0,25.
     lucros = [100, 140, 196, 274, 384, 538, 753, 1054, 1476, 2066]
     divs = [round(0.2 * x) for x in lucros]
-    # PL p/ ROE_val = mediana(últimos 3 = 1054,1476,2066 → 1476) / 3690 ≈ 0,40.
-    c = _mk("TETO", lucros, [3690] * 10, divs=divs, beta=3.0)  # beta alto ⇒ Ke > 0,25
+    # PL baixo ⇒ mediana(ROE) alta ⇒ g_fund ≈ 0,36 (> 0,25); beta 3,0 ⇒ Ke ≈ 0,285 (> 0,25).
+    c = _mk("TETO", lucros, [1200] * 10, divs=divs, beta=3.0)
 
     a = report.analisar_acao(c, cfg)
 
@@ -102,16 +128,20 @@ def test_teto_absoluto_025_quando_g_fund_e_cagr_explodem():
     assert a.g_alto == 0.25
 
 
-def test_trava_ke_quando_g_fund_supera_ke():
-    """g_fund > Ke (e ≤ 0,25), CAGR ≥ g_fund ⇒ após a trava FIX-01, g_alto == Ke."""
+@pytest.mark.invariante
+def test_g_alto_trava_no_ke_quando_fundamentos_supera_ke():
+    """TRAVA Ke (FIX-01, D-02): g_fund > Ke (e ≤ 0,25), CAGR ≥ g_fund ⇒ g_alto == Ke.
+
+    Invariante estrutural preservado (extraído do golden deletado `test_trava_ke_quando_g_fund
+    _supera_ke`): a trava econômica `g_alto ≤ Ke` da fase explícita sobrevive à adoção do g por
+    fundamentos. Sem ela o fator (1+g)/(1+Ke) > 1 faria a fase explícita inflar em vez de
+    convergir. O teto do g explícito é o Ke — o g_cap (perpetuidade) trava SÓ o terminal (D-02).
+    """
     cfg = _cfg()
-    # Rebaseline FIX-03: o Ke local (Selic fallback 0,105 + beta 0,8 × ERP 0,06) = 0,153 subiu
-    # frente ao Ke antigo (≈0,0875). Para o caso-limite "g_fund > Ke" continuar mordendo, o PL
-    # caiu de 1987 p/ 1700 ⇒ ROE_val ≈ 0,35 e g_fund ≈ 0,175 (> Ke 0,153, < 0,25); CAGR ≈ 0,20
-    # ≥ g_fund. Recalibração de fixture (não afrouxa assert): o assert g_alto == Ke é o mesmo.
+    # PL ⇒ mediana(ROE) ≈ 0,36 e g_fund ≈ 0,18 (> Ke 0,153, < 0,25); CAGR ≈ 0,25 ≥ g_fund.
     lucros = [100, 125, 156, 195, 244, 305, 381, 477, 596, 745]
     divs = [round(0.5 * x) for x in lucros]
-    c = _mk("TRKE", lucros, [1700] * 10, divs=divs, beta=0.8)
+    c = _mk("TRKE", lucros, [850] * 10, divs=divs, beta=0.8)
 
     a = report.analisar_acao(c, cfg)
 

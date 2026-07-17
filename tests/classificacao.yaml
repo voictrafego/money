@@ -158,9 +158,9 @@
 'tests/test_growth.py::test_ponto_none_retorna_none': contrato
 'tests/test_growth.py::test_len_menor_que_2_retorna_none': contrato
 'tests/test_growth_reconciliacao.py::test_payout_acima_de_100_zera_g_alto_sem_piso': contrato
-'tests/test_growth_reconciliacao.py::test_g_fund_menor_que_cagr_vira_teto_do_g_alto': golden_nivel  # reconciliacao do g -> Fase 11 (GROW)
-'tests/test_growth_reconciliacao.py::test_teto_absoluto_025_quando_g_fund_e_cagr_explodem': golden_nivel  # teto absoluto de g = 0,25 -> Fase 11 (GROW)
-'tests/test_growth_reconciliacao.py::test_trava_ke_quando_g_fund_supera_ke': golden_nivel  # trava g <= Ke -> Fase 11 (GROW)
+'tests/test_growth_reconciliacao.py::test_g_alto_adota_g_fundamentos_nao_subordina_ao_historico': invariante  # WR-04/GROW-04: ADOCAO do g por fundamentos, extraido do golden de nivel test_g_fund_menor_que_cagr (DELETADO na Fase 11); SOBREVIVE
+'tests/test_growth_reconciliacao.py::test_g_alto_respeita_o_teto_absoluto_de_025': invariante  # WR-04: teto absoluto de g = 0,25, extraido do golden de nivel test_teto_absoluto_025 (DELETADO na Fase 11); SOBREVIVE
+'tests/test_growth_reconciliacao.py::test_g_alto_trava_no_ke_quando_fundamentos_supera_ke': invariante  # WR-04: trava g <= Ke (FIX-01/D-02), extraido do golden de nivel test_trava_ke (DELETADO na Fase 11); SOBREVIVE
 'tests/test_growth_robusto_multiticker.py::test_perfil_vulc3_spike_extraordinario_nao_infla_g_nem_bsd': contrato
 'tests/test_growth_robusto_multiticker.py::test_consistencia_crescimento_lucro_3a_igual_g_historico': contrato
 'tests/test_growth_robusto_multiticker.py::test_perfis_normais_g_finito_coerente_e_bsd_nao_colapsa': contrato
@@ -356,7 +356,7 @@
 'tests/test_motores.py::test_dcf_crescimento_never_raise': contrato
 'tests/test_motores.py::test_nav_contabil_igual_vpa': invariante
 'tests/test_motores.py::test_nav_contabil_never_raise': contrato
-'tests/test_motores.py::test_rota_seguradora_bbse3_gordon_franquia': golden_nivel
+'tests/test_motores.py::test_rota_seguradora_roteia_e_da_intrinseco_finito_positivo': contrato  # WR-04: rota seguradora positiva (motor=='seguradora', finito>0), extraido do golden de nivel test_rota_seguradora_bbse3_gordon_franquia (banda 39,87 DELETADA na Fase 11 GROW-01); SOBREVIVE
 'tests/test_motores.py::test_setor_de_banco_nao_casa_o_token_seguradora': invariante  # WR-04: roteamento-negativo (setor de banco nao casa token seguradora), extraido de test_rota_seguradora_nao_pega_banco (banda 30-40 DELETADA na Fase 10 PRIM-05); SOBREVIVE
 'tests/test_multiples.py::test_margem_liquida_cielo': invariante
 'tests/test_multiples.py::test_roe_petrobras': invariante
@@ -478,7 +478,7 @@
 'tests/test_setup_report.py::test_setup_sem_copy_imperativa': contrato
 'tests/test_setup_report.py::test_score_config_driven': contrato
 'tests/test_setup_report.py::test_e2e_calcular_integra': contrato
-'tests/test_vulc3_regressao.py::test_vulc3_cascata_domada_regressao': golden_nivel  # niveis de ke/g/vmax da VULC3 via engine -> Fases 10-12
+'tests/test_vulc3_regressao.py::test_vulc3_cascata_estrutural_sobrevive': invariante  # WR-04: split-before-delete do golden de nivel test_vulc3_cascata_domada_regressao (bandas vmax<3x preco [g antigo 2,5%, Fase 11] e ke>=0,15 [Fase 12] DELETADAS); os invariantes estruturais (norm/g_fund<=0/Ke relacional/matriz/veredito/cross-menu) SOBREVIVEM
 'tests/test_vulc3_regressao.py::test_vulc3_normalizacao_doma_roe_e_dy': invariante
 'tests/test_vulc3_regressao.py::test_capstone_itub4_sem_evitar_motor_rim_ddm_como_lente': contrato
 'tests/test_vulc3_regressao.py::test_capstone_taee11_baseline_ddm_identico': contrato

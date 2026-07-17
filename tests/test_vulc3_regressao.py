@@ -20,6 +20,7 @@ offline, sem chamar o BCB).
 import math
 import os
 
+import pytest
 import yaml
 
 from analista.core.fundamentals import CompanyData
@@ -66,8 +67,25 @@ def _vulc3_sintetica() -> CompanyData:
     return c
 
 
-def test_vulc3_cascata_domada_regressao():
-    """Os 6 invariantes da cascata domada (um por FIX) + a trava cross-menu do caso âncora."""
+@pytest.mark.invariante
+def test_vulc3_cascata_estrutural_sobrevive():
+    """WR-04 (split-before-delete): os invariantes ESTRUTURAIS da cascata domada da VULC3.
+
+    Substitui o golden de NÍVEL `test_vulc3_cascata_domada_regressao` (classificado
+    `golden_nivel`), DELETADO na Fase 11 (GROW). Aquele golden travava DUAS bandas de nível que
+    a cura tornou obsoletas — NÃO atualizadas, DELETADAS (regra dura do CLAUDE.md):
+      (i) FIX-06: `vmax < 3× preço` — calibrada ao `g_estavel = 2,5%` REAL. O `g_cap` derivado da
+          Fase 11 (~7,28%) encolhe o spread `Ke − g` da perpetuidade e o peso do valor terminal
+          quase dobra (Armadilha 5, prevista no D-07): o teto da matriz Ke×g subiu de ~2,3× para
+          ~3,6× o preço. É o mesmo reflexo do `g` antigo que esta fase remove do repo.
+      (ii) FIX-03: `ke >= 0,15` (banda absoluta de Ke small-cap BR) — NÍVEL de Ke, território da
+          Fase 12 (KE). Deletado aqui em vez de arrastar um nível de Ke para a suíte default.
+    O que SOBREVIVE (extraído ANTES da deleção, no MESMO diff) é a estrutura, não o nível:
+    normalização robusta, g sustentável ≤ 0 sob payout > 100%, Ke materialmente acima do 2019,
+    a banda como max/min da matriz de sensibilidade REAL, o veredito consumindo as flags, e a
+    consistência cross-menu (Core Value). Nenhum nível em reais/percentual do método antigo
+    permanece travado — BLIND-04a-safe (asserts estruturais/relacionais, offline).
+    """
     c = _vulc3_sintetica()
     cfg = _cfg()
     a = report.analisar_acao(c, cfg)
@@ -84,23 +102,20 @@ def test_vulc3_cascata_domada_regressao():
     # na era de payout >100% (≈1.25, sem clamp; o expurgo é intrínseco à mediana).
     assert c.payout_valuation() > 1.0
     # payout sustentável >100% ⇒ g_fund = ROE × (1 − payout) ≤ 0 (crescimento_por_fundamentos
-    # não tem piso); o piso max(0, …) do report pina g_alto = 0 (L85 segue valendo).
+    # não tem piso); o piso max(0, …) do report pina g_alto = 0 (segue valendo com o g adotado).
     assert a.g_fundamentos <= 0.0
     assert a.g_alto == 0.0
 
-    # ---- FIX-03 (CAPM local com Selic) ----
-    # Ke = rf_local (0,105 fallback) + beta 0,88 × ERP 0,06 = 0,1578: faixa de small cap BR,
-    # MATERIALMENTE acima dos 9,43% dos literais de 2019 que combustionavam o valuation.
+    # ---- FIX-03 (CAPM local com Selic) — RELACIONAL (o nível de Ke é Fase 12) ----
+    # Ke = rf_local (fallback) + beta × ERP: MATERIALMENTE acima dos 9,43% dos literais de 2019
+    # que combustionavam o valuation. Assert relacional (> 2019), não a banda absoluta.
     assert a.ke is not None
     assert a.ke > 0.094          # acima do Ke antigo (literais EUA 2019)
-    assert a.ke >= 0.15          # dentro da faixa small cap BR
 
-    # ---- FIX-06 (banda = sensibilidade real) + o resultado-âncora da cascata ----
-    # O teto da banda intrínseca deixa de ser 11–23× o preço. Limiar = 3× (folga ampla sobre
-    # o ~2,3× observado pós-cascata; qualquer regressão de FIX-01/02/03 estouraria os 3×).
-    assert a.vmax is not None
-    assert a.vmax < 3.0 * c.preco_atual
-    # A banda vem da matriz Ke×g (sensibilidade real), não do toggle binário de 2 cenários.
+    # ---- FIX-06 (banda = sensibilidade real) — INVARIANTE ESTRUTURAL (sem nível) ----
+    # A banda vem da matriz Ke×g (sensibilidade real), não do toggle binário de 2 cenários:
+    # vmin/vmax são exatamente o min/max das células — invariante que sobrevive à mudança de g.
+    assert a.vmin is not None and a.vmax is not None
     celulas = [v for linha in (a.sensibilidade or []) for v in linha if v is not None]
     assert celulas and a.vmin == min(celulas) and a.vmax == max(celulas)
 

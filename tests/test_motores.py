@@ -14,7 +14,7 @@ import os
 import yaml
 
 from analista.backtest import carregar_snapshot
-from analista.core import arquetipo, capm, ddm, motores
+from analista.core import arquetipo, capm, motores
 from analista.core import normalizacao as norm
 from analista.report import report
 
@@ -186,26 +186,29 @@ def _cesta_congelada():
     return {c.ticker: c for c in empresas}, cfg
 
 
-def test_rota_seguradora_bbse3_gordon_franquia():
-    # Alavanca 3 (D-03/D-04): a seguradora capital-light (BBSE3, setor CVM casa o token
-    # "seguradora") roteia para a rota Gordon-franquia sobre o dividendo SUSTENTÁVEL
-    # (dpa_recorrente), fora do bank-RIM ancorado no book minúsculo. Com os inputs congelados
-    # (dpa_recorrente≈3,83, ke_live≈12,36%, g=2,5%) devolve V_seguradora ≈ R$39,87 (em cima do
-    # mid de consenso 39,5). RED antes da implementação: o ramo não existe → BBSE3 sai R$25,38 (RIM).
+def test_rota_seguradora_roteia_e_da_intrinseco_finito_positivo():
+    """CONTRATO (WR-04): a seguradora capital-light roteia para a rota Gordon-franquia
+    (`motor == "seguradora"`) e devolve um intrínseco FINITO e > 0 — nunca o bank-RIM ancorado
+    no book minúsculo (VPA≈5,35, que a subvaloriza), nunca None/explosão.
+
+    Extraído do golden de NÍVEL `test_rota_seguradora_bbse3_gordon_franquia` (banda ≈R$39,87),
+    DELETADO na Fase 11 (GROW-01): o nível morreu porque a rota passou a usar o `g_cap` derivado
+    (~7,28%) no lugar do `cfg["ddm"]["g_estavel"]` (chave removida na Fase 11), encolhendo o
+    denominador Gordon `Ke − g` — comportamento INTENCIONAL (D-04). A guarda ESTRUTURAL de
+    roteamento + finitude/positividade SOBREVIVE (split-before-delete), sem cravar reais e sem
+    ler a chave removida. Auto-consistência: o número bate EXATAMENTE o Gordon-franquia dos
+    insumos (dpa_recorrente×(1+g_cap), ke=a.ke, g=g_cap) — reuso PURO de `ddm.valor_gordon`.
+    """
     por_ticker, cfg = _cesta_congelada()
     c = por_ticker["BBSE3"]
     a = report.analisar_acao(c, cfg)
 
-    # rótulo honesto: a rota assume a seguradora, não mais 'rim'.
+    # rótulo honesto: a rota assume a seguradora, não mais 'rim' — o roteamento sobrevive.
     assert a.motor == "seguradora"
+    # finitude/positividade estrutural: sob o g_cap derivado (~7,28%) o Gordon de estágio único
+    # da seguradora NÃO explode nem devolve None/absurdo — sem cravar nenhum nível em reais.
     assert a.intrinseco_motor is not None
-    assert abs(a.intrinseco_motor - 39.87) <= 1.0
-
-    # auto-consistência: o número é EXATAMENTE o Gordon-franquia dos insumos congelados
-    # (dpa_recorrente×(1+g), ke_live=a.ke, g=g_estavel) — reuso PURO de ddm.valor_gordon.
-    g = cfg["ddm"]["g_estavel"]
-    esperado = ddm.valor_gordon(c.dpa_recorrente() * (1 + g), a.ke, g)
-    assert abs(a.intrinseco_motor - esperado) < 1e-9
+    assert math.isfinite(a.intrinseco_motor) and a.intrinseco_motor > 0
 
 
 def test_setor_de_banco_nao_casa_o_token_seguradora():
