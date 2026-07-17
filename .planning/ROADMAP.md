@@ -80,7 +80,7 @@ quarentenados/deletados; **isso é a correção, não regressão.**
 - [ ] **Phase 8: Sanidade dos dados (SAN)** - os asserts vêm ANTES dos consertos, de propósito: eles SÃO o teste de regressão da Fase 9
 - [ ] **Phase 9: Ingestão correta (DATA)** - JCP, base do controlador, duplo split, `impliedSharesOutstanding`; os asserts da Fase 8 viram verde ticker a ticker
 - [x] **Phase 10: Primitivas sem viés (PRIM)** - maior alavancagem por linha do repo; **critério de saída: o golden ITUB4 32.88 quebra e é DELETADO** (completed 2026-07-16)
-- [ ] **Phase 11: Crescimento / `g` (GROW)** - `g_cap = (1+π_ciclo)(1+PIB_real)−1 = 7,28%`; metade da Doença 1 (o `g`) — o teste de invariância (BLIND-02) só vira verde na Fase 12, quando o `ke_teto` sai
+- [x] **Phase 11: Crescimento / `g` (GROW)** - `g_cap = (1+π_ciclo)(1+PIB_real)−1 = 7,28%`; metade da Doença 1 (o `g`) — o teste de invariância (BLIND-02) só vira verde na Fase 12, quando o `ke_teto` sai (completed 2026-07-17)
 - [ ] **Phase 12: Custo de capital / `Ke` (KE)** - ERP único 4,5%, beta setorial + Blume, `ke_teto`/`ke_piso` deletados; **separada da Fase 11 de propósito**
 - [ ] **Phase 13: Motores + contrato de saída (ENG)** - os 4 motores colapsam num RIM único com políticas de input; contrato do livro (tríade + MS do usuário + matriz Ke×g); `motores:` ~20 → ≤5 chaves
 - [ ] **Phase 14: Validação honesta (VAL)** - **o caso do livro passa (V ≈ R$ 37,22)**; hold-out roda uma vez, 3 graus de liberdade, distribuição + jackknife
@@ -221,7 +221,7 @@ por fundamentos (10,24% no Itaú) — o app calcula 10,29% e **descarta**, adota
 **Plans**: 3 plans
 - [x] 11-01-PLAN.md — π_ciclo: helper `ipca_ciclo_para_g` + carimbo `cfg['macro']['pi_ciclo']` (cli/app) + default offline (GROW-01/02)
 - [x] 11-02-PLAN.md — g_cap derivado + adoção de g_fundamentos + g_T fechado por empresa + migração de knob no MESMO diff (GROW-01/03/04, D-05)
-- [ ] 11-03-PLAN.md — split-before-delete dos goldens do g antigo + cobertura D-07 (spread apertado) + verificação (BLIND-02 xfail, não-regressão) (GROW-04/05)
+- [x] 11-03-PLAN.md — split-before-delete dos goldens do g antigo + cobertura D-07 (spread apertado) + verificação (BLIND-02 xfail, não-regressão) (GROW-04/05)
 
 ### Phase 12: Custo de capital / `Ke` (KE)
 **Goal**: Curar a **outra metade da Doença 1**, e **só agora** — porque tirar o clamp só é seguro
@@ -297,7 +297,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 8. Sanidade dos dados (SAN) | v2.4 | 1/6 | In Progress|  |
 | 9. Ingestão correta (DATA) | v2.4 | 0/5 | Planned | - |
 | 10. Primitivas sem viés (PRIM) | v2.4 | 4/4 | Complete    | 2026-07-16 |
-| 11. Crescimento / g (GROW) | v2.4 | 2/3 | In Progress|  |
+| 11. Crescimento / g (GROW) | v2.4 | 3/3 | Complete   | 2026-07-17 |
 | 12. Custo de capital / Ke (KE) | v2.4 | 0/? | Not started | - |
 | 13. Motores + contrato de saída (ENG) | v2.4 | 0/? | Not started | - |
 | 14. Validação honesta (VAL) | v2.4 | 0/? | Not started | - |

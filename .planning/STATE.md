@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
-status: executing
-stopped_at: Phase 11 plan 02 complete (11-03 next)
-last_updated: "2026-07-17T00:14:25.018Z"
+status: verifying
+stopped_at: Phase 11 complete (11-03 done); ready for phase verification / Fase 12 (KE)
+last_updated: "2026-07-17T11:44:41.452Z"
 last_activity: 2026-07-17
 progress:
   total_phases: 8
@@ -33,27 +33,28 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 11 (crescimento-g-grow) — EXECUTING
-Plan: 3 of 3 (11-01 ✓, 11-02 ✓ · `a461147`)
-Status: Ready to execute plan 11-03
+Plan: 3 of 3 (11-01 ✓, 11-02 ✓ · `a461147` · 11-03 ✓ · `20bb97d`)
+Status: Phase 11 complete — ready for verification
 Last activity: 2026-07-17
 
-Progress: [█████████▓] 96%
+Progress: [██████████] 96%
 
-**Suíte:** `490 passed, 1 skipped, 27 deselected, 1 xfailed` — 0 XPASS (era 486: +4 dos testes que o
-`g_cap` do 11-02 tocou — 3 `contrato` de divergência re-tunados COM o método, 1 `invariante` de nota
-decouplado do nível v2.3 e renomeado `test_nenhuma_nota_de_excecao_e_orfa`). Sobra **1 xfailed** =
-BLIND-02b (vira verde na Fase 12) e **1 skipped** = jackknife (Fase 14). **PRIM-05 cumprido: o golden ITUB4=32,88 NÃO existe
-mais no repo** (DELETADO, nunca atualizado — critério de saída da Fase 10). Nenhum assert vivo de nível
-ITUB4 sobra (só prosa BLIND-02b/Fase-12 e os honeypots do detector BLIND-04a).
+**Suíte:** `499 passed, 1 skipped, 22 deselected, 1 xfailed, 0 failed` — 0 XPASS (era 490: +9 do 11-03
+= 3 invariantes de `g_alto` + 1 contrato seguradora + 1 invariante VULC3 estrutural [ex-goldens de
+nível, agora no default] + 2 cobertura D-07 + 2 não-regressão do mapa real; −5 goldens_nivel
+deselecionados). `-m golden_nivel` **22 passed, 0 CLASSIFICACAO ORFA**. Sobra **1 xfailed** = BLIND-02b
+(vira verde na Fase 12) e **1 skipped** = jackknife (Fase 14). **PRIM-05 cumprido: o golden ITUB4=32,88
+NÃO existe mais no repo** (DELETADO — critério de saída da Fase 10). Nenhum assert vivo de nível ITUB4
+sobra (só prosa BLIND-02b/Fase-12 e os honeypots do detector BLIND-04a).
 
-**⚠ DÍVIDA WR-04 — PARCIALMENTE CURADA (7 dos goldens de nível ITUB4, no plano 10-04):** o Phase 7
-cindiu só 2 de ~20 funções mistas; o 10-04 curou as 3 mistas dentre os 7 goldens de nível ITUB4 que
-deletou — extraiu os invariantes estruturais presos (no-silent-routing D-08, no-silent-FAIL D-08 do
-gate de quórum, roteamento-negativo por token) como testes `invariante` BLIND-04a-safe ANTES de apagar
-a banda, no MESMO diff (superfície de constrangimento AUMENTOU, não encolheu). **Ainda ABERTO para as
-demais funções mistas** que as Fases 11/12/13 vão deletar (`test_growth_reconciliacao`, SAN-01
-reetiqueta, `test_financeira_rim_destrava`, VULC3 cascata etc.) — aplicar o mesmo padrão
-split-before-delete. Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
+**⚠ DÍVIDA WR-04 — MAIS AVANÇADA (10-04 + 11-03):** o Phase 7 cindiu só 2 de ~20 funções mistas; o
+10-04 curou as 3 mistas dentre os 7 goldens de nível ITUB4; o **11-03 curou `test_growth_reconciliacao`
+(3 funções → adoção/teto/trava Ke como `invariante`), a rota seguradora (contrato `motor=='seguradora'`)
+e a VULC3 cascata** (banda `vmax<3× preço` do g=2,5% deletada; estrutura extraída) — todos
+split-before-delete, invariantes extraídos ANTES no MESMO diff, zero órfão (superfície de
+constrangimento AUMENTOU). **Ainda ABERTO** para as funções mistas de Ke (`SAN-01 reetiqueta`,
+`test_financeira_rim_destrava`, bandas de Ke) que a **Fase 12** vai deletar — aplicar o mesmo padrão.
+Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 **⚠ `core.hooksPath` é estado local por clone.** Todo clone novo nasce sem a proteção do BLIND-05;
 `test_hook_do_blind05_esta_instalado` é o que torna isso vermelho em vez de proteção fantasma.
@@ -127,10 +128,39 @@ split-before-delete. Fila de triagem e varredor AST: `07-VERIFICATION.md` (apên
 | Phase 10 P03 | 12min | 3 tasks | 13 files |
 | Phase 10 P04 | 40min | 2 tasks | 4 files |
 | Phase 11 P01 | 14min | 2 tasks | 4 files |
+| Phase 11 P03 | 35min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **GROW-04/05 (Fase 11 / plano 11-03) — o método antigo do `g` SAI do repo (split-before-delete)
+  e os 2 knobs decorativos viram load-bearing por COBERTURA; a fase fecha.** **(1) Goldens de nível
+  do `g` antigo DELETADOS, nunca atualizados** — `test_g_fund_menor_que_cagr`/`test_teto_absoluto_025`/
+  `test_trava_ke` (`test_growth_reconciliacao`), `test_rota_seguradora_bbse3` (nível 39,87, lia
+  `cfg["ddm"]["g_estavel"]` REMOVIDO na Fase 11) e — **extensão de escopo** — `test_vulc3_cascata_domada`
+  (golden_nivel JÁ vermelho desde 11-02: o `g_cap` explodiu a banda `vmax < 3× preço` do g=2,5% para
+  ~3,6×). Os **invariantes estruturais presos foram EXTRAÍDOS ANTES da deleção, no MESMO diff (WR-04)**:
+  adoção de `g_fundamentos` (GROW-04), teto absoluto 0,25, trava Ke (FIX-01/D-02), rota seguradora
+  (`motor=="seguradora"`, finito>0), e da VULC3 (norm robusta / `g_fund≤0` sob payout>100% / Ke
+  relacional / matriz de sensibilidade / veredito VERIFICAR / cross-menu). Função + linha do
+  `classificacao.yaml` juntas (zero órfão). **NENHUM nível novo asserido** (deletar, não reajustar).
+  **(2) Cobertura D-07 (GROW-05):** o RI terminal do RIM sob o spread `Ke − g` apertado que o `g_cap`
+  produz (~5,7pp: `ke_rim` 0,13 − `g_cap` 0,0728) **não explode** (`vp_terminal < V`) e **degrada
+  honesto** (spread < `ke_g_spread_min` ⇒ `vp_terminal == 0`, fade-only, never-raise; `valor_gordon`
+  → None em ke−g≤0). `excesso_sustentavel`/`ke_g_spread_min` **LIDOS de config**, não recalibrados —
+  load-bearing por COBERTURA, não por knob move. **(3) Não-regressão contra o MAPA REAL dos 104**
+  (`hs.CAMINHO_SNAPSHOT_LIMPO`, NÃO fixtures sintéticas): TAEE11 (regulada — `intrinseco_motor` é None
+  por arquitetura; valida pela banda DDM `vmin/vmax` 37–75), BBSE3 (85,85, seguradora), VULC3 (11,55,
+  normalizado) finitos/positivos/sensatos; os 104 (menos as falhas de mercado) sem NaN/inf/exceção
+  (None aceitável), com limite de sanidade 50× preço sem nomear ticker (BLIND-04a-safe). Medido:
+  `g_cap = 0,0728`; ITUB4 `g_fundamentos = 0,0959`, `g_alto = min(g_fund, ke)`. **Fronteira respeitada:
+  BLIND-02b PERMANECE xfail (não XPASS — a metade Ke da Doença 1 é a Fase 12); `git diff config.yaml
+  calibracao.lock.yaml` VAZIO (só ADIÇÃO de cobertura, nenhum knob movido); orçamento em 3 graus.**
+  Suíte default **499 passed, 1 skipped, 22 deselected, 1 xfailed, 0 failed**; `-m golden_nivel`
+  **22 passed, 0 CLASSIFICACAO ORFA**. Commits: `dcfd1a2` (Task 1), `cebe32f` (Task 2), `20bb97d`
+  (Task 3). **WR-04 avançado:** as funções mistas do `test_growth_reconciliacao` e a VULC3 cascata
+  (que a dívida listava para "Fases 11/12/13") foram curadas aqui.
 
 - **GROW-01/02 (Fase 11 / plano 11-01) — o insumo `π_ciclo` está CARIMBADO; a engine segue intocada.**
   `macro.ipca_ciclo_para_g(fallback, anos=10)` é o **irmão exato** de `selic_ciclo_para_capm`: **média
@@ -516,8 +546,8 @@ split-before-delete. Fila de triagem e varredor AST: `07-VERIFICATION.md` (apên
 
 ## Session Continuity
 
-Last session: 2026-07-17T00:13:49.871Z
-Stopped at: Phase 11 context gathered
+Last session: 2026-07-17T11:44:41.448Z
+Stopped at: Phase 11 complete (11-03 done); ready for phase verification / Fase 12 (KE)
 Resume file: None
 
 ## Operator Next Steps
