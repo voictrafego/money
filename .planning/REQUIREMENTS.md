@@ -167,7 +167,7 @@ Maior alavancagem por linha do repositório: atinge todos os motores, todos os m
   inflação. **BLIND-02 NÃO vira verde aqui** — vira na **Fase 12**, quando o `ke_teto` (que satura
   sob o choque e absorve a perna do `rf`) é removido. Esta fase entrega a **metade `g`** da cura;
   esperar o teste verde aqui faria o executor "consertar" o teste em vez do código.
-- [ ] **GROW-03**: `g_T = min(ROE_T × retenção, g_cap)` — identidade fechada, não constante.
+- [x] **GROW-03**: `g_T = min(ROE_T × retenção, g_cap)` — identidade fechada, não constante.
 - [x] **GROW-04**: O `g` da fase explícita é reconciliado com o **livro**, que usa o `g` por
   fundamentos (10,24% no Itaú) — o app calcula 10,29% e **descarta**, adotando o histórico de 6,94%.
 - [x] **GROW-05**: A **Armadilha 5 é endereçada aqui**: com `g` = 7,28%, o spread `Ke − g` cai de
@@ -307,7 +307,7 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | PRIM-05 | Phase 10 | Complete |
 | GROW-01 | Phase 11 | Complete |
 | GROW-02 | Phase 11 | Complete |
-| GROW-03 | Phase 11 | Pending |
+| GROW-03 | Phase 11 | Complete |
 | GROW-04 | Phase 11 | Complete |
 | GROW-05 | Phase 11 | Complete |
 | KE-01 | Phase 12 | Pending |
