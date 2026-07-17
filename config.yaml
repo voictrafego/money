@@ -74,9 +74,11 @@ capm:
                               # + ERP Brasil fixo + beta. "eua_ajustada" (literais 2019) segue
                               # disponível como fallback de método (legado do caso Itaú).
   # --- abordagem "local" (default, FIX-03 — Ke coerente com o custo de capital de hoje) ---
-  erp_local: 0.06             # ERP Brasil aplicado SOBRE a Selic: ~4,5% de mercado maduro
-                              # (Damodaran) + ~1,5% de prêmio small-cap/iliquidez. A Selic já
-                              # precifica risco-país + inflação, então o ERP é só o prêmio de equity.
+  erp_local: 0.045            # KE-02: ERP Brasil aplicado SOBRE a Selic = mercado maduro puro
+                              # (~4,5%, Damodaran). A Selic já precifica risco-país + inflação,
+                              # então o ERP é só o prêmio de equity. ERP UNIFICADO: o 2º prêmio de
+                              # risco estrutural dos bancos foi removido — dois prêmios no mesmo
+                              # modelo era sintoma, não design.
   selic_fallback: 0.105       # Selic de referência quando o BCB (selic_meta) está indisponível.
   rf_ciclo_anos: 10           # rf do CAPM = Selic MÉDIA destes últimos N anos (through-the-cycle).
                               # Numa perpetuidade (DDM) a taxa deve refletir o juro de LP, não o
@@ -241,19 +243,10 @@ arquetipo:
 # (backtest sobre a B3) é BACKTEST-01, deferida. Ajuste sem deploy.
 # Anti-rebaseline (Pitfall 5): nenhum bloco pré-existente (capm/ddm/arquetipo) é tocado.
 motores:
-  rim:                            # RIM (ENG-02, banco/seguradora) — Ke ESTRUTURAL, menor que o CAPM ao vivo (D-01)
-    erp_banco: 0.045              # ERP aplicado sobre a Selic-ciclo no ke_rim: ~4,5% de mercado maduro (Damodaran)
-                                  # SEM o prêmio small-cap/iliquidez do capm.erp_local (0.06) — impróprio para
-                                  # banco large-cap/líquido (D-01). SEGUNDO ERP do sistema: o KE-02 (Fase 12)
-                                  # unifica com capm.erp_local — dois prêmios de risco no mesmo modelo é sintoma.
-    ke_piso: 0.11                 # clamp inferior do Ke do RIM (nunca abaixo — evita intrínseco explosivo)
-    ke_teto: 0.13                 # CAL-02: revisado 0.14→0.13. Banco large-cap/líquido com beta ajustado (Blume
-                                  # puxa betas para 1,0) tem Ke estrutural ~13%, não 14%. Damodaran mature ERP 4,23%
-                                  # + a Selic-ciclo (rf_local) já embute risco-país/inflação → NÃO somar country risk
-                                  # de novo (senão double-count). O ke_rim também nunca excede ke_live.
-                                  # ⚠ CLAMP QUE SATURA: com a Selic-ciclo de hoje, o Ke estrutural de um banco
-                                  # grande bate no teto e o Ke PARA de reagir ao rf — é a Doença 3 (BLIND-02b).
-                                  # KE-04 (Fase 12): este knob é REMOVIDO, não recalibrado.
+  rim:                            # RIM (ENG-02, banco/seguradora) — recebe o Ke ÚNICO (CAPM local) pronto (12-02)
+    # KE-02/KE-04 (Fase 12): o 2º prêmio de risco estrutural dos bancos e o clamp (piso/teto do
+    # Ke) foram REMOVIDOS. O Ke colapsou num só (CAPM local sobre β setorial+Blume) no plano 12-02
+    # e a perpetuidade converge pelo piso do Blume por aritmética, não por trava.
     n_fade: 10                    # horizonte explícito (anos) de fade do excesso de ROE até o excesso sustentável
                                   # (CAL-01). RIM híbrido com valor terminal: o terminal responde por ~17% do valor
                                   # num banco grande típico. É UM DOS 3 GRAUS DE LIBERDADE do sistema
@@ -269,8 +262,8 @@ motores:
     # local (2,5% REAL/Doença 1) e passou à FONTE ÚNICA derivada na engine (g_cap). O RI terminal
     # do RIM agora cresce à identidade fechada por empresa g_T = min(ROE_T × retenção, g_cap) (GROW-03).
     ke_g_spread_min: 0.03         # CAL-01 (NOVO) — piso de (Ke−g_terminal) p/ liberar o terminal; senão degrada para
-                                  # fade-only (never-raise). Com g=0,025 e ke_piso=0,11 o spread real é folgado; a
-                                  # guarda protege configs futuros.
+                                  # fade-only (never-raise). Com o Ke do CAPM local (piso do Blume) acima de g_cap o
+                                  # spread real é folgado; a guarda protege configs futuros.
     roe_terminal_stat: "mediana"  # CAL-01 (Alavanca 2/D-01) — estatística do ROE through-cycle usada SÓ no RI
                                   # terminal (mediana|media). O excesso terminal é ancorado no poder de lucro through-
                                   # cycle da PRÓPRIA empresa (a série histórica dela, não uma constante — D-08) e

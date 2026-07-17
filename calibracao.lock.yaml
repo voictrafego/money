@@ -31,9 +31,11 @@
 # --------------------------------------------------------------------------- #
 # ESCOPO — os blocos do config.yaml que afetam o valor intrinseco `V`.
 # --------------------------------------------------------------------------- #
-# 29 folhas (motores 10 + capm 12 + ddm 5 + normalizacao 2). O orcamento se aplica a ELAS.
-# (GROW-01/Fase 11: motores caiu de 11 -> 10 com a remocao de `motores.rim.g_terminal`; ddm
-#  segue com 5 folhas — `ddm.g_estavel` saiu e `ddm.pib_real` entrou, o home migrado do PIB_real.)
+# 26 folhas (motores 7 + capm 12 + ddm 5 + normalizacao 2). O orcamento se aplica a ELAS.
+# (KE-02/KE-04/Fase 12: motores caiu de 10 -> 7 com a remocao do 2o premio de risco dos bancos
+#  e do clamp (piso/teto do Ke) — o Ke colapsou num so' (CAPM local) e a perpetuidade converge
+#  pelo piso do Blume por aritmetica. GROW-01/Fase 11 ja' havia baixado de 11 -> 10 com a remocao
+#  de `motores.rim.g_terminal`; ddm segue com 5 folhas.)
 #
 # Os outros 8 blocos do config.yaml (80 folhas: screening 33, indicadores 16, score 11,
 # padroes 6, arquetipo 5, veredito 4, selo 3, universo 2) ficam FORA do escopo porque
@@ -59,16 +61,14 @@ graus_de_liberdade:
 
   ERP:
     caminho: capm.erp_local
-    valor: 0.06
+    valor: 0.045
     fonte: >-
-      Premio de risco de equity sobre a Selic: ~4,5% de mercado maduro (Damodaran) + ~1,5%
-      de premio small-cap/iliquidez. A Selic ja' precifica risco-pais e inflacao, entao o
-      ERP e' so' o premio de equity.
-    # HOJE EXISTEM DOIS ERPs SIMULTANEOS NO SISTEMA: `capm.erp_local` (0.06) e
-    # `motores.rim.erp_banco` (0.045). Dois premios de risco no mesmo modelo e' um sintoma,
-    # nao um design: o segundo nasceu para baixar o Ke dos bancos. Ele esta em `congelados`.
-    # KE-02 (Fase 12) UNIFICA — sobra UM ERP. Ate la', o grau de liberdade e' este.
-    # Alvo do KE-02: 0.045 (mercado maduro puro). NAO escrever o alvo aqui hoje.
+      Premio de risco de equity sobre a Selic: mercado maduro puro (~4,5%, Damodaran). A
+      Selic ja' precifica risco-pais e inflacao, entao o ERP e' so' o premio de equity.
+    # KE-02 (Fase 12): o ERP foi UNIFICADO em 4,5%. Ate a Fase 12 existiam DOIS premios de
+    # risco simultaneos no sistema (`capm.erp_local` e um 2o premio estrutural dos bancos) —
+    # dois premios no mesmo modelo era um sintoma, nao um design: o segundo nasceu para baixar
+    # o Ke dos bancos. Ele foi REMOVIDO junto com o clamp; sobra UM ERP, este.
 
   n_fade:
     caminho: motores.rim.n_fade
@@ -119,25 +119,21 @@ user_control:
     ate: "ENG-06 (Fase 13) — vira controle do usuario"
 
 # --------------------------------------------------------------------------- #
-# CONGELADOS — as outras 26 folhas do escopo (29 - 3 graus de liberdade).
+# CONGELADOS — as outras 23 folhas do escopo (26 - 3 graus de liberdade).
 # --------------------------------------------------------------------------- #
 # Valor de HOJE, lido do `config.yaml` (nunca digitado de memoria). Se qualquer um destes
 # divergir do config, `test_knobs_batem_com_o_lock` fica VERMELHO — e a mudanca precisa
 # aparecer NESTE arquivo, no MESMO diff. E' o que a torna revisavel.
 congelados:
 
-  # --- motores.rim (7) — a superficie exata do overfit v2.3 ---
-  motores.rim.erp_banco: 0.045
-    # KE-02, Fase 12: o 2o ERP do sistema MORRE; sobra um so' (`capm.erp_local`).
-  motores.rim.ke_piso: 0.11
-    # KE-04, Fase 12: REMOVIDO.
-  motores.rim.ke_teto: 0.13
-    # KE-04, Fase 12: REMOVIDO. Hoje ele SATURA (3 de 4 bancos da cesta ja' estao no teto) e
-    # absorve integralmente a perna do `rf` do BLIND-02(b) — e' por isso que aquele teste so'
-    # pode virar verde na Fase 12, e nao na 11. A justificativa "Blume" do config.yaml e'
-    # aritmeticamente FALSA: Blume (beta -> 1,0) daria Ke ~15,9%, nao 13%.
+  # --- motores.rim (4) — o que sobrou da superficie do overfit v2.3 ---
+  # (KE-02/KE-04, Fase 12: o 2o premio de risco estrutural dos bancos e o clamp (piso/teto do
+  #  Ke) foram REMOVIDOS de config+lock neste commit. O Ke colapsou num so' (CAPM local sobre
+  #  o beta setorial+Blume) no plano 12-02, e a perpetuidade converge pelo piso do Blume por
+  #  aritmetica (beta_blume >= 0,33 => Ke_min > g_cap), nao por trava. A justificativa "Blume"
+  #  do antigo clamp era aritmeticamente FALSA — Blume (beta -> 1,0) daria Ke ~15,9%, nao 13%.)
   # (`motores.rim.n_fade` NAO aparece aqui de proposito: e' GRAU DE LIBERDADE. Os 3 graus e
-  #  os 26 congelados sao uma PARTICAO das 29 folhas do escopo — nenhuma folha nos dois lados,
+  #  os 23 congelados sao uma PARTICAO das 26 folhas do escopo — nenhuma folha nos dois lados,
   #  nenhuma folha de fora. O teste verifica a particao, nao so' a contagem.)
   motores.rim.excesso_sustentavel: 0.045
     # GROW-05, Fase 11: hoje DECORATIVO (o cap satura), vira LOAD-BEARING quando o spread
