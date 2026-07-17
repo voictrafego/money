@@ -98,7 +98,10 @@ capm:
 # --- Cap. 14/15/17: crescimento e DDM ---
 ddm:
   n_anos_explicito: 10        # estágio de alto crescimento (livro: 5 a 10)
-  g_estavel: 0.025            # crescimento na perpetuidade <= PIB (Focus/BCB ~2,5%)
+  # GROW-01/D-03: PIB real estrutural (~2,0%, Focus/BCB) — insumo do g da perpetuidade DERIVADO
+  # na engine: g_cap = (1+π_ciclo)(1+PIB_real)−1 ≈ 7,28%. Substitui o antigo g_estavel (2,5% REAL
+  # descontado por Ke NOMINAL = Doença 1). É o home do grau de liberdade PIB_real (calibracao.lock).
+  pib_real: 0.02
   tributacao_dividendos: 0.0  # toggle: imposto sobre dividendos (ex.: 0.15)
   sensibilidade:
     delta_ke: [-0.02, -0.01, 0.0, 0.01, 0.02]
@@ -262,9 +265,9 @@ motores:
                                   # este excesso sustentável (não a zero, não ao excesso cheio eterno). CONGELADO
                                   # (calibracao.lock.yaml): hoje decorativo (o cap satura), vira LOAD-BEARING no
                                   # GROW-05 (Fase 11), quando o spread Ke−g cair de ~10,5pp para ~5,5pp.
-    g_terminal: 0.025             # CAL-01 (NOVO) — g do RI na perpetuidade (espelha ddm.g_estavel ≤ PIB; declarado
-                                  # localmente por independência do motor, NÃO acopla os blocos). O RI terminal cresce
-                                  # a g_terminal, NÃO à taxa do book (evita RIM explosivo).
+    # GROW-01/D-04: g_terminal REMOVIDO — o g da perpetuidade deixou de ser uma constante gêmea
+    # local (2,5% REAL/Doença 1) e passou à FONTE ÚNICA derivada na engine (g_cap). O RI terminal
+    # do RIM agora cresce à identidade fechada por empresa g_T = min(ROE_T × retenção, g_cap) (GROW-03).
     ke_g_spread_min: 0.03         # CAL-01 (NOVO) — piso de (Ke−g_terminal) p/ liberar o terminal; senão degrada para
                                   # fade-only (never-raise). Com g=0,025 e ke_piso=0,11 o spread real é folgado; a
                                   # guarda protege configs futuros.

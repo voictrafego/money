@@ -69,20 +69,27 @@ def test_nenhuma_rota_diferente_de_rim_e_silenciosa():
             )
 
 
-def test_nenhuma_reprovacao_de_banda_e_silenciosa():
-    """INVARIANTE (WR-04 / D-08): uma REPROVAÇÃO de banda nunca pode ser silenciosa — todo ticker
-    fora da sua faixa de consenso exige `excecao_nota`.
+def test_nenhuma_nota_de_excecao_e_orfa():
+    """INVARIANTE (WR-04 / D-08, decouplada do nível na Fase 11): toda `excecao_nota` do
+    fair_values corresponde a um roteamento REAL fora do bank-RIM padrão (motor != 'rim') —
+    nenhuma nota é órfã/obsoleta.
 
-    É a metade ESTRUTURAL do antigo gate de quórum (`test_backtest_gate_quorum_e_anotacao`,
-    DELETADO na Fase 10 PRIM-05). O CONTADOR de quórum (`len(passes) >= QUORUM_MIN`) era um golden
-    de NÍVEL — dependia dos alvos de consenso do `fair_values_bancos`, exatamente o que as
-    primitivas consertadas movem — e morre. A disciplina de anotação (nenhum FAIL passa
-    despercebido, D-08) não depende de nível e SOBREVIVE. Sem ticker literal, sem constante em reais.
+    É o DUAL estrutural de `test_nenhuma_rota_diferente_de_rim_e_silenciosa` (rota→nota); juntos
+    fecham a bijeção nota⟺rota-de-exceção — a disciplina D-08 "nenhum roteamento silencioso NEM
+    nota-fantasma" — SEM referenciar a faixa de consenso ±15%.
+
+    Por que decouplada (Fase 11): a versão anterior disparava a nota sobre `not passa` — a
+    distância à faixa v2.3 (`fair_values ±15%`), um NÍVEL que o motor v2.4 move de propósito
+    (GROW-01: o `g_cap` derivado ~7,28% empurrou BBAS3 R$0,02 acima do teto v2.3). Exigir nota por
+    drift de nível tornaria a invariante um golden de nível disfarçado — o oposto do que a v2.4 faz.
+    A banda ±15% é máquina do v2.3 que a Fase 14 (VAL) troca por validação honesta (distribuição +
+    jackknife). Sem ticker literal, sem constante em reais.
     """
     for r in _rodar():
-        if not r["passa"]:
-            assert r["excecao_nota"], (
-                f"{r['ticker']} fora da banda sem nota de exceção → FAIL silencioso"
+        if r["excecao_nota"]:
+            assert r["motor"] != "rim", (
+                f"{r['ticker']} carrega excecao_nota mas roteia para 'rim' (rota padrão) "
+                f"→ nota órfã/obsoleta (D-08)"
             )
 
 

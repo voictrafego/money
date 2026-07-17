@@ -57,13 +57,19 @@ def _ohlc_acima_mm200_adx_fraco() -> pd.DataFrame:
 # --------------------------------------------------------------------------- #
 def _financeira_rim(ticker="BANK3") -> CompanyData:
     """Banco (setor financeiro) → hard-route financeira → motor RIM. Preço alto de propósito
-    (acima da banda do motor) para o veredito cair em SOBREAVALIADA de forma honesta."""
+    (acima da banda do motor) para o veredito cair em SOBREAVALIADA de forma honesta.
+
+    ROE 26% / payout 17% (alto-ROE que retém lucro): o RIM captura o valor criado pelo book
+    de alta rentabilidade enquanto o DDM, ancorado no dividendo magro, subvaloriza — mantém a
+    divergência RIM ~3× DDM sob o g_cap derivado (~7,28%, GROW-01). Antes da Fase 11 a fixture
+    era ROE 20% / payout 30%, calibrada ao g estável de 2,5%; a perpetuidade maior encolhia a
+    razão para 1,86× (< limiar 2×) — re-tunada com o método, não afrouxada."""
     anos = list(range(2015, 2025))
     c = CompanyData(ticker=ticker, nome="Banco", setor="Bancos", anos=anos)
     for a in anos:
-        c.lucro_liquido[a] = 1000
+        c.lucro_liquido[a] = 1300
         c.patrimonio_liquido[a] = 5000
-        c.dividendos[a] = 300
+        c.dividendos[a] = 220
         c.num_acoes[a] = 1000
         c.vendas_liquidas[a] = 4000
         c.fco[a] = 1200

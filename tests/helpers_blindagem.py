@@ -730,8 +730,10 @@ def choque_nominal(empresas, cfg: dict, bps: int):
     Devolve `(empresas_chocadas, cfg_chocado)` em `copy.deepcopy` — NUNCA muta os
     originais (T-07-03).
 
-    Perna da TAXA (cfg): `capm.rf_local`, `ddm.g_estavel` e `motores.rim.g_terminal`
-    sobem `δ = bps/10_000`.
+    Perna da TAXA (cfg): `capm.rf_local` e `macro.pi_ciclo` sobem `δ = bps/10_000`. O `g` da
+    perpetuidade nao e' mais uma constante digitada (`ddm.g_estavel`/`motores.rim.g_terminal`
+    foram REMOVIDOS na GROW-01): ele e' DERIVADO na engine como `g_cap = (1+pi_ciclo)(1+PIB_real)−1`
+    (fonte unica, D-04), entao chocar `macro.pi_ciclo` propaga a perna do `g` a TODOS os motores.
 
     Perna do LUCRO NOMINAL (dado): a inflacao levanta o lucro NOMINAL, nao a taxa de
     desconto sozinha. Chocar so' `rf`/`g` deixaria o `ROE` (real, congelado no snapshot)
@@ -754,8 +756,8 @@ def choque_nominal(empresas, cfg: dict, bps: int):
 
     cfg2 = copy.deepcopy(cfg)
     cfg2["capm"]["rf_local"] += delta
-    cfg2["ddm"]["g_estavel"] += delta
-    cfg2["motores"]["rim"]["g_terminal"] += delta
+    cfg2.setdefault("macro", {})
+    cfg2["macro"]["pi_ciclo"] = cfg2["macro"].get("pi_ciclo", 0.0518) + delta
 
     empresas2 = copy.deepcopy(list(empresas))
     for c in empresas2:

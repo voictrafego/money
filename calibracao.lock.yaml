@@ -31,7 +31,9 @@
 # --------------------------------------------------------------------------- #
 # ESCOPO — os blocos do config.yaml que afetam o valor intrinseco `V`.
 # --------------------------------------------------------------------------- #
-# 30 folhas (motores 11 + capm 12 + ddm 5 + normalizacao 2). O orcamento se aplica a ELAS.
+# 29 folhas (motores 10 + capm 12 + ddm 5 + normalizacao 2). O orcamento se aplica a ELAS.
+# (GROW-01/Fase 11: motores caiu de 11 -> 10 com a remocao de `motores.rim.g_terminal`; ddm
+#  segue com 5 folhas — `ddm.g_estavel` saiu e `ddm.pib_real` entrou, o home migrado do PIB_real.)
 #
 # Os outros 8 blocos do config.yaml (80 folhas: screening 33, indicadores 16, score 11,
 # padroes 6, arquetipo 5, veredito 4, selo 3, universo 2) ficam FORA do escopo porque
@@ -82,23 +84,19 @@ graus_de_liberdade:
     # matando um knob nao e' um teste, e' um knob disfarcado.
 
   PIB_real:
-    caminho: ddm.g_estavel
-    valor: 0.025
+    caminho: ddm.pib_real
+    valor: 0.02
     fonte: >-
-      Crescimento na perpetuidade <= PIB (Focus/BCB ~2,5%).
-    # ATENCAO — O CAMINHO DE HOJE NAO E' O CAMINHO FINAL, E ISSO E' PROPOSITAL:
-    #
-    # Hoje o PIB REAL esta digitado DIRETO em `ddm.g_estavel`: 2,5% REAL descontado por um
-    # `Ke` NOMINAL (que embute ~5,2% de IPCA). E' A DOENCA 1 — o vies de inflacao — e ela
-    # esta versionada como teste em `test_invariancia_inflacao_engine_itub4` (xfail).
-    # NAO existe `ddm.pib_real` no config.yaml. Registrar aqui um caminho que nao existe
-    # deixaria a suite vermelha e convidaria a inventar a chave.
-    #
-    # GROW-01 (Fase 11) troca isto por um `g_cap` DERIVADO:
+      PIB real estrutural de longo prazo (Focus/BCB ~2,0%): o teto do crescimento na
+      perpetuidade em termos REAIS, antes de reexpresso a nominal pelo IPCA de ciclo.
+    # GROW-01 (Fase 11) MIGROU o PIB real de `ddm.g_estavel` para `ddm.pib_real`, no MESMO commit
+    # que derivou o `g_cap` na engine (D-05). O caminho antigo digitava 2,5% REAL descontado por um
+    # `Ke` NOMINAL (que embute ~5,2% de IPCA) — era A DOENCA 1, o vies de inflacao. Agora o `g` da
+    # perpetuidade e' DERIVADO na engine (nunca digitado):
     #     g_cap = (1 + pi_ciclo) x (1 + PIB_real) - 1 = 7,28%
-    # QUANDO ISSO ACONTECER, ATUALIZE O `caminho` AQUI, NO MESMO COMMIT.
-    # Isso NAO e' afrouxar o orcamento — e' o orcamento SENDO MANTIDO. O grau de liberdade
-    # continua sendo UM (o PIB real); o que muda e' onde ele mora e como e' consumido.
+    # O `pi_ciclo` (IPCA de ciclo, medido do BCB) e' insumo carimbado FORA do escopo do lock; o
+    # PIB real permanece o UNICO grau de liberdade deste eixo — mudou onde ele mora (ddm.pib_real)
+    # e como e' consumido (reexpresso a nominal na derivacao), nao o orcamento (segue UM grau).
 
 # --------------------------------------------------------------------------- #
 # USER_CONTROL — D-04: o 4o grau de liberdade ESCONDIDO, fechado por declaracao.
@@ -121,14 +119,14 @@ user_control:
     ate: "ENG-06 (Fase 13) — vira controle do usuario"
 
 # --------------------------------------------------------------------------- #
-# CONGELADOS — as outras 27 folhas do escopo (30 - 3 graus de liberdade).
+# CONGELADOS — as outras 26 folhas do escopo (29 - 3 graus de liberdade).
 # --------------------------------------------------------------------------- #
 # Valor de HOJE, lido do `config.yaml` (nunca digitado de memoria). Se qualquer um destes
 # divergir do config, `test_knobs_batem_com_o_lock` fica VERMELHO — e a mudanca precisa
 # aparecer NESTE arquivo, no MESMO diff. E' o que a torna revisavel.
 congelados:
 
-  # --- motores.rim (8) — a superficie exata do overfit v2.3 ---
+  # --- motores.rim (7) — a superficie exata do overfit v2.3 ---
   motores.rim.erp_banco: 0.045
     # KE-02, Fase 12: o 2o ERP do sistema MORRE; sobra um so' (`capm.erp_local`).
   motores.rim.ke_piso: 0.11
@@ -139,15 +137,17 @@ congelados:
     # pode virar verde na Fase 12, e nao na 11. A justificativa "Blume" do config.yaml e'
     # aritmeticamente FALSA: Blume (beta -> 1,0) daria Ke ~15,9%, nao 13%.
   # (`motores.rim.n_fade` NAO aparece aqui de proposito: e' GRAU DE LIBERDADE. Os 3 graus e
-  #  os 27 congelados sao uma PARTICAO das 30 folhas do escopo — nenhuma folha nos dois lados,
+  #  os 26 congelados sao uma PARTICAO das 29 folhas do escopo — nenhuma folha nos dois lados,
   #  nenhuma folha de fora. O teste verifica a particao, nao so' a contagem.)
   motores.rim.excesso_sustentavel: 0.045
     # GROW-05, Fase 11: hoje DECORATIVO (o cap satura), vira LOAD-BEARING quando o spread
     # `Ke - g` cair de 10,5pp para ~5,5pp. Um knob decorativo que vira load-bearing sem
     # ninguem notar e' exatamente como um modelo passa a ser governado por um numero que
     # ninguem revisou.
-  motores.rim.g_terminal: 0.025
-    # GROW-01, Fase 11: espelha o `ddm.g_estavel` (mesma Doenca 1, mesma cura).
+  # (`motores.rim.g_terminal` FOI REMOVIDO em GROW-01/Fase 11: a folha saiu do config.yaml —
+  #  o g da perpetuidade deixou de ser uma constante gemea de 2,5% e passou a ser DERIVADO na
+  #  engine como `g_cap` (fonte unica, D-04). O RI terminal cresce agora a` identidade fechada
+  #  por empresa g_T = min(ROE_T x retencao, g_cap). Nao ha folha congelada a declarar aqui.)
   motores.rim.ke_g_spread_min: 0.03
     # GROW-05, Fase 11: hoje DECORATIVO, vira LOAD-BEARING junto com `excesso_sustentavel`.
   motores.rim.roe_terminal_stat: mediana

@@ -59,7 +59,7 @@
 'tests/test_arquetipo_roteamento.py::test_render_fronteirico_exibe_candidatos_e_range': contrato
 'tests/test_arquetipo_roteamento.py::test_render_nao_fronteirico_sem_bloco_incerto': contrato
 'tests/test_backtest_bancos.py::test_nenhuma_rota_diferente_de_rim_e_silenciosa': invariante  # WR-04: D-08 rota nao-silenciosa, extraido de test_backtest_cesta_rota_por_ticker (banda 30-40 DELETADA na Fase 10 PRIM-05); SOBREVIVE
-'tests/test_backtest_bancos.py::test_nenhuma_reprovacao_de_banda_e_silenciosa': invariante  # WR-04: D-08 FAIL nao-silencioso, extraido de test_backtest_gate_quorum_e_anotacao (contador de quorum de NIVEL DELETADO na Fase 10 PRIM-05); SOBREVIVE
+'tests/test_backtest_bancos.py::test_nenhuma_nota_de_excecao_e_orfa': invariante  # WR-04/D-08 decouplada do nivel na Fase 11 (GROW-01): dual de test_nenhuma_rota_diferente_de_rim_e_silenciosa (nota<=>rota nao-RIM); nao referencia mais a banda ±15% (nivel v2.3 que a Fase 14 troca por validacao honesta); SOBREVIVE
 'tests/test_backtest_bancos.py::test_backtest_determinismo': invariante
 'tests/test_backtest_bancos.py::test_backtest_rotulo_do_motor_consistente': contrato
 'tests/test_capm_local.py::test_config_capm_local_documentado': contrato

@@ -214,7 +214,14 @@ def _intrinseco_por_motor(
     Nota: a guarda de não-positivo (`valor <= 0` não é preço-alvo) fica no chamador — o funil
     a aplica com alerta honesto; o ramo fronteiriço a aplica ao coletar os candidatos."""
     ult = c.ultimo_ano()
-    g_estavel = cfg["ddm"]["g_estavel"]
+    # GROW-01/D-03: g da perpetuidade DERIVADO na engine (nunca digitado) a partir do IPCA
+    # de ciclo (π_ciclo, carimbado nos entry points, MESMA janela do rf) e do PIB real
+    # estrutural (knob). g_cap = (1+π_ciclo)(1+PIB_real)−1 ≈ 7,28% — a FONTE ÚNICA (D-04) do
+    # crescimento terminal, consumida por perpetuidade DDM e RI terminal do RIM. Leitura
+    # defensiva (o fallback == default do config, comportamento idêntico com ou sem a chave).
+    g_cap = (1.0 + cfg.get("macro", {}).get("pi_ciclo", 0.0518)) * (
+        1.0 + cfg["ddm"].get("pib_real", 0.02)
+    ) - 1.0
     mot_cfg = (cfg or {}).get("motores", {})
     try:
         # Alavanca 3 (D-03/D-04): rota de SEGURADORA capital-light — ANTES do bank-RIM.
@@ -222,7 +229,7 @@ def _intrinseco_por_motor(
         # dividendo, não no book minúsculo (VPA≈5,35) que o RIM ancora — o RIM a subvaloriza.
         # Rota mínima e reusável (D-08, zero knob numérico novo): Gordon de estágio único sobre o
         # dividendo SUSTENTÁVEL (`dpa_recorrente`, NÃO trailing — Pitfall 4) com o Ke do CAPM ao
-        # vivo (`a.ke`, NÃO o ke_rim de balanço large-cap — Pitfall 3) e g = g_estavel (2,5%).
+        # vivo (`a.ke`, NÃO o ke_rim de balanço large-cap — Pitfall 3) e g = g_cap (~7,28%, derivado).
         # Detecção reusa `arquetipo._setor_casa_token` (limite de palavra), NÃO reimplementa match.
         # Never-raise: dpa/ke None ou valor_gordon None (ke−g ≤ 0) → NÃO força a rota, degrada para
         # o RIM legado. Rótulo honesto `a.motor="seguradora"` (exige `excecao_nota` no gate, D-05).
@@ -231,23 +238,30 @@ def _intrinseco_por_motor(
         ):
             dpa_sust = c.dpa_recorrente()
             if dpa_sust is not None and a.ke is not None:
-                v_seg = ddm.valor_gordon(dpa_sust * (1 + g_estavel), a.ke, g_estavel)
+                v_seg = ddm.valor_gordon(dpa_sust * (1 + g_cap), a.ke, g_cap)
                 if v_seg is not None:
                     a.motor = "seguradora"
                     return v_seg
             # dado degenerado → cai para o RIM legado (never-raise, não força a rota).
         if motor == "rim":
             rim_cfg = mot_cfg.get("rim", {})
+            # GROW-03: identidade fechada do g terminal por EMPRESA — o RI da perpetuidade
+            # cresce ao MENOR entre o g sustentável do próprio ticker (ROE_T × retenção) e o
+            # teto macro g_cap (≤ PIB nominal). Satura em g_cap quando ROE_T×ret é alto; usa
+            # g_cap quando o ROE through-cycle degrada (None). Substitui o antigo g_terminal fixo.
+            _retencao = (1.0 - (c.payout_valuation() or 0.0))
+            _roe_term = _roe_through_cycle(c, rim_cfg)
+            _g_T = min(_roe_term * _retencao, g_cap) if _roe_term is not None else g_cap
             res_rim = motores.rim(
                 vpa0=lentes.vpa(c.patrimonio_liquido.get(ult), c.num_acoes.get(ult)),
                 roe0=c.roe_valuation(),
                 ke=motores.ke_rim(c.beta, cfg),
-                retencao=(1.0 - (c.payout_valuation() or 0.0)),
+                retencao=_retencao,
                 n=rim_cfg.get("n_fade", 10),
                 excesso_sustentavel=rim_cfg.get("excesso_sustentavel", 0.0),
-                g_terminal=rim_cfg.get("g_terminal"),
+                g_terminal=_g_T,
                 ke_g_spread_min=rim_cfg.get("ke_g_spread_min", 0.03),
-                roe_terminal=_roe_through_cycle(c, rim_cfg),
+                roe_terminal=_roe_term,
             )
             return res_rim.valor_intrinseco if res_rim else None
         if motor == "normalizado":
@@ -290,10 +304,10 @@ def _intrinseco_por_motor(
                 ),
                 c.num_acoes.get(ult),
             )
-            return motores.lucro_normalizado(lpa_mid, a.ke, g_estavel)
+            return motores.lucro_normalizado(lpa_mid, a.ke, g_cap)
         if motor == "dcf":
             return motores.dcf_crescimento(
-                c.lpa_valuation(), a.g_alto, g_estavel, a.ke,
+                c.lpa_valuation(), a.g_alto, g_cap, a.ke,
                 mot_cfg.get("crescimento", {}).get("n_anos_explicito", 10),
             )
         if motor == "nav":
@@ -413,21 +427,23 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     # g_fundamentos usa o MESMO payout do valuation (payout_valuation) ⇒ é o g SUSTENTÁVEL,
     # quanto a empresa consegue reinvestir: g_fund = ROE_normalizado × (1 − payout_valuation).
     a.g_fundamentos = growth.crescimento_por_fundamentos(c.roe_valuation(), c.payout_valuation())
-    g_estavel = cfg["ddm"]["g_estavel"]
-    a.g_estavel = g_estavel
-    # DDM-FIX-02 (reconciliação g × fundamentos, caso VULC3): o g_alto adotado parte do
-    # crescimento histórico observado (CAGR sobre a série normalizada), mas é SUBORDINADO ao
-    # g sustentável — o TETO do g_alto passa a ser g_fundamentos (CONTEXT FIX-02). O g deixa
-    # de ser um haircut arbitrário do CAGR e reflete o reinvestimento real.
-    # Precedência: g_fund (sustentável) → teto absoluto 0.25 → trava ≤ Ke (FIX-01, abaixo).
-    # Payout ≥ 100% (ou ROE não positivo) ⇒ g_fund ≤ 0 ⇒ g_alto cai para 0 — SEM o piso
-    # artificial g_estavel na fase explícita (g_estavel segue valendo só como taxa da
-    # perpetuidade no DDM, não como piso do crescimento alto).
-    g_alto = a.g_historico if a.g_historico is not None else a.g_fundamentos
-    if a.g_fundamentos is not None:
-        g_alto = a.g_fundamentos if g_alto is None else min(g_alto, a.g_fundamentos)
+    # GROW-01/D-03: g da perpetuidade DERIVADO (nunca digitado) — g_cap = (1+π_ciclo)(1+PIB_real)−1
+    # ≈ 7,28%. Carrega em a.g_estavel o valor derivado (para os rótulos); é a FONTE ÚNICA (D-04)
+    # do crescimento terminal. Leitura defensiva: o fallback == default do config (idêntico).
+    g_cap = (1.0 + cfg.get("macro", {}).get("pi_ciclo", 0.0518)) * (
+        1.0 + cfg["ddm"].get("pib_real", 0.02)
+    ) - 1.0
+    a.g_estavel = g_cap
+    # GROW-04/D-01: a fase explícita ADOTA o g por fundamentos (método do livro, Cap. 14.3;
+    # ITUB4 ~10,29% ≈ 10,24% do livro), em vez de subordiná-lo ao histórico. O g_historico deixa
+    # de ser teto e vira número de SANIDADE exibido + FALLBACK (quando g_fundamentos é None).
+    # Precedência: g_fund (sustentável) → teto absoluto 0.25 → trava ≤ Ke (FIX-01, abaixo). O
+    # g_cap (~7,28%) trava SÓ o terminal, NUNCA a fase explícita (D-02): a estrutura de dois
+    # estágios do livro — g alto → fade → g terminal ≤ g_cap — não pode ser colapsada num teto só.
+    # Payout ≥ 100% (ou ROE não positivo) ⇒ g_fund ≤ 0 ⇒ g_alto cai para 0.
+    g_alto = a.g_fundamentos if a.g_fundamentos is not None else a.g_historico
     if g_alto is not None:
-        g_alto = max(0.0, min(g_alto, 0.25))  # teto absoluto 25% a.a.; sem piso g_estavel (nunca < 0)
+        g_alto = max(0.0, min(g_alto, 0.25))  # teto absoluto 25% a.a. (inalterado); nunca < 0
     a.g_alto = g_alto
 
     # --- Estágio do ciclo de vida (Cap. 8) ---
@@ -509,17 +525,17 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     payout_proj = c.payout_valuation()  # média 3a + clamp 1.0 (função canônica única)
     n = cfg["ddm"]["n_anos_explicito"]
     trib = cfg["ddm"].get("tributacao_dividendos", 0.0)
-    if None not in (lpa, payout_proj, a.g_alto, a.ke) and a.ke > g_estavel:
+    if None not in (lpa, payout_proj, a.g_alto, a.ke) and a.ke > g_cap:
         dpa_inicial = lpa * (1 + a.g_alto) * payout_proj
         a.ddm_constante = ddm.ddm_dois_estagios(
-            dpa_inicial, a.g_alto, n, g_estavel, a.ke, decrescente=False, tributacao=trib
+            dpa_inicial, a.g_alto, n, g_cap, a.ke, decrescente=False, tributacao=trib
         )
         a.ddm_h = ddm.ddm_dois_estagios(
-            dpa_inicial, a.g_alto, n, g_estavel, a.ke, decrescente=True, tributacao=trib
+            dpa_inicial, a.g_alto, n, g_cap, a.ke, decrescente=True, tributacao=trib
         )
         sens = cfg["ddm"]["sensibilidade"]
         a.sensibilidade = ddm.matriz_sensibilidade(
-            dpa_inicial, a.g_alto, n, g_estavel, a.ke,
+            dpa_inicial, a.g_alto, n, g_cap, a.ke,
             sens["delta_ke"], sens["delta_g"],
         )
 
@@ -696,8 +712,8 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             faltou.append("payout sustentável")
         if a.g_alto is None:
             faltou.append("crescimento (g)")
-        if a.ke is not None and a.ke <= g_estavel:
-            faltou.append("Ke ≤ g estável (perpetuidade não converge)")
+        if a.ke is not None and a.ke <= g_cap:
+            faltou.append("Ke ≤ g_cap (perpetuidade não converge)")
         motivo = ", ".join(faltou) if faltou else "insumo de valuation indisponível"
         a.alertas.append(f"DDM não calculado ({motivo}): sem valor intrínseco nem veredito.")
     ano_base = cfg.get("universo", {}).get("ano_base")
@@ -957,9 +973,9 @@ def relatorio_markdown(c: CompanyData, a: AnaliseAcao, cfg: dict) -> str:
 
     # Crescimento e custo de capital
     L.append("## Crescimento e custo de capital (Cap. 14 e 16)")
-    L.append(f"- g histórico (tendência log-linear): **{_pct(a.g_historico)}**")
-    L.append(f"- g por fundamentos (ROE × retenção): **{_pct(a.g_fundamentos)}**")
-    L.append(f"- g alto adotado: **{_pct(a.g_alto)}**  |  g estável (perpetuidade): **{_pct(a.g_estavel)}**")
+    L.append(f"- g histórico (tendência log-linear, sanidade/fallback): **{_pct(a.g_historico)}**")
+    L.append(f"- g por fundamentos (ROE × retenção, adotado): **{_pct(a.g_fundamentos)}**")
+    L.append(f"- g alto adotado: **{_pct(a.g_alto)}**  |  g_cap (perpetuidade, derivado): **{_pct(a.g_estavel)}**")
     L.append(f"- Beta: **{_num(a.beta)}**  |  Ke (CAPM): **{_pct(a.ke)}**")
     L.append("")
 
