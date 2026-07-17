@@ -238,7 +238,11 @@ produz o número da manchete nunca é exibido**. Alvo do livro: `Ke` = 12,48%.
   - **NÃO reintroduzir um clamp com outro nome** quando algum ticker ficar feio sem o `ke_teto`. Se um valor explodir sem clamp, o bug está em `ROE_T` ou no spread — não no Ke.
   - **NÃO recalibrar o `g` da Fase 11** para "acomodar" o Ke novo. As duas fases são medições independentes; misturá-las apaga o diagnóstico que é o ponto do marco.
   - **NÃO criar prêmio de risco por ticker/setor** para explicar um caso — é grau de liberdade fora do orçamento de 3 (BLIND-06).
-**Plans**: TBD
+**Plans**: 4 plans (4 waves — sequenciais por acoplamento de arquivo e fronteira de suíte-verde)
+- [ ] 12-01-PLAN.md — β setorial: artefato versionado + carimbo nos 3 entry points + helper beta_blume (KE-03 infra, aditivo)
+- [ ] 12-02-PLAN.md — Unificação do Ke: consumir β setorial no a.ke, deletar ke_rim, RIM lê a.ke, destravar BLIND-02b (KE-01/03/04/05)
+- [ ] 12-03-PLAN.md — Knob sancionado: ERP 0,045 + remover erp_banco/ke_piso/ke_teto (config+lock, mesmo commit) (KE-02/04)
+- [ ] 12-04-PLAN.md — Validação sem clamp: invariante estrutural Ke_min>g_cap + regressão dos 104 tickers (KE-04)
 
 ### Phase 13: Motores + contrato de saída (ENG)
 **Goal**: Colapsar os 4 motores num **RIM único**. Sob clean surplus (Ohlson 1995), RIM ≡ DDM ≡
