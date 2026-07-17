@@ -272,3 +272,16 @@ def carregar_beta_setorial(path: Optional[str] = None) -> Dict[str, float]:
     if not isinstance(dados, dict):
         return {}
     return {str(k): float(v) for k, v in dados.items() if v is not None}
+
+
+def carimbar_beta_setorial(cfg: dict) -> None:
+    """Carimba o mapa `setor -> mediana(beta)` em `cfg["capm"]["beta_setorial"]` (D-05/D-06).
+
+    Irmao de `cli._carimbar_macro`: resolve a FONTE ÚNICA (o artefato versionado) UMA vez no
+    entry point e a grava em `cfg`, para `analyze` e `rank` lerem o MESMO mapa — sem isso a
+    mesma acao mostraria beta setorial (logo Ke) diferente entre os menus (anti-padrao WR-03,
+    D-06). Leitura de arquivo local (sem rede); ausente/vazio -> {} (degradacao graciosa).
+    Muta `cfg` in-place; cria o bloco `capm` se ausente.
+    """
+    cfg.setdefault("capm", {})
+    cfg["capm"]["beta_setorial"] = carregar_beta_setorial()

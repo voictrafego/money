@@ -91,6 +91,10 @@ def _carimbar_macro(cfg: dict) -> None:
             cfg["capm"].get("rf_ciclo_anos", 10),
         ),
     }
+    # KE-03/D-06: carimba o mapa beta setorial (fonte única versionada) para analyze E rank
+    # lerem o MESMO mapa — sem isso a mesma ação mostra beta setorial (logo Ke) diferente
+    # entre os menus (WR-03). Leitura de arquivo local, sem rede; ausente → {}.
+    macro.carimbar_beta_setorial(cfg)
 
 
 def cmd_analyze(args, cfg):

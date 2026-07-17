@@ -894,6 +894,10 @@ if modo.startswith("Analisar"):
                         CFG["capm"].get("rf_ciclo_anos", 10),
                     ),
                 }
+                # KE-03/D-06: carimba o mapa beta setorial (fonte única versionada), espelhando
+                # o carimbo do rf. Leitura de arquivo local (sem rede) → chamada direta; a engine
+                # o lê offline e aplica Blume. MESMO mapa que o CLI carimba (analyze==rank).
+                macro.carimbar_beta_setorial(CFG)
                 st.write("Calculando valuation (DDM + múltiplos)…")
                 a = report.analisar_acao(c, CFG)
                 _status.update(label=f"Análise de {ticker_ativo} concluída",

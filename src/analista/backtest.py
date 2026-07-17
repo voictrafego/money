@@ -30,7 +30,9 @@ from .report import report
 BANDA_PASS = 0.15
 
 # chaves globais do snapshot que NÃO são tickers (carimbos de captura).
-_CHAVES_GLOBAIS = {"data_base", "rf_local", "ipca_deflatores"}
+# KE-03: `beta_setorial` é um carimbo global aditivo (como `rf_local`/`ipca_deflatores`) —
+# um snapshot pode carregá-lo sem que seja confundido com um ticker na reconstrução.
+_CHAVES_GLOBAIS = {"data_base", "rf_local", "ipca_deflatores", "beta_setorial"}
 
 # séries anuais reconstruídas no CompanyData (obrigatórias + display).
 _SERIES = (
@@ -126,7 +128,14 @@ def rodar_cesta(
     """
     cfg = {
         **cfg,
-        "capm": {**cfg.get("capm", {}), "rf_local": rf_local},
+        "capm": {
+            **cfg.get("capm", {}),
+            "rf_local": rf_local,
+            # KE-03: preserva/injeta o mapa beta setorial na cópia do cfg; ausente → {}
+            # (a engine cai no fallback do beta individual, D-04; never-raise). ADITIVO:
+            # nada consome beta_blume ainda (Plano 02), mas o carimbo já flui pela fonte única.
+            "beta_setorial": cfg.get("capm", {}).get("beta_setorial") or {},
+        },
         "macro": {**cfg.get("macro", {}), "ipca_deflatores": ipca_deflatores or {}},
     }
 

@@ -17,6 +17,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional, Sequence
 
+from ..ingest import macro
+
 Number = Optional[float]
 
 
@@ -69,3 +71,28 @@ def ke_eua_ajustada(beta_acao: float, params: CapmParams) -> float:
 def ke_local(beta_acao: float, rf_local: float, erp_local: float) -> float:
     """Ke pela abordagem com dados locais (caso Engie, 17.2): Ke = Rf + Beta * ERP."""
     return rf_local + beta_acao * erp_local
+
+
+def beta_blume(
+    beta_cru: Number, setor: Optional[str], mapa_setorial: Optional[dict]
+) -> Number:
+    """Beta ajustado por Blume (`0,33 + 0,67 x base`) sobre o beta SETORIAL (KE-03, D-03/D-04).
+
+    A base e' a mediana do setor (`mapa_setorial[_normalizar_setor(setor)]`) quando disponivel
+    — a "industry beta" de Damodaran, que faz BB e Bradesco (mesmo risco de negocio) receberem
+    o MESMO beta, apagando o ruido do beta individual. Fallback D-04: setor ausente do mapa (ou
+    mapa vazio) -> usa o proprio `beta_cru` (beta individual Blume-ajustado). Blume aplicado UMA
+    vez (D-03: agregar-beta-cru->Blume == Blume->agregar para a mediana, linear e monotonico).
+
+    Never-raise (contrato de borda da engine, como `motores.ke_rim`): `beta_cru is None` -> None
+    (sem dado de mercado, sem Ke). A normalizacao de setor e' a fonte unica de `ingest.macro`
+    (nao acopla a engine a rede: `_normalizar_setor` e' pura, sem I/O).
+    """
+    if beta_cru is None:
+        return None
+    base = None
+    if mapa_setorial:
+        base = mapa_setorial.get(macro._normalizar_setor(setor))
+    if base is None:
+        base = beta_cru
+    return 0.33 + 0.67 * base
