@@ -83,6 +83,13 @@ def _carimbar_macro(cfg: dict) -> None:
     cfg["macro"] = {
         **cfg.get("macro", {}),
         "ipca_deflatores": macro.ipca_deflatores_anuais(cfg["capm"].get("rf_ciclo_anos", 10)),
+        # GROW-02: π_ciclo do g_cap na MESMA janela do rf (rf_ciclo_anos) — a simetria
+        # rf↔π_ciclo que mantém o valuation invariante à inflação. Fallback offline = o
+        # default macro.pi_ciclo do config (degradação graciosa quando o BCB falha).
+        "pi_ciclo": macro.ipca_ciclo_para_g(
+            cfg["macro"].get("pi_ciclo", cfg["capm"]["selic_fallback"]),
+            cfg["capm"].get("rf_ciclo_anos", 10),
+        ),
     }
 
 
