@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
-stopped_at: Phase 11 context gathered
+stopped_at: Phase 11 plan 02 complete (11-03 next)
 last_updated: "2026-07-17T00:14:25.018Z"
 last_activity: 2026-07-17
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 23
-  completed_plans: 21
-  percent: 91
+  completed_plans: 22
+  percent: 96
 ---
 
 # Project State
@@ -33,15 +33,16 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 11 (crescimento-g-grow) — EXECUTING
-Plan: 2 of 3
-Status: Ready to execute
+Plan: 3 of 3 (11-01 ✓, 11-02 ✓ · `a461147`)
+Status: Ready to execute plan 11-03
 Last activity: 2026-07-17
 
-Progress: [█████████░] 91%
+Progress: [█████████▓] 96%
 
-**Suíte:** `486 passed, 1 skipped, 27 deselected, 1 xfailed` — 0 XPASS (era 483/34: +3 invariantes
-extraídos WR-04, −7 goldens de nível ITUB4 deletados). Sobra **1 xfailed** = BLIND-02b (vira verde na
-Fase 12) e **1 skipped** = jackknife (Fase 14). **PRIM-05 cumprido: o golden ITUB4=32,88 NÃO existe
+**Suíte:** `490 passed, 1 skipped, 27 deselected, 1 xfailed` — 0 XPASS (era 486: +4 dos testes que o
+`g_cap` do 11-02 tocou — 3 `contrato` de divergência re-tunados COM o método, 1 `invariante` de nota
+decouplado do nível v2.3 e renomeado `test_nenhuma_nota_de_excecao_e_orfa`). Sobra **1 xfailed** =
+BLIND-02b (vira verde na Fase 12) e **1 skipped** = jackknife (Fase 14). **PRIM-05 cumprido: o golden ITUB4=32,88 NÃO existe
 mais no repo** (DELETADO, nunca atualizado — critério de saída da Fase 10). Nenhum assert vivo de nível
 ITUB4 sobra (só prosa BLIND-02b/Fase-12 e os honeypots do detector BLIND-04a).
 
