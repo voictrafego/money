@@ -6,17 +6,16 @@ motor recalcula método: todos COMPÕEM primitivas já testadas do `core/` (`len
 `ddm.ddm_dois_estagios`, `ddm.valor_gordon`, `normalizacao.base_normalizada`) — consistência
 cross-modo (FIX-04). `core/ddm.py`/`lentes.py`/`capm.py`/`normalizacao.py` ficam INTOCADOS.
 
-Motores (arquétipo → motor primário):
-- RIM (ENG-02 / CAL-01, banco/seguradora): RIM híbrido multiestágio — VPA + janela explícita do
-  excesso de ROE sobre Ke + VALOR TERMINAL (perpetuidade de Gordon sobre o RI terminal, via
-  `ddm.valor_gordon`). A janela converge a um excesso sustentável limitado; o terminal cresce a
-  `g_terminal` ≤ PIB. O Ke é o ÚNICO do sistema (KE-01/Fase 12): o RIM recebe `a.ke` PRONTO do
-  chamador (CAPM local sobre o β setorial+Blume), NÃO recomputa um Ke estrutural nem clampa — a
-  perpetuidade converge pelo piso do Blume, por aritmética.
-- Lucro normalizado (ENG-03, cíclica): P/L justo (Gordon) sobre o lucro médio 7–10a.
-- DCF de crescimento (ENG-04, compounder): reuso PURO de `ddm.ddm_dois_estagios` com LUCRO
-  no lugar de dividendo, modelo-H (conservador). "DCF sobre lucro, aproximação capital-light".
-- NAV contábil (ENG-05, holding): VPA como piso patrimonial (não SOTP por segmento, D-03).
+Caminho ÚNICO de valor (ENG-01, Fase 13): TODO arquétipo roda o `rim` — a política do arquétipo
+(`arquetipo.ARQUETIPO_ANCORA_ROE`) só varia o INSUMO (o ROE-âncora e o g terminal), não a fórmula.
+- RIM (ENG-02 / CAL-01): RIM híbrido multiestágio — VPA + janela explícita do excesso de ROE sobre
+  Ke + VALOR TERMINAL (perpetuidade de Gordon sobre o RI terminal, via `ddm.valor_gordon`). A janela
+  converge a um excesso sustentável limitado; o terminal cresce a `g_terminal` ≤ PIB (ou fade-only
+  quando `g_terminal is None`, o carve-out CONCESSAO_FINITA). O Ke é o ÚNICO do sistema (KE-01/Fase
+  12): o RIM recebe `a.ke` PRONTO do chamador (CAPM local sobre o β setorial+Blume), NÃO recomputa um
+  Ke estrutural nem clampa — a perpetuidade converge pelo piso do Blume, por aritmética.
+- NAV contábil (derivador de piso patrimonial): VPA como piso (não SOTP por segmento, D-03). Não é
+  mais motor primário — o `report` o usa como derivador de book para a política HOLDING do RIM.
 """
 
 from __future__ import annotations
@@ -31,12 +30,7 @@ Number = Optional[float]
 
 # Rótulos humanos de cada motor — exibidos no render (o Plan 02 consome no funil).
 MOTOR_ROTULO = {
-    "rim": "RIM — VPA + VP do excesso de ROE sobre Ke (banco/seguradora)",
-    "seguradora": "DDM-franquia — Gordon sobre o dividendo sustentável (seguradora capital-light)",
-    "normalizado": "P/L justo sobre lucro normalizado (média 7–10a)",
-    "dcf": "DCF sobre lucro, aproximação capital-light",
-    "nav": "NAV contábil (piso patrimonial), não SOTP por segmento",
-    "ddm": "DDM — lente conservadora (não é o motor deste arquétipo)",
+    "rim": "RIM — VPA + VP do excesso de ROE sobre Ke (caminho único de valor)",
 }
 
 
@@ -144,52 +138,6 @@ def rim(
         ri_por_ano=ris,
         vp_terminal=vp_terminal,
     )
-
-
-def lucro_normalizado(lpa_normalizado: float, ke: float, g_estavel: float) -> Number:
-    """P/L justo (Gordon) sobre o LPA já normalizado (média 7–10a) — cíclica (ENG-03, D-04).
-
-    Retorna `lpa_normalizado × fair_PE`, com `fair_PE = (1+g)/(Ke−g)` implícito no Gordon
-    (`ddm.valor_gordon`). O lucro médio 7–10a é resolvido pelo CHAMADOR via
-    `norm.media_ciclo(serie, anos_media=cfg["motores"]["ciclica"]["anos_media"])` — a média
-    through-cycle, NÃO o endpoint Theil-Sen de base_normalizada (PRIM-01, split do estimador);
-    aqui a função já recebe o LPA normalizado (fronteira FIX-04). None se `ke−g_estavel<=0` ou input None.
-    """
-    return ddm.valor_gordon(dpa1=lpa_normalizado, ke=ke, g=g_estavel)
-
-
-def dcf_crescimento(
-    lpa_valuation: float,
-    g_alto: float,
-    g_estavel: float,
-    ke: float,
-    n: int,
-    decrescente: bool = True,
-) -> Number:
-    """DCF de crescimento por reuso PURO de `ddm.ddm_dois_estagios` (D-05, ddm.py INTOCADO).
-
-    Alimenta o LUCRO no lugar do dividendo: `dpa_inicial = lpa_valuation × (1 + g_alto)` (lucro
-    do ano 1, NÃO × payout). Modelo-H por default (`decrescente=True`) — conservador (Pitfall 4).
-    Rótulo honesto: "DCF sobre lucro, aproximação capital-light". Devolve o valor intrínseco
-    (positivo e finito) ou None se `ke−g_estavel<=0`, input None ou `n<=0`.
-    """
-    if lpa_valuation is None or g_alto is None or n is None or n <= 0:
-        return None
-    # Trava defensiva g_alto <= ke (IN-02, espelha ddm.matriz_sensibilidade): com decrescente=False
-    # e g_alto>ke o estágio explícito infla em vez de convergir. O chamador do report já pré-trava,
-    # mas o motor é primitiva pura e independente — protege o chamador direto.
-    if ke is not None:
-        g_alto = min(g_alto, ke)
-    dpa_inicial = lpa_valuation * (1 + g_alto)
-    res = ddm.ddm_dois_estagios(
-        dpa_inicial=dpa_inicial,
-        g_alto=g_alto,
-        n=n,
-        g_estavel=g_estavel,
-        ke=ke,
-        decrescente=decrescente,
-    )
-    return res.valor_intrinseco if res else None
 
 
 def nav_contabil(patrimonio_liquido: float, num_acoes: float) -> Number:

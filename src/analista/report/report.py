@@ -198,201 +198,118 @@ def _roe_through_cycle(c: CompanyData, rim_cfg: dict) -> Optional[float]:
     return statistics.mean(validos) if stat == "media" else statistics.median(validos)
 
 
-def _intrinseco_por_motor(
-    motor: str, c: CompanyData, a: AnaliseAcao, cfg: dict
-) -> Optional[float]:
-    """Dispatch PURO motor→intrínseco (extraído do funil, VER-02 03-03) — reutilizável.
+def _roe0_ciclico(c: CompanyData, cfg: dict, vpa0: Optional[float]) -> Optional[float]:
+    """roe0-âncora da CÍCLICA (política 'normalizado'): LPA normalizado deflacionado / VPA0 (PRIM-04).
 
-    Devolve o valor intrínseco pelo motor dado consumindo SEMPRE os números-síntese
-    (`*_valuation`, `norm.base_normalizada`, `lentes.vpa`), NUNCA o cru (FIX-04/Pitfall 2),
-    com a MESMA lógica do dispatch do funil (rim / normalizado / dcf / nav). Caso `"ddm"`:
-    o motor primário deste perfil é o próprio bloco DDM, então devolve o mid da banda
-    (`vmin/vmax` já calculada) quando disponível, senão None. Never-raise: qualquer insumo
-    degenerado/erro → None. É consumido pelo dispatch principal (comportamento idêntico ao
-    baseline) E pelo ramo fronteiriço (um motor por candidato).
-
-    Nota: a guarda de não-positivo (`valor <= 0` não é preço-alvo) fica no chamador — o funil
-    a aplica com alerta honesto; o ramo fronteiriço a aplica ao coletar os candidatos."""
+    A série de lucro é trazida a REAIS DO ÚLTIMO ANO (deflacionada por IPCA) ANTES da MÉDIA
+    through-cycle (`norm.media_ciclo`, NÃO o endpoint Theil-Sen): uma cíclica com prejuízo recente
+    vale pela força de lucro do meio do ciclo, não pelo ano atual. Os deflatores são LIDOS de cfg
+    (carimbados nos entry points, como o rf_local) — a engine permanece offline/determinística.
+    Fallback never-raise: deflatores ausentes/vazios/sem casar ano → série nominal. None se o LPA
+    normalizado ou o VPA0 degeneram."""
+    if vpa0 is None or vpa0 <= 0:
+        return None
+    cic = (cfg or {}).get("motores", {}).get("ciclica", {})
+    # WR-02: coage as chaves do carimbo para int (round-trip YAML pode entregá-las como string);
+    # sem isso `an in defl` casa ZERO anos e a série sai vazia, matando o motor cíclico em silêncio.
+    _defl_raw = (cfg or {}).get("macro", {}).get("ipca_deflatores") or {}
+    defl = {}
+    for _ano, _fator in _defl_raw.items():
+        try:
+            defl[int(_ano)] = float(_fator)
+        except (TypeError, ValueError):
+            continue
     ult = c.ultimo_ano()
-    # GROW-01/D-03: g da perpetuidade DERIVADO na engine (nunca digitado) a partir do IPCA
-    # de ciclo (π_ciclo, carimbado nos entry points, MESMA janela do rf) e do PIB real
-    # estrutural (knob). g_cap = (1+π_ciclo)(1+PIB_real)−1 ≈ 7,28% — a FONTE ÚNICA (D-04) do
-    # crescimento terminal, consumida por perpetuidade DDM e RI terminal do RIM. Leitura
-    # defensiva (o fallback == default do config, comportamento idêntico com ou sem a chave).
+    serie_lucro = [
+        c.lucro_liquido[an] * defl[an]
+        for an in c.anos_ordenados()
+        if an in c.lucro_liquido and an in defl
+    ]
+    if not serie_lucro:
+        serie_lucro = c.serie("lucro_liquido")
+    lpa_norm = mult.lpa(
+        norm.media_ciclo(
+            serie_lucro,
+            anos_media=cic.get("anos_media", 10), winsor=cic.get("winsor", 0.10),
+        ),
+        c.num_acoes.get(ult),
+    )
+    if lpa_norm is None:
+        return None
+    return lpa_norm / vpa0
+
+
+def _derivar_insumo(
+    politica: str, c: CompanyData, ke: Optional[float], g_cap: float, rim_cfg: dict, cfg: dict
+) -> tuple:
+    """Deriva o insumo do RIM único pela política do arquétipo (ENG-01/ENG-03, §Mapa de âncoras).
+
+    Devolve `(roe0, roe_terminal, g_terminal, base_book)`. O RIM é SEMPRE a fórmula; a política só
+    escolhe o ROE-âncora da janela e o g terminal:
+    - `through_cycle` (financeira/madura): roe0 = mediana through-cycle (`roe_valuation`);
+    - `through_cycle_sem_g` (CONCESSAO_FINITA): idem, mas `g_terminal = None` — o carve-out do spike
+      13-01 (fade-only, sem g de inflação: sob ICPC 01 o book já capitaliza a receita regulatória, e
+      o g_cap embute IPCA → double-count);
+    - `normalizado` (cíclica): roe0 = LPA normalizado deflacionado / VPA0;
+    - `atual_fade` (crescimento): roe0 = ROE de qualidade ATUAL (endpoint), fade sobre n_fade;
+    - `nav_piso` (holding): roe0 = roe_terminal = Ke ⇒ excesso ≡ 0 ⇒ V = book (NAV/piso patrimonial).
+    `g_terminal` (exceto o carve-out) = identidade fechada por empresa g_T = max(0, min(ROE_T×ret,
+    g_cap)) (GROW-03); usa g_cap quando o ROE through-cycle degrada (None). Never-raise: insumo
+    degenerado propaga None (o RIM já é never-raise)."""
+    ult = c.ultimo_ano()
+    base_book = lentes.vpa(c.patrimonio_liquido.get(ult), c.num_acoes.get(ult))
+    roe_terminal = _roe_through_cycle(c, rim_cfg)
+    # Piso 0 (WR-01): payout_valuation NÃO é capado em 1.0 (TAEE11 ≈ 216%), então a retenção pode ser
+    # negativa; g_T ∈ [0, g_cap] evita que um g_T < 0 encolha (ou < −1 inverta) o RI terminal.
+    retencao = 1.0 - (c.payout_valuation() or 0.0)
+    g_T = (max(0.0, min(roe_terminal * retencao, g_cap))
+           if roe_terminal is not None else g_cap)
+
+    if politica == "normalizado":
+        return _roe0_ciclico(c, cfg, base_book), roe_terminal, g_T, base_book
+    if politica == "atual_fade":
+        return c.roe_qualidade_atual(), roe_terminal, g_T, base_book
+    if politica == "through_cycle_sem_g":
+        # Carve-out CONCESSAO_FINITA (spike 13-01): terminal fade-only (g_terminal=None), sem
+        # reintroduzir o g de inflação (g_cap embute IPCA → double-count sob ICPC 01).
+        return c.roe_valuation(), roe_terminal, None, base_book
+    if politica == "nav_piso":
+        # HOLDING: piso patrimonial = NAV (VPA). roe0 = roe_terminal = Ke ⇒ excesso ≡ 0 ⇒ V = book.
+        return ke, ke, None, base_book
+    # "through_cycle" (financeira/madura, default por eliminação).
+    return c.roe_valuation(), roe_terminal, g_T, base_book
+
+
+def _valor_rim(c: CompanyData, a: AnaliseAcao, cfg: dict) -> Optional[float]:
+    """Caminho ÚNICO de valor (ENG-01): deriva o insumo pela política do arquétipo e chama SEMPRE
+    `motores.rim` com o Ke ÚNICO (`a.ke`, Fase 12) e o g_T fechado (Fase 11) prontos — NÃO recomputa
+    Ke/g_cap. Colapsa os antigos 6 ramos (rim/normalizado/dcf/nav/ddm + rota seguradora) num só.
+    Never-raise: qualquer insumo degenerado/erro → None (`motores.rim` já é never-raise)."""
+    # GROW-01/D-03: g da perpetuidade DERIVADO na engine (nunca digitado) — g_cap =
+    # (1+π_ciclo)(1+PIB_real)−1 ≈ 7,28%, a FONTE ÚNICA (D-04). Leitura defensiva (fallback == default).
     g_cap = (1.0 + cfg.get("macro", {}).get("pi_ciclo", 0.0518)) * (
         1.0 + cfg["ddm"].get("pib_real", 0.02)
     ) - 1.0
-    mot_cfg = (cfg or {}).get("motores", {})
+    rim_cfg = (cfg or {}).get("motores", {}).get("rim", {})
+    politica = arquetipo.ARQUETIPO_ANCORA_ROE.get(a.arquetipo, "through_cycle")
     try:
-        # Alavanca 3 (D-03/D-04): rota de SEGURADORA capital-light — ANTES do bank-RIM.
-        # A seguradora (BBSE3, setor CVM "...Seguradoras...") tem o valor na FRANQUIA/fluxo de
-        # dividendo, não no book minúsculo (VPA≈5,35) que o RIM ancora — o RIM a subvaloriza.
-        # Rota mínima e reusável (D-08, zero knob numérico novo): Gordon de estágio único sobre o
-        # dividendo SUSTENTÁVEL (`dpa_recorrente`, NÃO trailing — Pitfall 4) com o Ke do CAPM ao
-        # vivo (`a.ke`, o Ke único setorial+Blume — Pitfall 3) e g = g_cap (~7,28%, derivado).
-        # Detecção reusa `arquetipo._setor_casa_token` (limite de palavra), NÃO reimplementa match.
-        # Never-raise: dpa/ke None ou valor_gordon None (ke−g ≤ 0) → NÃO força a rota, degrada para
-        # o RIM legado. Rótulo honesto `a.motor="seguradora"` (exige `excecao_nota` no gate, D-05).
-        if motor == "rim" and arquetipo._setor_casa_token(
-            (c.setor or "").lower(), ["seguradora"]
-        ):
-            dpa_sust = c.dpa_recorrente()
-            if dpa_sust is not None and a.ke is not None:
-                v_seg = ddm.valor_gordon(dpa_sust * (1 + g_cap), a.ke, g_cap)
-                if v_seg is not None:
-                    a.motor = "seguradora"
-                    return v_seg
-            # dado degenerado → cai para o RIM legado (never-raise, não força a rota).
-        if motor == "rim":
-            rim_cfg = mot_cfg.get("rim", {})
-            # GROW-03: identidade fechada do g terminal por EMPRESA — o RI da perpetuidade
-            # cresce ao MENOR entre o g sustentável do próprio ticker (ROE_T × retenção) e o
-            # teto macro g_cap (≤ PIB nominal). Satura em g_cap quando ROE_T×ret é alto; usa
-            # g_cap quando o ROE through-cycle degrada (None). Substitui o antigo g_terminal fixo.
-            # Piso 0 (WR-01): payout_valuation NÃO é capado em 1.0 (TAEE11 ≈ 216%), então a
-            # retenção pode ser negativa; sem o piso, um g_T < 0 encolheria — e a g_T < −1
-            # inverteria o sinal — do RI terminal (número silenciosamente errado). g_T ∈ [0, g_cap].
-            _retencao = (1.0 - (c.payout_valuation() or 0.0))
-            _roe_term = _roe_through_cycle(c, rim_cfg)
-            _g_T = max(0.0, min(_roe_term * _retencao, g_cap)) if _roe_term is not None else g_cap
-            res_rim = motores.rim(
-                vpa0=lentes.vpa(c.patrimonio_liquido.get(ult), c.num_acoes.get(ult)),
-                roe0=c.roe_valuation(),
-                ke=a.ke,  # KE-01/D-09: o RIM recebe o Ke ÚNICO já pronto (β setorial+Blume), não recomputa
-                retencao=_retencao,
-                n=rim_cfg.get("n_fade", 10),
-                excesso_sustentavel=rim_cfg.get("excesso_sustentavel", 0.0),
-                g_terminal=_g_T,
-                ke_g_spread_min=rim_cfg.get("ke_g_spread_min", 0.03),
-                roe_terminal=_roe_term,
-            )
-            return res_rim.valor_intrinseco if res_rim else None
-        if motor == "normalizado":
-            cic = mot_cfg.get("ciclica", {})
-            # PRIM-04: a série de lucro é trazida a REAIS DO ÚLTIMO ANO (deflacionada por IPCA)
-            # ANTES da média through-cycle — o motor cíclico parava de somar reais nominais de
-            # anos diferentes (IPCA acumulado ~58% em 10 anos subvalorizava cíclicas só por
-            # nominalidade). Os deflatores são LIDOS de cfg (carimbados nos entry points, como o
-            # rf_local) — a engine permanece offline/determinística, NUNCA chama macro/requests.
-            # Fallback never-raise: deflatores ausentes/vazios → série nominal (comportamento
-            # antigo). O estimador continua a MÉDIA through-cycle (media_ciclo), NÃO o endpoint
-            # Theil-Sen de base_normalizada: uma cíclica com prejuízo recente vale pela força de
-            # lucro do meio do ciclo, não pelo ano atual (RESEARCH §Estimator split, PRIM-01).
-            # WR-02: coage as chaves do carimbo para int (um round-trip YAML pode entregá-las
-            # como string) — sem isso `an in defl` (an inteiro) casa ZERO anos e a série sai
-            # vazia, matando o motor cíclico em silêncio. never-raise: chave não-inteira é
-            # ignorada.
-            _defl_raw = (cfg or {}).get("macro", {}).get("ipca_deflatores") or {}
-            defl = {}
-            for _ano, _fator in _defl_raw.items():
-                try:
-                    defl[int(_ano)] = float(_fator)
-                except (TypeError, ValueError):
-                    continue
-            serie_lucro = [
-                c.lucro_liquido[an] * defl[an]
-                for an in c.anos_ordenados()
-                if an in c.lucro_liquido and an in defl
-            ]
-            # WR-02 (defesa em profundidade): carimbo presente mas SEM casar nenhum ano da
-            # empresa → série deflacionada vazia → o motor cíclico sumiria (None). Cai na série
-            # nominal (never-raise), o MESMO destino de "deflatores ausentes/vazios", em vez de
-            # o motor morrer em silêncio.
-            if not serie_lucro:
-                serie_lucro = c.serie("lucro_liquido")
-            lpa_mid = mult.lpa(
-                norm.media_ciclo(
-                    serie_lucro,
-                    anos_media=cic.get("anos_media", 10), winsor=cic.get("winsor", 0.10),
-                ),
-                c.num_acoes.get(ult),
-            )
-            return motores.lucro_normalizado(lpa_mid, a.ke, g_cap)
-        if motor == "dcf":
-            return motores.dcf_crescimento(
-                c.lpa_valuation(), a.g_alto, g_cap, a.ke,
-                mot_cfg.get("crescimento", {}).get("n_anos_explicito", 10),
-            )
-        if motor == "nav":
-            return motores.nav_contabil(
-                c.patrimonio_liquido.get(ult), c.num_acoes.get(ult)
-            )
-        if motor == "ddm":
-            if a.vmin is not None and a.vmax is not None:
-                return (a.vmin + a.vmax) / 2.0
-            return None
+        roe0, roe_terminal, g_terminal, base_book = _derivar_insumo(
+            politica, c, a.ke, g_cap, rim_cfg, cfg
+        )
+        res = motores.rim(
+            vpa0=base_book,
+            roe0=roe0,
+            ke=a.ke,  # KE-01/D-09: Ke ÚNICO já pronto (β setorial+Blume), não recomputa
+            retencao=1.0 - (c.payout_valuation() or 0.0),
+            n=rim_cfg.get("n_fade", 10),
+            excesso_sustentavel=rim_cfg.get("excesso_sustentavel", 0.0),
+            g_terminal=g_terminal,
+            ke_g_spread_min=rim_cfg.get("ke_g_spread_min", 0.03),
+            roe_terminal=roe_terminal,
+        )
+        return res.valor_intrinseco if res else None
     except Exception:
         return None
-    return None
-
-
-def _veredito_fronteirico(a: AnaliseAcao, c: CompanyData, cfg: dict) -> None:
-    """VER-02 (03-03): caso-fronteira → a ferramenta assume a dúvida em voz alta.
-
-    Quando `a.arquetipo_fronteirico` (conflito real de sinais da Fase 1), roda o motor de CADA
-    arquétipo candidato (`a.arquetipo_candidatos`) via `_intrinseco_por_motor` (o MESMO dispatch
-    do funil, um motor por candidato), coleta os intrínsecos que resolveram (não-None, > 0) e
-    monta o range [menor..maior] + a bandeira "classificação incerta entre X e Y" (D-06). O
-    veredito recebe o prefixo `VERIFICAR`: `selo.montar_selo` (selo.py:119) já suprime faixa/
-    rótulo, então o selo NÃO estampa faixa cravada no fronteiriço (reusa a supressão do
-    VERIFICAR); o range/candidatos aparecem como CONTEÚDO exibido, não como selo.
-
-    Degradação honesta: candidato cujo motor devolve None/≤0 é filtrado; com exatamente 1
-    resolvido exibe só esse valor (sem forçar um range de 1 ponto); com 0 resolvido informa que
-    os motores candidatos não estimaram preço-alvo. Sobrescreve o veredito do VER-01 (precedência
-    no fronteiriço). NÃO toca `selo.py`."""
-    pares: List[tuple] = []
-    vistos = set()
-    for cand in a.arquetipo_candidatos:
-        if cand in vistos:
-            continue
-        vistos.add(cand)
-        motor = arquetipo.ARQUETIPO_MOTOR.get(cand)
-        if motor is None:
-            continue
-        val = _intrinseco_por_motor(motor, c, a, cfg)
-        if val is not None and val > 0:
-            pares.append((cand, val))
-
-    a.arquetipo_incerto = True
-    a.candidatos_intrinsecos = pares
-
-    if len(pares) >= 2:
-        valores = [v for _, v in pares]
-        menor, maior = min(valores), max(valores)
-        a.veredito_range = (menor, maior)
-        primeiro, ultimo = pares[0][0], pares[-1][0]
-        a.veredito = (
-            f"VERIFICAR — caso-fronteira: classificação incerta entre {primeiro} e {ultimo}. "
-            f"Intrínseco no range R$ {_br(menor)}–{_br(maior)} conforme o arquétipo assumido."
-        )
-        a.alertas.append(
-            "Caso-fronteira (VER-02): os sinais da Fase 1 conflitam — a ferramenta assume a "
-            f"dúvida. Rodou o motor de cada arquétipo candidato ({primeiro}, {ultimo}); o range "
-            f"R$ {_br(menor)}–{_br(maior)} é o span honesto da classificação incerta, não um "
-            "preço-alvo cravado."
-        )
-    elif len(pares) == 1:
-        cand, val = pares[0]
-        a.veredito_range = None
-        a.veredito = (
-            f"VERIFICAR — caso-fronteira: classificação incerta, mas só o motor do arquétipo "
-            f"{cand} estimou preço-alvo (R$ {_br(val)}); os demais candidatos degradaram."
-        )
-        a.alertas.append(
-            "Caso-fronteira (VER-02): os sinais conflitam, porém apenas um motor candidato "
-            f"resolveu preço-alvo ({cand}: R$ {_br(val)}) — exibido sem forçar um range de 1 ponto."
-        )
-    else:
-        a.veredito_range = None
-        a.veredito = (
-            "VERIFICAR — caso-fronteira: os sinais de arquétipo conflitam e nenhum motor "
-            "candidato estimou preço-alvo confiável."
-        )
-        a.alertas.append(
-            "Caso-fronteira (VER-02): classificação incerta e os motores candidatos não "
-            "estimaram preço-alvo — veredito de preço suspenso sem estampar faixa falsa."
-        )
 
 
 def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
@@ -501,9 +418,11 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     a.arquetipo = arq.chave
     a.arquetipo_fronteirico = arq.fronteirico
     a.arquetipo_candidatos = arq.candidatos
-    motor = arquetipo.ARQUETIPO_MOTOR.get(arq.chave)
-    a.motor = motor or "pendente_fase_2"
-    a.motor_pendente = a.motor != "ddm"   # D-06: paridade com o predicado de suspensão (não drift)
+    # ENG-01 (Fase 13): caminho ÚNICO de valor — TODO arquétipo roda o RIM (a política do arquétipo
+    # só varia o insumo). NÃO consome ARQUETIPO_MOTOR (legado; morre no Plano 06); a.motor é sempre
+    # "rim" (a rota própria de seguradora e os rótulos ddm/normalizado/dcf/nav morreram).
+    a.motor = "rim"
+    a.motor_pendente = False
 
     # --- Dispatch do motor do arquétipo (Fase 2 v2.2, ENG-02..05) ---
     # O motor primário resolvido CALCULA e GRAVA o intrínseco do arquétipo (D-06: motor
@@ -513,15 +432,10 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     # rodando SEMPRE (agora como lente conservadora onde motor != "ddm") — cálculo intocado.
     # Leitura defensiva dos knobs do motor (paridade com classificar): config antigo sem
     # o bloco `motores:` degrada para os defaults do config.yaml sem quebrar o never-raise (WR-03).
-    # Dispatch extraído em `_intrinseco_por_motor` (VER-02 03-03): mesma lógica de antes, agora
-    # reutilizada também pelo ramo fronteiriço (um motor por candidato). motor == "ddm": o helper
-    # devolve None aqui (a banda ainda não foi calculada) — o bloco DDM abaixo é o motor primário.
-    a.intrinseco_motor = _intrinseco_por_motor(a.motor, c, a, cfg)
-    # Rótulo do motor computado APÓS o dispatch: o ramo de seguradora (04-03) muta `a.motor` para
-    # "seguradora" DENTRO de `_intrinseco_por_motor`. Computar antes gravaria o rótulo do RIM sobre o
-    # número Gordon-franquia — atribuição de método auto-contraditória na tela (CR-01, fidelidade de
-    # método = Core Value).
-    a.motor_rotulo = motores.MOTOR_ROTULO.get(a.motor, "")
+    # Caminho ÚNICO (ENG-01): `_valor_rim` deriva o insumo pela política do arquétipo
+    # (ARQUETIPO_ANCORA_ROE) e chama SEMPRE motores.rim com o Ke/g_T prontos (never-raise → None).
+    a.intrinseco_motor = _valor_rim(c, a, cfg)
+    a.motor_rotulo = motores.MOTOR_ROTULO["rim"]
 
     # Guarda-corpo do intrínseco do motor (paridade com _guarda_faixa_ddm / SAN-01): um valor
     # NÃO-POSITIVO (PL/lucro normalizado negativo: holding sem patrimônio, cíclica em fundo de
@@ -687,15 +601,6 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             f"Roteamento: {a.arquetipo} → motor '{a.motor}'. Banda de preço indisponível "
             f"(motor e DDM degradaram); veredito de preço suspenso sem estampar faixa falsa."
         )
-
-    # --- VER-02: caso-fronteira → assume a dúvida (range dos candidatos + bandeira) ---
-    # Precedência sobre o VER-01: quando a Fase 1 marcou conflito real de sinais
-    # (`arquetipo_fronteirico`), a classificação em si é incerta, então NÃO se crava um selo
-    # único — roda o motor de cada candidato e sobrescreve o veredito com o range [menor..maior]
-    # + a bandeira "classificação incerta entre X e Y" (prefixo VERIFICAR suprime a faixa do selo,
-    # selo.py:119). Não-fronteiriço: nada roda; o veredito do VER-01 segue mandando.
-    if a.arquetipo_fronteirico:
-        _veredito_fronteirico(a, c, cfg)
 
     # --- Guarda-corpo anti-aberração SAN-01 (Plan 03-02) ---
     # Roda DEPOIS de a cadeia de veredito estar montada e ANTES de `montar_selo` (abaixo), de
