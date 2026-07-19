@@ -33,21 +33,44 @@ from typing import List, Optional
 # medem 0.49-1.24 na escala de resíduos; o corte fica ~0.35). Precede o guard de <3 pontos.
 _SINAL_PREJUIZO_CICLICO = 10.0
 
-# 5 chaves de arquétipo, 1:1 com os motores primários (D-03/ENG-01) --------------- #
+# Chaves de arquétipo, 1:1 com a política de derivação de ROE-âncora (D-01/D-03/ENG-03) - #
+# O antigo rótulo regulada foi CINDIDO em dois herdeiros (D-05): PAGADORA_MADURA (o novo
+# default-por-eliminação — empresa sem sinal roda RIM normal, não mais o balde da transmissora)
+# e CONCESSAO_FINITA (o hard-route de `eh_concessionaria`, carve-out declarado ANTES do hold-out
+# — a mecânica do g é o Plano 03). A string do rótulo antigo deixa de ser devolvida.
 FINANCEIRA = "financeira"            # banco/seguradora → RIM
-PAGADORA_REGULADA = "pagadora_regulada"  # transmissora/saneamento madura → DDM (já existe)
+PAGADORA_MADURA = "pagadora_madura"  # madura sem sinal (default por eliminação) → RIM normal
+CONCESSAO_FINITA = "concessao_finita"  # concessão de vida finita (transmissora/saneamento) → RIM carve-out
 CICLICA = "ciclica"                  # lucro oscilante → lucro normalizado
 CRESCIMENTO = "crescimento"          # ROE alto + retenção → DCF multi-estágio (compounder)
 HOLDING = "holding"                  # participações → NAV/SOTP (stretch)
+
+# Registry arquétipo → POLÍTICA de derivação de ROE-âncora (ENG-03, §"Mapa de âncoras"). É o
+# mapa que o RIM único (Plano 03) consome para derivar o roe0-âncora com erro limitado. Os
+# valores são strings de POLÍTICA (não ids de motor): CONCESSAO_FINITA usa "through_cycle_sem_g"
+# (o carve-out; a mecânica do g_terminal=None fica no Plano 03).
+ARQUETIPO_ANCORA_ROE = {
+    FINANCEIRA: "through_cycle",
+    PAGADORA_MADURA: "through_cycle",
+    CONCESSAO_FINITA: "through_cycle_sem_g",
+    CICLICA: "normalizado",
+    CRESCIMENTO: "atual_fade",
+    HOLDING: "nav_piso",
+}
 
 # Registry arquétipo → motor primário (ENG-01). A Fase 2 plugou os 4 motores que faltavam
 # (RIM/lucro normalizado/DCF/NAV do core/motores.py) — registry 5/5 preenchido. Os ids batem
 # 1:1 com o dispatch no funil (report.analisar_acao) e com o predicado de suspensão do veredito
 # (motor != "ddm"): o selo ainda consome só o DDM até VER-01/Fase 3, então onde o motor do
 # arquétipo não é o DDM o veredito de preço segue SUSPENSO (D-06) para não regredir o ITUB4.
+# LEGADO — a remover no Plano 06 (com o último consumidor, freio.motor_pendente). Mantido VIVO
+# só para não quebrar `freio.motor_pendente` entre as ondas: AMBOS os herdeiros do antigo
+# regulada (PAGADORA_MADURA e CONCESSAO_FINITA) mapeiam para "ddm", espelhando o antigo
+# rótulo regulada → "ddm". Assim `ARQUETIPO_MOTOR.get(arq.chave) != "ddm"` segue idêntico.
 ARQUETIPO_MOTOR = {
     FINANCEIRA: "rim",
-    PAGADORA_REGULADA: "ddm",
+    PAGADORA_MADURA: "ddm",
+    CONCESSAO_FINITA: "ddm",
     CICLICA: "normalizado",
     CRESCIMENTO: "dcf",
     HOLDING: "nav",
@@ -128,11 +151,11 @@ def classificar(c: "CompanyData", cfg: dict) -> ResultadoArquetipo:
 
     1. HARD-ROUTE financeira — setor contém token financeiro → FINANCEIRA (soberano, sem
        quantitativo). O SETOR_ATIV da CVM é confiável para financeiras.
-    2. HARD-ROUTE regulada — `eh_concessionaria` E setor NÃO contém token de exclusão
-       (guarda anti-Petróleo OBRIGATÓRIA) → PAGADORA_REGULADA.
+    2. HARD-ROUTE concessão — `eh_concessionaria` E setor NÃO contém token de exclusão
+       (guarda anti-Petróleo OBRIGATÓRIA) → CONCESSAO_FINITA (carve-out).
     3. REFINO quantitativo p/ todo o resto — dispersão dos resíduos do ajuste log-linear do
        lucro (ou prejuízo na janela) >= corte → cíclica; ROE alto E retenção alta →
-       crescimento; nenhum → pagadora_regulada (default maduro).
+       crescimento; nenhum → PAGADORA_MADURA (default maduro por eliminação).
     4. CONFLITO — >= 2 candidatos distintos → fronteiriço honesto (confiança baixa).
 
     Cada sinal é guardado com `is not None` ANTES de qualquer comparação (Pitfall 2): sob
@@ -157,7 +180,7 @@ def classificar(c: "CompanyData", cfg: dict) -> ResultadoArquetipo:
     # Exclusão anti-Petróleo pelo MESMO casamento por limite de palavra do hard-route financeiro
     # (IN-01): uma única estratégia consistente evita que um substring solto mis-roteie a regulada.
     if c.eh_concessionaria and not _setor_casa_token(setor, regulada_excluir):
-        return ResultadoArquetipo(PAGADORA_REGULADA, confianca="alta")
+        return ResultadoArquetipo(CONCESSAO_FINITA, confianca="alta")
 
     # 3. REFINO quantitativo -------------------------------------------------- #
     # ROE de QUALIDADE ATUAL (endpoint), NÃO a mediana through-cycle de roe_valuation (PRIM-02):
@@ -177,7 +200,7 @@ def classificar(c: "CompanyData", cfg: dict) -> ResultadoArquetipo:
             and retencao is not None and retencao >= retencao_alta_min):
         candidatos.append(CRESCIMENTO)
     if not candidatos:
-        candidatos.append(PAGADORA_REGULADA)  # pagadora madura por eliminação
+        candidatos.append(PAGADORA_MADURA)  # pagadora madura por eliminação (RIM normal, não o balde da transmissora)
 
     # 4. CONFLITO real de sinais → fronteiriço honesto (D-01) ----------------- #
     # `candidatos` sempre populado (debug/Fase 3 e must_have "inclui X nos candidatos");
