@@ -267,12 +267,23 @@ saída é o **do livro** — que o app já tem quase certo e **não deve trocar*
   - **NÃO deletar o Ranking** — rebaixar e re-rotular. Deletar joga fora os Cap. 11-12.
 **Plans**: 7 plans (6 waves — serializados por `report.py`/`config.yaml`/`tests/classificacao.yaml` compartilhados; o commit de knob-cut honra a ordem BLIND-05)
 Plans:
+**Wave 1**
 - [ ] 13-01-PLAN.md — Wave 0 de medição: regressão dos 104 sob RIM único proposto + decisão do g_terminal do carve-out CONCESSAO_FINITA (spike puro, zero produção) (ENG-01/04)
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 13-02-PLAN.md — ARQUETIPO_ANCORA_ROE (arquétipo→política) + split PAGADORA_MADURA/CONCESSAO_FINITA; ARQUETIPO_MOTOR legado mantido p/ freio (ENG-03/04)
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 13-03-PLAN.md — Colapso do dispatch num RIM único + carve-out da concessão + ensemble/guardas-cicatriz removidos + dcf morto; goldens de nível do ensemble DELETADOS (ENG-01/02/03/04)
+
+**Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 13-04-PLAN.md — Contrato do livro: tríade de V vs região da MS + ponte P/B auditável (teste de correção) + guard 0<P/B<6 em dois níveis + matriz Ke×g reusada (ENG-05/06/07/08/09)
+
+**Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 13-05-PLAN.md — Corte contado de knobs: motores 7→≤5 (config+lock coeso) + MS default 5-10% + veredito.san01 morto removido; 3 graus intactos (ENG-06/10)
 - [ ] 13-06-PLAN.md — Ranking rebaixado a screener por múltiplos crus + UI mínima (MS slider/ponte/matriz) + selo sem 'Evitar'/'Baixa'; freio.py e ARQUETIPO_MOTOR deletados (ENG-05/06/07/11)
+
+**Wave 6** *(blocked on Wave 5 completion)*
 - [ ] 13-07-PLAN.md — Prova por execução: regressão dos 104 (finito/sem explosão/P/B sã/caminho único) + cross-menu; suíte default verde (ENG-01/08/09)
 **UI hint**: yes
 
