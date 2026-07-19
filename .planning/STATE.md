@@ -4,14 +4,14 @@ milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
 stopped_at: Phase 13 context gathered
-last_updated: "2026-07-19T16:44:32.758Z"
-last_activity: 2026-07-19 -- Phase 13 planning complete
+last_updated: "2026-07-19T23:34:50.211Z"
+last_activity: 2026-07-19
 progress:
   total_phases: 8
   completed_phases: 6
   total_plans: 34
-  completed_plans: 27
-  percent: 79
+  completed_plans: 28
+  percent: 82
 ---
 
 # Project State
@@ -27,17 +27,17 @@ entre si** — a mesma ação não pode parecer barata num menu e cara/ausente e
 ITUB4, Cap. 17 (Tabelas 41/43): `g` = 10,24% · `Ke` = 12,48% → **V = R$ 37,22** (região R$ 35–39,
 MS ±5%). **Hoje o app entrega R$ 16,13.**
 
-**Current focus:** Phase 12 — Custo de capital / Ke (KE)
+**Current focus:** Phase 13 — motores-contrato-de-sa-da-eng
 
 ## Current Position
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
-Phase: 13
-Plan: Not started
+Phase: 13 (motores-contrato-de-sa-da-eng) — EXECUTING
+Plan: 2 of 7
 Status: Ready to execute
-Last activity: 2026-07-19 -- Phase 13 planning complete
+Last activity: 2026-07-19
 
-Progress: [██████████] 100%
+Progress: [████████░░] 82%
 
 **Suíte:** `519 passed, 1 skipped, 20 deselected, 0 failed, 0 xfailed, 0 XPASS` (517 do pós-12-03 +
 os 2 testes de validação KE-04 do 12-04). `-m golden_nivel` **20 passed, 0 CLASSIFICACAO ORFA**.
@@ -139,10 +139,38 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | Phase 12 P02 | 30min | 3 tasks | 9 files |
 | Phase 12 P03 | 15min | 1 tasks | 2 files |
 | Phase 12 P04 | 20min | 2 tasks | 2 files |
+| Phase 13 P01 | 40min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **ENG-01/ENG-04 spike (Fase 13 / plano 13-01) — o RIM único NÃO explode em nenhum coorte e o
+  carve-out CONCESSAO_FINITA fica decidido por MEDIÇÃO em `g_terminal = None`.** Spike offline
+  throwaway (`scripts/spike_eng_rim_104.py`) que espelha `test_ke_validacao` (snapshot LIMPO + β
+  setorial carimbado) e roda o RIM único proposto no §Mapa de âncoras sobre os 104, por coorte,
+  consumindo `a.ke` (Fase 12) e `g_cap` (Fase 11) prontos. **Sanidade por coorte MEDIDA (não
+  assumida — o research era MEDIUM):** madura (hoje→DDM, passa a RIM no split D-05) fica **SÃ com 0
+  ofensores** (V/preço 0,66; P/B justo 0,88 ∈(0,6); payout_T 0,65 ∈(0,1)) — o split D-05 está
+  **de-riscado**; cíclica (hoje→Gordon-P/L) **SÃ no corpo** (mediana P/B 0,76, payout_T 0,58; cauda
+  de 4 `None` + ~3 ofensores nos 49, absorvida pelo never-raise SAN-06); financeira (baseline) 15/17
+  em P/B∈(0,6) com a cauda P/B<1 sendo o anti-bad-bank correto; crescimento 0 ofensores. **Headline:
+  max V/preço em TODOS os coortes = 2,82 « teto 50x — o RIM único não diverge.** **Decisão do
+  carve-out: `g_terminal = None` (fade-only).** As duas variantes (None × PIB_real) medidas lado a
+  lado no mesmo coorte de concessão (n=15): ambas sãs; o gatilho do research p/ preferir PIB_real
+  ("subvaloriza demais") **NÃO disparou** (V/preço mediana 0,77 vs 0,85). O único diferenciador —
+  `payout_T` cravando em 1,00 na variante None — é **identidade definicional** de terminal zerado
+  (`payout_T = 1 − g/ROE_T`, g=0 ⇒ 1), não patologia: é a economia correta de concessão finita sob
+  ICPC 01 (o book já capitaliza a RAP; `g_cap` embute inflação → double-count). **Nota load-bearing
+  p/ Plano 03 (guard ENG-08/09/D-10a):** sob `g_terminal=None` o guard `payout_T ∈ (0,1)` aberto
+  marcaria TODA concessão pela fronteira 1,0 — usar meio-aberto `(0,1]` ou skip quando
+  `g_terminal is None`. **Fronteira respeitada:** `git diff src/ config.yaml calibracao.lock.yaml`
+  VAZIO (spike puro, orçamento em 3 graus intacto), NÃO valida o caso do livro (Fase 14), nenhum
+  ticker nomeado (BLIND-04a). **Desvio (Rule 3):** o loader offline não persiste `eh_concessionaria`
+  (derivado do setor em `build.py:168`); reconstruído no script por mirror dos tokens de
+  `build.py:139` p/ o coorte de concessão existir. Suíte inalterada **519 passed, 1 skipped, 20
+  deselected**. **ENG-01/ENG-04 seguem Pending** (o spike MEDE/de-risca; a implementação — motor
+  único + split do arquétipo — é dos Planos 02/03). Commits: `ad58045` (T1), `bb32a3c` (T2).
 
 - **KE-04 (Fase 12 / plano 12-04) — "nada explode sem clamp" PROVADO POR EXECUÇÃO; o gate final da
   fase.** `tests/test_ke_validacao.py` (2 testes `invariante`, arquivo novo) fecha a Doença 3 com
@@ -646,9 +674,9 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-17T23:53:09.781Z
+Last session: 2026-07-19T23:34:38.220Z
 Stopped at: Phase 13 context gathered
-Resume file: .planning/phases/13-motores-contrato-de-sa-da-eng/13-CONTEXT.md
+Resume file: None
 
 ## Operator Next Steps
 

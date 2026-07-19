@@ -268,7 +268,7 @@ saída é o **do livro** — que o app já tem quase certo e **não deve trocar*
 **Plans**: 7 plans (6 waves — serializados por `report.py`/`config.yaml`/`tests/classificacao.yaml` compartilhados; o commit de knob-cut honra a ordem BLIND-05)
 Plans:
 **Wave 1**
-- [ ] 13-01-PLAN.md — Wave 0 de medição: regressão dos 104 sob RIM único proposto + decisão do g_terminal do carve-out CONCESSAO_FINITA (spike puro, zero produção) (ENG-01/04)
+- [x] 13-01-PLAN.md — Wave 0 de medição: regressão dos 104 sob RIM único proposto + decisão do g_terminal do carve-out CONCESSAO_FINITA (spike puro, zero produção) (ENG-01/04)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 13-02-PLAN.md — ARQUETIPO_ANCORA_ROE (arquétipo→política) + split PAGADORA_MADURA/CONCESSAO_FINITA; ARQUETIPO_MOTOR legado mantido p/ freio (ENG-03/04)
@@ -322,7 +322,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 10. Primitivas sem viés (PRIM) | v2.4 | 4/4 | Complete    | 2026-07-16 |
 | 11. Crescimento / g (GROW) | v2.4 | 3/3 | Complete   | 2026-07-17 |
 | 12. Custo de capital / Ke (KE) | v2.4 | 4/4 | Complete    | 2026-07-17 |
-| 13. Motores + contrato de saída (ENG) | v2.4 | 0/7 | Planned | - |
+| 13. Motores + contrato de saída (ENG) | v2.4 | 1/7 | In Progress|  |
 | 14. Validação honesta (VAL) | v2.4 | 0/? | Not started | - |
 
 ## Requirement Coverage (v2.4)
