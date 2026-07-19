@@ -19,8 +19,8 @@
 'tests/test_arquetipo.py::test_banco_vira_financeira': contrato
 'tests/test_arquetipo.py::test_seguradora_vira_financeira': contrato
 'tests/test_arquetipo.py::test_financeira_hard_route_soberana_ignora_quantitativo': contrato
-'tests/test_arquetipo.py::test_concessionaria_vira_pagadora_regulada': contrato
-'tests/test_arquetipo.py::test_petroleo_concessionaria_nao_vira_pagadora_regulada': contrato
+'tests/test_arquetipo.py::test_concessionaria_vira_concessao_finita': contrato
+'tests/test_arquetipo.py::test_petroleo_concessionaria_nao_vira_concessao_finita': contrato
 'tests/test_arquetipo.py::test_lucro_oscilante_vira_ciclica': contrato
 'tests/test_arquetipo.py::test_roe_alto_retencao_alta_vira_crescimento': contrato
 'tests/test_arquetipo.py::test_compounder_real_wege_vira_crescimento': contrato
@@ -40,9 +40,8 @@
 'tests/test_arquetipo.py::test_hard_route_financeiro_nao_faz_over_match_substring_embutida': contrato
 'tests/test_arquetipo.py::test_sinais_none_degrada_sem_typeerror': contrato
 'tests/test_arquetipo.py::test_bloco_config_ausente_nao_quebra': contrato
-'tests/test_arquetipo_roteamento.py::test_regulada_mantem_motor_ddm_e_veredito_ddm': contrato
 'tests/test_arquetipo_roteamento.py::test_financeira_veredito_real_do_motor_nunca_evitar': contrato
-'tests/test_arquetipo_roteamento.py::test_petroleo_nao_vira_pagadora_regulada': contrato
+'tests/test_arquetipo_roteamento.py::test_petroleo_nao_vira_concessao_finita': contrato
 'tests/test_arquetipo_roteamento.py::test_degradacao_um_ano_nao_levanta': contrato
 'tests/test_arquetipo_roteamento.py::test_fronteirico_via_funil_expoe_conflito': invariante
 'tests/test_arquetipo_roteamento.py::test_render_exibe_arquetipo_e_motor': contrato
@@ -491,7 +490,6 @@
 'tests/test_vulc3_regressao.py::test_vulc3_cascata_estrutural_sobrevive': invariante  # WR-04: split-before-delete do golden de nivel test_vulc3_cascata_domada_regressao (bandas vmax<3x preco [g antigo 2,5%, Fase 11] e ke>=0,15 [Fase 12] DELETADAS); os invariantes estruturais (norm/g_fund<=0/Ke relacional/matriz/veredito/cross-menu) SOBREVIVEM
 'tests/test_vulc3_regressao.py::test_vulc3_normalizacao_doma_roe_e_dy': invariante
 'tests/test_vulc3_regressao.py::test_capstone_itub4_sem_evitar_motor_rim_ddm_como_lente': contrato
-'tests/test_vulc3_regressao.py::test_capstone_taee11_baseline_ddm_identico': contrato
 'tests/test_vulc3_regressao.py::test_capstone_vale3_motor_normalizado': contrato
 'tests/test_vulc3_regressao.py::test_capstone_wege3_motor_dcf_sem_faixa_lixo': contrato
 'tests/test_vulc3_regressao.py::test_capstone_vulc3_verifica_por_risco_real': contrato

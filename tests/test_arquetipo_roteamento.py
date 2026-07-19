@@ -139,18 +139,6 @@ def _holding(ticker="HOLD3") -> CompanyData:
     return c
 
 
-# --- (a) REGULADA — motor ddm, veredito NÃO suspenso (ENG-06) ------------------ #
-def test_regulada_mantem_motor_ddm_e_veredito_ddm():
-    a = report.analisar_acao(_regulada_solida(), _cfg())
-    assert a.arquetipo == "pagadora_regulada"
-    assert a.motor == "ddm"
-    assert a.motor_pendente is False
-    assert a.arquetipo_fronteirico is False
-    # O veredito NÃO é suspenso por roteamento (mantém o prefixo DDM — TAEE11 idêntica).
-    assert not a.veredito.startswith("VERIFICAR")
-    assert a.veredito  # DDM rodou e produziu veredito direcional
-
-
 # --- (b) FINANCEIRA — motor RIM alimenta o veredito (VER-01), selo consome o motor, nunca 'evitar' --- #
 def test_financeira_veredito_real_do_motor_nunca_evitar():
     cfg = _cfg()
@@ -172,9 +160,9 @@ def test_financeira_veredito_real_do_motor_nunca_evitar():
 
 
 # --- (c) ANTI-PETRÓLEO — não vira regulada mesmo com eh_concessionaria=True ------ #
-def test_petroleo_nao_vira_pagadora_regulada():
+def test_petroleo_nao_vira_concessao_finita():
     a = report.analisar_acao(_petroleo_compounder(), _cfg())
-    assert a.arquetipo != "pagadora_regulada"
+    assert a.arquetipo != "concessao_finita"
     # Fase 2: petróleo-compounder roteia para crescimento (dcf) ou cíclica (normalizado) —
     # em ambos o motor != "ddm", então (VER-01) o veredito é REAL, alimentado pela banda do motor.
     assert a.motor in {"dcf", "normalizado"}

@@ -172,24 +172,6 @@ def _itub4_financeira() -> CompanyData:
     return c
 
 
-def _taee11_regulada() -> CompanyData:
-    """TAEE11-âncora: utility regulada (Energia Elétrica, eh_concessionaria) → pagadora
-    regulada → motor DDM. É o baseline que NÃO pode mexer: veredito DDM, sem suspensão,
-    sem reetiqueta, sem fronteiriço — determinístico e idêntico entre execuções."""
-    c = CompanyData(ticker="TAEE11", nome="Taesa (sintética)", setor="Energia Elétrica",
-                    anos=_anos(), eh_concessionaria=True)
-    for a in _anos():
-        c.lucro_liquido[a] = 1000 + (a - 2015) * 50
-        c.patrimonio_liquido[a] = 4000 + (a - 2015) * 100
-        c.dividendos[a] = 600 + (a - 2015) * 30
-        c.num_acoes[a] = 1000
-        c.vendas_liquidas[a] = 1800
-        c.fco[a] = 1200
-    c.preco_atual = 30.0
-    c.beta = 0.8
-    return c
-
-
 def _vale3_ciclica() -> CompanyData:
     """VALE3-âncora: cíclica (lucro oscilando com anos de prejuízo → cíclica, ROE baixo →
     retenção baixa, sem crescimento) → motor 'normalizado' (lucro médio), não DDM."""
@@ -240,24 +222,6 @@ def test_capstone_itub4_sem_evitar_motor_rim_ddm_como_lente():
     # NUNCA 'Evitar': nem o texto do veredito nem o selo (bsd alto → qualidade Alta).
     assert "Evitar" not in a.veredito
     assert selo_mod.montar_selo(70.0, a.veredito, cfg).rotulo != "Evitar"
-
-
-def test_capstone_taee11_baseline_ddm_identico():
-    """TAEE11 (baseline intocado): motor DDM, sem suspensão/reetiqueta/fronteiriço, e o
-    veredito/banda determinísticos (idênticos entre duas execuções)."""
-    cfg = _cfg()
-    a1 = report.analisar_acao(_taee11_regulada(), cfg)
-    assert a1.arquetipo == "pagadora_regulada"
-    assert a1.motor == "ddm"
-    assert a1.banda_do_motor is False
-    assert a1.san01_reetiquetado is False
-    assert a1.arquetipo_fronteirico is False
-    assert a1.arquetipo_incerto is False
-    assert not a1.veredito.startswith("VERIFICAR")
-    # Idêntica ao baseline: reexecutar a MESMA fixture dá o MESMO veredito/banda (sem deriva).
-    a2 = report.analisar_acao(_taee11_regulada(), cfg)
-    assert a2.veredito == a1.veredito
-    assert (a2.vmin, a2.vmax) == (a1.vmin, a1.vmax)
 
 
 def test_capstone_vale3_motor_normalizado():

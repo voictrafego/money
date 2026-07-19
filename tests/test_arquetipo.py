@@ -1,7 +1,7 @@
 """Golden do classificador de arquétipo (core/arquetipo.py) — Fase 1 v2.2, ARQ-01/ARQ-02.
 
 Trava a árvore de decisão híbrida (D-01/D-02):
-- HARD-ROUTE por setor: banco/seguradora → financeira; concessionária (não-petróleo) → pagadora_regulada;
+- HARD-ROUTE por setor: banco/seguradora → financeira; concessionária (não-petróleo) → concessao_finita;
 - REFINO quantitativo para o resto: CV do lucro → cíclica; ROE alto + retenção alta → crescimento;
 - guarda anti-Petróleo (Pitfall 1) e degradação graciosa sob sinais None (Pitfall 2);
 - conflito real de sinais → fronteiriço honesto (ARQ-02).
@@ -17,9 +17,9 @@ import yaml
 from analista.core.arquetipo import (
     ARQUETIPO_MOTOR,
     CICLICA,
+    CONCESSAO_FINITA,
     CRESCIMENTO,
     FINANCEIRA,
-    PAGADORA_REGULADA,
     classificar,
 )
 from analista.core.fundamentals import CompanyData
@@ -104,19 +104,19 @@ def test_financeira_hard_route_soberana_ignora_quantitativo():
 
 # --- HARD-ROUTE regulada + guarda anti-Petróleo ------------------------------- #
 
-def test_concessionaria_vira_pagadora_regulada():
+def test_concessionaria_vira_concessao_finita():
     c = _empresa("TAEE11", "Energia Elétrica", [1000] * 10, eh_concessionaria=True)
     r = classificar(c, _cfg())
-    assert r.chave == PAGADORA_REGULADA
+    assert r.chave == CONCESSAO_FINITA
     assert r.confianca == "alta"
-    assert ARQUETIPO_MOTOR[r.chave] == "ddm"
+    assert ARQUETIPO_MOTOR[r.chave] == "ddm"  # motor legado (Plano 06 remove); freio intacto
 
 
-def test_petroleo_concessionaria_nao_vira_pagadora_regulada():
+def test_petroleo_concessionaria_nao_vira_concessao_finita():
     # Guarda anti-Petróleo (Pitfall 1): 'Gás' ⊂ 'Petróleo e Gás' dispara eh_concessionaria falso-positivo.
     c = _empresa("PETR4", "Petróleo e Gás", [1000] * 10, eh_concessionaria=True)
     r = classificar(c, _cfg())
-    assert r.chave != PAGADORA_REGULADA
+    assert r.chave != CONCESSAO_FINITA
 
 
 # --- REFINO quantitativo ------------------------------------------------------ #
