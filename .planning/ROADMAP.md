@@ -265,7 +265,15 @@ saída é o **do livro** — que o app já tem quase certo e **não deve trocar*
   - **NÃO "consertar" o `dcf_crescimento` com FCFE (`lpa × payout`)** — **Armadilha 2:** vira DDM matematicamente (teorema, não bug). WEGE3 0,58 → **0,26**.
   - **NÃO consertar o `g` das transmissoras sob ICPC 01.** Elas usam **modelo de ativo financeiro**: o book **já é** o VP da RAP e o ROE dispara em ano de IPCA alto → corrigir o `g` nelas causa **double-count de inflação**. É o carve-out `CONCESSAO_FINITA`, declarado **antes** do hold-out.
   - **NÃO deletar o Ranking** — rebaixar e re-rotular. Deletar joga fora os Cap. 11-12.
-**Plans**: TBD
+**Plans**: 7 plans (6 waves — serializados por `report.py`/`config.yaml`/`tests/classificacao.yaml` compartilhados; o commit de knob-cut honra a ordem BLIND-05)
+Plans:
+- [ ] 13-01-PLAN.md — Wave 0 de medição: regressão dos 104 sob RIM único proposto + decisão do g_terminal do carve-out CONCESSAO_FINITA (spike puro, zero produção) (ENG-01/04)
+- [ ] 13-02-PLAN.md — ARQUETIPO_ANCORA_ROE (arquétipo→política) + split PAGADORA_MADURA/CONCESSAO_FINITA; ARQUETIPO_MOTOR legado mantido p/ freio (ENG-03/04)
+- [ ] 13-03-PLAN.md — Colapso do dispatch num RIM único + carve-out da concessão + ensemble/guardas-cicatriz removidos + dcf morto; goldens de nível do ensemble DELETADOS (ENG-01/02/03/04)
+- [ ] 13-04-PLAN.md — Contrato do livro: tríade de V vs região da MS + ponte P/B auditável (teste de correção) + guard 0<P/B<6 em dois níveis + matriz Ke×g reusada (ENG-05/06/07/08/09)
+- [ ] 13-05-PLAN.md — Corte contado de knobs: motores 7→≤5 (config+lock coeso) + MS default 5-10% + veredito.san01 morto removido; 3 graus intactos (ENG-06/10)
+- [ ] 13-06-PLAN.md — Ranking rebaixado a screener por múltiplos crus + UI mínima (MS slider/ponte/matriz) + selo sem 'Evitar'/'Baixa'; freio.py e ARQUETIPO_MOTOR deletados (ENG-05/06/07/11)
+- [ ] 13-07-PLAN.md — Prova por execução: regressão dos 104 (finito/sem explosão/P/B sã/caminho único) + cross-menu; suíte default verde (ENG-01/08/09)
 **UI hint**: yes
 
 ### Phase 14: Validação honesta (VAL)
@@ -303,7 +311,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 10. Primitivas sem viés (PRIM) | v2.4 | 4/4 | Complete    | 2026-07-16 |
 | 11. Crescimento / g (GROW) | v2.4 | 3/3 | Complete   | 2026-07-17 |
 | 12. Custo de capital / Ke (KE) | v2.4 | 4/4 | Complete    | 2026-07-17 |
-| 13. Motores + contrato de saída (ENG) | v2.4 | 0/? | Not started | - |
+| 13. Motores + contrato de saída (ENG) | v2.4 | 0/7 | Planned | - |
 | 14. Validação honesta (VAL) | v2.4 | 0/? | Not started | - |
 
 ## Requirement Coverage (v2.4)
