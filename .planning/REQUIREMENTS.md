@@ -200,9 +200,9 @@ prova que a ordem importa: consertar o `Ke` antes do `g` **piora** (ITUB4 0,75 �
 - [ ] **ENG-02**: O **ensemble morre junto** — ele mede os próprios bugs do projeto e chama isso de
   "divergência de método". Idem `_guarda_san01` e `_guarda_faixa_ddm`: são **cicatrizes do viés, não
   features**. Removidos, não portados.
-- [ ] **ENG-03**: O classificador de arquétipo **sobrevive e melhora** — deixa de escolher um *modelo*
+- [x] **ENG-03**: O classificador de arquétipo **sobrevive e melhora** — deixa de escolher um *modelo*
   (erro ilimitado) e passa a escolher uma *âncora de ROE* (erro limitado).
-- [ ] **ENG-04**: `PAGADORA_REGULADA` é separada em `PAGADORA_MADURA` + `CONCESSAO_FINITA`. Hoje ela é
+- [x] **ENG-04**: `PAGADORA_REGULADA` é separada em `PAGADORA_MADURA` + `CONCESSAO_FINITA`. Hoje ela é
   **também o default por eliminação** (`arquetipo.py:176`) — empresa sem sinal cai no balde da
   transmissora. E transmissoras sob ICPC 01 usam **modelo de ativo financeiro**: o book **já é** o VP
   da RAP e o ROE dispara em ano de IPCA alto → consertar o `g` causaria **double-count de inflação**.
@@ -317,8 +317,8 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | KE-05 | Phase 12 | Complete |
 | ENG-01 | Phase 13 | Pending |
 | ENG-02 | Phase 13 | Pending |
-| ENG-03 | Phase 13 | Pending |
-| ENG-04 | Phase 13 | Pending |
+| ENG-03 | Phase 13 | Complete |
+| ENG-04 | Phase 13 | Complete |
 | ENG-05 | Phase 13 | Pending |
 | ENG-06 | Phase 13 | Pending |
 | ENG-07 | Phase 13 | Pending |

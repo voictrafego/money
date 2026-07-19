@@ -4,14 +4,14 @@ milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
 stopped_at: Phase 13 context gathered
-last_updated: "2026-07-19T23:34:50.211Z"
+last_updated: "2026-07-19T23:44:56.457Z"
 last_activity: 2026-07-19
 progress:
   total_phases: 8
   completed_phases: 6
   total_plans: 34
-  completed_plans: 28
-  percent: 82
+  completed_plans: 29
+  percent: 85
 ---
 
 # Project State
@@ -33,11 +33,11 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 13 (motores-contrato-de-sa-da-eng) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-07-19
 
-Progress: [████████░░] 82%
+Progress: [█████████░] 85%
 
 **Suíte:** `519 passed, 1 skipped, 20 deselected, 0 failed, 0 xfailed, 0 XPASS` (517 do pós-12-03 +
 os 2 testes de validação KE-04 do 12-04). `-m golden_nivel` **20 passed, 0 CLASSIFICACAO ORFA**.
@@ -140,10 +140,38 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | Phase 12 P03 | 15min | 1 tasks | 2 files |
 | Phase 12 P04 | 20min | 2 tasks | 2 files |
 | Phase 13 P01 | 40min | 2 tasks | 2 files |
+| Phase 13 P02 | 15min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **ENG-03/ENG-04 (Fase 13 / plano 13-02) — o registry `ARQUETIPO_ANCORA_ROE` nasce e o antigo
+  `PAGADORA_REGULADA` é CINDIDO.** `arquetipo.py` ganha `ARQUETIPO_ANCORA_ROE` (arquétipo →
+  **política** de derivação de ROE-âncora, ENG-03, 6 chaves de policy string do §Mapa de âncoras:
+  `FINANCEIRA`/`PAGADORA_MADURA`→`through_cycle`, `CONCESSAO_FINITA`→`through_cycle_sem_g` [carve-out],
+  `CICLICA`→`normalizado`, `CRESCIMENTO`→`atual_fade`, `HOLDING`→`nav_piso`) — o mapa que o RIM único
+  do Plano 03 consome. O rótulo `PAGADORA_REGULADA` é removido e cindido (D-05) em **`PAGADORA_MADURA`**
+  (novo default-por-eliminação — empresa sem sinal roda RIM normal, não mais o balde da transmissora)
+  + **`CONCESSAO_FINITA`** (hard-route de `eh_concessionaria`, carve-out declarado ANTES do hold-out).
+  Só as **duas linhas de split** mudaram no corpo de `classificar` (a árvore de decisão sobrevive
+  intocada, ENG-03); a **guarda anti-Petróleo** (`_setor_casa_token(setor, regulada_excluir)`) segue no
+  hard-route. **`ARQUETIPO_MOTOR` legado MANTIDO vivo** (ambos os herdeiros → `"ddm"`): `freio.motor_pendente`
+  (`.get(chave) != "ddm"`) fica idêntico — a deleção do legado é o Plano 06. **Onda 2 verde por
+  split-before-delete:** todos os testes que asseveravam a string `pagadora_regulada` ao vivo foram
+  **REWRITE** (invariante que sobrevive ao relabel: concessionária→`CONCESSAO_FINITA`; Petróleo NÃO cai em
+  `CONCESSAO_FINITA`) ou **DELETE** (baseline da rota DDM demolida no Plano 03:
+  `test_regulada_mantem_motor_ddm_e_veredito_ddm` + `test_capstone_taee11_baseline_ddm_identico` + fixture
+  órfã `_taee11_regulada`) — função + linha da `classificacao.yaml` no MESMO diff, **nenhum nível
+  atualizado** (baseline de rota morta é DELETADO). A invariância motor==ddm da regulada segue coberta por
+  `test_regulada_ddm_nao_suspenso_eng06` (não cita a string morta). **Nota:** os valores da ANCORA seguem o
+  §Mapa de âncoras (ACTION), não a heurística grep imperfeita da prose do acceptance (que proíbe
+  `normalizado`/`nav`, os próprios valores que ela manda); o `<verify><automated>` da task não a inclui e
+  passa. **Fronteira respeitada:** `git diff config.yaml calibracao.lock.yaml` VAZIO (orçamento em 3 graus;
+  nenhum knob de valuation tocado; a mecânica do `g_terminal` do carve-out é o Plano 03). Suíte default
+  **517 passed, 1 skipped, 20 deselected, 0 failed** (baseline 519 − 2 deletados); `-m golden_nivel`
+  **20 passed, 0 ORFA**; 0 referência VIVA à string morta (6 menções sobram só em comentário, comment-aware).
+  Commits: `4d9053e` (T1), `a4ed8a8` (T2).
 
 - **ENG-01/ENG-04 spike (Fase 13 / plano 13-01) — o RIM único NÃO explode em nenhum coorte e o
   carve-out CONCESSAO_FINITA fica decidido por MEDIÇÃO em `g_terminal = None`.** Spike offline
@@ -674,7 +702,7 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-19T23:34:38.220Z
+Last session: 2026-07-19T23:44:45.127Z
 Stopped at: Phase 13 context gathered
 Resume file: None
 
