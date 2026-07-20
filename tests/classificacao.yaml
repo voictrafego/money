@@ -385,6 +385,12 @@
 # guard D-10a do 13-04 provado por execucao), caminho unico (a.motor sempre "rim"). Sem ticker/nivel.
 'tests/test_eng_validacao.py::test_regressao_104_colapso_rim_unico': invariante
 
+# `invariante`: WR-03 cross-modo pos-13-06. O Ranking virou screener de multiplos crus (nao roda
+# mais analisar_acao/carimbo macro): a propriedade antiga (a.ke/intrinseco identicos rank<->analyze)
+# morreu. O que sobrevive: ROE/P/L/EY do screener == os do Analisar (a.multiplos), fonte canonica
+# unica de CompanyData (Core Value cross-modo, FIX-04). Sem colunas removidas, sem ke/intrinseco, sem ticker.
+'tests/test_cli_rank_consistencia.py::test_rank_e_analyze_mostram_os_mesmos_multiplos_crus': invariante
+
 # DATA-05 — o DY declara sua base BRUTA (contrato de string; sem nivel de mercado).
 'tests/test_dy_base.py::test_header_dy_recorrente_declara_base_bruta': contrato
 'tests/test_dy_base.py::test_header_dy_fallback_declara_base_bruta': contrato
