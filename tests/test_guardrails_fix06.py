@@ -80,37 +80,24 @@ def _empresa_com_provento_extraordinario(ticker="EXTR3"):
 
 
 # --------------------------------------------------------------------------- #
-# (a) Banda intrínseca = sensibilidade real (item H)
+# (a) Banda degrada sem estampar faixa espúria (item H)
 # --------------------------------------------------------------------------- #
-def test_banda_vem_da_matriz_de_sensibilidade():
-    c = _empresa_crescente_solida()
-    cfg = _cfg()
-    a = report.analisar_acao(c, cfg)
-
-    assert a.sensibilidade is not None, "DDM/ matriz não rodaram — checar fixture"
-    celulas = [v for linha in a.sensibilidade for v in linha if v is not None]
-    assert celulas
-
-    # A banda exibida É o min/max da matriz Ke×g (sensibilidade real).
-    assert a.vmin == min(celulas)
-    assert a.vmax == max(celulas)
-
-    # E é ESTRITAMENTE mais larga que o toggle binário (ddm_h, ddm_constante): a matriz
-    # alcança um Ke menor (vmax maior) e um Ke maior (vmin menor) que os 2 pontos centrais.
-    binario = [r.valor_intrinseco for r in (a.ddm_h, a.ddm_constante) if r]
-    assert a.vmax > max(binario)
-    assert a.vmin < min(binario)
+# NOTA (Fase 13/ENG-01): o golden `test_banda_vem_da_matriz_de_sensibilidade` foi DELETADO — a
+# banda deixou de vir do min/max da matriz DDM (o ensemble/matriz-como-fonte morreu no Plano 03).
+# Sob o RIM único a banda é a região da MS sobre o intrínseco do RIM (coberto por
+# test_vulc3_cascata_estrutural_sobrevive). O invariante que SOBREVIVE aqui é o de degradação.
 
 
-def test_banda_degrada_quando_ddm_nao_roda():
-    # Sem fundamentos suficientes (sem PL/ações) o DDM não roda → matriz None → sem banda,
-    # sem exceção (T-08-07: matriz só-None não pode virar vmin/vmax espúrio).
+def test_banda_degrada_quando_rim_nao_roda():
+    # Sem fundamentos suficientes (sem PL/ações) o RIM único degrada (intrínseco None) → sem
+    # banda, sem exceção (never-raise). O DDM secundário também não roda (matriz None). O veredito
+    # de preço fica suspenso (prefixo VERIFICAR), nunca uma faixa vmin/vmax espúria.
     c = CompanyData(ticker="VAZIA3", anos=[2024])
     c.preco_atual = 10.0
     a = report.analisar_acao(c, _cfg())
     assert a.sensibilidade is None
     assert a.vmin is None and a.vmax is None
-    assert a.veredito == ""
+    assert a.veredito.startswith("VERIFICAR")
 
 
 # --------------------------------------------------------------------------- #

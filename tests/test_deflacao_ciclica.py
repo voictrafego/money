@@ -1,9 +1,9 @@
 """PRIM-04 — o motor CÍCLICO consome a série de lucro deflacionada a reais do último ano.
 
-O ramo `"normalizado"` de `_intrinseco_por_motor` somava reais NOMINAIS de anos diferentes
-(reais de 2015 com 2024) antes da média through-cycle — subvalorizando cíclicas só por
-nominalidade. Agora deflaciona `c.serie("lucro_liquido")` pelos deflatores JÁ CARIMBADOS em
-`cfg["macro"]["ipca_deflatores"]` (lidos OFFLINE — a engine nunca chama macro/requests).
+A política CÍCLICA do RIM único (`_roe0_ciclico`, consumida por `_valor_rim`) somava reais
+NOMINAIS de anos diferentes (reais de 2015 com 2024) antes da média through-cycle —
+subvalorizando cíclicas só por nominalidade. Agora deflaciona `c.serie("lucro_liquido")` pelos
+deflatores JÁ CARIMBADOS em `cfg["macro"]["ipca_deflatores"]` (OFFLINE — a engine nunca puxa rede).
 
 Estes testes carimbam os deflatores À MÃO (zero rede) e provam a DIREÇÃO (base deflacionada
 > nominal para série inflacionária) e a FRONTEIRA de fallback (deflatores ausentes/vazios →
@@ -39,9 +39,12 @@ def _empresa_ciclica_inflacionaria():
 
 
 def _analise_com_ke():
+    # ENG-01 (Fase 13): o motor cíclico é o RIM ÚNICO com a política do arquétipo CICLICA
+    # ("normalizado"): roe0 = LPA normalizado DEFLACIONADO / VPA0. `_valor_rim` lê a.arquetipo.
     a = report.AnaliseAcao(ticker="CICL3", nome="Ciclica SA", setor="Siderurgia",
                            preco_atual=None)
     a.ke = 0.12
+    a.arquetipo = "ciclica"
     return a
 
 
@@ -58,8 +61,8 @@ def test_base_ciclica_deflacionada_supera_a_nominal():
     cfg_defl = {**cfg, "macro": {"ipca_deflatores": _deflatores_inflacao(anos)}}
     cfg_nom = {**cfg, "macro": {"ipca_deflatores": {}}}
 
-    v_defl = report._intrinseco_por_motor("normalizado", c, _analise_com_ke(), cfg_defl)
-    v_nom = report._intrinseco_por_motor("normalizado", c, _analise_com_ke(), cfg_nom)
+    v_defl = report._valor_rim(c, _analise_com_ke(), cfg_defl)
+    v_nom = report._valor_rim(c, _analise_com_ke(), cfg_nom)
 
     assert v_defl is not None and v_nom is not None
     assert v_defl > 0 and v_nom > 0
@@ -81,9 +84,9 @@ def test_deflatores_com_chaves_string_ainda_deflacionam_nao_no_opam():
     cfg_int = {**cfg, "macro": {"ipca_deflatores": defl_int}}
     cfg_nom = {**cfg, "macro": {"ipca_deflatores": {}}}
 
-    v_str = report._intrinseco_por_motor("normalizado", c, _analise_com_ke(), cfg_str)
-    v_int = report._intrinseco_por_motor("normalizado", c, _analise_com_ke(), cfg_int)
-    v_nom = report._intrinseco_por_motor("normalizado", c, _analise_com_ke(), cfg_nom)
+    v_str = report._valor_rim(c, _analise_com_ke(), cfg_str)
+    v_int = report._valor_rim(c, _analise_com_ke(), cfg_int)
+    v_nom = report._valor_rim(c, _analise_com_ke(), cfg_nom)
 
     assert v_str is not None
     # chave-string deflaciona IGUAL à chave-int (não some para série vazia/None)
@@ -98,11 +101,11 @@ def test_fallback_nominal_quando_deflatores_ausentes_never_raise():
 
     # Sem bloco macro nenhum: o ramo degrada para a série nominal sem levantar.
     cfg_sem_macro = {k: v for k, v in cfg.items() if k != "macro"}
-    v_sem = report._intrinseco_por_motor("normalizado", c, _analise_com_ke(), cfg_sem_macro)
+    v_sem = report._valor_rim(c, _analise_com_ke(), cfg_sem_macro)
 
     # Deflatores vazios: mesmo caminho nominal.
     cfg_vazio = {**cfg, "macro": {"ipca_deflatores": {}}}
-    v_vazio = report._intrinseco_por_motor("normalizado", c, _analise_com_ke(), cfg_vazio)
+    v_vazio = report._valor_rim(c, _analise_com_ke(), cfg_vazio)
 
     assert v_sem is not None and v_vazio is not None
     assert v_sem == v_vazio   # ausência ≡ vazio: ambos caem na série nominal

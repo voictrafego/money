@@ -95,119 +95,6 @@ def _regulada_ddm(ticker="REG3") -> CompanyData:
     return c
 
 
-def test_ensemble_banda_do_motor_financeira():
-    # Task 1 (VER-01/ENS-01): motor != "ddm" com intrínseco + contraponto DDM → a banda
-    # vmin/vmax passa a vir do ENSEMBLE (min/max entre o motor e o mid do DDM), banda_do_motor
-    # True, e a divergência motor×contraponto é avaliada pelo helper puro (limiar 2×).
-    cfg = _cfg_ind()
-    a = report.analisar_acao(_financeira_rim(), cfg)
-    assert a.motor == "rim"
-    assert a.intrinseco_motor is not None and a.intrinseco_motor > 0
-    assert a.contraponto_valor is not None            # mid do DDM capturado antes de sobrescrever
-    assert a.banda_do_motor is True
-    assert a.vmin == min(a.intrinseco_motor, a.contraponto_valor)
-    assert a.vmax == max(a.intrinseco_motor, a.contraponto_valor)
-    # RIM ~3× o DDM nesta fixture → divergência ativa e razão coerente.
-    assert a.divergencia_ativa is True
-    assert a.divergencia_razao is not None and a.divergencia_razao >= 2.0
-
-
-def test_ensemble_ddm_intocado_regulada():
-    # Task 1: motor == "ddm" (pagadora regulada) — NENHUM caminho novo é acionado (TAEE11
-    # idêntica): sem banda do motor, sem divergência espúria.
-    cfg = _cfg_ind()
-    a = report.analisar_acao(_regulada_ddm(), cfg)
-    assert a.motor == "ddm"
-    assert a.banda_do_motor is False
-    assert a.divergencia_ativa is False
-
-
-def test_ensemble_fallback_margem_seguranca(monkeypatch):
-    # Task 1 (fallback D-01): motor != "ddm" com intrínseco mas SEM contraponto (DDM suprimido)
-    # → banda = intrínseco ± cfg["veredito"]["margem_seguranca"].
-    cfg = _cfg_ind()
-    margem = cfg["veredito"]["margem_seguranca"]
-    c = _financeira_rim()
-    a = report.analisar_acao(c, cfg)
-    intr = a.intrinseco_motor
-    # Reexecuta forçando o contraponto a degradar: zera a matriz de sensibilidade do DDM.
-    import analista.report.report as rep
-
-    orig = rep.ddm.matriz_sensibilidade
-    monkeypatch.setattr(rep.ddm, "matriz_sensibilidade", lambda *a, **k: [[None]])
-    monkeypatch.setattr(rep.ddm, "ddm_dois_estagios", lambda *a, **k: None)
-    a2 = report.analisar_acao(_financeira_rim(), cfg)
-    assert a2.contraponto_valor is None
-    assert a2.banda_do_motor is True
-    assert abs(a2.vmin - intr * (1 - margem)) < 1e-6
-    assert abs(a2.vmax - intr * (1 + margem)) < 1e-6
-    assert a2.divergencia_ativa is False   # sem contraponto → sem bandeira espúria
-
-
-def test_hipotese_divergencia_financeira_motor_acima():
-    # Task 3 (ENS-01/D-03): hipótese curada por (arquétipo, sinal). Financeira com motor > DDM
-    # → "compounder subvalorizado pelo DDM".
-    frase = report._hipotese_divergencia("financeira", 28.0, 16.0, 1.75)
-    assert "subvalorizado pelo DDM" in frase
-
-
-def test_hipotese_divergencia_fallback_generico():
-    # Task 3: tupla (arquétipo, sinal) que não resolve → fallback genérico "modelos divergem".
-    frase = report._hipotese_divergencia("holding", 10.0, 4.0, 2.5)
-    assert "modelos divergem" in frase
-    assert "2.5" in frase
-
-
-def test_divergencia_hipotese_preenchida_so_quando_ativa():
-    # Task 3: a.divergencia_hipotese só é preenchida quando a.divergencia_ativa é True.
-    cfg = _cfg_ind()
-    a_div = report.analisar_acao(_financeira_rim(), cfg)   # divergência ativa (RIM ~3× DDM)
-    assert a_div.divergencia_ativa is True
-    assert "subvalorizado pelo DDM" in a_div.divergencia_hipotese
-    a_ddm = report.analisar_acao(_regulada_ddm(), cfg)     # motor ddm → sem divergência
-    assert a_ddm.divergencia_ativa is False
-    assert a_ddm.divergencia_hipotese == ""
-
-
-def test_render_bandeira_divergencia_exibe_dois_numeros_e_porque():
-    # Task 3: relatorio_markdown de um caso divergente exibe AMBOS os números (motor + DDM)
-    # e o "porquê" (hipótese); um caso não-divergente NÃO emite o bloco de bandeira.
-    cfg = _cfg_ind()
-    c = _financeira_rim()
-    a = report.analisar_acao(c, cfg)
-    md = report.relatorio_markdown(c, a, cfg)
-    assert "Bandeira de divergência" in md
-    assert report._num(a.intrinseco_motor) in md      # número do motor
-    assert report._num(a.contraponto_valor) in md     # número do contraponto DDM
-    assert "subvalorizado pelo DDM" in md             # o porquê
-    # Caso não-divergente (regulada, motor ddm): sem bloco de bandeira.
-    c2 = _regulada_ddm()
-    a2 = report.analisar_acao(c2, cfg)
-    md2 = report.relatorio_markdown(c2, a2, cfg)
-    assert "Bandeira de divergência" not in md2
-
-
-def test_ver01_financeira_veredito_real_do_motor():
-    # Task 2 (VER-01): o ramo de suspensão D-06 é substituído por veredito REAL derivado da
-    # banda do motor. A financeira (RIM), com preço acima da banda, cai em SOBREAVALIADA (não
-    # mais "VERIFICAR — arquétipo ... só na Fase 3") e o selo CONSOME o motor (faixa/rótulo).
-    cfg = _cfg_ind()
-    c = _financeira_rim()
-    a = report.analisar_acao(c, cfg)
-    assert a.motor == "rim"
-    assert a.banda_do_motor is True
-    # veredito real derivado da banda do motor — um dos prefixos casados por faixa_do_veredito.
-    assert a.veredito.startswith(("SUBAVALIADA", "NO INTERVALO", "SOBREAVALIADA", "VERIFICAR"))
-    assert "só na Fase 3" not in a.veredito
-    assert "referência primária pelo" not in a.veredito
-    # Alerta honesto: DDM rebaixado a lente conservadora, motor primário nomeado.
-    assert any("lente conservadora" in al.lower() for al in a.alertas)
-    # O selo consome o motor (não fica suspenso via VERIFICAR nesta fixture de preço alto).
-    from analista.report import selo as selo_mod
-    s = selo_mod.montar_selo(70.0, a.veredito, cfg)
-    assert s.faixa_preco == selo_mod.faixa_do_veredito(a.veredito)
-
-
 def test_ver01_motor_sem_banda_degrada_para_verificar(monkeypatch):
     # Task 2: motor != "ddm" SEM banda (intrínseco None E DDM suprimido) → veredito degrada
     # para o prefixo VERIFICAR (selo suprime faixa), nunca crasha nem estampa faixa falsa.
@@ -222,30 +109,6 @@ def test_ver01_motor_sem_banda_degrada_para_verificar(monkeypatch):
     assert a.intrinseco_motor is None
     assert a.vmin is None and a.vmax is None
     assert a.veredito.startswith("VERIFICAR")
-
-
-def test_cr01_motor_degrada_mas_ddm_sobrevive_rotula_ddm(monkeypatch):
-    # CR-01: motor != "ddm" degrada (intrínseco None) MAS o DDM sobrevive (banda vmin/vmax
-    # válida). A banda exibida é 100% do DDM → banda_do_motor PERMANECE False (o rótulo do
-    # app cai para "Intrínseco (DDM)"), um alerta honesto declara a degradação do motor, e o
-    # markdown NÃO chama o DDM de "lente conservadora" (é a avaliação PRIMÁRIA, não contraponto)
-    # nem estampa a seção "Valuation pelo motor" (intrínseco do motor é None).
-    cfg = _cfg_ind()
-    import analista.report.report as rep
-    monkeypatch.setattr(rep.motores, "rim", lambda **k: None)   # só o motor degrada; DDM roda
-    a = report.analisar_acao(_financeira_rim(), cfg)
-    assert a.motor == "rim"
-    assert a.intrinseco_motor is None
-    # DDM sobreviveu: a banda existe, mas NÃO é do motor.
-    assert a.vmin is not None and a.vmax is not None
-    assert a.banda_do_motor is False
-    # Alerta honesto: o motor degradou e a faixa vem do DDM (não do motor do arquétipo).
-    assert any("degradou" in al.lower() and "ddm" in al.lower() for al in a.alertas)
-    # Markdown honesto: DDM não é "lente" (é a única/primária avaliação exibida) e a seção do
-    # motor não aparece (intrínseco do motor ausente).
-    md = report.relatorio_markdown(_financeira_rim(), a, cfg)
-    assert "lente conservadora" not in md
-    assert "Valuation pelo motor do arquétipo" not in md
 
 
 def test_composite_acima_mm200_adx_fraco_eh_sem_tendencia():
@@ -410,14 +273,16 @@ def test_alerta_none_sem_rompimento():
 
 
 def test_alerta_independe_do_veredito_d08():
-    # D-08: o alerta dispara lendo SÓ os sinais, independente do veredito DDM.
+    # D-08: o alerta dispara lendo SÓ os sinais, independente do veredito.
     # O helper puro recebe apenas `sinais` — não há canal para o veredito influenciar.
     cfg = copy.deepcopy(_cfg_ind())
     cfg["indicadores"]["base_temporal"] = "diario"
     c = CompanyData(ticker="TST", anos=[2023], ohlc_ajustado=_ohlc_baixa_rompimento())
     a = report.analisar_acao(c, cfg)
-    # veredito vazio (sem fundamentos) e ainda assim o alerta disparou.
-    assert a.veredito == ""
+    # Sem fundamentos o RIM único degrada (intrínseco None) → veredito de PREÇO suspenso
+    # (prefixo VERIFICAR, sem faixa). O alerta técnico dispara MESMO ASSIM (lê só os sinais).
+    assert a.intrinseco_motor is None
+    assert a.veredito.startswith("VERIFICAR")
     assert a.alerta_reverificacao is not None
 
 

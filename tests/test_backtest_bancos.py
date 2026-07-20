@@ -119,20 +119,14 @@ def _analises_por_ticker() -> dict:
 def test_backtest_rotulo_do_motor_consistente():
     """CR-01 (fidelidade de método = Core Value): o rótulo exibido do motor casa com o motor real.
 
-    A BBSE3 roteia para o ramo de seguradora (Gordon-franquia), que MUTA `a.motor` DENTRO do
-    dispatch. O `motor_rotulo` precisa refletir esse motor — não pode exibir o número da seguradora
-    sob o rótulo do RIM (book-anchored). Trava a ordem correta (rótulo computado APÓS o dispatch) e
-    a presença da chave `seguradora` em MOTOR_ROTULO.
+    REWRITE (Fase 13/ENG-01): sob o RIM ÚNICO a rota própria de seguradora MORREU — TODO ticker
+    da cesta (bancos E a seguradora capital-light) roteia para o MESMO `motores.rim`, então
+    `a.motor == "rim"` e `a.motor_rotulo == MOTOR_ROTULO["rim"]` para todos. A chave `seguradora`
+    saiu de `MOTOR_ROTULO`.
     """
     analises = _analises_por_ticker()
 
-    bbse = analises["BBSE3"]
-    assert bbse.motor == "seguradora"
-    assert bbse.motor_rotulo == motores.MOTOR_ROTULO["seguradora"]
-    assert "RIM" not in bbse.motor_rotulo  # não atribuir o número Gordon-franquia ao RIM
-
-    # Os bancos seguem RIM: o rótulo do motor casa com o motor primário do arquétipo.
-    for tk in ("ITUB4", "BBAS3", "BBDC4"):
+    for tk in ("ITUB4", "BBAS3", "BBDC4", "BBSE3"):
         a = analises[tk]
         assert a.motor == "rim"
         assert a.motor_rotulo == motores.MOTOR_ROTULO["rim"]

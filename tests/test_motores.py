@@ -130,47 +130,6 @@ def test_o_ke_que_alimenta_o_rim_e_o_a_ke_unico(monkeypatch):
 
 
 # --------------------------------------------------------------------------- #
-# Lucro normalizado (ENG-03) — usa média 7–10a, não 1 ano
-# --------------------------------------------------------------------------- #
-def test_lucro_normalizado_usa_media_e_ignora_pico_vale():
-    # Série de LPA oscilante: picos e vales não podem mandar no intrínseco.
-    serie = [2.0, 6.0, 1.0, 7.0, 1.5, 8.0, 1.2, 6.5, 1.8, 7.5]
-    lpa_mid = norm.base_normalizada(serie, anos_media=10, winsor=0.10)
-    # A base normalizada difere materialmente do último ano (7,5).
-    assert abs(lpa_mid - serie[-1]) > 0.5
-    intr = motores.lucro_normalizado(lpa_mid, ke=0.12, g_estavel=0.025)
-    assert intr is not None and intr > 0 and math.isfinite(intr)
-    # Gordon puro: intrínseco = lpa_mid / (ke - g).
-    assert abs(intr - lpa_mid / (0.12 - 0.025)) < 1e-9
-
-
-def test_lucro_normalizado_never_raise():
-    assert motores.lucro_normalizado(5.0, ke=0.02, g_estavel=0.025) is None  # ke-g<=0
-    assert motores.lucro_normalizado(None, ke=0.12, g_estavel=0.025) is None
-
-
-# --------------------------------------------------------------------------- #
-# DCF crescimento (ENG-04) — positivo e finito, modelo-H conservador
-# --------------------------------------------------------------------------- #
-def test_dcf_crescimento_positivo_finito_e_modelo_h_conservador():
-    h = motores.dcf_crescimento(
-        lpa_valuation=2.0, g_alto=0.15, g_estavel=0.025, ke=0.14, n=10
-    )
-    assert h is not None and h > 0 and math.isfinite(h)  # critério #3: não zero/lixo
-    const = motores.dcf_crescimento(
-        lpa_valuation=2.0, g_alto=0.15, g_estavel=0.025, ke=0.14, n=10, decrescente=False
-    )
-    # Modelo-H (decrescente) é conservador: <= cenário de crescimento constante.
-    assert h < const
-
-
-def test_dcf_crescimento_never_raise():
-    # ke - g_estavel <= 0 → None.
-    assert motores.dcf_crescimento(2.0, 0.15, 0.15, 0.10, 10) is None
-    assert motores.dcf_crescimento(None, 0.15, 0.025, 0.14, 10) is None
-
-
-# --------------------------------------------------------------------------- #
 # NAV contábil (ENG-05) — piso patrimonial = VPA
 # --------------------------------------------------------------------------- #
 def test_nav_contabil_igual_vpa():
@@ -196,27 +155,22 @@ def _cesta_congelada():
     return {c.ticker: c for c in empresas}, cfg
 
 
-def test_rota_seguradora_roteia_e_da_intrinseco_finito_positivo():
-    """CONTRATO (WR-04): a seguradora capital-light roteia para a rota Gordon-franquia
-    (`motor == "seguradora"`) e devolve um intrínseco FINITO e > 0 — nunca o bank-RIM ancorado
-    no book minúsculo (VPA≈5,35, que a subvaloriza), nunca None/explosão.
-
-    Extraído do golden de NÍVEL `test_rota_seguradora_bbse3_gordon_franquia` (banda ≈R$39,87),
-    DELETADO na Fase 11 (GROW-01): o nível morreu porque a rota passou a usar o `g_cap` derivado
-    (~7,28%) no lugar do `cfg["ddm"]["g_estavel"]` (chave removida na Fase 11), encolhendo o
-    denominador Gordon `Ke − g` — comportamento INTENCIONAL (D-04). A guarda ESTRUTURAL de
-    roteamento + finitude/positividade SOBREVIVE (split-before-delete), sem cravar reais e sem
-    ler a chave removida. Auto-consistência: o número bate EXATAMENTE o Gordon-franquia dos
-    insumos (dpa_recorrente×(1+g_cap), ke=a.ke, g=g_cap) — reuso PURO de `ddm.valor_gordon`.
+def test_seguradora_como_financeira_da_intrinseco_finito_positivo():
+    """REWRITE (WR-04, Fase 13/ENG-01): sob o RIM ÚNICO a rota própria de seguradora MORREU — a
+    seguradora capital-light é classificada FINANCEIRA e roda o MESMO `motores.rim` que os bancos
+    (`motor == "rim"`, sem chave `seguradora`). O invariante ESTRUTURAL que o aviso Fase-7 exige
+    SOBREVIVE (não é morto em silêncio): o intrínseco é FINITO e > 0 — o ROE alto da franquia
+    compensa o book pequeno (VPA≈5,35) que preocupava; o RIM não a subvaloriza a None/absurdo.
+    Sem cravar nível em reais (BLIND-04a); só finitude/positividade estrutural.
     """
     por_ticker, cfg = _cesta_congelada()
     c = por_ticker["BBSE3"]
     a = report.analisar_acao(c, cfg)
 
-    # rótulo honesto: a rota assume a seguradora, não mais 'rim' — o roteamento sobrevive.
-    assert a.motor == "seguradora"
-    # finitude/positividade estrutural: sob o g_cap derivado (~7,28%) o Gordon de estágio único
-    # da seguradora NÃO explode nem devolve None/absurdo — sem cravar nenhum nível em reais.
+    # RIM único: nenhuma rota própria — a seguradora é uma FINANCEIRA como qualquer banco.
+    assert a.motor == "rim"
+    # finitude/positividade estrutural: o RIM não explode nem devolve None/absurdo para a franquia
+    # capital-light — sem cravar nenhum nível em reais.
     assert a.intrinseco_motor is not None
     assert math.isfinite(a.intrinseco_motor) and a.intrinseco_motor > 0
 

@@ -82,9 +82,9 @@ def test_vulc3_cascata_estrutural_sobrevive():
           Fase 12 (KE). Deletado aqui em vez de arrastar um nível de Ke para a suíte default.
     O que SOBREVIVE (extraído ANTES da deleção, no MESMO diff) é a estrutura, não o nível:
     normalização robusta, g sustentável ≤ 0 sob payout > 100%, Ke materialmente acima do 2019,
-    a banda como max/min da matriz de sensibilidade REAL, o veredito consumindo as flags, e a
-    consistência cross-menu (Core Value). Nenhum nível em reais/percentual do método antigo
-    permanece travado — BLIND-04a-safe (asserts estruturais/relacionais, offline).
+    a banda como região da margem de segurança sobre o RIM único (Fase 13/ENG-01), a armadilha de
+    payout > 100% surfaçada nos alertas, e a consistência cross-menu (Core Value). Nenhum nível em
+    reais/percentual do método antigo permanece travado — BLIND-04a-safe (asserts estruturais).
     """
     c = _vulc3_sintetica()
     cfg = _cfg()
@@ -112,18 +112,23 @@ def test_vulc3_cascata_estrutural_sobrevive():
     assert a.ke is not None
     assert a.ke > 0.094          # acima do Ke antigo (literais EUA 2019)
 
-    # ---- FIX-06 (banda = sensibilidade real) — INVARIANTE ESTRUTURAL (sem nível) ----
-    # A banda vem da matriz Ke×g (sensibilidade real), não do toggle binário de 2 cenários:
-    # vmin/vmax são exatamente o min/max das células — invariante que sobrevive à mudança de g.
+    # ---- Banda = região da margem de segurança sobre o RIM único (ENG-01, Fase 13) ----
+    # REWRITE: a banda deixou de ser o min/max da matriz DDM (o ensemble/matriz-como-fonte morreu
+    # no Plano 03). Sob o RIM único é a região SIMÉTRICA V×(1∓ms) sobre o intrínseco do RIM (o
+    # Plano 04 formaliza a região da MS primária). Invariante estrutural (sem nível em reais).
+    assert a.intrinseco_motor is not None and a.intrinseco_motor > 0
+    ms = cfg.get("veredito", {}).get("margem_seguranca", 0.15)
     assert a.vmin is not None and a.vmax is not None
-    celulas = [v for linha in (a.sensibilidade or []) for v in linha if v is not None]
-    assert celulas and a.vmin == min(celulas) and a.vmax == max(celulas)
+    assert abs(a.vmin - a.intrinseco_motor * (1.0 - ms)) < 1e-9
+    assert abs(a.vmax - a.intrinseco_motor * (1.0 + ms)) < 1e-9
 
-    # ---- FIX-05 (veredito consome flags) ----
-    # Preço abaixo do intrínseco MAS payout > 100% / DY > 15% ⇒ NÃO é "SUBAVALIADA" verde:
-    # é "VERIFICAR — possível divergência de modelo".
+    # ---- FIX-05 (veredito não vende armadilha como barganha) — INVARIANTE que SOBREVIVE ----
+    # payout > 100% (armadilha Cap. 6) ⇒ o veredito NÃO pode ser "SUBAVALIADA" verde (barganha).
+    # O veto de risco continua vivo no ramo SUBAVALIADA; e a armadilha é SEMPRE surfaçada nos
+    # alertas (mesmo quando a banda estreita da MS põe o preço "NO INTERVALO"). O prefixo VERIFICAR
+    # do método antigo dependia da banda DDM larga (preço abaixo de vmin) — DELETADO com ela.
     assert not a.veredito.startswith("SUBAVALIADA")
-    assert a.veredito.startswith("VERIFICAR")
+    assert any("Payout > 100%" in al for al in a.alertas)
 
     # ---- Consistência entre menus (Core Value), travada no caso âncora ----
     # O ROE/payout que o Analisar EXIBE é a MESMA base canônica que o Ranking consome.
@@ -206,55 +211,15 @@ def _wege3_crescimento() -> CompanyData:
     return c
 
 
-def test_capstone_itub4_sem_evitar_motor_rim_ddm_como_lente():
-    """ITUB4 (SC#1): financeira → motor RIM alimenta o veredito, DDM é lente conservadora,
-    e o selo NUNCA estampa 'Evitar' (o erro de arquitetura domado)."""
-    cfg = _cfg()
-    a = report.analisar_acao(_itub4_financeira(), cfg)
-    assert a.arquetipo == "financeira"
-    assert a.motor == "rim"
-    assert a.banda_do_motor is True
-    # O motor RIM referenciado (intrínseco do motor populado e positivo).
-    assert a.intrinseco_motor is not None and a.intrinseco_motor > 0
-    # DDM rebaixado a lente conservadora (contraponto capturado ANTES da banda do ensemble).
-    assert a.contraponto_valor is not None
-    assert any("lente conservadora" in al.lower() for al in a.alertas)
-    # NUNCA 'Evitar': nem o texto do veredito nem o selo (bsd alto → qualidade Alta).
-    assert "Evitar" not in a.veredito
-    assert selo_mod.montar_selo(70.0, a.veredito, cfg).rotulo != "Evitar"
+def test_capstone_vulc3_nao_vende_armadilha_como_barganha():
+    """VULC3 (invariante): payout > 100% (risco REAL) NÃO é vendido como 'SUBAVALIADA' (barganha),
+    e a armadilha é surfaçada nos alertas — o veredito honesto não maquia armadilha de dividendos.
 
-
-def test_capstone_vale3_motor_normalizado():
-    """VALE3 (SC#2): cíclica → motor 'normalizado' (não DDM), banda do motor, sem fronteiriço."""
-    cfg = _cfg()
-    a = report.analisar_acao(_vale3_ciclica(), cfg)
-    assert a.arquetipo == "ciclica"
-    assert a.motor == "normalizado"
-    assert a.banda_do_motor is True
-    assert a.intrinseco_motor is not None and a.intrinseco_motor > 0
-    assert selo_mod.montar_selo(70.0, a.veredito, cfg).rotulo != "Evitar"
-
-
-def test_capstone_wege3_motor_dcf_sem_faixa_lixo():
-    """WEGE3 (SC#2): crescimento → motor 'dcf', intrínseco positivo e FINITO, banda do motor
-    saudável (0 < vmin ≤ vmax, sem faixa-lixo)."""
-    cfg = _cfg()
-    a = report.analisar_acao(_wege3_crescimento(), cfg)
-    assert a.arquetipo == "crescimento"
-    assert a.motor == "dcf"
-    assert a.banda_do_motor is True
-    assert a.intrinseco_motor is not None
-    assert a.intrinseco_motor > 0 and math.isfinite(a.intrinseco_motor)
-    # Banda do motor saudável: sem faixa negativa/degenerada/infinita.
-    assert a.vmin is not None and a.vmax is not None
-    assert 0 < a.vmin <= a.vmax
-    assert math.isfinite(a.vmax)
-
-
-def test_capstone_vulc3_verifica_por_risco_real():
-    """VULC3 (invariante): payout > 100% (risco REAL) → veredito começa com 'VERIFICAR'
-    mesmo após toda a Fase 3 — o veredito honesto não maquia armadilha de dividendos."""
+    REWRITE (Fase 13/ENG-01): o prefixo 'VERIFICAR' do método antigo dependia da banda DDM LARGA
+    que punha o preço abaixo de vmin; sob o RIM único a banda é a região estreita da MS e o preço
+    pode cair 'NO INTERVALO'. O invariante que SOBREVIVE é: não-SUBAVALIADA + armadilha nos alertas.
+    """
     cfg = _cfg()
     a = report.analisar_acao(_vulc3_sintetica(), cfg)
-    assert a.veredito.startswith("VERIFICAR")
     assert not a.veredito.startswith("SUBAVALIADA")
+    assert any("Payout > 100%" in al for al in a.alertas)

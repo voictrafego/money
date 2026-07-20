@@ -100,8 +100,9 @@ def test_rank_e_analyze_carimbam_o_mesmo_macro_e_produzem_o_mesmo_intrinseco(mon
     assert v_analyze["ke"] is not None
     assert v_analyze["ke"] == v_rank["ke"]
 
-    # A ação é cíclica: o intrínseco vem do motor 'normalizado' (deflator-sensível).
-    assert v_analyze["motor"] == "normalizado"
-    # Core Value: o intrínseco do motor cíclico é o MESMO em rank e analyze.
+    # ENG-01 (Fase 13): a ação roda o RIM ÚNICO (motor == "rim") com a política cíclica
+    # (deflator-sensível); o rótulo do motor não é mais 'normalizado'.
+    assert v_analyze["motor"] == "rim"
+    # Core Value: o intrínseco do motor (RIM único) é o MESMO em rank e analyze.
     assert v_analyze["intr"] is not None
     assert v_analyze["intr"] == v_rank["intr"]

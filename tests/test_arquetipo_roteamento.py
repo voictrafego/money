@@ -144,45 +144,34 @@ def test_financeira_veredito_real_do_motor_nunca_evitar():
     cfg = _cfg()
     a = report.analisar_acao(_financeira(), cfg)
     assert a.arquetipo == "financeira"
-    # REBASELINE VER-01 (Fase 3): a suspensão D-06 foi SUBSTITUÍDA por veredito real derivado
-    # da banda do motor (ensemble). O motor RIM alimenta o veredito; o DDM é lente conservadora.
+    # ENG-01 (Fase 13): financeira roda o RIM ÚNICO (a.motor == "rim"). O veredito de preço é
+    # REAL (SUB/NO INTERVALO/SOBRE sobre a região da MS), não mais suspenso via "VERIFICAR".
     assert a.motor == "rim"
-    assert a.banda_do_motor is True
-    assert "só na Fase 3" not in a.veredito     # não mais o texto de suspensão
-    # O selo CONSOME o motor: faixa/rótulo derivados da banda do motor (Alta×faixa), NUNCA
-    # o 'evitar' (Baixa×Caro) que o DDM sozinho produziria — o erro de arquitetura do ITUB4.
+    assert a.intrinseco_motor is not None and a.intrinseco_motor > 0
+    assert a.veredito.startswith(("SUBAVALIADA", "NO INTERVALO", "SOBREAVALIADA"))
+    # O selo CONSOME o motor: faixa/rótulo derivados do veredito, NUNCA o 'Evitar' que o DDM
+    # sozinho produziria (o erro de arquitetura do ITUB4 domado pelo RIM).
     s = selo_mod.montar_selo(70.0, a.veredito, cfg)   # bsd 70 → verde → qualidade Alta
     assert s.rotulo != "Evitar"
-    if not a.veredito.startswith("VERIFICAR"):
-        assert s.faixa_preco == selo_mod.faixa_do_veredito(a.veredito)
-    # Alerta honesto declara o DDM como lente conservadora e nomeia o motor primário.
-    assert any("lente conservadora" in al.lower() for al in a.alertas)
+    assert s.faixa_preco == selo_mod.faixa_do_veredito(a.veredito)
 
 
 # --- (c) ANTI-PETRÓLEO — não vira regulada mesmo com eh_concessionaria=True ------ #
 def test_petroleo_nao_vira_concessao_finita():
     a = report.analisar_acao(_petroleo_compounder(), _cfg())
+    # A guarda anti-Petróleo impede a rota de concessão mesmo com eh_concessionaria=True.
     assert a.arquetipo != "concessao_finita"
-    # Fase 2: petróleo-compounder roteia para crescimento (dcf) ou cíclica (normalizado) —
-    # em ambos o motor != "ddm", então (VER-01) o veredito é REAL, alimentado pela banda do motor.
-    assert a.motor in {"dcf", "normalizado"}
-    assert a.banda_do_motor is True
+    # ENG-01 (Fase 13): qualquer que seja o arquétipo do refino, roda o RIM único.
+    assert a.motor == "rim"
 
 
 # --- (d) DEGRADAÇÃO — 1 ano, não levanta, popula o arquétipo -------------------- #
 def test_degradacao_um_ano_nao_levanta():
     c = CompanyData(ticker="VAZIA3", anos=[2024])
     c.preco_atual = 10.0
-    a = report.analisar_acao(c, _cfg())   # não deve levantar
-    assert a.arquetipo  # populado (default degradado pagadora_regulada)
-    assert a.motor_pendente is False       # default regulada tem motor ddm
-
-
-# --- (e) FRONTEIRIÇO PELO FUNIL (ARQ-02) --------------------------------------- #
-def test_fronteirico_via_funil_expoe_conflito():
-    a = report.analisar_acao(_fronteirico(), _cfg())
-    assert a.arquetipo_fronteirico is True
-    assert len(a.arquetipo_candidatos) >= 2
+    a = report.analisar_acao(c, _cfg())   # não deve levantar (never-raise, SAN-06)
+    assert a.arquetipo          # populado (default degradado por eliminação)
+    assert a.motor == "rim"     # ENG-01: caminho único de valor
 
 
 # --- Render mínimo (D-04): cabeçalho exibe "Arquétipo → motor" ----------------- #
@@ -193,180 +182,6 @@ def test_render_exibe_arquetipo_e_motor():
     md = report.relatorio_markdown(c, a, cfg)
     assert "Arquétipo:" in md
     assert "→ motor" in md
-
-
-# =========================================================================== #
-# Fase 2 v2.2 — anchors e2e por motor (roteamento + intrínseco do motor, D-06)
-# =========================================================================== #
-
-# --- Financeira (RIM): motor plugado, RIM destrava vs DDM, veredito REAL do motor (VER-01) --- #
-def test_financeira_rim_destrava_vs_ddm_e_alimenta_veredito():
-    cfg = _cfg()
-    c = _financeira()
-    a = report.analisar_acao(c, cfg)
-    ult = c.ultimo_ano()
-    assert a.motor == "rim"
-    assert a.intrinseco_motor is not None and a.intrinseco_motor > 0
-    # (a) RIM excede o VPA (ROE > Ke → excesso positivo, estrutural).
-    vpa = lentes.vpa(c.patrimonio_liquido.get(ult), c.num_acoes.get(ult))
-    assert a.intrinseco_motor > vpa
-    # (b) RIM materialmente acima da referência DDM ao vivo da PRÓPRIA fixture (comparação
-    # RELATIVA, robusta ao ke_rim real). O contraponto DDM foi capturado em contraponto_valor
-    # ANTES de a banda do ensemble sobrescrever vmin/vmax (Fase 3, ENS-01).
-    ddm_ref = a.contraponto_valor if a.contraponto_valor is not None \
-        else (a.ddm_h.valor_intrinseco if a.ddm_h else None)
-    assert ddm_ref is not None
-    assert a.intrinseco_motor > 1.3 * ddm_ref
-    # (c) REBASELINE VER-01: o motor RIM ALIMENTA o veredito (banda do ensemble); o selo passa
-    # a consumir o motor — faixa/rótulo derivados da banda do motor, NUNCA 'evitar' pelo DDM.
-    assert a.banda_do_motor is True
-    assert selo_mod.montar_selo(70.0, a.veredito, cfg).rotulo != "Evitar"
-
-
-# --- Cíclica (lucro normalizado): motor 'normalizado', intrínseco populado ------ #
-def test_ciclica_roteia_lucro_normalizado():
-    cfg = _cfg()
-    a = report.analisar_acao(_ciclica(), cfg)
-    assert a.motor == "normalizado"
-    assert a.intrinseco_motor is not None and a.intrinseco_motor > 0
-    assert a.banda_do_motor is True   # VER-01: o motor alimenta o veredito (não mais suspenso)
-
-
-# --- Crescimento (DCF): motor 'dcf', intrínseco positivo e finito (não zero/lixo) --- #
-def test_crescimento_roteia_dcf_positivo_finito():
-    import math
-    cfg = _cfg()
-    a = report.analisar_acao(_petroleo_compounder(), cfg)
-    assert a.motor == "dcf"
-    assert a.intrinseco_motor is not None
-    assert a.intrinseco_motor > 0 and math.isfinite(a.intrinseco_motor)
-    assert a.banda_do_motor is True   # VER-01: o motor alimenta o veredito (não mais suspenso)
-
-
-# --- Holding (NAV): motor 'nav', intrínseco == VPA do ano-base (dispatch forçado) --- #
-def test_holding_roteia_nav_igual_vpa(monkeypatch):
-    cfg = _cfg()
-    c = _holding()
-    # O classificador ainda não emite 'holding'; força a rota para validar o dispatch NAV e2e.
-    monkeypatch.setattr(
-        arq_mod, "classificar",
-        lambda c, cfg: arq_mod.ResultadoArquetipo(arq_mod.HOLDING),
-    )
-    a = report.analisar_acao(c, cfg)
-    ult = c.ultimo_ano()
-    assert a.motor == "nav"
-    assert a.intrinseco_motor == lentes.vpa(
-        c.patrimonio_liquido.get(ult), c.num_acoes.get(ult)
-    )
-    assert a.banda_do_motor is True   # VER-01: o motor alimenta o veredito (não mais suspenso)
-
-
-# --- Regulada (DDM, NÃO suspenso): reafirma ENG-06 preservado ------------------- #
-def test_regulada_ddm_nao_suspenso_eng06():
-    a = report.analisar_acao(_regulada_solida(), _cfg())
-    assert a.motor == "ddm"
-    assert not a.veredito.startswith("VERIFICAR")
-
-
-# --- Render (D-06): intrínseco do motor como referência primária + DDM rebaixado - #
-def test_render_financeira_exibe_motor_e_ddm_como_lente():
-    cfg = _cfg()
-    c = _financeira()
-    a = report.analisar_acao(c, cfg)
-    md = report.relatorio_markdown(c, a, cfg)
-    assert "motor do arquétipo" in md          # linha do intrínseco do motor (referência primária)
-    assert "lente conservadora" in md          # DDM rebaixado onde motor != "ddm"
-
-
-# =========================================================================== #
-# Fase 3 v2.2 — VER-02: caso-fronteira assume a dúvida (range + bandeira, D-06)
-# =========================================================================== #
-
-# --- Fronteiriço com >=2 candidatos resolvidos → range + bandeira, selo suprime faixa --- #
-def test_fronteirico_range_e_bandeira():
-    cfg = _cfg()
-    c = _fronteirico()
-    a = report.analisar_acao(c, cfg)
-    assert a.arquetipo_fronteirico is True
-    assert a.arquetipo_incerto is True
-    # >=2 candidatos rodaram o motor e resolveram (não-None, positivos).
-    assert len(a.candidatos_intrinsecos) >= 2
-    # Veredito assume a dúvida: prefixo VERIFICAR + range + bandeira de classificação incerta.
-    assert a.veredito.startswith("VERIFICAR")
-    assert "classificação incerta entre" in a.veredito
-    valores = [v for _, v in a.candidatos_intrinsecos]
-    assert a.veredito_range == (min(valores), max(valores))
-    # O selo NÃO estampa faixa no fronteiriço (reusa a supressão do prefixo VERIFICAR).
-    assert selo_mod.faixa_do_veredito(a.veredito) is None
-    assert selo_mod.montar_selo(70.0, a.veredito, cfg).faixa_preco is None
-
-
-# --- Degradação: só 1 motor candidato resolve → exibe o único valor, sem range de 1 ponto --- #
-def test_fronteirico_um_candidato_sem_range(monkeypatch):
-    cfg = _cfg()
-    c = _fronteirico()
-    monkeypatch.setattr(
-        arq_mod, "classificar",
-        lambda c, cfg: arq_mod.ResultadoArquetipo(
-            "ciclica", fronteirico=True, candidatos=["ciclica", "crescimento"], confianca="baixa"
-        ),
-    )
-    # Força só um dos motores candidatos a resolver (o outro degrada → None).
-    def _fake(motor, c, a, cfg):
-        return 20.0 if motor == "normalizado" else None
-    monkeypatch.setattr(report, "_intrinseco_por_motor", _fake)
-    a = report.analisar_acao(c, cfg)
-    assert a.arquetipo_incerto is True
-    assert a.veredito.startswith("VERIFICAR")
-    assert a.veredito_range is None                 # sem range de 1 ponto
-    assert len(a.candidatos_intrinsecos) == 1
-    assert selo_mod.faixa_do_veredito(a.veredito) is None
-
-
-# --- Nenhum candidato resolve → VERIFICAR informativo, sem faixa --- #
-def test_fronteirico_nenhum_candidato_resolve(monkeypatch):
-    cfg = _cfg()
-    c = _fronteirico()
-    monkeypatch.setattr(
-        arq_mod, "classificar",
-        lambda c, cfg: arq_mod.ResultadoArquetipo(
-            "ciclica", fronteirico=True, candidatos=["ciclica", "crescimento"], confianca="baixa"
-        ),
-    )
-    monkeypatch.setattr(report, "_intrinseco_por_motor", lambda motor, c, a, cfg: None)
-    a = report.analisar_acao(c, cfg)
-    assert a.arquetipo_incerto is True
-    assert a.veredito.startswith("VERIFICAR")
-    assert a.veredito_range is None
-    assert a.candidatos_intrinsecos == []
-    assert selo_mod.faixa_do_veredito(a.veredito) is None
-
-
-# --- Não-fronteiriço: o ramo VER-02 não roda (VER-01 segue mandando) --- #
-def test_nao_fronteirico_nao_aciona_ver02():
-    cfg = _cfg()
-    a = report.analisar_acao(_regulada_solida(), cfg)
-    assert a.arquetipo_fronteirico is False
-    assert a.arquetipo_incerto is False
-    assert a.candidatos_intrinsecos == []
-    assert a.veredito_range is None
-
-
-# --- Render (VER-02): markdown do fronteiriço lista candidatos + bandeira + range --- #
-def test_render_fronteirico_exibe_candidatos_e_range():
-    cfg = _cfg()
-    c = _fronteirico()
-    a = report.analisar_acao(c, cfg)
-    md = report.relatorio_markdown(c, a, cfg)
-    # Bloco de classificação incerta presente com a bandeira.
-    assert "classificação incerta" in md.lower()
-    assert "Classificação incerta (caso-fronteira)" in md
-    # Cada candidato aparece com o seu intrínseco.
-    for cand, _ in a.candidatos_intrinsecos:
-        assert cand in md
-    # O range aparece no render (formatação ptBR via _num).
-    menor, maior = a.veredito_range
-    assert f"R$ {report._num(menor)}–{report._num(maior)}" in md
 
 
 # --- Render limpo fora do fronteiriço: nenhum bloco de classificação incerta --- #
