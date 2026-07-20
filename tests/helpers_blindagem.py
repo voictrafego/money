@@ -13,8 +13,10 @@ from __future__ import annotations
 import ast
 import copy
 import json
+import math
 import os
 import pathlib
+import random
 import re
 import shlex
 import statistics
@@ -354,6 +356,120 @@ def mediana_jackknife(valores: Sequence[float]) -> tuple[float, float]:
         abs(statistics.median(vals[:i] + vals[i + 1:]) - mediana) for i in range(len(vals))
     )
     return mediana, desvio_max
+
+
+def _mad(valores: Sequence[float]) -> float:
+    """Desvio absoluto mediano (MAD) — escala ROBUSTA de dispersao, sem I/O.
+
+    `MAD = mediana(|v - mediana(v)|)`. E' a escala que NAO se deixa inflar por um outlier
+    (ao contrario do desvio-padrao), casando com a mediana do jackknife. Usada para tornar o
+    estatistico do jackknife ESCALA-INVARIANTE.
+    """
+    vals = list(valores)
+    med = statistics.median(vals)
+    return statistics.median([abs(v - med) for v in vals])
+
+
+def desvio_jackknife_normalizado(valores: Sequence[float]) -> float:
+    """O desvio do jackknife (de `mediana_jackknife`) NORMALIZADO pela escala robusta (MAD).
+
+    Funcao-irma de `mediana_jackknife` — NAO altera a assinatura dela (o teste que a valida por
+    construcao continua verde). O desvio bruto do jackknife tem as UNIDADES dos dados; dividi-lo
+    pelo MAD da a fracao "quantos MADs um unico ponto move a mediana", um numero ADIMENSIONAL e
+    escala-invariante. E' esse estatistico que o `LIMIAR_JACKKNIFE_PP(n)` calibra — os dois lados
+    da comparacao (o limiar e o desvio observado da cesta) DEVEM estar na MESMA unidade.
+
+    Escala nula (todos os pontos iguais) -> 0.0: se nao ha dispersao nenhuma, nenhum ponto e'
+    load-bearing (never-raise, mesma disciplina de degradacao do resto da suite). `n < 3` levanta
+    (herdado de `mediana_jackknife`).
+    """
+    _, desvio_max = mediana_jackknife(valores)
+    escala = _mad(valores)
+    if escala <= 0.0:
+        return 0.0
+    return desvio_max / escala
+
+
+# --------------------------------------------------------------------------- #
+# LIMIAR_JACKKNIFE_PP(n) — a estatistica pre-registrada (D-10 / VAL-05).
+#
+# O null NEUTRO e o unico grau de premissa; e' PRE-REGISTRADO aqui (Wave 2), ANTES de existir
+# qualquer valor do modelo (Plano 04, Wave 4) — overfit-proof por CONSTRUCAO e por TIMESTAMP. Os
+# quatro parametros abaixo sao literais fixos no codigo: mexer neles depois de ver a cesta seria
+# escolher o limiar olhando o resultado (T-14-05). Nenhum deles vem do hold-out observado.
+# --------------------------------------------------------------------------- #
+
+# Semente literal fixa -> a simulacao e' bit-a-bit reproduzivel. NAO e' um ticker nem um dado:
+# e' a data da fase (2026-07-20), escolhida por neutralidade.
+_SEED_NULL_JACKKNIFE = 20260720
+# Dispersao do null "saudavel". UNICA premissa de modelagem: crenca previa sobre a dispersao de
+# uma distribuicao de V/FairValue SEM ponto load-bearing. NUNCA medida do hold-out. Como o
+# estatistico e' normalizado por MAD, o resultado e' quase insensivel a este valor — ele fixa a
+# FORMA (lognormal suave unimodal), nao a escala.
+_SIGMA_NULL_JACKKNIFE = 0.35
+# Numero de draws de Monte-Carlo. Alto o bastante para o percentil ser estavel na 3a casa.
+_M_DRAWS_JACKKNIFE = 10_000
+# Percentil alto: "num sample saudavel de n pontos, um unico ponto move a mediana em <= X (em
+# MADs) com 95% de confianca; exceder X = ponto load-bearing alem do que a suavidade explica".
+_PCT_JACKKNIFE = 95.0
+
+
+def _percentil(ordenados: Sequence[float], pct: float) -> float:
+    """Percentil por interpolacao linear numa lista JA ordenada (metodo canonico numpy)."""
+    if not ordenados:
+        raise ValueError("percentil de sequencia vazia")
+    k = (pct / 100.0) * (len(ordenados) - 1)
+    lo = int(k)
+    hi = min(lo + 1, len(ordenados) - 1)
+    frac = k - lo
+    return ordenados[lo] * (1.0 - frac) + ordenados[hi] * frac
+
+
+@lru_cache(maxsize=None)
+def LIMIAR_JACKKNIFE_PP(n: int) -> float:
+    """Limiar do jackknife como FUNCAO de `n`, derivado de um null neutro (Monte-Carlo, seed fixo).
+
+    Substitui a constante magica `LIMIAR_JACKKNIFE_PP = 0.01 [ASSUMIDO]`. Responde:
+    "num sample SAUDAVEL de `n` pontos (sem ponto load-bearing), quanto um unico ponto PODE mover
+    a mediana — normalizado pela dispersao robusta (MAD) do proprio sample?". Exceder o limiar =
+    ha um ticker load-bearing, alem do que a suavidade de `n` pontos explica (D-11).
+
+    DERIVACAO (auditavel — cada premissa e' um literal fixo no modulo, pre-registrado antes de
+    qualquer valor do modelo):
+      - NULL NEUTRO: `n` pontos iid de uma lognormal suave unimodal, `exp(N(0, sigma))` com
+        `sigma = _SIGMA_NULL_JACKKNIFE = 0.35` — uma distribuicao de V/FairValue SEM ponto
+        load-bearing. A `sigma` (dispersao saudavel) e' crenca previa, NUNCA medida do hold-out.
+      - SEED: `_SEED_NULL_JACKKNIFE = 20260720` (literal) -> a simulacao e' deterministica,
+        bit-a-bit reproduzivel; `lru_cache` so' memoiza (nao muda o resultado).
+      - M: `_M_DRAWS_JACKKNIFE = 10_000` draws.
+      - ESTATISTICO: `desvio_jackknife_normalizado` = `mediana_jackknife` desvio / MAD -> o
+        limiar depende SO' de `n` e da FORMA do null, imune a "que dispersao a cesta acabou tendo"
+        (a normalizacao por MAD mata a escala; ver landmine de escala no RESEARCH).
+      - PERCENTIL: `_PCT_JACKKNIFE = 95.0` (percentil alto do null).
+
+    PROPRIEDADES: determinstica (mesma `n` -> mesmo float); monotona NAO-crescente em `n` (mais
+    pontos -> um unico ponto move menos a mediana): `LIMIAR(11)` >> `LIMIAR(99)`. Para os tamanhos
+    de cesta em que este gate roda (n >= ~9) o valor cai em `(0, 1)`; para `n` minusculo (3-6) o
+    limiar e' LEGITIMAMENTE grande (>1) — a afirmacao honesta de que com 3-6 pontos NAO da' para
+    distinguir um ponto load-bearing da propria granularidade (por isso o hold-out exige >= 6 por
+    estrato e `mediana_jackknife` levanta para n < 3).
+
+    NAO OLHA NENHUM DADO REAL: nem os valores do modelo, nem as ancoras independentes, nem a
+    cesta do hold-out — so' `n` e o null pre-registrado. E' a garantia de que o gate nao foi
+    calibrado contra o resultado.
+    """
+    if n < 3:
+        raise ValueError(
+            f"LIMIAR_JACKKNIFE_PP exige n >= 3 (o jackknife nao tem significado abaixo disso); "
+            f"recebeu n = {n}."
+        )
+    rng = random.Random(_SEED_NULL_JACKKNIFE)
+    estatisticos = []
+    for _ in range(_M_DRAWS_JACKKNIFE):
+        amostra = [math.exp(rng.gauss(0.0, _SIGMA_NULL_JACKKNIFE)) for _ in range(n)]
+        estatisticos.append(desvio_jackknife_normalizado(amostra))
+    estatisticos.sort()
+    return _percentil(estatisticos, _PCT_JACKKNIFE)
 
 
 def importa_caminho_de_valuation(caminho: pathlib.Path) -> bool:
