@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
-stopped_at: Completed 14-01-PLAN.md
-last_updated: "2026-07-20T14:27:07.237Z"
+stopped_at: Completed 14-02-PLAN.md
+last_updated: "2026-07-20T14:42:28.113Z"
 last_activity: 2026-07-20
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 38
-  completed_plans: 35
-  percent: 92
+  completed_plans: 36
+  percent: 95
 ---
 
 # Project State
@@ -33,11 +33,11 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 14 (valida-o-honesta-val) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-07-20
 
-Progress: [█████████░] 92%
+Progress: [██████████] 95%
 
 **Suíte:** `468 passed, 1 skipped, 18 deselected, 0 failed, 0 xfailed, 0 XPASS` (pós-13-06: −17 vs 485 = 16
 testes de `test_ranking_freio` [freio/ARQUETIPO_MOTOR/divergencia_entre_lentes deletados] + 1 straggler
@@ -153,15 +153,45 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | Phase 13 P06 | 40min | 4 tasks | 14 files |
 | Phase 13 P07 | 35min | 2 tasks | 3 files |
 | Phase 14 P01 | 18min | 3 tasks | 7 files |
+| Phase 14 P02 | 20min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
 
+- **VAL-05 (Fase 14 / plano 14-02) — a constante mágica `LIMIAR_JACKKNIFE_PP = 0.01 [ASSUMIDO]`
+  MORREU e virou FUNÇÃO de `n` (D-10); o item de MAIOR INCERTEZA da fase, entregue como derivação
+  estatística.** `LIMIAR_JACKKNIFE_PP(n)` (em `helpers_blindagem.py`, ao lado de `mediana_jackknife`)
+  = **percentil 95** do desvio-do-jackknife-**normalizado-por-MAD** sobre um **null neutro** lognormal
+  suave (`exp(N(0, σ=0,35))`), **M=10000** draws, **seed literal `20260720`** — pura, determinística
+  (`@lru_cache`, bit-a-bit), **monótona não-crescente em n** (`LIMIAR(11)=0,50 ≥ LIMIAR(99)=0,069`;
+  `LIMIAR(23)=0,286 ∈ (0,1)`). Normalização por MAD via **`desvio_jackknife_normalizado`** (função-irmã,
+  **sem quebrar a assinatura** de `mediana_jackknife` — o teste `:88` segue verde): o limiar depende
+  **SÓ de `n` e da forma do null**, imune à "dispersão que a cesta acabou tendo" (landmine de escala do
+  RESEARCH). **Pré-registrada na Wave 2, ANTES de qualquer `v_modelo`** (Plano 04, Wave 4):
+  overfit-proof por CONSTRUÇÃO e por TIMESTAMP; a derivação vem de um null Monte-Carlo, **nunca** dos
+  valores reais (grep-clean: zero `v_modelo`/`fair_value`/fixture no corpo da função). **Call-site
+  convertido:** `test_nenhum_ticker_e_load_bearing` passou de `mediana_jackknife(razoes)` (desvio bruto)
+
+  + constante para `desvio_jackknife_normalizado(razoes)` + `h.LIMIAR_JACKKNIFE_PP(len(razoes))` —
+  **mesma unidade (MADs) nos dois lados**; a construção de razões (`:160-165`) NÃO tocada; segue
+  `skipped` (fixture nasce no Plano 03/04). **`test_limiar_jackknife_mede_o_que_promete`** (`invariante`,
+  entrada em `classificacao.yaml` sem ticker) prova as DUAS direções: saudável `0,062 < LIMIAR(31)=0,214
+  < ponte 4,5`. **Nota honesta:** n pequeno (3–6) tem limiar legitimamente `> 1` (não dá para distinguir
+  ponte de granularidade com 3–6 pontos; por isso o hold-out exige ≥6/estrato) — documentado, **não
+  clampado**. **Desvio (Rule 1 - higiene):** os tokens `v_modelo`/`fair_value`/`fixture`/`[ASSUMIDO]`
+  vazaram para a prosa dos docstrings → scrubados por paráfrase antes de cada commit (greps de aceite
+  `==0`). **Fronteira: validação PURA** — `git diff -- config.yaml calibracao.lock.yaml` VAZIO,
+  orçamento em 3 graus intacto. Suíte default **470 passed, 1 skipped, 18 deselected, 0 failed**;
+  `-m golden_nivel` **18 passed, 0 ORFA**. **VAL-05 NÃO marcado completo** (co-reivindicado por
+  14-03/04; a métrica V/FairValue + jackknife acordado fecham no 14-04). Commits: `2702d9d` (T1),
+  `15950de` (T2).
+
 - **VAL-01/06/07 (Fase 14 / plano 14-01) — os 3 artefatos de validação SEM hold-out landados; a fase
   abre provando o caso do livro POR EXECUÇÃO.** **(VAL-01)** `test_soberano_itub4.py::test_soberano_itub4_reproduz_caso_do_livro`
   (`contrato`, BLIND-04a-safe): injeta o **Ke do livro (0,1248)** em `motores.rim` com os insumos do
   Cap. 17 (helper `insumos_itub4_livro` em `helpers_blindagem.py`, FORA de `test_` — literal do ticker
+
   + números vivem só ali) e asserta a **REGIÃO `35 <= V <= 39`**, NUNCA o ponto 37,22 (`==` seria golden
   de nível → BLIND-04a; `grep -c "ITUB4"` e `grep -c "37"` no teste == 0). O gap de hoje (V engine com
   Ke 15,86% ≈ 24,38) é inteiramente o Ke; a fórmula RIM já reproduz o livro. **NENHUM knob para "chegar
@@ -852,8 +882,8 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-20T14:27:07.231Z
-Stopped at: Completed 14-01-PLAN.md
+Last session: 2026-07-20T14:42:28.103Z
+Stopped at: Completed 14-02-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
