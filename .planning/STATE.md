@@ -4,14 +4,14 @@ milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
 stopped_at: Completed 13-04-PLAN.md
-last_updated: "2026-07-20T00:43:45.227Z"
+last_updated: "2026-07-20T00:52:36.027Z"
 last_activity: 2026-07-20
 progress:
   total_phases: 8
   completed_phases: 6
   total_plans: 34
-  completed_plans: 31
-  percent: 91
+  completed_plans: 32
+  percent: 94
 ---
 
 # Project State
@@ -33,16 +33,17 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 13 (motores-contrato-de-sa-da-eng) — EXECUTING
-Plan: 5 of 7
+Plan: 6 of 7
 Status: Ready to execute
 Last activity: 2026-07-20
 
-Progress: [█████████░] 91%
+Progress: [█████████░] 94%
 
-**Suíte:** `485 passed, 1 skipped, 18 deselected, 0 failed, 0 xfailed, 0 XPASS` (pós-13-04: +7 invariante
-da ponte P/B + 3 contrato de saída; pós-13-03 o RIM único matou o ensemble e 42 testes do método antigo
-foram delete/rewrite na onda 3, com a classificacao no mesmo diff). `-m golden_nivel` **18 passed, 0
-CLASSIFICACAO ORFA**.
+**Suíte:** `485 passed, 1 skipped, 18 deselected, 0 failed, 0 xfailed, 0 XPASS` (INALTERADA pós-13-05: o
+knob-cut motores 7→5 e a MS 0.15→0.05 são co-change config+lock coeso, não movem a suíte — a partição do
+orçamento segue 3 graus; pós-13-04: +7 invariante da ponte P/B + 3 contrato de saída; pós-13-03 o RIM único
+matou o ensemble e 42 testes do método antigo foram delete/rewrite na onda 3, com a classificacao no mesmo
+diff). `-m golden_nivel` **18 passed, 0 CLASSIFICACAO ORFA**.
 **AS DUAS DOENÇAS DO v2.4 ESTÃO CURADAS** (BLIND-03 na Fase 10, BLIND-02b no 12-02): `xfail_estritos()`
 == **0**; a guarda de seleção foi reconciliada à cura (0 pendentes é válido; as ex-doenças rodam como
 invariantes selecionadas). Sobra só **1 skipped** = jackknife (Fase 14). **PRIM-05 cumprido: o golden
@@ -145,10 +146,34 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | Phase 13 P02 | 15min | 2 tasks | 5 files |
 | Phase 13 P03 | 95 | 3 tasks | 12 files |
 | Phase 13 P04 | 30min | 3 tasks | 6 files |
+| Phase 13 P05 | 15min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **ENG-10/ENG-06 (Fase 13 / plano 13-05) — o KNOB-CUT CONTADO (regra dura C): `motores:` 7→5 folhas,
+  lock reescrito no MESMO commit, orçamento intacto em 3 graus.** O bloco `motores:` do `config.yaml`
+  foi de **7 folhas para 5 CONTADAS** (uma chave `rim`: `n_fade`, `excesso_sustentavel`, `ke_g_spread_min`,
+  `roe_terminal_stat`, `anos_ciclica`). Os sub-blocos `motores.ciclica`/`motores.crescimento` **colapsaram**
+  (dcf_crescimento/lucro_normalizado deixaram de ser motores no RIM único, Plano 03): `ciclica.anos_media`
+  **MOVIDA** → `motores.rim.anos_ciclica` (política de input do RIM — janela da média through-cycle do
+  arquétipo cíclico); `ciclica.winsor` (inerte desde PRIM-02) e `crescimento.n_anos_explicito` (o DCF
+  morreu; RIM usa n_fade) **DELETADAS**. `calibracao.lock.yaml` reescrito no MESMO commit: escopo **26→24
+  folhas** (motores 5) nos 3 lugares (escopo/header/partição), congelados **23→21**, `motores.rim (4)→(5)`
+  com a folha renomeada; **`graus_de_liberdade` INTOCADO** (ERP 0.045, n_fade 10, PIB_real 0.02 — n_fade
+  sobreviveu). O único consumidor da knob movida (`report._roe0_ciclico`) migrou para `motores.rim.anos_ciclica`
+  (winsor hardcoded 0.10) **no mesmo diff**. **ENG-06 CUMPRIDO:** `veredito.margem_seguranca` **0.15→0.05**
+  (MS simétrica do livro, Cap. 17 — o valor do caso-exemplo, região R$ 35–39 MS ±5%), **co-change** no
+  `user_control` do lock (fora dos 3 graus — é controle do usuário, nunca calibrada contra dispersão/preço/
+  compra). Bloco morto `veredito.san01` **removido** (`_guarda_san01` morreu no Plano 03; `grep -c san01
+  config.yaml == 0`). **Desvio (Rule 1):** o comentário novo da MS no config citava o ticker do caso-exemplo
+  → `test_nenhuma_justificativa_de_knob_menciona_ticker` (CR-05, varre o user_control) ficou vermelho; comentário
+  reescrito sem nomear o papel (a própria guarda pegou o furo antes do commit). Trailers `Knob-Change-Justification:`
+  de razão econômica **sem ticker**; hook BLIND-05 verde **sem `--no-verify`**; `git diff tests/` **VAZIO** nos
+  dois commits (não disparou o hook). Suíte default **485 passed, 1 skipped, 18 deselected, 0 failed** (baseline
+  pós-13-04 preservado); `-k 'orcamento or knobs_batem_com_o_lock or justificativa'` 4 passed. Commits:
+  `a638142` (T1 knob-cut), `9c264b1` (T2 MS+san01).
 
 - **ENG-05/06/07/08/09 (Fase 13 / plano 13-04) — o CONTRATO DE SAÍDA do livro (Cap. 17) foi RELIGADO
   ao RIM único.** `core/valuation.py` nasce com a identidade fechada **`pb_justo(roe,ke,g)=1+(roe−ke)/(ke−g)`**
@@ -751,7 +776,7 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-20T00:43:45.221Z
+Last session: 2026-07-20T00:51:59.880Z
 Stopped at: Completed 13-04-PLAN.md
 Resume file: None
 

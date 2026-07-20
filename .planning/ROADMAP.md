@@ -280,7 +280,7 @@ Plans:
 - [x] 13-04-PLAN.md — Contrato do livro: tríade de V vs região da MS + ponte P/B auditável (teste de correção) + guard 0<P/B<6 em dois níveis + matriz Ke×g reusada (ENG-05/06/07/08/09)
 
 **Wave 5** *(blocked on Wave 4 completion)*
-- [ ] 13-05-PLAN.md — Corte contado de knobs: motores 7→≤5 (config+lock coeso) + MS default 5-10% + veredito.san01 morto removido; 3 graus intactos (ENG-06/10)
+- [x] 13-05-PLAN.md — Corte contado de knobs: motores 7→≤5 (config+lock coeso) + MS default 5-10% + veredito.san01 morto removido; 3 graus intactos (ENG-06/10)
 - [ ] 13-06-PLAN.md — Ranking rebaixado a screener por múltiplos crus + UI mínima (MS slider/ponte/matriz) + selo sem 'Evitar'/'Baixa'; freio.py e ARQUETIPO_MOTOR deletados (ENG-05/06/07/11)
 
 **Wave 6** *(blocked on Wave 5 completion)*
@@ -322,7 +322,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 10. Primitivas sem viés (PRIM) | v2.4 | 4/4 | Complete    | 2026-07-16 |
 | 11. Crescimento / g (GROW) | v2.4 | 3/3 | Complete   | 2026-07-17 |
 | 12. Custo de capital / Ke (KE) | v2.4 | 4/4 | Complete    | 2026-07-17 |
-| 13. Motores + contrato de saída (ENG) | v2.4 | 4/7 | In Progress|  |
+| 13. Motores + contrato de saída (ENG) | v2.4 | 5/7 | In Progress|  |
 | 14. Validação honesta (VAL) | v2.4 | 0/? | Not started | - |
 
 ## Requirement Coverage (v2.4)

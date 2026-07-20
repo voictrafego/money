@@ -221,7 +221,7 @@ prova que a ordem importa: consertar o `Ke` antes do `g` **piora** (ITUB4 0,75 �
 - [x] **ENG-09**: Guarda-corpo sobre a **razão implícita**, não sobre o resultado: `0 < P/B justo < 6`.
   (O RIM **não** impede sozinho o CGRA4 a 921× — `VPA = PL/num_acoes` infla junto e o motor herda o
   erro 1:1, com P/B justo de 1,4×.)
-- [ ] **ENG-10**: O bloco `motores:` do `config.yaml` vai de **~20 chaves para ≤ 5**. A deleção é
+- [x] **ENG-10**: O bloco `motores:` do `config.yaml` vai de **~20 chaves para ≤ 5**. A deleção é
   **contada** — senão não acontece.
 - [ ] **ENG-11**: O Ranking é **rebaixado e re-rotulado**, não deletado (deletar jogaria fora os
   Cap. 11-12 do livro). Vira **screener comparativo por múltiplos**; as colunas
@@ -324,7 +324,7 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | ENG-07 | Phase 13 | Complete |
 | ENG-08 | Phase 13 | Complete |
 | ENG-09 | Phase 13 | Complete |
-| ENG-10 | Phase 13 | Pending |
+| ENG-10 | Phase 13 | Complete |
 | ENG-11 | Phase 13 | Pending |
 | VAL-01 | Phase 14 | Pending |
 | VAL-02 | Phase 14 | Pending |
