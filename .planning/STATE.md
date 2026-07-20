@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
-stopped_at: Phase 13 context gathered
-last_updated: "2026-07-20T00:28:16.320Z"
+stopped_at: Completed 13-04-PLAN.md
+last_updated: "2026-07-20T00:43:45.227Z"
 last_activity: 2026-07-20
 progress:
   total_phases: 8
   completed_phases: 6
   total_plans: 34
-  completed_plans: 30
-  percent: 88
+  completed_plans: 31
+  percent: 91
 ---
 
 # Project State
@@ -33,15 +33,16 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 13 (motores-contrato-de-sa-da-eng) — EXECUTING
-Plan: 4 of 7
+Plan: 5 of 7
 Status: Ready to execute
 Last activity: 2026-07-20
 
-Progress: [█████████░] 88%
+Progress: [█████████░] 91%
 
-**Suíte:** `475 passed, 1 skipped, 18 deselected, 0 failed, 0 xfailed, 0 XPASS` (pós-13-03: o RIM único
-matou o ensemble e 42 testes do método antigo foram delete/rewrite na onda 3, com a classificacao no
-mesmo diff). `-m golden_nivel` **18 passed, 0 CLASSIFICACAO ORFA**.
+**Suíte:** `485 passed, 1 skipped, 18 deselected, 0 failed, 0 xfailed, 0 XPASS` (pós-13-04: +7 invariante
+da ponte P/B + 3 contrato de saída; pós-13-03 o RIM único matou o ensemble e 42 testes do método antigo
+foram delete/rewrite na onda 3, com a classificacao no mesmo diff). `-m golden_nivel` **18 passed, 0
+CLASSIFICACAO ORFA**.
 **AS DUAS DOENÇAS DO v2.4 ESTÃO CURADAS** (BLIND-03 na Fase 10, BLIND-02b no 12-02): `xfail_estritos()`
 == **0**; a guarda de seleção foi reconciliada à cura (0 pendentes é válido; as ex-doenças rodam como
 invariantes selecionadas). Sobra só **1 skipped** = jackknife (Fase 14). **PRIM-05 cumprido: o golden
@@ -143,10 +144,32 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | Phase 13 P01 | 40min | 2 tasks | 2 files |
 | Phase 13 P02 | 15min | 2 tasks | 5 files |
 | Phase 13 P03 | 95 | 3 tasks | 12 files |
+| Phase 13 P04 | 30min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **ENG-05/06/07/08/09 (Fase 13 / plano 13-04) — o CONTRATO DE SAÍDA do livro (Cap. 17) foi RELIGADO
+  ao RIM único.** `core/valuation.py` nasce com a identidade fechada **`pb_justo(roe,ke,g)=1+(roe−ke)/(ke−g)`**
+  e **`payout_terminal(roe_t,g)=1−g/roe_t`** (None-guard de borda, never-raise/T-13-08); o BLIND-02a
+  (`test_invariantes_v24`) passou a IMPORTÁ-LA (fonte única, assert < 1e-9 intacto). A **ponte auditável**
+  (`pb_justo`/`v_ponte`/`payout_terminal`) é computada em `report.analisar_acao` reusando o **MESMO
+  `_derivar_insumo`** do `_valor_rim` (ROE_T=`_roe_through_cycle`, Ke=`a.ke`, g=g_T; g_ponte=0 no carve-out)
+  — não diverge do motor — e exposta em `AnaliseAcao` para a UI (Plano 06). É LENTE (decomposição
+  steady-state), NÃO um 2º motor. **Guard runtime never-raise (ENG-09/D-10b):** razão patológica
+  (`pb_justo∉(0,6)` ou `payout_T∉(0,1]` — **MEIO-ABERTO** por identidade do terminal zerado, nota
+  load-bearing do spike 13-01) DEGRADA o veredito p/ **VERIFICAR** (com alerta), `analisar_acao` NUNCA
+  levanta. O guard pega patologia de **MODELO** (spread/razão), ORTOGONAL ao bug de **DADO** (CGRA4 921×,
+  VPA inflado, P/B implícito ~1,4 são — SAN-01). **Região da MS já era primária desde o 13-03**
+  (`vmin/vmax=intrínseco×(1∓ms)`, MS consumida de cfg, nunca calibrada); a matriz Ke×g segue sobre `a.ke`
+  (Fase 12). **Questão aberta do 13-03 (veto de risco além da SUBAVALIADA) resolvida por NÃO-extensão**
+  (anti-goal proíbe contrato novo; armadilha segue sempre nos alertas). Testes de FORMATO/BORDA:
+  `test_eng_ponte_pb` (invariante, RED-able — a razão-guarda reprova patologia) + `test_eng_contrato`
+  (contrato — tríade por posição, região simétrica que escala com a MS, never-raise), sem ticker/número-alvo.
+  **Fronteira:** `git diff config.yaml calibracao.lock.yaml` **VAZIO** (3 graus intactos); caso do livro
+  NÃO validado (Fase 14). Suíte default **485 passed, 1 skipped, 18 deselected, 0 failed**; `-m golden_nivel`
+  **18 passed, 0 ORFA**. Commits: `f872a43` (T1), `824a6d8` (T2), `5f013aa` (T3).
 
 - **ENG-01/ENG-02 (Fase 13 / plano 13-03) — o RIM ÚNICO nasce e o ensemble MORRE.** `report._intrinseco_por_motor`
   (6 ramos: rim/normalizado/dcf/nav/ddm + rota seguradora) colapsou em **`_valor_rim` → `_derivar_insumo(politica, …)`
@@ -728,8 +751,8 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-20T00:26:30.572Z
-Stopped at: Phase 13 context gathered
+Last session: 2026-07-20T00:43:45.221Z
+Stopped at: Completed 13-04-PLAN.md
 Resume file: None
 
 ## Operator Next Steps

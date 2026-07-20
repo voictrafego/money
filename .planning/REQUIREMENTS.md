@@ -206,19 +206,19 @@ prova que a ordem importa: consertar o `Ke` antes do `g` **piora** (ITUB4 0,75 �
   **também o default por eliminação** (`arquetipo.py:176`) — empresa sem sinal cai no balde da
   transmissora. E transmissoras sob ICPC 01 usam **modelo de ativo financeiro**: o book **já é** o VP
   da RAP e o ROE dispara em ano de IPCA alto → consertar o `g` causaria **double-count de inflação**.
-- [ ] **ENG-05**: **O contrato de saída é o do livro** — valor intrínseco + **região de valor** +
+- [x] **ENG-05**: **O contrato de saída é o do livro** — valor intrínseco + **região de valor** +
   tríade **SUBAVALIADA / NO INTERVALO / SOBREAVALIADA**. Sai apenas o que nunca veio do livro:
   **"Evitar"** e **"Qualidade Baixa"**.
-- [ ] **ENG-06**: A **margem de segurança é controle do usuário**, simétrica, default 5-10%
+- [x] **ENG-06**: A **margem de segurança é controle do usuário**, simétrica, default 5-10%
   (*"se 5%, 10% ou qualquer outro valor, é você quem decide"* — Cap. 17). **Nunca calibrada** contra
   dispersão, preço ou taxa de "compra" — é assim que a Armadilha 4 morre por construção.
-- [ ] **ENG-07**: A **matriz de sensibilidade `Ke × g` vive** — o livro a chama de *"a que mais
+- [x] **ENG-07**: A **matriz de sensibilidade `Ke × g` vive** — o livro a chama de *"a que mais
   gostamos"*, é a estratégia **preferida** dele para a região de valor. Construída sobre `Ke` e `g`
   **corretos**.
-- [ ] **ENG-08**: A **ponte auditável** é exibida: `P/B justo = 1 + (ROE_T − Ke)/(Ke − g)` × VPA = `V`,
+- [x] **ENG-08**: A **ponte auditável** é exibida: `P/B justo = 1 + (ROE_T − Ke)/(Ke − g)` × VPA = `V`,
   com o **payout terminal implícito** (`payout_T = 1 − g/ROE_T`). É um **teste de correção**, não
   decoração: payout terminal negativo ou > 100% **é bug** e vira assert.
-- [ ] **ENG-09**: Guarda-corpo sobre a **razão implícita**, não sobre o resultado: `0 < P/B justo < 6`.
+- [x] **ENG-09**: Guarda-corpo sobre a **razão implícita**, não sobre o resultado: `0 < P/B justo < 6`.
   (O RIM **não** impede sozinho o CGRA4 a 921× — `VPA = PL/num_acoes` infla junto e o motor herda o
   erro 1:1, com P/B justo de 1,4×.)
 - [ ] **ENG-10**: O bloco `motores:` do `config.yaml` vai de **~20 chaves para ≤ 5**. A deleção é
@@ -319,11 +319,11 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | ENG-02 | Phase 13 | Complete |
 | ENG-03 | Phase 13 | Complete |
 | ENG-04 | Phase 13 | Complete |
-| ENG-05 | Phase 13 | Pending |
-| ENG-06 | Phase 13 | Pending |
-| ENG-07 | Phase 13 | Pending |
-| ENG-08 | Phase 13 | Pending |
-| ENG-09 | Phase 13 | Pending |
+| ENG-05 | Phase 13 | Complete |
+| ENG-06 | Phase 13 | Complete |
+| ENG-07 | Phase 13 | Complete |
+| ENG-08 | Phase 13 | Complete |
+| ENG-09 | Phase 13 | Complete |
 | ENG-10 | Phase 13 | Pending |
 | ENG-11 | Phase 13 | Pending |
 | VAL-01 | Phase 14 | Pending |
