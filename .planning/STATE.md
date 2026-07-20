@@ -35,7 +35,7 @@ Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 14
 Plan: Not started
 Status: Milestone complete
-Last activity: 2026-07-20
+Last activity: 2026-07-20 - Completed quick task 260720-kuc: relabel DDM→RIM na aba Analisar (pré-deploy)
 
 Progress: [██████████] 100%
 
@@ -928,6 +928,7 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 |---|-------------|------|--------|
 | 260712-p6r | Freio do Ranking no Streamlit (paridade CLI↔UI) | 2026-07-12 | f9ace2d |
 | 260713-hoo | Card intrínseco lidera com o motor primário (ITUB4 → "RIM R$ 32,88") | 2026-07-13 | 9897bd9 |
+| 260720-kuc | Relabel DDM→RIM na aba Analisar + remove código morto do ensemble (manchete "Intrínseco (RIM)"; DDM mantido onde é a lente genuína) | 2026-07-20 | f8e7ef9 |
 
 ## Deferred Items
 
