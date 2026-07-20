@@ -45,6 +45,11 @@ _SERIES = (
 )
 
 
+# VAL-07 (Fase 14) — DECISÃO REGISTRADA: NÃO fazer backtest temporal com este snapshot.
+# Um backtest honesto exige dados point-in-time (data de PUBLICAÇÃO de cada DFP, ~2–3 meses após o
+# fechamento; preço/rf da época). Usar a DFP na data de competência é vazamento de futuro → número
+# confiante e falso, pior que nenhum. Se você veio aqui para implementar um backtest temporal: LEIA
+# `.planning/decisions/VAL-07-backtest-temporal.md` PRIMEIRO — ou faça PIT de verdade, ou não faça.
 def carregar_snapshot(caminho: str) -> Tuple[List[CompanyData], float, dict]:
     """Lê o snapshot YAML congelado e reconstrói os `CompanyData` + os carimbos globais.
 
