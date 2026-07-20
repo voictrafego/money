@@ -1054,6 +1054,41 @@ if modo.startswith("Analisar"):
                     f"DDM {esc_md(fmt_rs(a.contraponto_valor))}."
                 )
 
+            # ----------------------------------------------------------------- #
+            # Contrato de saída do livro (Cap. 17 / D-08) — a MARGEM DE SEGURANÇA
+            # é ESCOLHA do usuário (percentual SIMÉTRICO sobre o V), nunca um knob
+            # calibrado contra resultado (Armadilha 4). O slider só EXPÕE o
+            # parâmetro: reprojeta a região de valor exibida a partir do intrínseco
+            # do motor, SEM recalibrar o default (que vem de cfg["veredito"]).
+            # ----------------------------------------------------------------- #
+            if a.intrinseco_motor is not None and a.intrinseco_motor > 0:
+                _ms_default = float((CFG.get("veredito") or {}).get("margem_seguranca", 0.05))
+                ms = st.slider(
+                    "Margem de segurança (± sobre o valor intrínseco)",
+                    min_value=0.0, max_value=0.20, value=_ms_default, step=0.01,
+                    help="A margem é sua escolha (Cap. 17): ±5%, ±10% ou o que você decidir. "
+                         "Só reprojeta a região exibida — não recalibra o modelo.",
+                )
+                _vmin_ms = a.intrinseco_motor * (1.0 - ms)
+                _vmax_ms = a.intrinseco_motor * (1.0 + ms)
+                st.caption(
+                    f"Região de valor (MS ±{ms*100:.0f}%): "
+                    f"**{esc_md(fmt_rs(_vmin_ms))} – {esc_md(fmt_rs(_vmax_ms))}** "
+                    f"em torno do intrínseco {esc_md(fmt_rs(a.intrinseco_motor))}."
+                )
+                # Ponte P/B (Plano 04) — decomposição steady-state AUDITÁVEL do intrínseco do
+                # RIM (LENTE, não 2º motor): P/B justo = 1+(ROE_T−Ke)/(Ke−g_T); V = P/B×VPA;
+                # payout terminal = 1−g_T/ROE_T. READ-ONLY: campos já derivados na engine.
+                if a.pb_justo is not None:
+                    _pb1, _pb2, _pb3 = st.columns(3)
+                    _pb1.metric("P/B justo (implícito)", fmt_num(a.pb_justo))
+                    _pb2.metric("V = P/B × VPA", fmt_rs(a.v_ponte))
+                    _pb3.metric("Payout terminal", fmt_pct(a.payout_terminal))
+                    st.caption(
+                        "Ponte P/B — decompõe o intrínseco em P/B justo × VPA para auditar a "
+                        "razão implícita. É lente de sanidade, não substitui o valor do motor."
+                    )
+
             # Guarda-corpo do DDM (Achado 2 / SAN-01): quando a faixa saiu negativa/zero a
             # engine já zerou vmin/vmax (Intrínseco cai em "—"). Aqui só a nota honesta do
             # porquê — nunca exibimos faixa negativa/degenerada como preço-alvo.
