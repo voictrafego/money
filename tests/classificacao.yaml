@@ -409,7 +409,7 @@
 'tests/test_selo.py::test_qualidade_por_cor': contrato
 'tests/test_selo.py::test_faixa_do_veredito_prefixos': contrato
 'tests/test_selo.py::test_matriz_quadrante_alta': contrato
-'tests/test_selo.py::test_matriz_quadrante_baixa': contrato
+'tests/test_selo.py::test_matriz_quadrante_atencao': contrato
 'tests/test_selo.py::test_montar_selo_joia_completo': contrato
 'tests/test_selo.py::test_overlay_verificar': contrato
 'tests/test_selo.py::test_degradacao_bsd_none': contrato

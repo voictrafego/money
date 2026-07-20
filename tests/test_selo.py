@@ -2,7 +2,7 @@
 
 Trava a camada de DERIVAÇÃO da engine:
 - cor do selo a partir do score BSD (cortes config-driven, com as BORDAS exatas);
-- qualidade (Alta/Baixa) por cor;
+- qualidade (Alta/Atenção) por cor;
 - faixa de preço a partir do PREFIXO do veredito do DDM;
 - matriz de quadrante qualidade×preço (os 6 rótulos de D2);
 - overlay VERIFICAR (alerta separado, sem rótulo de preço);
@@ -58,8 +58,8 @@ def test_cor_do_bsd_none():
 def test_qualidade_por_cor():
     assert selo._qualidade("verde") == "Alta"
     assert selo._qualidade("azul") == "Alta"
-    assert selo._qualidade("amarelo") == "Baixa"
-    assert selo._qualidade("vermelho") == "Baixa"
+    assert selo._qualidade("amarelo") == "Atenção"
+    assert selo._qualidade("vermelho") == "Atenção"
     assert selo._qualidade(None) is None
 
 
@@ -76,7 +76,7 @@ def test_faixa_do_veredito_prefixos():
 
 
 # --------------------------------------------------------------------------- #
-# Matriz de quadrante (SELO-02) — os 6 rótulos de D2
+# Matriz de quadrante (SELO-02) — os rótulos de D2 ("Evitar" removido no Plano 13-06)
 # --------------------------------------------------------------------------- #
 def test_matriz_quadrante_alta():
     assert selo.montar_selo(85, "SUBAVALIADA — x", CFG).rotulo == "JOIA"
@@ -84,10 +84,12 @@ def test_matriz_quadrante_alta():
     assert selo.montar_selo(85, "SOBREAVALIADA — x", CFG).rotulo == "Boa, mas cara"
 
 
-def test_matriz_quadrante_baixa():
+def test_matriz_quadrante_atencao():
+    # ENG-11/D-08: o eixo "Baixa" foi re-rotulado neutro ("Atenção"); VALUE TRAP/Fraca ficam.
     assert selo.montar_selo(30, "SUBAVALIADA — x", CFG).rotulo == "VALUE TRAP"
     assert selo.montar_selo(30, "NO INTERVALO — x", CFG).rotulo == "Fraca"
-    assert selo.montar_selo(30, "SOBREAVALIADA — x", CFG).rotulo == "Evitar"
+    # A célula ("Atenção","Caro") perdeu o rótulo "Evitar" → degrada para None (sem veredito binário).
+    assert selo.montar_selo(30, "SOBREAVALIADA — x", CFG).rotulo is None
 
 
 def test_montar_selo_joia_completo():

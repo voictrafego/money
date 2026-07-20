@@ -28,7 +28,7 @@ class Selo:
     """Selo derivado (aditivo, defaults degradáveis).
 
     `cor`      : verde | azul | amarelo | vermelho (None quando o BSD é indisponível)
-    `qualidade`: Alta (verde/azul) | Baixa (amarelo/vermelho) | None
+    `qualidade`: Alta (verde/azul) | Atenção (amarelo/vermelho) | None
     `faixa_preco`: Barato | Justo | Caro | None (None em VERIFICAR/veredito ausente)
     `rotulo`   : rótulo do quadrante qualidade×preço (None quando falta qualidade/faixa)
     `verificar`: True quando o veredito é VERIFICAR — alerta 'verificar dados' que se
@@ -49,9 +49,10 @@ _MATRIZ = {
     ("Alta", "Barato"): "JOIA",
     ("Alta", "Justo"): "Boa, no preço",
     ("Alta", "Caro"): "Boa, mas cara",
-    ("Baixa", "Barato"): "VALUE TRAP",
-    ("Baixa", "Justo"): "Fraca",
-    ("Baixa", "Caro"): "Evitar",
+    ("Atenção", "Barato"): "VALUE TRAP",
+    ("Atenção", "Justo"): "Fraca",
+    # ("Atenção", "Caro") NÃO tem rótulo — a antiga célula de rejeição saiu (nunca veio do
+    # livro; o livro prescreve valor intrínseco + região, não veredito binário). Degrada p/ None.
 }
 
 
@@ -77,11 +78,15 @@ def cor_do_bsd(bsd: Optional[float], cfg: dict) -> Optional[str]:
 
 
 def _qualidade(cor: Optional[str]) -> Optional[str]:
-    """Eixo Qualidade do quadrante: verde/azul → 'Alta'; amarelo/vermelho → 'Baixa'."""
+    """Eixo Qualidade do quadrante: verde/azul → 'Alta'; amarelo/vermelho → 'Atenção'.
+
+    O rótulo 'Baixa' saiu (re-rotulado neutro): nunca veio do livro e o BSD alto/baixo é
+    contexto, não veredito. VALUE TRAP/Fraca (os quadrantes descritivos) permanecem.
+    """
     if cor in ("verde", "azul"):
         return "Alta"
     if cor in ("amarelo", "vermelho"):
-        return "Baixa"
+        return "Atenção"
     return None
 
 

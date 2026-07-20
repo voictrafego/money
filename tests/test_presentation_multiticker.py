@@ -205,8 +205,8 @@ def test_selo_badge_nunca_e_imperativo():
     saidas = [
         presentation.selo_badge("verde", "JOIA", "Alta", False),
         presentation.selo_badge("azul", "Boa, no preço", "Alta", False),
-        presentation.selo_badge("amarelo", "VALUE TRAP", "Baixa", False),
-        presentation.selo_badge("vermelho", "Evitar", "Baixa", False),
+        presentation.selo_badge("amarelo", "VALUE TRAP", "Atenção", False),
+        presentation.selo_badge("vermelho", None, "Atenção", False),
         presentation.selo_badge("verde", None, "Alta", True),
         presentation.selo_badge(None, None, None, False),
     ]
