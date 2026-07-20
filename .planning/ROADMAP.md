@@ -337,7 +337,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 11. Crescimento / g (GROW) | v2.4 | 3/3 | Complete   | 2026-07-17 |
 | 12. Custo de capital / Ke (KE) | v2.4 | 4/4 | Complete    | 2026-07-17 |
 | 13. Motores + contrato de saída (ENG) | v2.4 | 7/7 | Complete    | 2026-07-20 |
-| 14. Validação honesta (VAL) | v2.4 | 4/4 | Complete   | 2026-07-20 |
+| 14. Validação honesta (VAL) | v2.4 | 4/4 | Complete    | 2026-07-20 |
 
 ## Requirement Coverage (v2.4)
 
