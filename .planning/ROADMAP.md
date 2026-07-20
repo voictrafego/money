@@ -281,7 +281,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 - [x] 13-05-PLAN.md — Corte contado de knobs: motores 7→≤5 (config+lock coeso) + MS default 5-10% + veredito.san01 morto removido; 3 graus intactos (ENG-06/10)
-- [ ] 13-06-PLAN.md — Ranking rebaixado a screener por múltiplos crus + UI mínima (MS slider/ponte/matriz) + selo sem 'Evitar'/'Baixa'; freio.py e ARQUETIPO_MOTOR deletados (ENG-05/06/07/11)
+- [x] 13-06-PLAN.md — Ranking rebaixado a screener por múltiplos crus + UI mínima (MS slider/ponte/matriz) + selo sem 'Evitar'/'Baixa'; freio.py e ARQUETIPO_MOTOR deletados (ENG-05/06/07/11)
 
 **Wave 6** *(blocked on Wave 5 completion)*
 - [ ] 13-07-PLAN.md — Prova por execução: regressão dos 104 (finito/sem explosão/P/B sã/caminho único) + cross-menu; suíte default verde (ENG-01/08/09)
@@ -322,7 +322,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 10. Primitivas sem viés (PRIM) | v2.4 | 4/4 | Complete    | 2026-07-16 |
 | 11. Crescimento / g (GROW) | v2.4 | 3/3 | Complete   | 2026-07-17 |
 | 12. Custo de capital / Ke (KE) | v2.4 | 4/4 | Complete    | 2026-07-17 |
-| 13. Motores + contrato de saída (ENG) | v2.4 | 5/7 | In Progress|  |
+| 13. Motores + contrato de saída (ENG) | v2.4 | 6/7 | In Progress|  |
 | 14. Validação honesta (VAL) | v2.4 | 0/? | Not started | - |
 
 ## Requirement Coverage (v2.4)

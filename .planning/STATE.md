@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
-stopped_at: Completed 13-04-PLAN.md
-last_updated: "2026-07-20T00:52:36.027Z"
+stopped_at: Completed 13-06-PLAN.md
+last_updated: "2026-07-20T01:17:24.190Z"
 last_activity: 2026-07-20
 progress:
   total_phases: 8
   completed_phases: 6
   total_plans: 34
-  completed_plans: 32
-  percent: 94
+  completed_plans: 33
+  percent: 97
 ---
 
 # Project State
@@ -33,13 +33,15 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 13 (motores-contrato-de-sa-da-eng) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
 Last activity: 2026-07-20
 
-Progress: [█████████░] 94%
+Progress: [██████████] 97%
 
-**Suíte:** `485 passed, 1 skipped, 18 deselected, 0 failed, 0 xfailed, 0 XPASS` (INALTERADA pós-13-05: o
+**Suíte:** `468 passed, 1 skipped, 18 deselected, 0 failed, 0 xfailed, 0 XPASS` (pós-13-06: −17 vs 485 = 16
+testes de `test_ranking_freio` [freio/ARQUETIPO_MOTOR/divergencia_entre_lentes deletados] + 1 straggler
+`test_cli_rank_consistencia` [rank não roda mais analisar_acao]; nenhum knob tocado. Pós-13-05: o
 knob-cut motores 7→5 e a MS 0.15→0.05 são co-change config+lock coeso, não movem a suíte — a partição do
 orçamento segue 3 graus; pós-13-04: +7 invariante da ponte P/B + 3 contrato de saída; pós-13-03 o RIM único
 matou o ensemble e 42 testes do método antigo foram delete/rewrite na onda 3, com a classificacao no mesmo
@@ -147,10 +149,36 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | Phase 13 P03 | 95 | 3 tasks | 12 files |
 | Phase 13 P04 | 30min | 3 tasks | 6 files |
 | Phase 13 P05 | 15min | 2 tasks | 3 files |
+| Phase 13 P06 | 40min | 4 tasks | 14 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **ENG-05/06/07/11 (Fase 13 / plano 13-06) — o Ranking foi REBAIXADO a screener por múltiplos crus e
+  o mundo antigo MORREU.** O Ranking (cli.cmd_rank + app.py) deixou de estampar preço-alvo/upside/veredito
+  e a 2ª lente ensemble×DDM + divergência de lentes (`cli.py:203-243`): a **regressão de pares é CEGA ao
+  nível de preço** (Cap. 12 mede P/L RELATIVO a pares, não imputa quanto a ação vale — memória
+  `ranking-e-cego-ao-preco`). Fica **Nota (Cap. 11) + múltiplos crus** (CLI: Nota+P/L+DY; app:
+  Nota+P/L+P/VP+DY+Selo via `lentes.metricas_par` canônico). **`preco_alvo_por_regressao` DESCONECTADA da
+  view, NÃO deletada** (conferência CTEEP do livro, `test_preco_alvo_cteep` verde). **Mundo antigo morto:**
+  `core/freio.py`, `arquetipo.ARQUETIPO_MOTOR` e `comparables.divergencia_entre_lentes`+`LIMIAR_DIVERGENCIA`
+  DELETADOS (últimos consumidores); `test_ranking_freio.py` deletado INTEIRO (import no topo impede deleção
+  parcial) + **16 entradas classificacao** no mesmo diff; `test_arquetipo` repontado a `ARQUETIPO_ANCORA_ROE`.
+  **Straggler (Rule 3):** `test_cli_rank_consistencia.py` deletado — `cmd_rank` não roda mais `analisar_acao`
+  (rank virou múltiplos puros, sem macro/valuation), a propriedade cross-menu que ele travava DEIXOU DE
+  EXISTIR (caminho morto, não número quebrado; espelha a onda-3 do 13-03). **UI Analisar mínima (D-08):**
+  slider de MS (`st.slider` 0–20%, default de `cfg["veredito"]["margem_seguranca"]`) que EXPÕE o parâmetro
+  do usuário e reprojeta a região exibida (`intrínseco×(1∓MS)`) **SEM recalibrar o default** (Armadilha 4
+  neutralizada por construção — a MS é escolha do usuário, Cap. 17); **ponte P/B exibida** (READ-ONLY,
+  campos `pb_justo/v_ponte/payout_terminal` do Plano 04); **matriz Ke×g reusada** sobre `a.ke` (Fase 12);
+  Graham/Bazin INTOCADOS. **selo sem "Evitar" e "Baixa"→"Atenção"** (célula `("Baixa","Caro")="Evitar"`
+  removida; eixo re-rotulado neutro; VALUE TRAP/Fraca mantidos; `faixa_do_veredito` INTOCADO). **Dívida de
+  UI deferida:** blocos mortos do ensemble em `app.py` (Analisar) seguem gateados por `getattr(...,False)`
+  (não renderizam/crasham) + a manchete ainda rotula "Intrínseco (DDM)" com motor RIM. **Fronteira:**
+  `git diff 43d69b8^..HEAD -- config.yaml calibracao.lock.yaml` **VAZIO** — orçamento de 3 graus intacto.
+  Suíte default **468 passed, 1 skipped, 18 deselected, 0 failed**; `-m golden_nivel` **18 passed, 0 ORFA**.
+  Commits: `43d69b8` (T1), `4cda48e` (T2), `43e98e4` (T3), `3d72b4f` (T4).
 
 - **ENG-10/ENG-06 (Fase 13 / plano 13-05) — o KNOB-CUT CONTADO (regra dura C): `motores:` 7→5 folhas,
   lock reescrito no MESMO commit, orçamento intacto em 3 graus.** O bloco `motores:` do `config.yaml`
@@ -776,7 +804,7 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-20T00:51:59.880Z
+Last session: 2026-07-20T01:16:25.869Z
 Stopped at: Completed 13-04-PLAN.md
 Resume file: None
 
