@@ -653,6 +653,36 @@ def empresa_itub4(empresas):
     return {c.ticker: c for c in empresas}["ITUB4"]
 
 
+def insumos_itub4_livro() -> dict:
+    """Insumos do caso-exemplo do livro (Cap. 17) para o teste soberano VAL-01 — o criterio de
+    aceite mais duro do marco: o motor RIM tem de reproduzir o caso do proprio livro.
+
+    HIGIENE DECLARADA (Pitfall 6 / BLIND-04a): o literal do ticker e os numeros do Cap. 17 vivem
+    AQUI, num helper fora de qualquer funcao `test_` (o detector so' varre `test_*.py`). O teste
+    assere a REGIAO [35, 39] (nunca o ponto de nivel), logo nao e' `ticker == valor de nivel`.
+
+    Proveniencia dos insumos:
+    - `ke=0,1248` e' a constante do livro (Cap. 17, Tabela 43) — INJETADA, nao re-derivada via
+      CAPM (a engine estima ~15,86% para o ITUB4; o gap de hoje e' inteiramente o Ke).
+    - `roe0=0,1798`, `retencao=0,5331`, `vpa0=19,0` vem do snapshot do ITUB4.
+    - O `g` do livro (10,24%) entra por `roe0 x retencao ~= 9,58%` (crescimento do book na janela),
+      NAO por um parametro `g_alto` — o RIM nao tem esse argumento. O unico `g` explicito e'
+      `g_terminal = g_cap = 0,0728`.
+    - `excesso_sustentavel=0,045` e' knob TRAVADO no lock: NAO se mexe nele para "chegar em 37,22"
+      (isso seria recalibrar — Pitfall 2). A regiao [35, 39] e' o gate; nenhum knob e' tocado.
+    """
+    return {
+        "vpa0": 19.0,
+        "roe0": 0.1798,
+        "ke": 0.1248,
+        "retencao": 0.5331,
+        "n": 10,
+        "excesso_sustentavel": 0.045,
+        "g_terminal": 0.0728,
+        "roe_terminal": 0.1798,
+    }
+
+
 def carregar_lock() -> dict:
     """Le o `calibracao.lock.yaml` da RAIZ. `safe_load`, NUNCA `load` (T-07-11).
 
