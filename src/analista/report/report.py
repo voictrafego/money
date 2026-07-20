@@ -17,6 +17,7 @@ from tabulate import tabulate
 from ..core import arquetipo, capm, ddm, growth, indicators, lentes, lifecycle, motores, screening
 from ..core import multiples as mult
 from ..core import normalizacao as norm
+from ..core import valuation
 from ..core.fundamentals import CompanyData
 from . import selo as selo_mod
 
@@ -57,6 +58,11 @@ class AnaliseAcao:
     # --- Fase 2 v2.2: intrínseco pelo RIM único do arquétipo (motor CALCULA e EXIBE, D-06) ---
     intrinseco_motor: Optional[float] = None               # valor intrínseco pelo RIM único (None se degradou, never-raise)
     motor_rotulo: str = ""                                  # rótulo humano do motor (motores.MOTOR_ROTULO)
+    # --- Fase 13 / plano 13-04: ponte P/B auditável (ENG-08, decomposição steady-state exibível) ---
+    pb_justo: Optional[float] = None                       # P/B justo implícito = 1+(ROE_T−Ke)/(Ke−g_T) (lente, não motor)
+    v_ponte: Optional[float] = None                        # V da ponte = pb_justo × VPA0 (sanidade da razão, não substitui o RIM)
+    payout_terminal: Optional[float] = None                # payout terminal implícito = 1 − g_T/ROE_T
+    razao_patologica: bool = False                         # True quando a razão implícita é patológica (ENG-09/D-10b): guard degrada o veredito
     # --- Fase 3 v2.2 (Achado 2 / SAN-01): guarda-corpo do DDM (secundário, não alimenta o veredito) ---
     ddm_inaplicavel: bool = False                          # True quando a faixa DDM saiu negativa/degenerada (suprimida na borda)
 
@@ -327,6 +333,47 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
         )
         a.intrinseco_motor = None
 
+    # --- Ponte P/B auditável (ENG-08) + guard runtime never-raise (ENG-09/D-10b) ---
+    # A ponte é a decomposição STEADY-STATE (Gordon-RIM) da mesma tese do RIM multiestágio: uma
+    # LENTE exibível para auditar a RAZÃO implícita, NÃO um segundo motor de valor (não substitui
+    # `intrinseco_motor`). Insumos = os TERMINAIS que o RIM único consome: ROE_T=_roe_through_cycle,
+    # Ke=a.ke, g=g_T (o g_terminal efetivo; None no carve-out fade-only ⇒ terminal g=0). Reusa o
+    # MESMO `_derivar_insumo` do `_valor_rim` (mesma política do arquétipo), então a ponte não
+    # diverge do que o motor usou. Never-raise: qualquer degeneração → campos None, nunca levanta.
+    try:
+        rim_cfg = (cfg or {}).get("motores", {}).get("rim", {})
+        politica = arquetipo.ARQUETIPO_ANCORA_ROE.get(a.arquetipo, "through_cycle")
+        _roe0, roe_T, g_term, vpa0 = _derivar_insumo(politica, c, a.ke, g_cap, rim_cfg, cfg)
+        # carve-out/holding: g_terminal=None ⇒ terminal fade-only, crescimento terminal = 0.
+        g_ponte = g_term if g_term is not None else 0.0
+        a.pb_justo = valuation.pb_justo(roe_T, a.ke, g_ponte)
+        a.payout_terminal = valuation.payout_terminal(roe_T, g_ponte)
+        if a.pb_justo is not None and vpa0 is not None:
+            a.v_ponte = a.pb_justo * vpa0
+        # Guard de razão (D-10b): P/B justo ∈ (0,6) E payout_T ∈ (0,1] (meio-aberto — spike 13-01:
+        # terminal zerado crava payout_T=1,0 por IDENTIDADE, não patologia). Fora disso = patologia
+        # de MODELO (spread degenerado / payout impossível). Este guard NÃO conserta VPA inflado
+        # (CGRA4 a 921×: P/B implícito ~1,4 é SÃO — bug de DADO, sinalizado por SAN-01, ORTOGONAL).
+        pb_patologico = a.pb_justo is not None and not (0.0 < a.pb_justo < 6.0)
+        payout_patologico = (
+            a.payout_terminal is not None and not (0.0 < a.payout_terminal <= 1.0)
+        )
+        a.razao_patologica = pb_patologico or payout_patologico
+        if a.razao_patologica:
+            motivos_razao = []
+            if pb_patologico:
+                motivos_razao.append(f"P/B justo implícito {a.pb_justo:.1f} fora de (0,6)")
+            if payout_patologico:
+                motivos_razao.append(f"payout terminal {a.payout_terminal:.0%} fora de (0,100%]")
+            a.alertas.append(
+                "Razão implícita patológica (" + ", ".join(motivos_razao) + "): a decomposição "
+                "steady-state do valor não fecha — veredito de preço degradado para verificação."
+            )
+    except Exception:
+        # never-raise (SAN-06): a ponte é lente auditável; jamais derruba a análise nem levanta.
+        a.pb_justo = a.v_ponte = a.payout_terminal = None
+        a.razao_patologica = False
+
     # --- DDM de dois estágios (Cap. 15/17) ---
     payout_proj = c.payout_valuation()  # média 3a + clamp 1.0 (função canônica única)
     n = cfg["ddm"]["n_anos_explicito"]
@@ -378,7 +425,15 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     # degradou → intrínseco None, ou sem preço) → prefixo VERIFICAR (selo suprime faixa, selo.py:119),
     # nunca faixa falsa.
     if a.vmin is not None and a.vmax is not None and a.preco_atual:
-        if a.preco_atual < a.vmin:
+        if a.razao_patologica:
+            # ENG-09/D-10b: razão implícita patológica ⇒ patologia de MODELO (não bug de dado). O
+            # guard runtime DEGRADA o veredito para VERIFICAR (never-raise: não levanta, não estampa
+            # a faixa como barganha/preço-alvo confiável). O motivo já está detalhado nos alertas.
+            a.veredito = (
+                f"VERIFICAR — razão implícita do modelo patológica: o intervalo intrínseco "
+                f"R$ {_br(a.vmin)}–{_br(a.vmax)} pode não ser confiável (ver alertas)."
+            )
+        elif a.preco_atual < a.vmin:
             # DDM-FIX-05 (caso VULC3): não rotular "SUBAVALIADA" quando flags de risco
             # contradizem a tese de desconto. Preço abaixo do intrínseco + payout>100% ou
             # DY>15% costuma ser divergência de modelo / armadilha, não barganha.
