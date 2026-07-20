@@ -194,10 +194,10 @@ prova que a ordem importa: consertar o `Ke` antes do `g` **piora** (ITUB4 0,75 �
 
 ## Motores e contrato de saída (ENG)
 
-- [ ] **ENG-01**: Um único motor de valor (**RIM**). Sob clean surplus, os 4 motores não são 4
+- [x] **ENG-01**: Um único motor de valor (**RIM**). Sob clean surplus, os 4 motores não são 4
   opiniões — são **4 implementações do mesmo modelo com inputs inconsistentes**. A dispersão
   (0,81/0,63/0,63/0,48) é a assinatura dos bugs.
-- [ ] **ENG-02**: O **ensemble morre junto** — ele mede os próprios bugs do projeto e chama isso de
+- [x] **ENG-02**: O **ensemble morre junto** — ele mede os próprios bugs do projeto e chama isso de
   "divergência de método". Idem `_guarda_san01` e `_guarda_faixa_ddm`: são **cicatrizes do viés, não
   features**. Removidos, não portados.
 - [x] **ENG-03**: O classificador de arquétipo **sobrevive e melhora** — deixa de escolher um *modelo*
@@ -315,8 +315,8 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | KE-03 | Phase 12 | Complete |
 | KE-04 | Phase 12 | Complete |
 | KE-05 | Phase 12 | Complete |
-| ENG-01 | Phase 13 | Pending |
-| ENG-02 | Phase 13 | Pending |
+| ENG-01 | Phase 13 | Complete |
+| ENG-02 | Phase 13 | Complete |
 | ENG-03 | Phase 13 | Complete |
 | ENG-04 | Phase 13 | Complete |
 | ENG-05 | Phase 13 | Pending |

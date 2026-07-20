@@ -4,14 +4,14 @@ milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
 stopped_at: Phase 13 context gathered
-last_updated: "2026-07-19T23:44:56.457Z"
-last_activity: 2026-07-19
+last_updated: "2026-07-20T00:28:16.320Z"
+last_activity: 2026-07-20
 progress:
   total_phases: 8
   completed_phases: 6
   total_plans: 34
-  completed_plans: 29
-  percent: 85
+  completed_plans: 30
+  percent: 88
 ---
 
 # Project State
@@ -33,14 +33,15 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 13 (motores-contrato-de-sa-da-eng) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
-Last activity: 2026-07-19
+Last activity: 2026-07-20
 
-Progress: [█████████░] 85%
+Progress: [█████████░] 88%
 
-**Suíte:** `519 passed, 1 skipped, 20 deselected, 0 failed, 0 xfailed, 0 XPASS` (517 do pós-12-03 +
-os 2 testes de validação KE-04 do 12-04). `-m golden_nivel` **20 passed, 0 CLASSIFICACAO ORFA**.
+**Suíte:** `475 passed, 1 skipped, 18 deselected, 0 failed, 0 xfailed, 0 XPASS` (pós-13-03: o RIM único
+matou o ensemble e 42 testes do método antigo foram delete/rewrite na onda 3, com a classificacao no
+mesmo diff). `-m golden_nivel` **18 passed, 0 CLASSIFICACAO ORFA**.
 **AS DUAS DOENÇAS DO v2.4 ESTÃO CURADAS** (BLIND-03 na Fase 10, BLIND-02b no 12-02): `xfail_estritos()`
 == **0**; a guarda de seleção foi reconciliada à cura (0 pendentes é válido; as ex-doenças rodam como
 invariantes selecionadas). Sobra só **1 skipped** = jackknife (Fase 14). **PRIM-05 cumprido: o golden
@@ -141,10 +142,34 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | Phase 12 P04 | 20min | 2 tasks | 2 files |
 | Phase 13 P01 | 40min | 2 tasks | 2 files |
 | Phase 13 P02 | 15min | 2 tasks | 5 files |
+| Phase 13 P03 | 95 | 3 tasks | 12 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **ENG-01/ENG-02 (Fase 13 / plano 13-03) — o RIM ÚNICO nasce e o ensemble MORRE.** `report._intrinseco_por_motor`
+  (6 ramos: rim/normalizado/dcf/nav/ddm + rota seguradora) colapsou em **`_valor_rim` → `_derivar_insumo(politica, …)`
+  → `motores.rim(…)`**: a política `ARQUETIPO_ANCORA_ROE[a.arquetipo]` (13-02) só varia o **INSUMO** (roe0-âncora,
+  roe_terminal, g_terminal, base_book); a fórmula é SEMPRE o RIM, com `a.ke` (F12) e `g_T` (F11) consumidos prontos
+  (nada recomputado). Carve-out **CONCESSAO_FINITA: `g_terminal=None`** (fade-only, spike 13-01; sem g de inflação no
+  terminal). **`dcf_crescimento`/`lucro_normalizado` DELETADOS** (não FCFE — Armadilha 2); `nav_contabil` vira derivador
+  de piso (política `nav_piso`); **chave `"seguradora"` fora de `MOTOR_ROTULO`** (só `"rim"`); a seguradora é uma
+  FINANCEIRA no RIM único (rota própria morta). **Ensemble MORTO:** campos de `AnaliseAcao` (banda_do_motor/contraponto_valor/
+  divergencia_*/arquetipo_incerto·fronteirico/candidatos_intrinsecos/veredito_range/san01_reetiquetado/motor_pendente),
+  as funções `_guarda_faixa_ddm`/`_guarda_san01`/`_hipotese_divergencia`/`_veredito_fronteirico` e o render de divergência/
+  incerto — REMOVIDOS (não portados). `vmin/vmax` do veredito viraram a **região SIMÉTRICA da MS** sobre o intrínseco do
+  RIM (o Plano 04 formaliza a região da MS primária). **WR-04 seguradora preservado (aviso Fase-7):** REWRITE finite>0
+  sobre FINANCEIRA→RIM, `test_setor_de_banco_nao_casa_o_token_seguradora` INTOCADO. **Sweep onda 3:** 42 testes do método
+  antigo delete/rewrite (test_guardrails_ddm inteiro; ensemble/divergência de test_report; fronteirico/banda/motor==X de
+  test_arquetipo_roteamento; capstones/cascata de test_vulc3; lucro_normalizado/dcf de test_motores; +stragglers de
+  behavior-change fora do inventário: test_deflacao_ciclica→_valor_rim, test_cli_rank rótulo rim, test_guardrails_fix06
+  banda-de-matriz DELETADA, excecao_nota órfã da seguradora removida do fair_values) — `classificacao.yaml` no MESMO diff
+  (0 órfão). **Nota p/ Plano 04:** o veto de risco (payout>100%) segue só no ramo SUBAVALIADA; sob a banda estreita da MS
+  uma armadilha pode cair "NO INTERVALO" no veredito de preço (sempre surfaçada nos alertas). **Fronteira:** `git diff
+  config.yaml calibracao.lock.yaml` VAZIO (orçamento em 3 graus; knob-cut é o Plano 05). Suíte default **475 passed,
+  1 skipped, 18 deselected, 0 failed, 0 xfailed**; `-m golden_nivel` **18 passed, 0 ORFA**. Commits: `9612798` (T1),
+  `83e3825` (T2), `6e7e2be` (T3).
 
 - **ENG-03/ENG-04 (Fase 13 / plano 13-02) — o registry `ARQUETIPO_ANCORA_ROE` nasce e o antigo
   `PAGADORA_REGULADA` é CINDIDO.** `arquetipo.py` ganha `ARQUETIPO_ANCORA_ROE` (arquétipo →
@@ -153,6 +178,7 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
   `CICLICA`→`normalizado`, `CRESCIMENTO`→`atual_fade`, `HOLDING`→`nav_piso`) — o mapa que o RIM único
   do Plano 03 consome. O rótulo `PAGADORA_REGULADA` é removido e cindido (D-05) em **`PAGADORA_MADURA`**
   (novo default-por-eliminação — empresa sem sinal roda RIM normal, não mais o balde da transmissora)
+
   + **`CONCESSAO_FINITA`** (hard-route de `eh_concessionaria`, carve-out declarado ANTES do hold-out).
   Só as **duas linhas de split** mudaram no corpo de `classificar` (a árvore de decisão sobrevive
   intocada, ENG-03); a **guarda anti-Petróleo** (`_setor_casa_token(setor, regulada_excluir)`) segue no
@@ -702,7 +728,7 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-19T23:44:45.127Z
+Last session: 2026-07-20T00:26:30.572Z
 Stopped at: Phase 13 context gathered
 Resume file: None
 
