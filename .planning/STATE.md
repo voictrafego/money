@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
-status: verifying
+status: ready_to_plan
 stopped_at: Completed 13-07-PLAN.md
 last_updated: "2026-07-20T02:00:00.000Z"
 last_activity: 2026-07-20
 progress:
   total_phases: 8
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 34
   completed_plans: 34
   percent: 100
@@ -32,9 +32,9 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 ## Current Position
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
-Phase: 13 (motores-contrato-de-sa-da-eng) — EXECUTING
-Plan: 7 of 7
-Status: Phase complete — ready for verification
+Phase: 14
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-07-20
 
 Progress: [██████████] 100%
@@ -115,6 +115,7 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | 09 | 5 | - | - |
 | 10 | 4 | - | - |
 | 12 | 4 | - | - |
+| 13 | 7 | - | - |
 
 **Recent Trend:**
 
