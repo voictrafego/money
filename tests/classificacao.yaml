@@ -83,7 +83,6 @@
 'tests/test_comparador.py::test_ordem_das_colunas_preserva_entrada_sem_sort_nem_alvo': contrato
 'tests/test_comparador.py::test_suficiente_falso_com_menos_de_dois': contrato
 'tests/test_comparador.py::test_never_raise_contexto_quebrado_degrada_so_a_coluna': contrato
-'tests/test_cli_rank_consistencia.py::test_rank_e_analyze_carimbam_o_mesmo_macro_e_produzem_o_mesmo_intrinseco': contrato
 'tests/test_consistencia_modos.py::test_roe_coerente_analisar_vs_ranking': contrato
 'tests/test_consistencia_modos.py::test_payout_coerente_ultimo_ano_vs_valuation': contrato
 'tests/test_consistencia_modos.py::test_veredito_direcao_coerente': contrato

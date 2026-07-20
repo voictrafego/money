@@ -175,79 +175,36 @@ def cmd_rank(args, cfg):
     if not empresas:
         return 1
 
-    # WR-03: carimba rf + deflatores UMA vez (MESMA fonte de `cmd_analyze`) ANTES do loop —
-    # a 2ª lente do ranque (ensemble motor×DDM via `analisar_acao`, abaixo) precisa ler os
-    # MESMOS macro-inputs que `Analisar`, senão a mesma ação cíclica diverge entre os menus.
-    _carimbar_macro(cfg)
-
-    nomes, ML, ROE, PL, EY, DP = [], [], [], [], [], []
+    # ENG-11: o Ranking é um SCREENER por múltiplos CRUS (Cap. 11) — a Nota padronizada + os
+    # múltiplos brutos. NÃO estampa nível de preço (a 2ª lente ensemble×DDM e a divergência de
+    # lentes SAÍRAM): a regressão de pares (Cap. 12) mede P/L RELATIVO a pares, é cega ao nível
+    # de preço e não imputa quanto a ação "vale". O valuation absoluto por preço vive no Analisar.
+    nomes, ML, ROE, PL, EY = [], [], [], [], []
+    pl_por_ticker, dy_por_ticker = {}, {}
     for c in empresas:
-        # FIX-04: ROE/LPA/payout de valuation saem dos métodos canônicos normalizados,
-        # idênticos ao Analisar e ao Ranking do app. Inclui payout_valuation no lugar do
-        # payout(ult) cru — alinha de quebra a divergência cli↔app pré-existente do payout.
-        ult = c.ultimo_ano()
+        # FIX-04: ROE/LPA de valuation saem dos métodos canônicos normalizados, idênticos ao
+        # Analisar e ao Ranking do app (Core Value cross-modo). Fundamentos puros, sem macro.
         lpa = c.lpa_valuation()
+        _pl = mult.preco_lucro(c.preco_atual, lpa)
         nomes.append(c.ticker)
         ML.append(c.margem_valuation())  # AUD-RANK-01: ML normalizada, igual a ROE/PL/EY do ranque
         ROE.append(c.roe_valuation())
-        PL.append(mult.preco_lucro(c.preco_atual, lpa))
+        PL.append(_pl)
         EY.append(mult.earnings_yield(lpa, c.preco_atual))
-        DP.append(c.payout_valuation())
+        pl_por_ticker[c.ticker] = _pl
+        dy_por_ticker[c.ticker] = c.dy_atual()
 
     ranking = cmp.ranking_por_multiplos(nomes, {"ML": ML, "ROE": ROE, "PL": PL, "EY": EY})
 
-    # regressão P/L ~ f(DP, ROE) e preço-alvo, quando houver pares suficientes (Cap. 12)
-    reg = cmp.ajustar_regressao_pl(PL, DP, ROE)
-    alvos = {}            # ticker -> PrecoAlvo (regressão crua, antes do freio)
-    pendentes = {}        # ticker -> motor_pendente (suspensão por arquétipo, paridade D-04)
-    ensemble_mid = {}     # ticker -> mid da banda do ensemble motor×DDM (2ª lente, p/ divergência)
-    for c in empresas:
-        pendentes[c.ticker] = _motor_pendente(c, cfg)
-        if reg:
-            pa = cmp.preco_alvo_por_regressao(
-                reg, c.payout_valuation(), c.roe_valuation(), c.lpa_valuation(), c.preco_atual)
-            if pa:
-                alvos[c.ticker] = pa
-        # 2ª lente só para SINALIZAR divergência (Achado 4) — read-only, offline. O mid é a banda
-        # do ENSEMBLE motor×DDM (pós-ENS-01, desde a Fase 3), não DDM puro: analisar_acao já agrega
-        # o motor do arquétipo com o DDM (lê cfg["capm"]["rf_local"] resolvido; não toca a rede aqui).
-        a = report.analisar_acao(c, cfg)
-        if a.vmin is not None and a.vmax is not None:
-            ensemble_mid[c.ticker] = (a.vmin + a.vmax) / 2.0
-
-    print(f"\n{'#':>2} {'TICKER':10} {'NOTA':>6}  {'ALVO R$':>9}  {'UPSIDE':>7}")
-    avisos = []           # SINALIZAÇÃO de divergência entre lentes (Achado 4) — NÃO reconciliação
+    print(f"\n{'#':>2} {'TICKER':10} {'NOTA':>6}  {'P/L':>7}  {'DY':>7}")
     for i, r in enumerate(ranking, 1):
         tk = r["empresa"]
-        pa = alvos.get(tk)
-        # Freio do Ranking (Achado 3): só estampa o alvo como preço-alvo quando a regressão é
-        # robusta (R²/n), o alvo não é degenerado e o arquétipo tem motor. Caso contrário marca
-        # "—" com o motivo — a NOTA do ranque abaixo permanece intacta.
-        confiavel, motivo = alvo_regressao_confiavel(reg, pa, pendentes.get(tk, False))
-        if confiavel:
-            alvo = f"{pa.preco_alvo:.2f}"
-            up = f"{pa.upside*100:.0f}%" if pa.upside is not None else "-"
-        else:
-            alvo = "—"
-            up = f"({motivo})" if motivo else "-"
         nota = f"{r['nota']:.1f}" if r["nota"] is not None else "-"
-        print(f"{i:>2} {tk:10} {nota:>6}  {alvo:>9}  {up:>7}")
-        # Aviso de divergência entre lentes (Achado 4 — SINALIZAÇÃO honesta): as duas lentes da
-        # MESMA ação (ensemble motor×DDM, valuation absoluto × regressão P/L relativa) medem coisas
-        # diferentes; quando divergem além do limiar, AVISAR em vez de fingir uma verdade.
-        if pa is not None and tk in ensemble_mid:
-            divergiu, razao = cmp.divergencia_entre_lentes(ensemble_mid[tk], pa.preco_alvo)
-            if divergiu:
-                avisos.append(
-                    f"⚠ {tk}: lentes divergem ~{razao:.1f}× (ensemble motor×DDM R$ {ensemble_mid[tk]:.2f} "
-                    f"× regressão R$ {pa.preco_alvo:.2f}) — ver Analisar a fundo.")
-    for aviso in avisos:
-        print(aviso, file=sys.stderr)
-    if reg:
-        _t_dp = f"{'−' if reg.coeficientes[1] < 0 else '+'} {abs(reg.coeficientes[1]):.2f}·DP"
-        _t_roe = f"{'−' if reg.coeficientes[2] < 0 else '+'} {abs(reg.coeficientes[2]):.2f}·ROE"
-        print(f"\nRegressão P/L = {reg.coeficientes[0]:.2f} {_t_dp} "
-              f"{_t_roe}  (R²={reg.r2:.2f}, n={reg.n})", file=sys.stderr)
+        _pl = pl_por_ticker.get(tk)
+        _dy = dy_por_ticker.get(tk)
+        pl_s = f"{_pl:.1f}" if _pl is not None else "-"
+        dy_s = f"{_dy*100:.1f}%" if _dy is not None else "-"
+        print(f"{i:>2} {tk:10} {nota:>6}  {pl_s:>7}  {dy_s:>7}")
     return 0
 
 

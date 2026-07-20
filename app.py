@@ -1555,9 +1555,11 @@ elif modo.startswith("Garimpar"):
 # 3) RANKING POR MÚLTIPLOS
 # =========================================================================== #
 elif modo.startswith("Ranking"):
-    st.subheader("Ranking por múltiplos + preço-alvo", help=h("ranking"))
-    st.caption("Padroniza os múltiplos em nota 0–100 e estima o preço justo por regressão "
-               "P/L ~ f(payout, ROE). Upside positivo = candidata a estar barata.")
+    st.subheader("Ranking por múltiplos", help=h("ranking"))
+    st.caption("Screener do Cap. 11: padroniza os múltiplos em nota 0–100 e mostra os múltiplos "
+               "crus (P/L, P/VP, DY) + o selo (BSD). Triagem relativa entre pares — não estima "
+               "preço-alvo nem veredito (a regressão de pares é cega ao nível de preço; o valor "
+               "por preço vive no Analisar a fundo).")
     txt = st.text_area("Tickers (de preferência do mesmo setor)",
                        value="TAEE11, EGIE3, CMIG4, ALUP11, CPFE3, EQTL3")
     if st.button("Rankear", type="primary"):
@@ -1575,81 +1577,50 @@ elif modo.startswith("Ranking"):
         else:
             # UX (quick-260710-u1f): feedback no corpo enquanto roda a regressão/ranking,
             # em vez de esvaziar a barra e deixar a tela parada.
-            prog.progress(1.0, text="Calculando ranking e preço-alvo (regressão)…")
-            nomes, ML, ROE, PL, EY, DP = [], [], [], [], [], []
+            prog.progress(1.0, text="Calculando ranking por múltiplos…")
+            nomes, ML, ROE, PL, EY = [], [], [], [], []
             for c in empresas:
                 # FIX-04: ROE/LPA de valuation saem dos métodos canônicos normalizados —
                 # o MESMO número que o Analisar exibe (Core Value). app.py segue read-only:
                 # só troca QUAL método canônico lê, não recalcula método.
-                u = c.ultimo_ano(); lpa = c.lpa_valuation()
+                lpa = c.lpa_valuation()
                 nomes.append(c.ticker)
                 ML.append(c.margem_valuation())  # AUD-RANK-01: ML normalizada, igual a ROE/PL/EY do ranque
                 ROE.append(c.roe_valuation())
                 PL.append(mult.preco_lucro(c.preco_atual, lpa))
                 EY.append(mult.earnings_yield(lpa, c.preco_atual))
-                DP.append(c.payout_valuation())  # payout canônico sustentável (mediana), igual ao Analisar
             ranking = cmp.ranking_por_multiplos(nomes, {"ML": ML, "ROE": ROE, "PL": PL, "EY": EY})
-            reg = cmp.ajustar_regressao_pl(PL, DP, ROE)
-            alvos = {}
-            if reg:
-                for c in empresas:
-                    pa = cmp.preco_alvo_por_regressao(reg, c.payout_valuation(), c.roe_valuation(), c.lpa_valuation(), c.preco_atual)
-                    if pa:
-                        alvos[c.ticker] = pa
             rows = []
             for r in ranking:
-                pa = alvos.get(r["empresa"])
                 _c_sel = next(c for c in empresas if c.ticker == r["empresa"])
-                # Freio compartilhado (quick-260712-p6r): a aba Ranking aplica o MESMO freio do
-                # CLI cmd_rank ANTES de estampar veredito/preço-alvo (fonte única core/freio.py).
-                # Fecha o BLOCKER da auditoria v2.2: ITUB4/VALE3 (motor_pendente) e alvos frágeis
-                # (R² baixo / amostra pequena / upside degenerado) deixam de aparecer "Cara" aqui
-                # e "protegida" no Analisar. A NOTA/Selo/régua de config seguem INTACTOS — o freio
-                # governa só a coluna de alvo/veredito (paridade com a NOTA intacta do CLI).
-                mp = freio.motor_pendente(_c_sel, CFG)
-                confiavel, motivo = freio.alvo_regressao_confiavel(reg, pa, mp)
-                if pa is None:
-                    # RANK-01: empresa descartada da regressão (ROE/payout ausente).
-                    # "indisponível" é estado neutro de dado ausente, não "cara" — distingue do "—" genérico.
-                    preco_alvo_txt = "indisponível"
-                    upside_txt = "indisponível"
-                    veredito = "indisponível (ROE/payout ausente)"
-                elif not confiavel:
-                    # Freio ativo: NÃO estampar "Cara"/"Subavaliada" por um modelo que não serve
-                    # ao perfil (motor_pendente) ou por uma regressão frágil/degenerada. Reetiqueta
-                    # honesta apontando ao Analisar a fundo, com o motivo do freio.
-                    preco_alvo_txt = "—"
-                    upside_txt = "—"
-                    veredito = f"Ver Analisar a fundo ({motivo})" if motivo else "Ver Analisar a fundo"
-                else:
-                    preco_alvo_txt = fmt_rs(pa.preco_alvo)
-                    upside_txt = fmt_pct(pa.upside) if pa.upside is not None else "—"
-                    veredito = "Subavaliada" if pa.subavaliada else "Cara"
-                    if pa.payout_fora_faixa:  # espelha o alerta ">100%" do Analisar
-                        veredito += " (payout ajustado)"
+                # ENG-11: o Ranking é um SCREENER por múltiplos CRUS. Múltiplos pela fonte
+                # canônica (lentes.metricas_par — o MESMO P/L, P/VP e DY dos "Pares do setor"
+                # do Analisar, Core Value cross-modo). SEM preço-alvo/upside/veredito: a
+                # regressão de pares é cega ao nível de preço (o valor por preço é o Analisar).
+                m = lentes.metricas_par(_c_sel)
                 rows.append({
                     "Ticker": r["empresa"],
                     "Nota (0–100)": round(r["nota"], 1) if r["nota"] is not None else None,
+                    "P/L": fmt_num(m.pl),
+                    "P/VP": fmt_num(m.pvp),
+                    "DY": fmt_pct(m.dy),
                     # Selo READ-ONLY: BSD por empresa vem da engine (sc.bsd_empresa, sem rede —
                     # dados já carregados), cor de selo.cor_do_bsd. Zero recálculo na view.
                     "Selo": presentation.selo_emoji(selo.cor_do_bsd(sc.bsd_empresa(_c_sel, CFG), CFG)),
-                    "Ano-base": next(c.ultimo_ano() for c in empresas if c.ticker == r["empresa"]),
-                    "Preço atual": fmt_rs(next(c.preco_atual for c in empresas if c.ticker == r["empresa"])),
-                    "Preço-alvo": preco_alvo_txt,
-                    "Upside": upside_txt,
-                    "Veredito": veredito,
+                    "Ano-base": _c_sel.ultimo_ano(),
+                    "Preço atual": fmt_rs(_c_sel.preco_atual),
                 })
             prog.empty()
             st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True,
                          column_config={
                              "Ticker": st.column_config.Column("Ticker", help=h("ticker")),
                              "Nota (0–100)": st.column_config.Column("Nota (0–100)", help=h("nota_padronizada")),
+                             "P/L": st.column_config.Column("P/L", help=h("pl")),
+                             "P/VP": st.column_config.Column("P/VP", help=h("pvp")),
+                             "DY": st.column_config.Column("DY", help=h("dy")),
                              "Selo": st.column_config.Column("Selo", help=h("selo")),
                              "Ano-base": st.column_config.Column("Ano-base", help=h("ano_base")),
                              "Preço atual": st.column_config.Column("Preço atual", help=h("preco")),
-                             "Preço-alvo": st.column_config.Column("Preço-alvo", help=h("preco_alvo")),
-                             "Upside": st.column_config.Column("Upside", help=h("upside")),
-                             "Veredito": st.column_config.Column("Veredito", help=h("veredito")),
                          })
             # Legenda dos selos (quick-260710-u3g #6): mesma régua de config do Garimpar.
             _cor = CFG["selo"]["cor"]
@@ -1658,46 +1629,13 @@ elif modo.startswith("Ranking"):
                 f"🔵 azul {_cor['azul_min']}–{_cor['verde_min'] - 1} · "
                 f"🟡 amarelo {_cor['amarelo_min']}–{_cor['azul_min'] - 1} · "
                 f"🔴 vermelho < {_cor['amarelo_min']}. Verde/azul = qualidade **Alta**; "
-                "amarelo/vermelho = qualidade **Baixa**. Triagem visual, não recomendação.",
+                "amarelo/vermelho = qualidade **Atenção**. Triagem visual, não recomendação.",
                 help=h("selo"),
             )
-            if reg:
-                _t_payout = f"{'−' if reg.coeficientes[1] < 0 else '+'} {abs(reg.coeficientes[1]):.2f}·payout"
-                _t_roe = f"{'−' if reg.coeficientes[2] < 0 else '+'} {abs(reg.coeficientes[2]):.2f}·ROE"
-                st.caption(f"Regressão: P/L = {reg.coeficientes[0]:.2f} {_t_payout} "
-                           f"{_t_roe}  (R²={reg.r2:.2f}, n={reg.n})")
-                # RANK-CONF-01: amostra pequena → regressão instável, veredito pouco confiável.
-                if reg.amostra_pequena:
-                    st.warning(
-                        f"**Amostra pequena (n={reg.n}).** Com poucas empresas, a regressão "
-                        f"P/L ~ f(payout, ROE) fica instável e o veredito *Subavaliada/Cara* é "
-                        f"pouco confiável. Adicione mais comparáveis **do mesmo setor** para "
-                        f"firmar o preço-alvo."
-                    )
-                # RANK-CONF-02: ROE com coeficiente negativo contraria Gordon (caso TAEE11).
-                if reg.roe_sinal_invertido:
-                    st.warning(
-                        "**Coeficiente do ROE saiu negativo** — isso *contraria* a teoria "
-                        "(modelo de Gordon: o P/L justo cresce com o ROE). Em geral é sinal de "
-                        "overfitting/multicolinearidade e acaba penalizando as empresas mais "
-                        "rentáveis. Aqui o preço-alvo da regressão pode discordar do **Analisar "
-                        "a fundo** (DDM); nesse caso, confie mais no DDM."
-                    )
-                # RANK-CONF-04 (AUD-CMP-02): R² baixo → regressão explica pouco do P/L do setor.
-                if reg.r2_baixo:
-                    st.warning(
-                        f"**R² baixo ({reg.r2:.2f}).** A regressão explica pouco da variação de "
-                        f"P/L entre as comparáveis — o preço-alvo e o veredito *Subavaliada/Cara* "
-                        f"são pouco confiáveis. Use comparáveis mais homogêneas (mesmo segmento) ou "
-                        f"confie mais no **Analisar a fundo** (DDM)."
-                    )
-                # RANK-CONF-03: orientação fixa de mesmo segmento (sempre que há tabela).
-                st.caption(
-                    "Compare empresas do **mesmo segmento** (ex.: geração × transmissão × "
-                    "distribuição de energia). Misturar segmentos distorce a regressão e o ranking."
-                )
-            else:
-                st.info("Poucas empresas para a regressão (precisa de ≥4). Os preços-alvo ficam indisponíveis.")
+            st.caption(
+                "Compare empresas do **mesmo segmento** (ex.: geração × transmissão × "
+                "distribuição de energia). Misturar segmentos distorce a nota e o ranking."
+            )
 
 
 # =========================================================================== #
