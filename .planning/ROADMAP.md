@@ -305,7 +305,21 @@ liberdade sobre 4 observações e chamou de "4/4 PASS" um resultado que era **2/
   - **NÃO validar contra consenso de sell-side.** É **circular**: target price é preço com um chapéu, e o preço é exatamente o que está sendo julgado. As âncoras não-circulares são **invariantes algébricos** (grátis) + **centro da seção transversal** (detector de viés, **nunca alvo de calibração**).
   - **NÃO criar carve-out/rota nova depois de ver um ticker falhar** (foi assim que a BBSE3 ganhou uma rota de seguradora no v2.3). Carve-outs são declarados na Fase 13, antes do hold-out. **Zero exceções aqui.**
   - **NÃO alargar a banda de tolerância** para o quórum passar — o "±15% sobre faixas de consenso já largas" do v2.3 dava uma banda efetiva de 2,2–2,6× de largura.
-**Plans**: TBD
+**Plans**: 4 plans (4 waves — serializados por `tests/classificacao.yaml`/`helpers_blindagem.py`/
+`holdout_v24.yaml` compartilhados; a ordem load-bearing do D-09 força Commit 1 (fair_value) antes de
+Commit 2 (v_modelo))
+Plans:
+**Wave 1**
+- [ ] 14-01-PLAN.md — VAL-01 soberano (ITUB4→V∈[35,39], Ke do livro injetado) + VAL-06 mata excecao_nota + VAL-07 ADR (não fazer backtest temporal)
+
+**Wave 2** *(blocked on Wave 1)*
+- [ ] 14-02-PLAN.md — VAL-05: LIMIAR_JACKKNIFE_PP(n) derivado de null neutro (Monte-Carlo seed-fixo) + teste que o valida; substitui a constante [ASSUMIDO]
+
+**Wave 3** *(blocked on Wave 2)*
+- [ ] 14-03-PLAN.md — VAL-02/03/05: montador determinístico da cesta (eh_concessionaria replicado) + Commit 1 (holdout_v24.yaml só fair_value Graham+Bazin) + teste de composição
+
+**Wave 4** *(blocked on Wave 3)*
+- [ ] 14-04-PLAN.md — VAL-03/04/05: Commit 2 (v_modelo rodado) + jackknife acorda + prova de ordem por git blame + PASS por execução (D-11)
 
 ## Progress
 
@@ -323,7 +337,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 11. Crescimento / g (GROW) | v2.4 | 3/3 | Complete   | 2026-07-17 |
 | 12. Custo de capital / Ke (KE) | v2.4 | 4/4 | Complete    | 2026-07-17 |
 | 13. Motores + contrato de saída (ENG) | v2.4 | 7/7 | Complete    | 2026-07-20 |
-| 14. Validação honesta (VAL) | v2.4 | 0/? | Not started | - |
+| 14. Validação honesta (VAL) | v2.4 | 0/4 | Planned | - |
 
 ## Requirement Coverage (v2.4)
 
