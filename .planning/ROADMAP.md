@@ -310,7 +310,7 @@ liberdade sobre 4 observações e chamou de "4/4 PASS" um resultado que era **2/
 Commit 2 (v_modelo))
 Plans:
 **Wave 1**
-- [ ] 14-01-PLAN.md — VAL-01 soberano (ITUB4→V∈[35,39], Ke do livro injetado) + VAL-06 mata excecao_nota + VAL-07 ADR (não fazer backtest temporal)
+- [x] 14-01-PLAN.md — VAL-01 soberano (ITUB4→V∈[35,39], Ke do livro injetado) + VAL-06 mata excecao_nota + VAL-07 ADR (não fazer backtest temporal)
 
 **Wave 2** *(blocked on Wave 1)*
 - [ ] 14-02-PLAN.md — VAL-05: LIMIAR_JACKKNIFE_PP(n) derivado de null neutro (Monte-Carlo seed-fixo) + teste que o valida; substitui a constante [ASSUMIDO]
@@ -337,7 +337,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 11. Crescimento / g (GROW) | v2.4 | 3/3 | Complete   | 2026-07-17 |
 | 12. Custo de capital / Ke (KE) | v2.4 | 4/4 | Complete    | 2026-07-17 |
 | 13. Motores + contrato de saída (ENG) | v2.4 | 7/7 | Complete    | 2026-07-20 |
-| 14. Validação honesta (VAL) | v2.4 | 0/4 | Planned | - |
+| 14. Validação honesta (VAL) | v2.4 | 1/4 | In Progress|  |
 
 ## Requirement Coverage (v2.4)
 

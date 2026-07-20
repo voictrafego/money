@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
-stopped_at: Phase 14 context gathered
-last_updated: "2026-07-20T13:42:42.277Z"
-last_activity: 2026-07-20 -- Phase 14 planning complete
+stopped_at: Completed 14-01-PLAN.md
+last_updated: "2026-07-20T14:27:07.237Z"
+last_activity: 2026-07-20
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 38
-  completed_plans: 34
-  percent: 89
+  completed_plans: 35
+  percent: 92
 ---
 
 # Project State
@@ -27,17 +27,17 @@ entre si** — a mesma ação não pode parecer barata num menu e cara/ausente e
 ITUB4, Cap. 17 (Tabelas 41/43): `g` = 10,24% · `Ke` = 12,48% → **V = R$ 37,22** (região R$ 35–39,
 MS ±5%). **Hoje o app entrega R$ 16,13.**
 
-**Current focus:** Phase 13 — motores-contrato-de-sa-da-eng
+**Current focus:** Phase 14 — valida-o-honesta-val
 
 ## Current Position
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
-Phase: 14
-Plan: Not started
+Phase: 14 (valida-o-honesta-val) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-07-20 -- Phase 14 planning complete
+Last activity: 2026-07-20
 
-Progress: [██████████] 100%
+Progress: [█████████░] 92%
 
 **Suíte:** `468 passed, 1 skipped, 18 deselected, 0 failed, 0 xfailed, 0 XPASS` (pós-13-06: −17 vs 485 = 16
 testes de `test_ranking_freio` [freio/ARQUETIPO_MOTOR/divergencia_entre_lentes deletados] + 1 straggler
@@ -152,10 +152,33 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | Phase 13 P05 | 15min | 2 tasks | 3 files |
 | Phase 13 P06 | 40min | 4 tasks | 14 files |
 | Phase 13 P07 | 35min | 2 tasks | 3 files |
+| Phase 14 P01 | 18min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **VAL-01/06/07 (Fase 14 / plano 14-01) — os 3 artefatos de validação SEM hold-out landados; a fase
+  abre provando o caso do livro POR EXECUÇÃO.** **(VAL-01)** `test_soberano_itub4.py::test_soberano_itub4_reproduz_caso_do_livro`
+  (`contrato`, BLIND-04a-safe): injeta o **Ke do livro (0,1248)** em `motores.rim` com os insumos do
+  Cap. 17 (helper `insumos_itub4_livro` em `helpers_blindagem.py`, FORA de `test_` — literal do ticker
+  + números vivem só ali) e asserta a **REGIÃO `35 <= V <= 39`**, NUNCA o ponto 37,22 (`==` seria golden
+  de nível → BLIND-04a; `grep -c "ITUB4"` e `grep -c "37"` no teste == 0). O gap de hoje (V engine com
+  Ke 15,86% ≈ 24,38) é inteiramente o Ke; a fórmula RIM já reproduz o livro. **NENHUM knob para "chegar
+  em 37,22"** (`excesso_sustentavel=0,045` intocado). **(VAL-06)** `excecao_nota` MORTO na árvore viva
+  (`grep -rn excecao_nota src/ tests/ scripts/` == 0): removido o passthrough de `rodar_cesta`, deletados
+  os 2 testes da bijeção nota⟺rota-não-rim (vacua sob o RIM único da Fase 13), removida a coluna do
+  `scripts/backtest_bancos.py` (senão KeyError) + 2 entradas órfãs de `classificacao.yaml` no MESMO diff
+  (sem CLASSIFICACAO ORFA); `fair_values_bancos.yaml` NÃO deletado (anti-padrão, só deixa de ser lido).
+  Preservados `test_backtest_determinismo` + `test_backtest_rotulo_do_motor_consistente`. **(VAL-07)** ADR
+  durável `.planning/decisions/VAL-07-backtest-temporal.md` (NÃO fazer backtest temporal — PIT honesto
+  exige data de publicação da DFP [lag ~2–3 meses] + preço/rf da época, inviável só com dados gratuitos;
+  backtest ingênuo = **vazamento de futuro** → número confiante e falso, pior que nenhum; Future
+  Requirement v2.5+) + comentário-âncora citando `VAL-07` perto de `carregar_snapshot` em `backtest.py`.
+  **Fronteira: validação PURA** — `git diff -- config.yaml calibracao.lock.yaml` VAZIO, orçamento em 3
+  graus intacto. Suíte default **469 passed, 1 skipped, 18 deselected, 0 failed**; `-m golden_nivel`
+  **18 passed, 0 ORFA**. **Desvio (Rule 1):** o literal "ITUB4" vazou para a docstring do teste →
+  scrubado antes do commit (`grep -c ITUB4 == 0`). Commits: `3b422aa` (T1), `2d01ddf` (T2), `2796678` (T3).
 
 - **ENG-01/08/09 (Fase 13 / plano 13-07) — o COLAPSO PROVADO POR EXECUÇÃO; a fase fecha pronta para a
   Fase 14.** `tests/test_eng_validacao.py::test_regressao_104_colapso_rim_unico` (`invariante`,
@@ -829,9 +852,9 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-20T11:41:37.947Z
-Stopped at: Phase 14 context gathered
-Resume file: .planning/phases/14-valida-o-honesta-val/14-CONTEXT.md
+Last session: 2026-07-20T14:27:07.231Z
+Stopped at: Completed 14-01-PLAN.md
+Resume file: None
 
 ## Operator Next Steps
 

@@ -230,7 +230,7 @@ prova que a ordem importa: consertar o `Ke` antes do `g` **piora** (ITUB4 0,75 �
 
 ## Validação (VAL)
 
-- [ ] **VAL-01**: **O caso do livro passa.** ITUB4 com os inputs do Cap. 17 reproduz `V` ≈ R$ 37,22.
+- [x] **VAL-01**: **O caso do livro passa.** ITUB4 com os inputs do Cap. 17 reproduz `V` ≈ R$ 37,22.
   Critério de aceite soberano do marco.
 - [ ] **VAL-02**: Cesta estratificada (≥ 6 por arquétipo + **10 "difíceis" deliberados**: P/B < 1,
   prejuízo recente, payout > 100%, book pequeno). Sem os difíceis, valida-se só o meio da
@@ -240,11 +240,11 @@ prova que a ordem importa: consertar o `Ke` antes do `g` **piora** (ITUB4 0,75 �
 - [ ] **VAL-04**: Hold-out roda **uma única vez**. Se falhar, **re-arquiteta-se — não recalibra**.
 - [ ] **VAL-05**: A métrica é `V/FairValue`, **nunca** `V/preço`. Um modelo com mediana `V/preço` = 1,00
   é um espelho do mercado e não serve para nada.
-- [ ] **VAL-06**: **Nenhuma regra de exceção pode salvar um ticker.** O `excecao_nota` do v2.3 é uma
+- [x] **VAL-06**: **Nenhuma regra de exceção pode salvar um ticker.** O `excecao_nota` do v2.3 é uma
   *lavanderia de overfit*: com quórum 3/4 + "exceção documentada passa", **o gate não pode reprovar**.
   (Recontagem: o v2.3 gastou **~8 graus de liberdade sobre 4 observações**, e o "4/4 PASS" real é
   **2/4** — BBAS3 e BBDC4 estão fora do consenso e passam só pelo acolchoamento de ±15%.)
-- [ ] **VAL-07**: Backtest temporal **só com point-in-time real** (a DFP de 2022 só existiu em
+- [x] **VAL-07**: Backtest temporal **só com point-in-time real** (a DFP de 2022 só existiu em
   mar/2023). **Se não der para fazer PIT direito, NÃO fazer** — um backtest ingênuo produz um número
   confiante e falso, pior que nenhum.
 
@@ -326,13 +326,13 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | ENG-09 | Phase 13 | Complete |
 | ENG-10 | Phase 13 | Complete |
 | ENG-11 | Phase 13 | Complete |
-| VAL-01 | Phase 14 | Pending |
+| VAL-01 | Phase 14 | Complete |
 | VAL-02 | Phase 14 | Pending |
 | VAL-03 | Phase 14 | Pending |
 | VAL-04 | Phase 14 | Pending |
 | VAL-05 | Phase 14 | Pending |
-| VAL-06 | Phase 14 | Pending |
-| VAL-07 | Phase 14 | Pending |
+| VAL-06 | Phase 14 | Complete |
+| VAL-07 | Phase 14 | Complete |
 
 ### Resumo por fase
 
