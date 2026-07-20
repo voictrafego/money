@@ -461,6 +461,15 @@
 'tests/test_invariantes_v24.py::test_g_cap_derivado_e_adocao_de_g_alto_no_itub4': invariante
 'tests/test_invariantes_v24.py::test_terminal_load_bearing_nao_explode_e_degrada_para_fade_only': invariante
 
+# --- Fase 13 / plano 13-04: ENG-08 ponte P/B auditavel (identidade fechada + razao-guarda RED-able) ---
+'tests/test_eng_ponte_pb.py::test_pb_justo_equivale_a_algebra_fechada_do_blind02a': invariante
+'tests/test_eng_ponte_pb.py::test_payout_terminal_e_identidade_fechada': invariante
+'tests/test_eng_ponte_pb.py::test_pb_justo_never_raise_em_spread_nao_positivo': invariante
+'tests/test_eng_ponte_pb.py::test_payout_terminal_never_raise_em_roe_zero': invariante
+'tests/test_eng_ponte_pb.py::test_razao_sadia_sobre_insumos_saos': invariante
+'tests/test_eng_ponte_pb.py::test_guarda_pega_payout_terminal_negativo': invariante
+'tests/test_eng_ponte_pb.py::test_guarda_pega_pb_justo_explosivo': invariante
+
 # --- Fase 7 / plano 07-03: BLIND-04. Meta-testes (testam OS TESTES, nao a engine) + harness
 # do jackknife. Nenhum deles crava nivel: rodam no default, para sempre.
 'tests/test_blindagem_meta.py::test_nenhum_teste_de_calibracao_crava_ticker_em_reais': contrato

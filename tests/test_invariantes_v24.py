@@ -34,6 +34,7 @@ import pytest
 
 import helpers_blindagem as h
 from analista.core import ddm, motores, normalizacao
+from analista.core import valuation as val
 from analista.report import report
 
 # Inflacao do ciclo: IPCA medio de 10 anos (Banco Central, serie SGS 13522). MESMA JANELA do
@@ -93,8 +94,9 @@ def test_invariancia_inflacao_identidade_pb_justo():
     Doenca 1, uma camada abaixo. Invariancia a inflacao EXIGE chocar o lucro nominal.)
     """
 
-    def pb_justo(roe: float, ke: float, g: float) -> float:
-        return 1.0 + (roe - ke) / (ke - g)
+    # ENG-08 (Fase 13): a identidade fechada vive em `core.valuation.pb_justo` (fonte única, sem
+    # cópia divergente); o BLIND-02a passou a IMPORTÁ-LA. O assert exato (< 1e-9) permanece INTACTO.
+    pb_justo = val.pb_justo
 
     delta = BPS_CHOQUE / 10_000
 
