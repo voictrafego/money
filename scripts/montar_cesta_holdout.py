@@ -42,6 +42,7 @@ import argparse
 import datetime
 import hashlib
 import os
+import re
 import sys
 
 # Roda standalone: adiciona src/ (engine) e tests/ (helpers offline) ao path.
@@ -313,6 +314,78 @@ def _snapshot_hash() -> str:
     return hashlib.sha256(dados).hexdigest()[:12]
 
 
+# --------------------------------------------------------------------------- #
+# COMMIT 2 (Plano 04 / D-09): preencher `v_modelo` rodando o modelo sobre a
+# MESMA cesta cravada no Commit 1. A ordem é load-bearing — o `git blame` prova
+# que os `fair_value` foram cravados ANTES de o modelo rodar. A inserção é
+# CIRÚRGICA (linha nova ao fim de cada bloco), sem re-tocar nenhuma linha do
+# Commit 1: reescrever o arquivo inteiro daria a TODAS as linhas o timestamp do
+# Commit 2 e a prova de ordem evaporaria.
+# --------------------------------------------------------------------------- #
+
+_RE_TICKER = re.compile(r"^([A-Z][A-Z0-9]+):\s*$")
+
+
+def _rodar_v_modelo(cfg: dict) -> dict:
+    """Roda o modelo sobre os 104 e devolve `{ticker: v_modelo}`.
+
+    `v_modelo` = V do RIM = `report.analisar_acao(c, cfg).intrinseco_motor` (FONTE ÚNICA;
+    NÃO reimplementa a fórmula). Mesmo cfg offline do montador (β setorial carimbado, D-06) —
+    Ke idêntico ao app. Never-raise: exceção ou `intrinseco_motor is None`/≤0 → ticker sem
+    `v_modelo` (degradação reportada, nunca aborta; AZUL4/falhas caem fora do jackknife sozinhos
+    por não ter fair_value / não ter V). Import tardio da engine: só o Commit 2 a exige.
+    """
+    from analista.report import report  # noqa: E402 — import tardio (só o Commit 2)
+
+    empresas = hs.carregar_snapshot_sanidade(hs.CAMINHO_SNAPSHOT_LIMPO)
+    v_por_ticker: dict = {}
+    for tk, c in empresas.items():
+        c.eh_concessionaria = _eh_concessionaria(c.setor)  # MIRROR obrigatório (build.py:168)
+        try:
+            a = report.analisar_acao(c, cfg)
+        except Exception:  # noqa: BLE001 — engine é never-raise; exceção = degradação, não aborta
+            continue
+        if a.intrinseco_motor is not None and a.intrinseco_motor > 0:
+            v_por_ticker[tk] = a.intrinseco_motor
+    return v_por_ticker
+
+
+def _inserir_v_modelo(texto_atual: str, v_por_ticker: dict) -> str:
+    """Insere `v_modelo` como linha NOVA ao fim de cada bloco de ticker, SEM re-tocar
+    nenhuma linha existente (fair_value byte-a-byte intocado — pré-condição do git blame D-09).
+
+    Idempotente: bloco que já tem `v_modelo` não recebe outra linha. Ticker ausente de
+    `v_por_ticker` (degradou: sem V) fica sem `v_modelo` — coerente com o never-raise.
+    """
+    linhas = texto_atual.split("\n")
+    saida: list = []
+    ticker_atual = None
+    bloco_ja_tem = False
+
+    def _flush():
+        if ticker_atual is not None and not bloco_ja_tem and ticker_atual in v_por_ticker:
+            saida.append(f"  v_modelo: {_fmt_num(v_por_ticker[ticker_atual])}")
+
+    for ln in linhas:
+        m = _RE_TICKER.match(ln)
+        if m:
+            _flush()  # fecha o bloco anterior antes de abrir o novo
+            ticker_atual = m.group(1)
+            bloco_ja_tem = False
+        elif ln.startswith("  v_modelo:"):
+            bloco_ja_tem = True
+        saida.append(ln)
+
+    # Último bloco: insere antes de eventuais linhas vazias finais (preserva o trailing newline).
+    if ticker_atual is not None and not bloco_ja_tem and ticker_atual in v_por_ticker:
+        pos = len(saida)
+        while pos > 0 and saida[pos - 1] == "":
+            pos -= 1
+        saida.insert(pos, f"  v_modelo: {_fmt_num(v_por_ticker[ticker_atual])}")
+
+    return "\n".join(saida)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Montador da cesta estratificada do hold-out.")
     modo = parser.add_mutually_exclusive_group()
@@ -324,12 +397,30 @@ def main() -> int:
                         help="Imprime o YAML no stdout em vez de gravar o fixture.")
     args = parser.parse_args()
 
-    if args.fill_v_modelo:
-        print("ERRO: --fill-v-modelo é o COMMIT 2 (Plano 04); não implementado neste plano.",
-              file=sys.stderr)
-        return 2
-
     cfg = _cfg_offline()
+
+    if args.fill_v_modelo:
+        # COMMIT 2 (D-09): roda o modelo sobre a MESMA cesta cravada no Commit 1 e insere
+        # `v_modelo` cirurgicamente, SEM re-tocar as linhas fair_value (git blame por linha).
+        if not os.path.exists(CAMINHO_FIXTURE):
+            print("ERRO: --fill-v-modelo exige o Commit 1 (holdout_v24.yaml) já gravado.",
+                  file=sys.stderr)
+            return 2
+        texto_atual = open(CAMINHO_FIXTURE, "r", encoding="utf-8").read()
+        v_por_ticker = _rodar_v_modelo(cfg)
+        texto = _inserir_v_modelo(texto_atual, v_por_ticker)
+        n_preenchidos = texto.count("\n  v_modelo:") + (
+            1 if texto.startswith("  v_modelo:") else 0
+        )
+        if args.dry_run:
+            sys.stdout.write(texto)
+        else:
+            with open(CAMINHO_FIXTURE, "w", encoding="utf-8") as fh:
+                fh.write(texto)
+            print(f"v_modelo preenchido: {CAMINHO_FIXTURE} ({n_preenchidos} tickers)",
+                  file=sys.stderr)
+        return 0
+
     cesta = montar(cfg)
     texto = _emitir_yaml(cesta, _snapshot_hash())
 

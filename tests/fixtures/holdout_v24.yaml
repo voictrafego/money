@@ -29,6 +29,7 @@ PETR3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 31.47
 PETR4:
   fair_value: 103.52
   fair_value_min: 76.12
@@ -39,6 +40,7 @@ PETR4:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 31.47
 VALE3:
   fair_value: 97.11
   fair_value_min: 64.93
@@ -49,6 +51,7 @@ VALE3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 61.42
 KLBN11:
   fair_value: 12.91
   fair_value_min: 7.55
@@ -59,6 +62,7 @@ KLBN11:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 7.59
 RDOR3:
   fair_value: 20.49
   fair_value_min: 19.47
@@ -69,6 +73,7 @@ RDOR3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 4.45
 TIMS3:
   fair_value: 6.08
   fair_value_min: 6.08
@@ -99,6 +104,7 @@ GOAU4:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 7.96
 HAPV3:
   fair_value: 0.72
   fair_value_min: 0.72
@@ -109,6 +115,7 @@ HAPV3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 1.43
 BRKM5:
   fair_value: 30.79
   fair_value_min: 30.79
@@ -129,6 +136,7 @@ RAIZ4:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 0.82
 PEAB3:
   fair_value: 53.51
   fair_value_min: 53.51
@@ -139,6 +147,7 @@ PEAB3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 24.30
 AZUL4:
   lentes: []
   arquetipo: ciclica
@@ -156,6 +165,7 @@ SBSP3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 41.30
 CPFE3:
   fair_value: 49.92
   fair_value_min: 45.63
@@ -166,6 +176,7 @@ CPFE3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 32.89
 ENEV3:
   fair_value: 9.14
   fair_value_min: 9.14
@@ -176,6 +187,7 @@ ENEV3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 5.06
 EQTL3:
   fair_value: 27.02
   fair_value_min: 26.21
@@ -186,6 +198,7 @@ EQTL3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 26.70
 CMIG3:
   fair_value: 19.41
   fair_value_min: 18.35
@@ -196,6 +209,7 @@ CMIG3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 14.11
 CPLE3:
   fair_value: 12.23
   fair_value_min: 11.38
@@ -206,6 +220,7 @@ CPLE3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 6.34
 ALUP11:
   fair_value: 51.85
   fair_value_min: 50.56
@@ -216,6 +231,7 @@ ALUP11:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 27.93
 AURE3:
   fair_value: 13.22
   fair_value_min: 13.22
@@ -226,6 +242,7 @@ AURE3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 3.14
 WEGE3:
   fair_value: 11.58
   fair_value_min: 11.26
@@ -236,6 +253,7 @@ WEGE3:
   cota_incompleta: true
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 11.45
 RADL3:
   fair_value: 6.35
   fair_value_min: 4.27
@@ -246,6 +264,7 @@ RADL3:
   cota_incompleta: true
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 6.61
 MULT3:
   fair_value: 19.12
   fair_value_min: 11.58
@@ -256,6 +275,7 @@ MULT3:
   cota_incompleta: true
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 13.78
 GRND3:
   fair_value: 6.52
   fair_value_min: 5.31
@@ -266,6 +286,7 @@ GRND3:
   cota_incompleta: true
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 4.49
 ITUB3:
   fair_value: 35.99
   fair_value_min: 29.82
@@ -276,6 +297,7 @@ ITUB3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 25.87
 ITUB4:
   fair_value: 35.99
   fair_value_min: 29.82
@@ -286,6 +308,7 @@ ITUB4:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 25.87
 BBDC4:
   fair_value: 20.60
   fair_value_min: 13.14
@@ -296,6 +319,7 @@ BBDC4:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 12.57
 BPAC11:
   fair_value: 25.43
   fair_value_min: 11.84
@@ -306,6 +330,7 @@ BPAC11:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 31.55
 BBDC3:
   fair_value: 20.60
   fair_value_min: 13.14
@@ -316,6 +341,7 @@ BBDC3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 12.57
 ITSA3:
   fair_value: 14.14
   fair_value_min: 12.20
@@ -326,6 +352,7 @@ ITSA3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 10.57
 WIZC3:
   fair_value: 13.66
   fair_value_min: 10.80
@@ -336,6 +363,7 @@ WIZC3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 15.04
 ABEV3:
   fair_value: 11.86
   fair_value_min: 11.03
@@ -346,6 +374,7 @@ ABEV3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 7.59
 VIVT3:
   fair_value: 33.41
   fair_value_min: 30.43
@@ -356,6 +385,7 @@ VIVT3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 9.73
 RENT3:
   fair_value: 24.69
   fair_value_min: 19.62
@@ -366,6 +396,7 @@ RENT3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 37.42
 HYPE3:
   fair_value: 23.82
   fair_value_min: 19.65
@@ -376,6 +407,7 @@ HYPE3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 17.10
 ASAI3:
   fair_value: 3.93
   fair_value_min: 1.39
@@ -386,6 +418,7 @@ ASAI3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 9.72
 FLRY3:
   fair_value: 15.46
   fair_value_min: 14.54
@@ -396,3 +429,4 @@ FLRY3:
   cota_incompleta: false
   fonte: "lentes Graham+Bazin (core/lentes)"
   data: "2026-07-20"
+  v_modelo: 8.28
