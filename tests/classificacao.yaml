@@ -378,6 +378,13 @@
 # Ke-g_T > 0, SEM clamp (β setorial+Blume identico ao app). Nenhum guard novo; sem nivel de ticker.
 'tests/test_ke_validacao.py::test_regressao_104_sem_explosao': invariante
 
+# --- Fase 13 / plano 13-07: ENG — prova por EXECUCAO do COLAPSO (RIM unico sobre os 104).
+# `invariante`: oraculo herdado de KE-04, agora sob o RIM unico. Sobre os 104 reais (β setorial
+# carimbado) os 4 invariantes por distribuicao: intrinseco_motor finito>0 ou None (never-raise),
+# sem explosao (V<50x preco), razao P/B sa por construcao (pb_justo (0,6) / payout_T (0,1] — o
+# guard D-10a do 13-04 provado por execucao), caminho unico (a.motor sempre "rim"). Sem ticker/nivel.
+'tests/test_eng_validacao.py::test_regressao_104_colapso_rim_unico': invariante
+
 # DATA-05 — o DY declara sua base BRUTA (contrato de string; sem nivel de mercado).
 'tests/test_dy_base.py::test_header_dy_recorrente_declara_base_bruta': contrato
 'tests/test_dy_base.py::test_header_dy_fallback_declara_base_bruta': contrato
