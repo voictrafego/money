@@ -49,6 +49,7 @@
 'tests/test_backtest_bancos.py::test_backtest_rotulo_do_motor_consistente': contrato
 'tests/test_soberano_itub4.py::test_soberano_itub4_reproduz_caso_do_livro': contrato  # VAL-01: criterio de aceite soberano do marco; motor RIM com Ke do livro reproduz a regiao de valor do Cap. 17 (regiao, nunca ponto de nivel — BLIND-04a-safe)
 'tests/test_holdout_cesta.py::test_holdout_estratificado_composicao': contrato  # VAL-02/03: composicao da cesta estratificada (>=6/estrato ou marcado, 10 dificeis disjuntos) e pureza do Commit 1 (sem v_modelo/excecao_nota); estrutural, sem nivel
+'tests/test_holdout_ordem_git.py::test_holdout_ordem_por_git': contrato  # VAL-03/D-09: prova por git blame (author-time por linha) que fair_value foi cravado ANTES de v_modelo; sem git log --grep, skip em shallow clone; sem nivel
 'tests/test_capm_local.py::test_config_capm_local_documentado': contrato
 'tests/test_capm_local.py::test_ke_local_materialmente_acima_do_ke_de_2019': invariante  # WR-04: extraido do golden de banda (DELETADO na Fase 12); SOBREVIVE
 'tests/test_capm_local.py::test_resolvedor_rf_usa_selic_ao_vivo': invariante

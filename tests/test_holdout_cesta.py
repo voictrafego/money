@@ -2,9 +2,9 @@
 
 Testa o SUBSTRATO, não a engine: o `holdout_v24.yaml` é uma cesta HONESTA — estratificada por
 arquétipo (≥6 por estrato quando o universo permite), com 10 "difíceis" deliberados disjuntos
-da cota, e — crucial para a ordem load-bearing — SÓ com `fair_value` (Graham+Bazin), ZERO
-`v_modelo` (que nasce no Commit 2 / Plano 04) e ZERO `excecao_nota` (a lavanderia do v2.3, morta
-na Fase 14 / VAL-06 — o fixture novo não nasce com ela).
+da cota, e ZERO `excecao_nota` (a lavanderia do v2.3, morta na Fase 14 / VAL-06 — o fixture novo
+não nasce com ela). A ordem load-bearing (fair_value cravado ANTES de `v_modelo`, D-09) é provada
+por `git blame` em `test_holdout_ordem_git`, não por este teste de composição.
 
 Sem literal de ticker (BLIND-04a): as verdades são ESTRUTURAIS (contagens, presença/ausência de
 chave), nunca `ticker == valor em reais`.
@@ -32,13 +32,14 @@ def _carregar_cesta() -> dict:
 
 @pytest.mark.contrato
 def test_holdout_estratificado_composicao():
-    """A cesta é estratificada, tem 10 difíceis disjuntos, e é um Commit 1 PURO (sem v_modelo).
+    """A cesta é estratificada, tem 10 difíceis disjuntos, e é livre de lavanderia (VAL-06).
 
     Cinco verdades estruturais:
 
-      1. COMMIT 1 PURO — nenhuma entrada tem `v_modelo` (o modelo roda no Plano 04; a ordem por
-         git só significa algo se o fair_value foi cravado ANTES) nem `excecao_nota` (a
-         lavanderia VAL-06 não pode renascer pelo novo substrato).
+      1. SEM LAVANDERIA — nenhuma entrada tem `excecao_nota` (a lavanderia VAL-06 não pode
+         renascer pelo novo substrato). A ORDEM fair_value-antes-de-v_modelo (D-09) é provada
+         por HISTÓRIA em test_holdout_ordem_git (git blame), não por ausência de conteúdo:
+         depois do Commit 2 o v_modelo legitimamente existe.
 
       2. COTA POR ESTRATO — cada estrato ou tem ≥6 membros de cota (dificil=false) OU está
          inteiramente MARCADO `cota_incompleta` (universo < 6, D-07: usa todos, não inventa).
@@ -56,11 +57,11 @@ def test_holdout_estratificado_composicao():
 
     entradas = list(cesta.values())
 
-    # 1. Commit 1 puro ------------------------------------------------------------- #
-    assert all("v_modelo" not in e for e in entradas), (
-        "Commit 1 do D-09 não pode ter v_modelo: o modelo roda no Plano 04, e a prova de ordem "
-        "por git exige que o fair_value seja cravado ANTES."
-    )
+    # 1. Sem lavanderia (VAL-06) --------------------------------------------------- #
+    # A ORDEM fair_value-antes-de-v_modelo (D-09) é provada por HISTÓRIA em
+    # test_holdout_ordem_git (git blame por linha), não por ausência de conteúdo — depois do
+    # Commit 2 (Plano 04) o v_modelo LEGITIMAMENTE existe. O que permanece invariante aqui é a
+    # pureza VAL-06: nenhuma entrada pode renascer com `excecao_nota` (a lavanderia do v2.3).
     assert all("excecao_nota" not in e for e in entradas), (
         "o fixture do hold-out não nasce com excecao_nota (VAL-06): nenhuma exceção pode salvar "
         "um ticker pelo novo substrato."
