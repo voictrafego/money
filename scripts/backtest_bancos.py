@@ -5,7 +5,8 @@ Chama a MESMA `backtest.rodar_cesta` que o teste (Plan 05-04) usa → script e t
 o MESMO número (RESEARCH Open Q3). Offline e determinístico: lê os fixtures congelados
 (snapshot + fair values), nunca toca a rede. `out/` é gitignored (linha 8) — a saída é
 gerada, não versionada. Os desvios são REPORTADOS, não escondidos (D-12): um ticker fora
-da banda ainda aparece com o veredito e a nota de exceção da FV.
+da banda ainda aparece com o veredito. A coluna de nota de exceção do v2.3 foi REMOVIDA na
+Fase 14 (VAL-06) — nenhuma nota pode salvar um ticker.
 
 Uso: python scripts/backtest_bancos.py
 """
@@ -33,7 +34,7 @@ DESTINO = os.path.join(OUT_DIR, "backtest_bancos.md")
 
 HEADERS = [
     "Ticker", "Motor", "RIM", "Graham", "Bazin", "Preço", "FV faixa",
-    "P/VP med", "P/L med", "Desvio RIM×FV", "PASS/FAIL", "Nota exceção",
+    "P/VP med", "P/L med", "Desvio RIM×FV", "PASS/FAIL",
 ]
 
 
@@ -76,7 +77,6 @@ def main() -> int:
             _num(r["pl_med"]),
             _pct(r["desvio"]),
             "PASS" if r["passa"] else "FAIL",
-            r["excecao_nota"] or "-",
         ])
 
     md = tabulate(linhas, headers=HEADERS, tablefmt="github")

@@ -16,7 +16,7 @@ D-12 (loop FECHADO pela Alavanca 2 + rota de seguradora / Fase 4 it.2) — estad
 (normalização through-cycle do ROE terminal, Alavanca 2) generalizou na cesta de bancos SEM afrouxar
 o gate — a banda ±15% e o quórum 3/4 permanecem intactos. A BBSE3 (única não-banco) roteia por uma
 rota própria de seguradora capital-light (Gordon-franquia sobre o dividendo sustentável, 04-03), com
-`excecao_nota` documentando a rota (motor≠rim exige nota, D-08). O `xfail(strict=True)` que travava a
+nota de rota do v2.3 [REMOVIDA na Fase 14 / VAL-06: nenhuma nota pode salvar um ticker] (motor≠rim exige nota, D-08). O `xfail(strict=True)` que travava a
 reprovação de propósito foi REMOVIDO ao cruzar o quórum (fechamento explícito do loop, D-07). Ver
 `04-02-SUMMARY.md`, `04-03-SUMMARY.md` e `05-04-SUMMARY.md`.
 """
@@ -51,46 +51,6 @@ def _rodar() -> list[dict]:
     empresas, rf_local, ipca_defl = carregar_snapshot(_SNAPSHOT)
     fair_values = carregar_fair_values(_FAIR_VALUES)
     return rodar_cesta(empresas, fair_values, _cfg(), rf_local, ipca_defl)
-
-
-def test_nenhuma_rota_diferente_de_rim_e_silenciosa():
-    """INVARIANTE (WR-04 / D-08): nenhum roteamento ≠ 'rim' na cesta pode ser SILENCIOSO — todo
-    motor diferente de RIM exige uma nota de exceção documentada. Estrutural: não depende de NÍVEL
-    de R$ nenhum.
-
-    Extraído do golden de nível `test_backtest_cesta_rota_por_ticker` (banda R$30–40,
-    `_ITUB4_RIM_MIN/MAX`), DELETADO na Fase 10 (PRIM-05): a banda de nível morreu, a guarda de
-    roteamento-não-silencioso SOBREVIVE (WR-04). Sem ticker literal, sem constante em reais.
-    """
-    for r in _rodar():
-        if r["motor"] != "rim":
-            assert r["excecao_nota"], (
-                f"{r['ticker']} roteado para '{r['motor']}' (≠ rim) sem nota de exceção → rota silenciosa"
-            )
-
-
-def test_nenhuma_nota_de_excecao_e_orfa():
-    """INVARIANTE (WR-04 / D-08, decouplada do nível na Fase 11): toda `excecao_nota` do
-    fair_values corresponde a um roteamento REAL fora do bank-RIM padrão (motor != 'rim') —
-    nenhuma nota é órfã/obsoleta.
-
-    É o DUAL estrutural de `test_nenhuma_rota_diferente_de_rim_e_silenciosa` (rota→nota); juntos
-    fecham a bijeção nota⟺rota-de-exceção — a disciplina D-08 "nenhum roteamento silencioso NEM
-    nota-fantasma" — SEM referenciar a faixa de consenso ±15%.
-
-    Por que decouplada (Fase 11): a versão anterior disparava a nota sobre `not passa` — a
-    distância à faixa v2.3 (`fair_values ±15%`), um NÍVEL que o motor v2.4 move de propósito
-    (GROW-01: o `g_cap` derivado ~7,28% empurrou BBAS3 R$0,02 acima do teto v2.3). Exigir nota por
-    drift de nível tornaria a invariante um golden de nível disfarçado — o oposto do que a v2.4 faz.
-    A banda ±15% é máquina do v2.3 que a Fase 14 (VAL) troca por validação honesta (distribuição +
-    jackknife). Sem ticker literal, sem constante em reais.
-    """
-    for r in _rodar():
-        if r["excecao_nota"]:
-            assert r["motor"] != "rim", (
-                f"{r['ticker']} carrega excecao_nota mas roteia para 'rim' (rota padrão) "
-                f"→ nota órfã/obsoleta (D-08)"
-            )
 
 
 def test_backtest_determinismo():

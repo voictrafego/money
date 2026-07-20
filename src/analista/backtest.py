@@ -176,7 +176,6 @@ def rodar_cesta(
                 "pl_med": pl_med,
                 "desvio": desvio,
                 "passa": _passa(rim, fv_min, fv_max),
-                "excecao_nota": fv.get("excecao_nota"),
             }
         )
     return resultados

@@ -45,8 +45,6 @@
 'tests/test_arquetipo_roteamento.py::test_degradacao_um_ano_nao_levanta': contrato
 'tests/test_arquetipo_roteamento.py::test_render_exibe_arquetipo_e_motor': contrato
 'tests/test_arquetipo_roteamento.py::test_render_nao_fronteirico_sem_bloco_incerto': contrato
-'tests/test_backtest_bancos.py::test_nenhuma_rota_diferente_de_rim_e_silenciosa': invariante  # WR-04: D-08 rota nao-silenciosa, extraido de test_backtest_cesta_rota_por_ticker (banda 30-40 DELETADA na Fase 10 PRIM-05); SOBREVIVE
-'tests/test_backtest_bancos.py::test_nenhuma_nota_de_excecao_e_orfa': invariante  # WR-04/D-08 decouplada do nivel na Fase 11 (GROW-01): dual de test_nenhuma_rota_diferente_de_rim_e_silenciosa (nota<=>rota nao-RIM); nao referencia mais a banda ±15% (nivel v2.3 que a Fase 14 troca por validacao honesta); SOBREVIVE
 'tests/test_backtest_bancos.py::test_backtest_determinismo': invariante
 'tests/test_backtest_bancos.py::test_backtest_rotulo_do_motor_consistente': contrato
 'tests/test_soberano_itub4.py::test_soberano_itub4_reproduz_caso_do_livro': contrato  # VAL-01: criterio de aceite soberano do marco; motor RIM com Ke do livro reproduz a regiao de valor do Cap. 17 (regiao, nunca ponto de nivel — BLIND-04a-safe)
