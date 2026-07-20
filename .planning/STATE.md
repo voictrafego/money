@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
-status: ready_to_plan
-stopped_at: Completed 13-07-PLAN.md
-last_updated: "2026-07-20T02:00:00.000Z"
+status: planning
+stopped_at: Phase 14 context gathered
+last_updated: "2026-07-20T11:41:37.957Z"
 last_activity: 2026-07-20
 progress:
   total_phases: 8
-  completed_phases: 8
+  completed_phases: 7
   total_plans: 34
   completed_plans: 34
   percent: 100
@@ -829,9 +829,9 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-20T01:31:25.874Z
-Stopped at: Completed 13-04-PLAN.md
-Resume file: None
+Last session: 2026-07-20T11:41:37.947Z
+Stopped at: Phase 14 context gathered
+Resume file: .planning/phases/14-valida-o-honesta-val/14-CONTEXT.md
 
 ## Operator Next Steps
 
