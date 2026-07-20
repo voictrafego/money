@@ -205,6 +205,16 @@ def test_nenhum_ticker_e_load_bearing():
         for d in cesta.values()
         if d.get("v_modelo") and d.get("fair_value")
     ]
+    if not razoes:
+        # D-09: o hold-out nasce em DOIS commits datados. O Commit 1 (Plano 03) grava SO' o
+        # fair_value (Graham+Bazin) — prova por git que a ancora foi cravada ANTES do modelo. O
+        # v_modelo, e com ele o substrato do jackknife (a razao V/FairValue), nasce no Commit 2
+        # (Plano 04). Sem v_modelo nao ha razao para medir: e' DEPENDENCIA DE FASE (skip, nao
+        # xfail — sinal trocado seria pior), exatamente como a ausencia do fixture era antes.
+        pytest.skip(
+            "hold-out no Commit 1 do D-09 (so' fair_value); o v_modelo — substrato do "
+            "jackknife — nasce no Commit 2 (Plano 04)"
+        )
 
     mediana, _ = h.mediana_jackknife(razoes)
     desvio_norm = h.desvio_jackknife_normalizado(razoes)

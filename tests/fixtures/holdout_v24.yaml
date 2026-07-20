@@ -1,0 +1,398 @@
+# holdout_v24.yaml — substrato de validação HONESTO do v2.4 (Fase 14 / VAL-02/03/05).
+#
+# COMMIT 1 (D-09): SÓ `fair_value` (faixa Graham+Bazin, lucro/dividendo real, independente
+# do modelo e do preço). ZERO `v_modelo` — o modelo roda no COMMIT 2 (Plano 04); o `git
+# blame` por linha prova que os fair values foram cravados ANTES do modelo.
+#
+# REGRA DE SELEÇÃO (escrita ANTES de rodar o modelo — cega ao resultado):
+#   - Estrato = arquetipo.classificar (com eh_concessionaria replicado de build.py:168).
+#   - Cota: por estrato, market_cap desc, desempate alfabético, 6 primeiros. Estrato com
+#     universo < 6 usa todos e marca `cota_incompleta: true` (D-07).
+#   - 10 difíceis (D-06): baldes P/B<1, prejuízo≤0 (últimos 3a), payout>100%, menor book;
+#     todos do balde raso (payout>100%) + extremos dos fartos em round-robin, DISJUNTOS
+#     da cota.
+#   - fair_value = ponto médio da faixa [min,max] das lentes definidas; nenhuma lente
+#     definida → SEM fair_value (D-03, degradação reportada, nunca exclusão silenciosa).
+#
+#   snapshot: snapshot_sanidade_limpo_2026-07-15.yaml
+#   snapshot_sha256_12: ea1dba555131
+#   gerado_por: scripts/montar_cesta_holdout.py --fair-value-only
+#   data: 2026-07-20
+
+PETR3:
+  fair_value: 103.52
+  fair_value_min: 76.12
+  fair_value_max: 130.92
+  lentes: [bazin, graham]
+  arquetipo: ciclica
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+PETR4:
+  fair_value: 103.52
+  fair_value_min: 76.12
+  fair_value_max: 130.92
+  lentes: [bazin, graham]
+  arquetipo: ciclica
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+VALE3:
+  fair_value: 97.11
+  fair_value_min: 64.93
+  fair_value_max: 129.28
+  lentes: [bazin, graham]
+  arquetipo: ciclica
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+KLBN11:
+  fair_value: 12.91
+  fair_value_min: 7.55
+  fair_value_max: 18.28
+  lentes: [bazin, graham]
+  arquetipo: ciclica
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+RDOR3:
+  fair_value: 20.49
+  fair_value_min: 19.47
+  fair_value_max: 21.51
+  lentes: [bazin, graham]
+  arquetipo: ciclica
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+TIMS3:
+  fair_value: 6.08
+  fair_value_min: 6.08
+  fair_value_max: 6.08
+  lentes: [bazin]
+  arquetipo: ciclica
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+CSAN3:
+  fair_value: 19.74
+  fair_value_min: 19.74
+  fair_value_max: 19.74
+  lentes: [bazin]
+  arquetipo: ciclica
+  dificil: true
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+GOAU4:
+  fair_value: 33.14
+  fair_value_min: 11.10
+  fair_value_max: 55.18
+  lentes: [bazin, graham]
+  arquetipo: ciclica
+  dificil: true
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+HAPV3:
+  fair_value: 0.72
+  fair_value_min: 0.72
+  fair_value_max: 0.72
+  lentes: [bazin]
+  arquetipo: ciclica
+  dificil: true
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+BRKM5:
+  fair_value: 30.79
+  fair_value_min: 30.79
+  fair_value_max: 30.79
+  lentes: [bazin]
+  arquetipo: ciclica
+  dificil: true
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+RAIZ4:
+  fair_value: 1.88
+  fair_value_min: 1.39
+  fair_value_max: 2.36
+  lentes: [bazin, graham]
+  arquetipo: ciclica
+  dificil: true
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+PEAB3:
+  fair_value: 53.51
+  fair_value_min: 53.51
+  fair_value_max: 53.51
+  lentes: [bazin]
+  arquetipo: ciclica
+  dificil: true
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+AZUL4:
+  lentes: []
+  arquetipo: ciclica
+  dificil: true
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+SBSP3:
+  fair_value: 23.98
+  fair_value_min: 23.98
+  fair_value_max: 23.98
+  lentes: [bazin]
+  arquetipo: concessao_finita
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+CPFE3:
+  fair_value: 49.92
+  fair_value_min: 45.63
+  fair_value_max: 54.21
+  lentes: [bazin, graham]
+  arquetipo: concessao_finita
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+ENEV3:
+  fair_value: 9.14
+  fair_value_min: 9.14
+  fair_value_max: 9.14
+  lentes: [graham]
+  arquetipo: concessao_finita
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+EQTL3:
+  fair_value: 27.02
+  fair_value_min: 26.21
+  fair_value_max: 27.83
+  lentes: [bazin, graham]
+  arquetipo: concessao_finita
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+CMIG3:
+  fair_value: 19.41
+  fair_value_min: 18.35
+  fair_value_max: 20.47
+  lentes: [bazin, graham]
+  arquetipo: concessao_finita
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+CPLE3:
+  fair_value: 12.23
+  fair_value_min: 11.38
+  fair_value_max: 13.09
+  lentes: [bazin, graham]
+  arquetipo: concessao_finita
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+ALUP11:
+  fair_value: 51.85
+  fair_value_min: 50.56
+  fair_value_max: 53.14
+  lentes: [bazin, graham]
+  arquetipo: concessao_finita
+  dificil: true
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+AURE3:
+  fair_value: 13.22
+  fair_value_min: 13.22
+  fair_value_max: 13.22
+  lentes: [bazin]
+  arquetipo: concessao_finita
+  dificil: true
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+WEGE3:
+  fair_value: 11.58
+  fair_value_min: 11.26
+  fair_value_max: 11.90
+  lentes: [bazin, graham]
+  arquetipo: crescimento
+  dificil: false
+  cota_incompleta: true
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+RADL3:
+  fair_value: 6.35
+  fair_value_min: 4.27
+  fair_value_max: 8.44
+  lentes: [bazin, graham]
+  arquetipo: crescimento
+  dificil: false
+  cota_incompleta: true
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+MULT3:
+  fair_value: 19.12
+  fair_value_min: 11.58
+  fair_value_max: 26.67
+  lentes: [bazin, graham]
+  arquetipo: crescimento
+  dificil: false
+  cota_incompleta: true
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+GRND3:
+  fair_value: 6.52
+  fair_value_min: 5.31
+  fair_value_max: 7.72
+  lentes: [bazin, graham]
+  arquetipo: crescimento
+  dificil: false
+  cota_incompleta: true
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+ITUB3:
+  fair_value: 35.99
+  fair_value_min: 29.82
+  fair_value_max: 42.16
+  lentes: [bazin, graham]
+  arquetipo: financeira
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+ITUB4:
+  fair_value: 35.99
+  fair_value_min: 29.82
+  fair_value_max: 42.16
+  lentes: [bazin, graham]
+  arquetipo: financeira
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+BBDC4:
+  fair_value: 20.60
+  fair_value_min: 13.14
+  fair_value_max: 28.07
+  lentes: [bazin, graham]
+  arquetipo: financeira
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+BPAC11:
+  fair_value: 25.43
+  fair_value_min: 11.84
+  fair_value_max: 39.01
+  lentes: [bazin, graham]
+  arquetipo: financeira
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+BBDC3:
+  fair_value: 20.60
+  fair_value_min: 13.14
+  fair_value_max: 28.07
+  lentes: [bazin, graham]
+  arquetipo: financeira
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+ITSA3:
+  fair_value: 14.14
+  fair_value_min: 12.20
+  fair_value_max: 16.09
+  lentes: [bazin, graham]
+  arquetipo: financeira
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+WIZC3:
+  fair_value: 13.66
+  fair_value_min: 10.80
+  fair_value_max: 16.52
+  lentes: [bazin, graham]
+  arquetipo: financeira
+  dificil: true
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+ABEV3:
+  fair_value: 11.86
+  fair_value_min: 11.03
+  fair_value_max: 12.70
+  lentes: [bazin, graham]
+  arquetipo: pagadora_madura
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+VIVT3:
+  fair_value: 33.41
+  fair_value_min: 30.43
+  fair_value_max: 36.38
+  lentes: [bazin, graham]
+  arquetipo: pagadora_madura
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+RENT3:
+  fair_value: 24.69
+  fair_value_min: 19.62
+  fair_value_max: 29.76
+  lentes: [bazin, graham]
+  arquetipo: pagadora_madura
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+HYPE3:
+  fair_value: 23.82
+  fair_value_min: 19.65
+  fair_value_max: 28.00
+  lentes: [bazin, graham]
+  arquetipo: pagadora_madura
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+ASAI3:
+  fair_value: 3.93
+  fair_value_min: 1.39
+  fair_value_max: 6.47
+  lentes: [bazin, graham]
+  arquetipo: pagadora_madura
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
+FLRY3:
+  fair_value: 15.46
+  fair_value_min: 14.54
+  fair_value_max: 16.37
+  lentes: [bazin, graham]
+  arquetipo: pagadora_madura
+  dificil: false
+  cota_incompleta: false
+  fonte: "lentes Graham+Bazin (core/lentes)"
+  data: "2026-07-20"
