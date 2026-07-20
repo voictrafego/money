@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
-status: executing
-stopped_at: Completed 13-06-PLAN.md
-last_updated: "2026-07-20T01:17:24.190Z"
+status: verifying
+stopped_at: Completed 13-07-PLAN.md
+last_updated: "2026-07-20T02:00:00.000Z"
 last_activity: 2026-07-20
 progress:
   total_phases: 8
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 34
-  completed_plans: 33
-  percent: 97
+  completed_plans: 34
+  percent: 100
 ---
 
 # Project State
@@ -34,10 +34,10 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 13 (motores-contrato-de-sa-da-eng) — EXECUTING
 Plan: 7 of 7
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-20
 
-Progress: [██████████] 97%
+Progress: [██████████] 100%
 
 **Suíte:** `468 passed, 1 skipped, 18 deselected, 0 failed, 0 xfailed, 0 XPASS` (pós-13-06: −17 vs 485 = 16
 testes de `test_ranking_freio` [freio/ARQUETIPO_MOTOR/divergencia_entre_lentes deletados] + 1 straggler
@@ -150,10 +150,34 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | Phase 13 P04 | 30min | 3 tasks | 6 files |
 | Phase 13 P05 | 15min | 2 tasks | 3 files |
 | Phase 13 P06 | 40min | 4 tasks | 14 files |
+| Phase 13 P07 | 35min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **ENG-01/08/09 (Fase 13 / plano 13-07) — o COLAPSO PROVADO POR EXECUÇÃO; a fase fecha pronta para a
+  Fase 14.** `tests/test_eng_validacao.py::test_regressao_104_colapso_rim_unico` (`invariante`,
+  BLIND-04a-safe) é o oráculo herdado de KE-04 (`test_regressao_104_sem_explosao`), agora sobre o **RIM
+  único**: roda `report.analisar_acao` sobre os **104 reais** (`hs.CAMINHO_SNAPSHOT_LIMPO`, β setorial
+  carimbado — Ke offline idêntico ao app, D-06) e assere por DISTRIBUIÇÃO, **93 analisados / 0 ofensores**,
+  os 4 invariantes: (1) never-raise (`intrinseco_motor` finito>0 ou None, zero NaN/inf/exceção); (2) sem
+  explosão (`V < 50× preço`, teto adimensional); (3) razão P/B sã por **DEGRADE-NOT-CRASH** — a ponte é
+  LENTE auditável; o guard D-10a do 13-04 **NÃO apaga** `pb_justo`/`payout_terminal` nem crasha: SINALIZA
+  (`razao_patologica=True`) e degrada o veredito; o invariante é "razão in-band (`pb∈(0,6)`, `payout_T∈(0,1]`
+  meio-aberto) OU sinalizada, nunca patologia muda" — **6 tickers fora da faixa, TODOS sinalizados** (o guard
+  segurou, provado por execução); (4) caminho único (`a.motor` sempre "rim", nenhum roteamento para
+  ddm/seguradora/normalizado/dcf/nav). **Cross-menu WR-03 RECONCILIADO** ao Ranking-screener do 13-06:
+  `cmd_rank` não roda mais `analisar_acao`/carimbo macro, então a propriedade antiga (`a.ke`/`intrinseco_motor`
+  idênticos rank↔analyze) **deixou de existir** — o teste que a travava foi deletado no 13-06.
+  `test_cli_rank_consistencia.py` **RECRIADO** provando o que SOBREVIVE (Core Value cross-modo, FIX-04): os
+  múltiplos crus (ROE/P/L/EY) que o screener ordena == os que o Analisar expõe (`a.multiplos`), fonte canônica
+  única de `CompanyData`; NÃO assere colunas removidas (preço-alvo/upside/veredito) nem `a.ke`/`intrinseco_motor`.
+  **NENHUM guard/clamp novo** (anti-goal respeitado); **fronteira VAZIA** (`git diff 86071c4^..HEAD --
+  config.yaml calibracao.lock.yaml src/` VAZIO — validação pura, orçamento de 3 graus intacto); **Fase 14
+  intacta** (prova por distribuição, nenhum ticker/número-alvo do livro — `grep 37,22|ITUB4` == 0). Suíte
+  default **470 passed, 1 skipped, 18 deselected, 0 failed, 0 xfailed**; `-m golden_nivel` **18 passed, 0 ORFA**;
+  nenhum golden_nivel novo. Commits: `86071c4` (T1), `a9ad0da` (T2).
 
 - **ENG-05/06/07/11 (Fase 13 / plano 13-06) — o Ranking foi REBAIXADO a screener por múltiplos crus e
   o mundo antigo MORREU.** O Ranking (cli.cmd_rank + app.py) deixou de estampar preço-alvo/upside/veredito
@@ -804,7 +828,7 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-20T01:16:25.869Z
+Last session: 2026-07-20T01:31:25.874Z
 Stopped at: Completed 13-04-PLAN.md
 Resume file: None
 

@@ -82,7 +82,7 @@ quarentenados/deletados; **isso é a correção, não regressão.**
 - [x] **Phase 10: Primitivas sem viés (PRIM)** - maior alavancagem por linha do repo; **critério de saída: o golden ITUB4 32.88 quebra e é DELETADO** (completed 2026-07-16)
 - [x] **Phase 11: Crescimento / `g` (GROW)** - `g_cap = (1+π_ciclo)(1+PIB_real)−1 = 7,28%`; metade da Doença 1 (o `g`) — o teste de invariância (BLIND-02) só vira verde na Fase 12, quando o `ke_teto` sai (completed 2026-07-17)
 - [x] **Phase 12: Custo de capital / `Ke` (KE)** - ERP único 4,5%, beta setorial + Blume, `ke_teto`/`ke_piso` deletados; **separada da Fase 11 de propósito** (completed 2026-07-17)
-- [ ] **Phase 13: Motores + contrato de saída (ENG)** - os 4 motores colapsam num RIM único com políticas de input; contrato do livro (tríade + MS do usuário + matriz Ke×g); `motores:` ~20 → ≤5 chaves
+- [x] **Phase 13: Motores + contrato de saída (ENG)** - os 4 motores colapsam num RIM único com políticas de input; contrato do livro (tríade + MS do usuário + matriz Ke×g); `motores:` ~20 → ≤5 chaves (completed 2026-07-20)
 - [ ] **Phase 14: Validação honesta (VAL)** - **o caso do livro passa (V ≈ R$ 37,22)**; hold-out roda uma vez, 3 graus de liberdade, distribuição + jackknife
 
 ## Phase Details
@@ -284,7 +284,7 @@ Plans:
 - [x] 13-06-PLAN.md — Ranking rebaixado a screener por múltiplos crus + UI mínima (MS slider/ponte/matriz) + selo sem 'Evitar'/'Baixa'; freio.py e ARQUETIPO_MOTOR deletados (ENG-05/06/07/11)
 
 **Wave 6** *(blocked on Wave 5 completion)*
-- [ ] 13-07-PLAN.md — Prova por execução: regressão dos 104 (finito/sem explosão/P/B sã/caminho único) + cross-menu; suíte default verde (ENG-01/08/09)
+- [x] 13-07-PLAN.md — Prova por execução: regressão dos 104 (finito/sem explosão/P/B sã/caminho único) + cross-menu; suíte default verde (ENG-01/08/09)
 **UI hint**: yes
 
 ### Phase 14: Validação honesta (VAL)
@@ -322,7 +322,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 10. Primitivas sem viés (PRIM) | v2.4 | 4/4 | Complete    | 2026-07-16 |
 | 11. Crescimento / g (GROW) | v2.4 | 3/3 | Complete   | 2026-07-17 |
 | 12. Custo de capital / Ke (KE) | v2.4 | 4/4 | Complete    | 2026-07-17 |
-| 13. Motores + contrato de saída (ENG) | v2.4 | 6/7 | In Progress|  |
+| 13. Motores + contrato de saída (ENG) | v2.4 | 7/7 | Complete   | 2026-07-20 |
 | 14. Validação honesta (VAL) | v2.4 | 0/? | Not started | - |
 
 ## Requirement Coverage (v2.4)
