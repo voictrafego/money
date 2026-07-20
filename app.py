@@ -240,7 +240,7 @@ def selic_atual():
 
 @st.cache_data(show_spinner=False, ttl=3600)
 def rf_capm(fallback, anos):
-    """rf do CAPM/DDM: Selic through-the-cycle (média ~10 anos), não a spot — numa
+    """rf do CAPM/RIM: Selic through-the-cycle (média ~10 anos), não a spot — numa
     perpetuidade a taxa de desconto reflete o juro de LP. Uma chamada de rede por execução."""
     return macro.selic_ciclo_para_capm(fallback, anos)
 
@@ -603,7 +603,7 @@ def _render_metodologia() -> None:
         "### O fluxo da análise\n"
         "1. **Garimpo (BSD)** — filtra várias empresas por estabilidade e segurança dos dividendos.\n"
         "2. **Ranking por múltiplos** — ordena candidatas e estima um preço-alvo por regressão.\n"
-        "3. **Análise a fundo** — valuation por Desconto de Dividendos (DDM), múltiplos e fundamentos.\n"
+        "3. **Análise a fundo** — valuation por Renda Residual (RIM), múltiplos e fundamentos.\n"
         "4. **Timing técnico (consultivo)** — indicadores de preço, sempre subordinados ao fundamento.\n\n"
         "### Fundamentação e referências\n"
         "A metodologia central segue o livro **_O Investidor em Ações de Dividendos_** "
@@ -897,7 +897,7 @@ if modo.startswith("Analisar"):
                 # o carimbo do rf. Leitura de arquivo local (sem rede) → chamada direta; a engine
                 # o lê offline e aplica Blume. MESMO mapa que o CLI carimba (analyze==rank).
                 macro.carimbar_beta_setorial(CFG)
-                st.write("Calculando valuation (DDM + múltiplos)…")
+                st.write("Calculando valuation (RIM + múltiplos)…")
                 a = report.analisar_acao(c, CFG)
                 _status.update(label=f"Análise de {ticker_ativo} concluída",
                                state="complete", expanded=False)
@@ -932,7 +932,7 @@ if modo.startswith("Analisar"):
                     a.selo.cor, a.selo.rotulo, a.selo.qualidade, a.selo.verificar
                 )
                 st.markdown(f"### {esc_md(badge)}")
-                st.caption("Selo = qualidade do dividendo (BSD) × preço (DDM). "
+                st.caption("Selo = qualidade do dividendo (BSD) × preço (RIM). "
                            "Descreve a combinação, não é recomendação.")
                 if a.selo.verificar:
                     st.warning(
@@ -993,20 +993,20 @@ if modo.startswith("Analisar"):
                         "razão implícita. É lente de sanidade, não substitui o valor do motor."
                     )
 
-            # Guarda-corpo do DDM (Achado 2 / SAN-01): quando a faixa saiu negativa/zero a
-            # engine já zerou vmin/vmax (Intrínseco cai em "—"). Aqui só a nota honesta do
-            # porquê — nunca exibimos faixa negativa/degenerada como preço-alvo.
+            # Guarda-corpo da lente DDM (Achado 2 / SAN-01): a lente por Desconto de Dividendos
+            # é secundária (sub-tab abaixo). Quando sua faixa saiu negativa/zero para este perfil,
+            # exibimos só a nota honesta do porquê — nunca uma faixa negativa/degenerada como preço-alvo.
             if getattr(a, "ddm_inaplicavel", False):
                 st.caption(
-                    "DDM estruturalmente inaplicável a este perfil (payout baixo / alto capex "
-                    "ou lucro negativo): a faixa por dividendos ficou negativa ou zero e NÃO é "
-                    "preço-alvo — por isso o Intrínseco (DDM) não é exibido."
+                    "Lente por Desconto de Dividendos (DDM) estruturalmente inaplicável a este "
+                    "perfil (payout baixo / alto capex ou lucro negativo): a faixa por dividendos "
+                    "ficou negativa ou zero e NÃO é preço-alvo — por isso a lente DDM não se aplica aqui."
                 )
 
             if a.preco_atual is None:
                 st.warning(
                     "Preço atual indisponível agora (fonte Yahoo instável). Os fundamentos e o "
-                    "valor intrínseco (DDM, dados CVM) abaixo seguem válidos — só a comparação de "
+                    "valor intrínseco (RIM, dados CVM) abaixo seguem válidos — só a comparação de "
                     "preço/veredito fica suspensa até o preço voltar."
                 )
 
@@ -1015,13 +1015,13 @@ if modo.startswith("Analisar"):
                     st.warning(esc_md(al))
 
             # ----------------------------------------------------------------- #
-            # Lentes de referência (Fase 19) — camada fina READ-ONLY, além do DDM.
+            # Lentes de referência (Fase 19) — camada fina READ-ONLY, além do RIM.
             # app.py só LÊ a engine (lentes.*); nenhuma fórmula/recálculo na view.
             # Copy de estudo, jamais recomendação (VAL-01/VAL-02).
             # ----------------------------------------------------------------- #
-            st.markdown("#### Lentes de referência (além do DDM)")
+            st.markdown("#### Lentes de referência (além do RIM)")
             st.caption(
-                "Fórmulas clássicas complementares — o valor intrínseco (DDM) acima segue "
+                "Fórmulas clássicas complementares — o valor intrínseco (RIM) acima segue "
                 "sendo a análise principal. São referências de estudo, não recomendações."
             )
             lente_graham, lente_bazin = st.columns(2)
@@ -1120,7 +1120,7 @@ if modo.startswith("Analisar"):
                 else:
                     st.info("Pares insuficientes do mesmo setor para comparar.")
 
-            # Gráfico de preço 5a + banda do valor intrínseco (DDM) — topo da aba, antes dos sub-tabs (D-03).
+            # Gráfico de preço 5a + banda do valor intrínseco (RIM) — topo da aba, antes dos sub-tabs (D-03).
             # Reservamos o slot do gráfico AQUI (topo) com st.container() e só o PREENCHEMOS depois que os
             # controles abaixo rodarem: assim o render lê o st.session_state["tec_estado"] já atualizado pelos
             # widgets no MESMO rerun (UI-03 — toggle redesenha na hora, sem lag de um clique). Read-only.
@@ -1170,7 +1170,7 @@ if modo.startswith("Analisar"):
                         "MACD", value=est["momentum"]["macd_on"], help=h("tec_macd"))
 
             # Render do gráfico no slot reservado no topo, JÁ com o estado atualizado pelos controles
-            # acima. make_subplots dinâmico: row 1 = preço + banda DDM + overlays ativos (UI-01);
+            # acima. make_subplots dinâmico: row 1 = preço + banda RIM + overlays ativos (UI-01);
             # rows seguintes = subpainéis SÓ dos osciladores ligados, montados a partir do SubpainelSpec
             # (série(s) + níveis de referência vindos do módulo puro — app.py não mapeia nome→série nem
             # hardcoda 20/25, 30/70, 0). Read-only: lê a.sinais, não recomputa indicador.
@@ -1181,7 +1181,7 @@ if modo.startswith("Analisar"):
                     # D-05/GRAF-03: série indisponível → aviso sem quebrar a aba (espelha o aviso de preço atual)
                     st.info(
                         "Gráfico de preço indisponível agora (fonte Yahoo instável). Os fundamentos e o "
-                        "valor intrínseco (DDM, dados CVM) abaixo seguem válidos."
+                        "valor intrínseco (RIM, dados CVM) abaixo seguem válidos."
                     )
                 else:
                     estado = st.session_state["tec_estado"]
@@ -1198,17 +1198,17 @@ if modo.startswith("Analisar"):
                         rows=layout["rows"], cols=1, shared_xaxes=True,
                         row_heights=layout["row_heights"], vertical_spacing=0.03,
                     )
-                    # Row 1 — preço nominal (mesmo trace/estilo do gráfico atual; alinha com a banda DDM)
+                    # Row 1 — preço nominal (mesmo trace/estilo do gráfico atual; alinha com a banda RIM)
                     fig.add_trace(go.Scatter(
                         x=serie.index, y=serie.values, mode="lines", name="Preço",
                         line=dict(color="#1f77b4", width=2),
                         hovertemplate="%{x|%d/%m/%Y}<br>R$ %{y:.2f}<extra></extra>",
                     ), row=1, col=1)
-                    # D-01/D-02/D-06: banda horizontal plana entre vmin e vmax, só se o DDM calculou
+                    # D-01/D-02/D-06: banda horizontal plana entre vmin e vmax, só se o RIM calculou
                     if a.vmin is not None and a.vmax is not None:
                         fig.add_hrect(
                             y0=a.vmin, y1=a.vmax, line_width=0, fillcolor="green", opacity=0.12,
-                            annotation_text="Valor intrínseco (DDM)", annotation_position="top right",
+                            annotation_text="Valor intrínseco (RIM)", annotation_position="top right",
                             row=1, col=1,
                         )
                     # Overlays (MMs/Donchian/Bollinger) no eixo de preço — série + estilo vêm do OverlaySpec
@@ -1324,10 +1324,10 @@ if modo.startswith("Analisar"):
                 cma, cmb = st.columns(2)
                 with cma:
                     st.markdown("**Múltiplos**", help=h("tab_multiplos"))
-                    st.caption("Dois payouts: o cru do último ano e o sustentável usado no valuation (DDM).",
+                    st.caption("Dois payouts: o cru do último ano e o sustentável usado no valuation.",
                                help=h("payout_dual"))
                     payout_ult = c.payout(c.ultimo_ano())  # CRU do último ano (paridade report.py L156)
-                    payout_proj = c.payout_valuation()     # sustentável (mediana sem clamp) usado no DDM
+                    payout_proj = c.payout_valuation()     # sustentável (mediana sem clamp) usado no valuation
                     rows = presentation.linhas_multiplos(a.multiplos, payout_ult, payout_proj)
                     st.dataframe(pd.DataFrame(rows, columns=["Múltiplo", "Valor"]),
                                  hide_index=True, use_container_width=True)
