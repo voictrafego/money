@@ -923,69 +923,6 @@ if modo.startswith("Analisar"):
                 st.warning(esc_md(v))
 
             # ----------------------------------------------------------------- #
-            # Sinais do veredito honesto (Fase 3 — VER-01/ENS-01/SAN-01/VER-02) —
-            # READ-ONLY: só LÊ campos já derivados na engine (a.san01_reetiquetado /
-            # a.arquetipo_incerto / a.divergencia_*), zero recálculo. Paridade de copy
-            # com relatorio_markdown (report.py). Descritivo, nunca recomendação.
-            # ----------------------------------------------------------------- #
-            # Quick 260713-hoo: SAN-01 (03-02) e a bandeira de divergência (ENS-01 / 03-01)
-            # explicam a MESMA coisa — "a referência é o motor do arquétipo, não o DDM". Em vez
-            # de duas caixas empilhadas repetindo o veredito, consolidamos num único expander
-            # OPCIONAL (fechado por padrão) que guarda o "porquê". READ-ONLY: só LÊ campos já
-            # derivados na engine; conteúdo/valores idênticos aos banners antigos, só muda o container.
-            if getattr(a, "san01_reetiquetado", False) or getattr(a, "divergencia_ativa", False):
-                with st.expander(f"Por que {a.motor_rotulo or 'o motor do arquétipo'} e não DDM?"):
-                    if getattr(a, "san01_reetiquetado", False):
-                        st.markdown(
-                            "**Guarda-corpo anti-aberração (SAN-01):** veredito reetiquetado — a "
-                            "referência primária é o motor do arquétipo (números abaixo); o DDM de "
-                            "estágio único é conservador demais para este perfil."
-                        )
-                    if getattr(a, "divergencia_ativa", False):
-                        _razao = fmt_num(a.divergencia_razao, 1) if a.divergencia_razao is not None else "—"
-                        _msg = (
-                            f"**Bandeira de divergência:** as lentes divergem ~{_razao}×: "
-                            f"**{esc_md(a.motor_rotulo or a.motor or '—')} "
-                            f"{esc_md(fmt_rs(a.intrinseco_motor))}** × DDM (lente conservadora) "
-                            f"{esc_md(fmt_rs(a.contraponto_valor))}."
-                        )
-                        if a.divergencia_hipotese:
-                            _msg += f"\n\nHipótese: {esc_md(a.divergencia_hipotese)}"
-                        st.markdown(_msg)
-
-            # Classificação incerta (VER-02 / 03-03, caso-fronteira): conflito real de
-            # sinais → roda o motor de cada arquétipo candidato e assume a dúvida (range +
-            # bandeira "classificação incerta entre X e Y"), em vez de cravar um selo.
-            if getattr(a, "arquetipo_incerto", False):
-                if a.candidatos_intrinsecos:
-                    _linhas = "\n".join(
-                        f"- {esc_md(str(cand))}: {esc_md(fmt_rs(val))} "
-                        f"(motor do arquétipo {esc_md(str(cand))})"
-                        for cand, val in a.candidatos_intrinsecos
-                    )
-                    _primeiro = a.candidatos_intrinsecos[0][0]
-                    _ultimo = a.candidatos_intrinsecos[-1][0]
-                    _txt = (
-                        "**Classificação incerta (caso-fronteira):**\n\n"
-                        f"{_linhas}\n\n"
-                        f"Classificação incerta entre {esc_md(str(_primeiro))} e "
-                        f"{esc_md(str(_ultimo))} — a ferramenta assume a dúvida em vez de "
-                        "cravar um selo."
-                    )
-                    if a.veredito_range is not None:
-                        _menor, _maior = a.veredito_range
-                        _txt += (
-                            "\n\nRange do intrínseco conforme o arquétipo assumido: "
-                            f"{esc_md(fmt_rs(_menor))} – {esc_md(fmt_rs(_maior))}."
-                        )
-                    st.warning(_txt)
-                else:
-                    st.warning(
-                        "**Classificação incerta (caso-fronteira):** os motores dos "
-                        "arquétipos candidatos não estimaram preço-alvo confiável."
-                    )
-
-            # ----------------------------------------------------------------- #
             # Selo de Sustentabilidade (Fase 20 / SELO-03) — READ-ONLY: só LÊ os
             # campos já derivados na engine (a.selo), zero fórmula/recálculo aqui.
             # Destaque perto do veredito + rótulo do quadrante (qualidade × preço).
@@ -1006,53 +943,20 @@ if modo.startswith("Analisar"):
 
             # Métricas principais — intervalo intrínseco vem do cálculo único do veredito (WR-07)
             intervalo = f"{fmt_rs(a.vmin)} – {fmt_rs(a.vmax)}" if a.vmin is not None and a.vmax is not None else "—"
-            # WR-01: no caso-fronteira (VER-02) a classificação é incerta e `_veredito_fronteirico`
-            # NÃO toca vmin/vmax — a banda seria a do arquétipo primário do VER-01, contradizendo o
-            # range dos candidatos exibido no banner "Classificação incerta". Suprime a faixa aqui:
-            # a faixa honesta vive no banner de candidatos, não neste selo cravado.
-            if getattr(a, "arquetipo_incerto", False):
-                intervalo = "—"
-            _motor = a.motor or "ddm"
-            # Quick 260713-hoo: a manchete do intrínseco lidera com o valor do motor primário
-            # (ex.: RIM R$ 32,88) quando a faixa vem DE FATO do motor — antes o usuário lia o
-            # piso do contraponto DDM ("16,13") como o intrínseco. Fora desse caso (DDM primário,
-            # banda degradada ou caso-fronteira) a manchete continua sendo a faixa vmin–vmax.
-            _usa_motor = (
-                _motor != "ddm"
-                and getattr(a, "banda_do_motor", False)
-                and not getattr(a, "arquetipo_incerto", False)
-                and a.intrinseco_motor is not None
-            )
             m1, m2, m3, m4, m5 = st.columns(5)
             m1.metric("Preço atual", esc_md(fmt_rs(a.preco_atual)), help=h("preco"))
-            # Rótulo honesto do intrínseco (T-0304-01): quando o motor do arquétipo NÃO é o
-            # DDM (RIM/normalizado/DCF/NAV), a faixa vem do motor primário — não chamar o
-            # motor de "DDM" (enganaria o usuário). "Intrínseco (DDM)" só quando motor==ddm.
-            # CR-01: o rótulo do motor só é honesto quando a banda vem DE FATO do motor
-            # (banda_do_motor True). Se o motor degradou e a faixa exibida é 100% do DDM,
-            # rotular com o nome do motor enganaria o usuário → cai para "Intrínseco (DDM)".
-            _label_intr = (
-                "Intrínseco (DDM)"
-                if _motor == "ddm" or not getattr(a, "banda_do_motor", False)
-                else f"Intrínseco ({a.motor_rotulo or _motor})"
-            )
-            _valor_intr = esc_md(fmt_rs(a.intrinseco_motor)) if _usa_motor else esc_md(intervalo)
+            # Rótulo honesto do intrínseco: o motor é ÚNICO (RIM, Fase 13). A faixa exibida
+            # (vmin–vmax) é a região da margem de segurança sobre o intrínseco do RIM — o rótulo
+            # é estático "Intrínseco (RIM)" (curto para st.metric). O DDM virou lente/fórmula
+            # secundária (sub-tab), não é mais o motor da manchete.
+            _label_intr = "Intrínseco (RIM)"
+            _valor_intr = esc_md(intervalo)
             m2.metric(_label_intr, _valor_intr, help=h("valor_intrinseco"))
             hdr = presentation.header_dy(a.multiplos.get("DY rec."), a.multiplos.get("DY"))
             m3.metric(hdr["label"], hdr["value"], delta=hdr["delta"],
                       delta_color="off", help=hdr["help"])
             m4.metric("ROE", fmt_pct(a.multiplos.get("ROE")), help=h("roe"))
             m5.metric("Ke (custo)", fmt_pct(a.ke), help=h("ke"))
-
-            # Quick 260713-hoo: com a manchete liderando pelo motor, a faixa vmin–vmax e o DDM
-            # como contraponto conservador são rebaixados a este caption discreto — substitui a
-            # antiga legenda "A faixa combina..." (que disputava a leitura do intrínseco).
-            if _usa_motor and a.contraponto_valor is not None:
-                st.caption(
-                    "Faixa com o DDM como contraponto conservador: "
-                    f"{esc_md(fmt_rs(a.vmin))} – {esc_md(fmt_rs(a.vmax))} · "
-                    f"DDM {esc_md(fmt_rs(a.contraponto_valor))}."
-                )
 
             # ----------------------------------------------------------------- #
             # Contrato de saída do livro (Cap. 17 / D-08) — a MARGEM DE SEGURANÇA
