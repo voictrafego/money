@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
 status: executing
-stopped_at: Completed 14-02-PLAN.md
-last_updated: "2026-07-20T14:42:28.113Z"
+stopped_at: Completed 14-03-PLAN.md
+last_updated: "2026-07-20T14:56:00.086Z"
 last_activity: 2026-07-20
 progress:
   total_phases: 8
@@ -33,7 +33,7 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 14 (valida-o-honesta-val) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-07-20
 
@@ -154,10 +154,42 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | Phase 13 P07 | 35min | 2 tasks | 3 files |
 | Phase 14 P01 | 18min | 3 tasks | 7 files |
 | Phase 14 P02 | 20min | 2 tasks | 3 files |
+| Phase 14 P03 | 25min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **VAL-02 (Fase 14 / plano 14-03) — o COMMIT 1 do hold-out (D-09): a cesta estratificada nasce SÓ
+  com `fair_value`, ANTES do modelo.** `scripts/montar_cesta_holdout.py` (montador determinístico,
+  offline, never-raise) gera `tests/fixtures/holdout_v24.yaml` sobre os **104** (universo COMPLETO —
+  NÃO filtra `falhas`: o hold-out mede o modelo contra âncoras Graham+Bazin, que partem de
+  lucro/dividendo real, **não de preço/β**, então um ticker sem dado de mercado ainda tem fair_value e
+  é um "difícil" legítimo; filtrar `falhas` era artefato do spike que RODAVA o modelo). **LANDMINE
+  curada:** o loader não persiste `eh_concessionaria` (derivado em `build.py:168`) → replicado no
+  montador, senão CONCESSAO_FINITA fica VAZIO e a cesta valida um roteamento que a produção não usa —
+  medido **CONCESSAO_FINITA=8 (≥6), 0 membros seria o warning sign**. **Regra de seleção escrita ANTES
+  (cega ao resultado, gravada no cabeçalho do YAML + snapshot-hash):** cota 6/estrato por `market_cap`
+  desc (desempate alfabético); estrato com universo <6 (**CRESCIMENTO=4**) usa todos e MARCA
+  `cota_incompleta` (D-07, honesto — não inventa nomes); **10 difíceis** (D-06) por 4 baldes (P/B<1,
+  prejuízo≤0 nos últimos 3a, payout>100%, menor book) DISJUNTOS da cota (todos do balde raso +
+  extremos ordinais dos fartos em round-robin — ordinais, não thresholds mágicos, p/ não criar 4º grau
+  de liberdade). `fair_value` = ponto médio da faixa [min(Graham,Bazin), max] entre as lentes
+  DEFINIDAS (D-02, campo escalar casa o teste que acorda); nenhuma lente → SEM fair_value (D-03,
+  degradação reportada com `lentes: []`, nunca exclusão silenciosa). **Cada campo em sua PRÓPRIA LINHA**
+  (pré-condição do git blame do Plano 04). **ZERO `v_modelo`** (Commit 2 = Plano 04; o `git log` prova
+  que a âncora foi cravada ANTES do modelo) e **ZERO `excecao_nota`** (a lavanderia morreu no Plano 01;
+  o fixture novo não nasce com ela). `test_holdout_estratificado_composicao` (`contrato`, sem literal de
+  ticker) prova as 5 verdades estruturais; entrada em `classificacao.yaml` no mesmo diff. **Desvio
+  (Rule 3):** o fixture existindo ACORDOU `test_nenhum_ticker_e_load_bearing` cedo demais (skip era `if
+  not HOLDOUT_V24.exists()`, assumia fixture completo) → guarda corrigida p/ o split D-09: **skip
+  enquanto não há `v_modelo`** (substrato do jackknife = Plano 04), dependência de FASE (never xfail,
+  sinal trocado é pior), **assert INTACTO** — não afrouxado. **VAL-02 completo; VAL-03/05
+  co-reivindicados** (a prova de ordem por git + a métrica V/FairValue com jackknife acordado fecham no
+  14-04). **Fronteira: validação PURA** — `git diff -- config.yaml calibracao.lock.yaml` VAZIO,
+  orçamento em 3 graus intacto. Suíte default **471 passed, 1 skipped, 18 deselected, 0 failed** (+1 vs
+  14-02 = o novo contrato); `-m golden_nivel` **18 passed, 0 ORFA**. Commits: `a9db387` (montador),
+  `a5899b0` (Commit 1).
 
 - **VAL-05 (Fase 14 / plano 14-02) — a constante mágica `LIMIAR_JACKKNIFE_PP = 0.01 [ASSUMIDO]`
   MORREU e virou FUNÇÃO de `n` (D-10); o item de MAIOR INCERTEZA da fase, entregue como derivação
@@ -882,7 +914,7 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-20T14:42:28.103Z
+Last session: 2026-07-20T14:55:36.972Z
 Stopped at: Completed 14-02-PLAN.md
 Resume file: None
 

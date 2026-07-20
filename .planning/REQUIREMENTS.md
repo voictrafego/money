@@ -232,7 +232,7 @@ prova que a ordem importa: consertar o `Ke` antes do `g` **piora** (ITUB4 0,75 �
 
 - [x] **VAL-01**: **O caso do livro passa.** ITUB4 com os inputs do Cap. 17 reproduz `V` ≈ R$ 37,22.
   Critério de aceite soberano do marco.
-- [ ] **VAL-02**: Cesta estratificada (≥ 6 por arquétipo + **10 "difíceis" deliberados**: P/B < 1,
+- [x] **VAL-02**: Cesta estratificada (≥ 6 por arquétipo + **10 "difíceis" deliberados**: P/B < 1,
   prejuízo recente, payout > 100%, book pequeno). Sem os difíceis, valida-se só o meio da
   distribuição — que é onde o modelo já funcionava.
 - [ ] **VAL-03**: Fair values **commitados ANTES** de rodar o modelo. O `git log` prova a ordem.
@@ -327,7 +327,7 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | ENG-10 | Phase 13 | Complete |
 | ENG-11 | Phase 13 | Complete |
 | VAL-01 | Phase 14 | Complete |
-| VAL-02 | Phase 14 | Pending |
+| VAL-02 | Phase 14 | Complete |
 | VAL-03 | Phase 14 | Pending |
 | VAL-04 | Phase 14 | Pending |
 | VAL-05 | Phase 14 | Pending |
