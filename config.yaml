@@ -269,8 +269,9 @@ motores:
                                   # cycle da PRÓPRIA empresa (a série histórica dela, não uma constante — D-08) e
                                   # ainda capado por excesso_sustentavel. A mediana é robusta a um ano de colapso de
                                   # ROE (um exercício ruim isolado não redefine o poder de lucro de longo prazo).
-  ciclica:                        # Lucro normalizado (ENG-03, cíclica) — P/L justo sobre lucro médio 7-10a
-    anos_media: 10                # janela do norm.base_normalizada (média/mediana robusta a exercício atípico)
-    winsor: 0.10                  # winsorização a 10% nos extremos (>=5 pontos), espelha o bloco `normalizacao`
-  crescimento:                    # DCF de crescimento (ENG-04, compounder) — reuso de ddm.ddm_dois_estagios
-    n_anos_explicito: 10          # estágio de alto crescimento explícito (modelo-H decrescente, conservador)
+    anos_ciclica: 10              # ENG-10 (Fase 13): política de INPUT do RIM para o arquétipo CÍCLICO — janela da
+                                  # média through-cycle (norm.media_ciclo) que ancora o ROE0 do RIM único. Migrada de
+                                  # `motores.ciclica.anos_media`: com dcf_crescimento/lucro_normalizado deixando de ser
+                                  # motores (Plano 03), os sub-blocos ciclica/crescimento colapsaram; a única folha viva
+                                  # (a janela) vira política de input do RIM. `ciclica.winsor` e `crescimento.n_anos_
+                                  # explicito` foram DELETADAS (inertes: winsor desde PRIM-02; n_anos_explicito com o DCF).

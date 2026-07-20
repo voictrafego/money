@@ -95,7 +95,10 @@ def _roe0_ciclico(c: CompanyData, cfg: dict, vpa0: Optional[float]) -> Optional[
     normalizado ou o VPA0 degeneram."""
     if vpa0 is None or vpa0 <= 0:
         return None
-    cic = (cfg or {}).get("motores", {}).get("ciclica", {})
+    # ENG-10 (Fase 13): a janela da média through-cycle da cíclica migrou de `motores.ciclica.anos_media`
+    # para `motores.rim.anos_ciclica` (política de input do RIM único). `winsor` foi deletada (inerte
+    # desde PRIM-02): usa o default 0.10 hardcoded, espelho do bloco `normalizacao`.
+    cic = (cfg or {}).get("motores", {}).get("rim", {})
     # WR-02: coage as chaves do carimbo para int (round-trip YAML pode entregá-las como string);
     # sem isso `an in defl` casa ZERO anos e a série sai vazia, matando o motor cíclico em silêncio.
     _defl_raw = (cfg or {}).get("macro", {}).get("ipca_deflatores") or {}
@@ -116,7 +119,7 @@ def _roe0_ciclico(c: CompanyData, cfg: dict, vpa0: Optional[float]) -> Optional[
     lpa_norm = mult.lpa(
         norm.media_ciclo(
             serie_lucro,
-            anos_media=cic.get("anos_media", 10), winsor=cic.get("winsor", 0.10),
+            anos_media=cic.get("anos_ciclica", 10), winsor=0.10,
         ),
         c.num_acoes.get(ult),
     )

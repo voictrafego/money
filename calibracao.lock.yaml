@@ -31,11 +31,14 @@
 # --------------------------------------------------------------------------- #
 # ESCOPO — os blocos do config.yaml que afetam o valor intrinseco `V`.
 # --------------------------------------------------------------------------- #
-# 26 folhas (motores 7 + capm 12 + ddm 5 + normalizacao 2). O orcamento se aplica a ELAS.
-# (KE-02/KE-04/Fase 12: motores caiu de 10 -> 7 com a remocao do 2o premio de risco dos bancos
-#  e do clamp (piso/teto do Ke) — o Ke colapsou num so' (CAPM local) e a perpetuidade converge
-#  pelo piso do Blume por aritmetica. GROW-01/Fase 11 ja' havia baixado de 11 -> 10 com a remocao
-#  de `motores.rim.g_terminal`; ddm segue com 5 folhas.)
+# 24 folhas (motores 5 + capm 12 + ddm 5 + normalizacao 2). O orcamento se aplica a ELAS.
+# (ENG-10/Fase 13: motores caiu de 7 -> 5 — os sub-blocos `ciclica`/`crescimento` colapsaram quando
+#  dcf_crescimento/lucro_normalizado deixaram de ser motores (RIM unico, Plano 03): `ciclica.anos_media`
+#  virou `motores.rim.anos_ciclica` (politica de input do RIM), `ciclica.winsor` e
+#  `crescimento.n_anos_explicito` foram DELETADAS. KE-02/KE-04/Fase 12 ja' havia baixado de 10 -> 7 com a
+#  remocao do 2o premio de risco dos bancos e do clamp (piso/teto do Ke) — o Ke colapsou num so' (CAPM
+#  local) e a perpetuidade converge pelo piso do Blume por aritmetica. GROW-01/Fase 11 baixara de 11 -> 10
+#  com a remocao de `motores.rim.g_terminal`; ddm segue com 5 folhas.)
 #
 # Os outros 8 blocos do config.yaml (80 folhas: screening 33, indicadores 16, score 11,
 # padroes 6, arquetipo 5, veredito 4, selo 3, universo 2) ficam FORA do escopo porque
@@ -119,21 +122,21 @@ user_control:
     ate: "ENG-06 (Fase 13) — vira controle do usuario"
 
 # --------------------------------------------------------------------------- #
-# CONGELADOS — as outras 23 folhas do escopo (26 - 3 graus de liberdade).
+# CONGELADOS — as outras 21 folhas do escopo (24 - 3 graus de liberdade).
 # --------------------------------------------------------------------------- #
 # Valor de HOJE, lido do `config.yaml` (nunca digitado de memoria). Se qualquer um destes
 # divergir do config, `test_knobs_batem_com_o_lock` fica VERMELHO — e a mudanca precisa
 # aparecer NESTE arquivo, no MESMO diff. E' o que a torna revisavel.
 congelados:
 
-  # --- motores.rim (4) — o que sobrou da superficie do overfit v2.3 ---
+  # --- motores.rim (5) — o que sobrou da superficie do overfit v2.3 ---
   # (KE-02/KE-04, Fase 12: o 2o premio de risco estrutural dos bancos e o clamp (piso/teto do
   #  Ke) foram REMOVIDOS de config+lock neste commit. O Ke colapsou num so' (CAPM local sobre
   #  o beta setorial+Blume) no plano 12-02, e a perpetuidade converge pelo piso do Blume por
   #  aritmetica (beta_blume >= 0,33 => Ke_min > g_cap), nao por trava. A justificativa "Blume"
   #  do antigo clamp era aritmeticamente FALSA — Blume (beta -> 1,0) daria Ke ~15,9%, nao 13%.)
   # (`motores.rim.n_fade` NAO aparece aqui de proposito: e' GRAU DE LIBERDADE. Os 3 graus e
-  #  os 23 congelados sao uma PARTICAO das 26 folhas do escopo — nenhuma folha nos dois lados,
+  #  os 21 congelados sao uma PARTICAO das 24 folhas do escopo — nenhuma folha nos dois lados,
   #  nenhuma folha de fora. O teste verifica a particao, nao so' a contagem.)
   motores.rim.excesso_sustentavel: 0.045
     # GROW-05, Fase 11: hoje DECORATIVO (o cap satura), vira LOAD-BEARING quando o spread
@@ -148,13 +151,13 @@ congelados:
     # GROW-05, Fase 11: hoje DECORATIVO, vira LOAD-BEARING junto com `excesso_sustentavel`.
   motores.rim.roe_terminal_stat: mediana
     # Estatistica (mediana|media) do ROE through-cycle no RI terminal. Nao e' um nivel.
-
-  # --- motores.ciclica + motores.crescimento (3) ---
-  motores.ciclica.anos_media: 10
-  motores.ciclica.winsor: 0.1
-  motores.crescimento.n_anos_explicito: 10
-    # ENG-10, Fase 13: o bloco `motores:` inteiro vai de 11 chaves para <=5.
-    # (O ROADMAP diz "~20 -> <=5"; sao 11, medidas. O corte e' real: 11 -> 5.)
+  motores.rim.anos_ciclica: 10
+    # ENG-10, Fase 13: janela da media through-cycle do arquetipo CICLICO — politica de INPUT do
+    # RIM unico (ancora o ROE0 da ciclica). Migrada de `motores.ciclica.anos_media` no MESMO commit:
+    # os sub-blocos `motores.ciclica`/`motores.crescimento` colapsaram quando dcf_crescimento/
+    # lucro_normalizado deixaram de ser motores (Plano 03). As folhas mortas `motores.ciclica.winsor`
+    # (inerte desde PRIM-02) e `motores.crescimento.n_anos_explicito` (o DCF morreu; o RIM usa n_fade)
+    # foram DELETADAS. O bloco `motores:` foi de 7 -> 5 folhas. Nao e' um nivel calibravel: e' a janela.
 
   # --- capm (11 = 12 - 1 grau de liberdade) ---
   capm.abordagem: local
