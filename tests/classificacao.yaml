@@ -470,6 +470,11 @@
 'tests/test_eng_ponte_pb.py::test_guarda_pega_payout_terminal_negativo': invariante
 'tests/test_eng_ponte_pb.py::test_guarda_pega_pb_justo_explosivo': invariante
 
+# --- Fase 13 / plano 13-04: ENG-05/06/09 contrato de saida (triade por posicao + regiao simetrica + never-raise) ---
+'tests/test_eng_contrato.py::test_triade_vem_da_posicao_do_preco_vs_regiao_da_ms': contrato
+'tests/test_eng_contrato.py::test_regiao_e_simetrica_e_escala_com_a_margem_de_seguranca': contrato
+'tests/test_eng_contrato.py::test_razao_patologica_degrada_veredito_never_raise': contrato
+
 # --- Fase 7 / plano 07-03: BLIND-04. Meta-testes (testam OS TESTES, nao a engine) + harness
 # do jackknife. Nenhum deles crava nivel: rodam no default, para sempre.
 'tests/test_blindagem_meta.py::test_nenhum_teste_de_calibracao_crava_ticker_em_reais': contrato
