@@ -14,7 +14,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 from tabulate import tabulate
 
-from ..core import arquetipo, capm, comparables, ddm, growth, indicators, lentes, lifecycle, motores, screening
+from ..core import arquetipo, capm, ddm, growth, indicators, lentes, lifecycle, motores, screening
 from ..core import multiples as mult
 from ..core import normalizacao as norm
 from ..core.fundamentals import CompanyData
@@ -50,135 +50,15 @@ class AnaliseAcao:
     alerta_reverificacao: Optional[str] = None             # None se nada rompeu (Plan 02)
     # --- Fase 20: Selo de Sustentabilidade × veredito de preço (aditivo, read-only) ---
     selo: Optional["selo_mod.Selo"] = None                 # cor do BSD × faixa do DDM → quadrante
-    # --- Fase 1 v2.2: roteamento por arquétipo (aditivo, read-only) ---
+    # --- Fase 1 v2.2 / ENG-01 (Fase 13): roteamento por arquétipo → RIM único (aditivo, read-only) ---
     arquetipo: str = ""                                    # chave do classificador (core/arquetipo)
-    motor: str = ""                                        # motor primário resolvido ("ddm" ou "pendente_fase_2")
-    arquetipo_fronteirico: bool = False                    # conflito real de sinais (ARQ-02)
-    arquetipo_candidatos: List[str] = field(default_factory=list)  # candidatos do funil (fallback honesto)
-    motor_pendente: bool = False                           # D-06: paridade com o predicado de suspensão (motor != "ddm"); veredito de preço pelo selo suspenso onde o motor não é o DDM
-    # --- Fase 2 v2.2: intrínseco pelo motor do arquétipo (aditivo; motor CALCULA e EXIBE, D-06) ---
-    intrinseco_motor: Optional[float] = None               # valor intrínseco pelo motor primário do arquétipo (None se degradou)
+    motor: str = ""                                        # caminho ÚNICO de valor (ENG-01): sempre "rim"
+    arquetipo_candidatos: List[str] = field(default_factory=list)  # candidatos do funil (debug do classificador)
+    # --- Fase 2 v2.2: intrínseco pelo RIM único do arquétipo (motor CALCULA e EXIBE, D-06) ---
+    intrinseco_motor: Optional[float] = None               # valor intrínseco pelo RIM único (None se degradou, never-raise)
     motor_rotulo: str = ""                                  # rótulo humano do motor (motores.MOTOR_ROTULO)
-    # --- Fase 3 v2.2 (Achado 2 / SAN-01): guarda-corpo do DDM ---
+    # --- Fase 3 v2.2 (Achado 2 / SAN-01): guarda-corpo do DDM (secundário, não alimenta o veredito) ---
     ddm_inaplicavel: bool = False                          # True quando a faixa DDM saiu negativa/degenerada (suprimida na borda)
-    san01_reetiquetado: bool = False                       # SAN-01 (03-02): veredito "evitar" reetiquetado como aberração anti-DDM (número mantido visível)
-    # --- Fase 3 v2.2 (VER-01/ENS-01): banda do ensemble motor×contraponto + divergência ---
-    contraponto_valor: Optional[float] = None              # mid do DDM (contraponto universal, D-02); None se o DDM degradou
-    banda_do_motor: bool = False                           # True quando vmin/vmax vêm do motor do arquétipo (ensemble), não do DDM
-    divergencia_ativa: bool = False                        # motor × contraponto divergem > limiar (comparables.LIMIAR_DIVERGENCIA = 2×)
-    divergencia_razao: Optional[float] = None              # razão maior/menor entre as duas lentes (1.0 quando não há divergência)
-    divergencia_hipotese: str = ""                          # frase curada por (arquétipo, sinal) — preenchida só quando divergencia_ativa
-    # --- Fase 3 v2.2 (VER-02): caso-fronteira → assume a dúvida (range dos candidatos + bandeira) ---
-    arquetipo_incerto: bool = False                        # ramo fronteiriço rodou (a.arquetipo_fronteirico): classificação incerta assumida
-    candidatos_intrinsecos: List[tuple] = field(default_factory=list)  # [(arquetipo, intrínseco)] dos candidatos que resolveram (não-None, positivos)
-    veredito_range: Optional[tuple] = None                 # (menor, maior) dos intrínsecos quando >=2 candidatos resolveram; None se 0/1
-
-
-def _guarda_faixa_ddm(a: AnaliseAcao) -> None:
-    """Guarda-corpo de emissão do DDM (Achado 2 / SAN-01) — puro e read-only sobre o veredito.
-
-    Onde o DDM roda mas a faixa intrínseca (vmin/vmax = min/max da matriz de sensibilidade)
-    sai economicamente INVÁLIDA — NEGATIVA (`vmax <= 0`: HAPV3 −2,20/−1,66; PCAR3 −7,67/−5,95)
-    ou DEGENERADA (`vmin == 0 and vmax == 0`: PRIO3 0–0) — essa faixa NÃO é preço-alvo, é
-    ruído que o usuário lê como intrínseco. Payout baixo / alto capex / lucro negativo tornam
-    o DDM por dividendos estruturalmente inaplicável àquele perfil.
-
-    Ação: marca `a.ddm_inaplicavel` e ZERA vmin/vmax → None, de modo que a métrica
-    "Intrínseco (DDM)" e a tabela do relatório caiam no caminho de "não disponível" (o ramo
-    condicional existente já suprime o veredito SUB/SOBRE a partir de faixa None). Acrescenta
-    um alerta honesto do porquê. NÃO toca core/ddm.py nem o firewall selo↛report — só a borda.
-
-    O caso vmin<0 mas vmax>0 (faixa cruza zero com teto positivo) NÃO é degenerado aqui: o
-    teto ainda carrega informação, então a faixa é preservada (só `vmax<=0` ou 0–0 disparam)."""
-    if a.vmax is None:
-        return
-    faixa_negativa = a.vmax <= 0
-    faixa_degenerada = a.vmin == 0 and a.vmax == 0
-    if faixa_negativa or faixa_degenerada:
-        a.ddm_inaplicavel = True
-        a.vmin = None
-        a.vmax = None
-        a.alertas.append(
-            "DDM estruturalmente inaplicável a este perfil (payout baixo / alto capex ou "
-            "lucro negativo): a faixa por dividendos resultou negativa ou zero e NÃO é "
-            "preço-alvo — por isso não é exibida como intrínseco."
-        )
-
-
-def _guarda_san01(
-    a: AnaliseAcao, c: CompanyData, cfg: dict, valor_pares: Optional[float] = None
-) -> None:
-    """Guarda-corpo anti-aberração SAN-01 (Plan 03-02) — puro e read-only sobre o veredito.
-
-    Modelado em `_guarda_faixa_ddm`: marca uma flag + mexe SÓ no veredito + alerta honesto,
-    na borda de emissão, sem tocar `core/`, `ddm.py` nem `selo.py` (firewall).
-
-    Regra literal do brief (D-05): quando o veredito montado resultaria em "evitar"
-    (quadrante Baixa×Caro, i.e. prefixo SOBREAVALIADA) E os sinais canônicos configuram uma
-    ABERRAÇÃO — `intrínseco < fator_pares × valor-dos-pares` (só quando `valor_pares` está
-    disponível) **E** `ROE_valuation > roe_min` **E** `corte de payout > corte_payout_min` —
-    troca o veredito por **"DDM conservador demais para este perfil — ver motor primário do
-    arquétipo"**, MANTENDO o número intrínseco visível (reetiqueta honesta, não supressão).
-
-    Degradação D-04 (custo-zero): no funil single-stock não há regressão de pares ajustada,
-    então `valor_pares=None` — a condição de pares NÃO é avaliada (tratada como neutra) e o
-    gate cai para as 2 restantes. NUNCA puxa rede.
-
-    Never-raise: qualquer insumo obrigatório None (ROE, payout cru/normalizado) → não dispara
-    (não inventa aberração sobre dado ausente). O prefixo do texto reetiquetado NÃO casa nenhum
-    dos prefixos que `selo.faixa_do_veredito` reconhece → `faixa=None` → o selo não estampa
-    "Evitar" (o número segue no texto). `selo.py` intocado."""
-    # Gatilho: só o quadrante Baixa×Caro ("Evitar") — que o selo cruzaria a partir de SOBREAVALIADA.
-    if not a.veredito.startswith("SOBREAVALIADA"):
-        return
-
-    san = (cfg or {}).get("veredito", {}).get("san01", {})
-    fator_pares = san.get("fator_pares", 0.5)
-    roe_min = san.get("roe_min", 0.15)
-    corte_payout_min = san.get("corte_payout_min", 0.40)
-
-    # Sinais canônicos (FIX-04): o MESMO número dos 3 modos. None → não dispara (never-raise).
-    roe = c.roe_valuation()
-    payout_norm = c.payout_valuation()
-    ult = c.ultimo_ano()
-    payout_cru = c.payout(ult) if ult is not None else None
-    if roe is None or payout_norm is None or payout_cru is None or payout_cru <= 0:
-        return
-
-    corte_payout = 1.0 - (payout_norm / payout_cru)
-
-    cond_roe = roe > roe_min
-    cond_corte = corte_payout > corte_payout_min
-    # Condição de pares (D-04): avaliada SÓ quando um valor-de-pares foi fornecido E há
-    # intrínseco do motor para comparar; ausente → neutra (não bloqueia o gate).
-    if valor_pares is not None and a.intrinseco_motor is not None:
-        cond_pares = a.intrinseco_motor < fator_pares * valor_pares
-    else:
-        cond_pares = True
-
-    if not (cond_roe and cond_corte and cond_pares):
-        return
-
-    # Número mantido visível: o intrínseco do motor primário quando existe; senão o mid da banda.
-    ref = a.intrinseco_motor
-    if ref is None and a.vmin is not None and a.vmax is not None:
-        ref = (a.vmin + a.vmax) / 2.0
-
-    a.san01_reetiquetado = True
-    sufixo = f" (intrínseco ≈ R$ {_br(ref)})" if ref is not None else ""
-    a.veredito = (
-        "DDM conservador demais para este perfil — ver motor primário do arquétipo" + sufixo
-    )
-    motivos = [f"ROE {_br(roe * 100, 1)}% > {_br(roe_min * 100, 0)}%",
-               f"corte de payout {_br(corte_payout * 100, 0)}% > {_br(corte_payout_min * 100, 0)}%"]
-    if valor_pares is not None and a.intrinseco_motor is not None:
-        motivos.append(f"intrínseco < {_br(fator_pares, 1)}× valor-dos-pares")
-    a.alertas.append(
-        "Guarda-corpo anti-aberração (SAN-01): veredito reetiquetado — "
-        + "; ".join(motivos)
-        + ". O DDM de estágio único é conservador demais para este perfil; "
-        "a referência primária é o motor do arquétipo (número acima mantido visível)."
-    )
 
 
 def _roe_through_cycle(c: CompanyData, rim_cfg: dict) -> Optional[float]:
@@ -416,13 +296,12 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     # bloco de veredito. pagadora_regulada → "ddm" (TAEE11 idêntica, ENG-06).
     arq = arquetipo.classificar(c, cfg)
     a.arquetipo = arq.chave
-    a.arquetipo_fronteirico = arq.fronteirico
     a.arquetipo_candidatos = arq.candidatos
     # ENG-01 (Fase 13): caminho ÚNICO de valor — TODO arquétipo roda o RIM (a política do arquétipo
     # só varia o insumo). NÃO consome ARQUETIPO_MOTOR (legado; morre no Plano 06); a.motor é sempre
-    # "rim" (a rota própria de seguradora e os rótulos ddm/normalizado/dcf/nav morreram).
+    # "rim" (a rota própria de seguradora e os rótulos ddm/normalizado/dcf/nav morreram, junto com o
+    # ensemble motor×contraponto e as guardas-cicatriz).
     a.motor = "rim"
-    a.motor_pendente = False
 
     # --- Dispatch do motor do arquétipo (Fase 2 v2.2, ENG-02..05) ---
     # O motor primário resolvido CALCULA e GRAVA o intrínseco do arquétipo (D-06: motor
@@ -437,14 +316,13 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     a.intrinseco_motor = _valor_rim(c, a, cfg)
     a.motor_rotulo = motores.MOTOR_ROTULO["rim"]
 
-    # Guarda-corpo do intrínseco do motor (paridade com _guarda_faixa_ddm / SAN-01): um valor
-    # NÃO-POSITIVO (PL/lucro normalizado negativo: holding sem patrimônio, cíclica em fundo de
-    # ciclo) NÃO é preço-alvo — é ruído que o usuário leria como intrínseco negativo. Suprime na
-    # borda (None + alerta honesto) para o veredito cair no ramo "motor sem preço-alvo" e o render
-    # não estampar um intrínseco ≈ R$ negativo. A anti-aberração por mediana de pares é Fase 3.
+    # Guarda-corpo do intrínseco do RIM: um valor NÃO-POSITIVO (book/lucro normalizado negativo:
+    # holding sem patrimônio, cíclica em fundo de ciclo) NÃO é preço-alvo — é ruído que o usuário
+    # leria como intrínseco negativo. Suprime na borda (None + alerta honesto) para o veredito cair
+    # no ramo "sem preço-alvo" e o render não estampar um intrínseco ≈ R$ negativo.
     if a.intrinseco_motor is not None and a.intrinseco_motor <= 0:
         a.alertas.append(
-            f"Motor '{a.motor}' devolveu valor não-positivo (PL/lucro normalizado negativo): "
+            "O RIM único devolveu valor não-positivo (book/lucro normalizado negativo): "
             "não é preço-alvo — não exibido como intrínseco."
         )
         a.intrinseco_motor = None
@@ -483,79 +361,27 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
         dpa_ult is not None and dpa_ult > 0 and lpa_ult is not None and lpa_ult <= 0
     )
 
-    # --- Veredito ---
-    # FIX-06 (item H): a banda intrínseca vmin/vmax = min/max da matriz de SENSIBILIDADE
-    # real (Ke×g, já calculada acima), não o toggle binário de 2 cenários (ddm_constante ×
-    # ddm_h). A matriz cobre o grid `delta_ke × delta_g` do config — é a sensibilidade
-    # econômica de fato (um Ke um pouco menor / g um pouco maior abre o teto da banda).
-    celulas_sens = [v for linha in (a.sensibilidade or []) for v in linha if v is not None]
-    if celulas_sens:
-        a.vmin, a.vmax = min(celulas_sens), max(celulas_sens)
-    else:
-        # Fallback (T-08-07): matriz só-None / DDM não rodou → degrada para os 2 cenários
-        # centrais (ou nada), como antes, sem deixar célula inválida virar banda espúria.
-        valores = [r.valor_intrinseco for r in (a.ddm_h, a.ddm_constante) if r]
-        if valores:
-            a.vmin, a.vmax = min(valores), max(valores)
-    # Guarda-corpo de emissão (Achado 2 / SAN-01): antes de qualquer veredito, uma faixa DDM
-    # NEGATIVA (vmax<=0) ou DEGENERADA (0–0) é ruído — não preço-alvo. Suprime aqui, read-only
-    # sobre o veredito e sem tocar core/ddm.py (borda de emissão apenas).
-    _guarda_faixa_ddm(a)
+    # --- Banda do veredito = região da margem de segurança sobre o RIM único (ENG-01/ENG-02) ---
+    # Plano 03: o ensemble motor×contraponto e a matriz DDM como FONTE da banda foram removidos. A
+    # banda do veredito é a região SIMÉTRICA V×(1∓ms) sobre o intrínseco do RIM único (o Plano 04
+    # formaliza como região da MS primária). O DDM segue rodando como display secundário (tabela/
+    # sensibilidade), mas NÃO alimenta mais vmin/vmax. RIM degradou (None) → banda None (o ramo de
+    # degradação do veredito suprime a faixa sem estampar preço-alvo falso).
+    if a.intrinseco_motor is not None:
+        margem = (cfg or {}).get("veredito", {}).get("margem_seguranca", 0.15)
+        a.vmin = a.intrinseco_motor * (1.0 - margem)
+        a.vmax = a.intrinseco_motor * (1.0 + margem)
 
-    # --- Ensemble motor × contraponto DDM (Fase 3 v2.2, ENS-01/VER-01, D-01/D-02) ---
-    # O DDM que já rodou (banda vmin/vmax = matriz de sensibilidade) é o CONTRAPONTO universal
-    # (D-02): captura-se o seu mid ANTES de a banda ser sobrescrita. Então, SOMENTE quando o
-    # motor do arquétipo NÃO é o DDM e calculou um intrínseco, a banda do veredito passa a vir
-    # do ENSEMBLE — min/max entre o motor primário e o contraponto (D-01). Fallback D-01: se o
-    # contraponto degradou (DDM suprimido/None), a banda = intrínseco ± margem de segurança
-    # config-driven (leitura defensiva do knob, paridade WR-03 com o dispatch do motor). O
-    # helper puro `divergencia_entre_lentes` (comparables, never-raise, limiar 2×) sinaliza a
-    # divergência sem inventar número reconciliado. motor == "ddm" (TAEE11): NADA é acionado.
-    if a.vmin is not None and a.vmax is not None:
-        a.contraponto_valor = (a.vmin + a.vmax) / 2.0
-    contraponto = a.contraponto_valor
-    if a.motor != "ddm" and a.intrinseco_motor is not None:
-        if contraponto is not None:
-            a.vmin = min(a.intrinseco_motor, contraponto)
-            a.vmax = max(a.intrinseco_motor, contraponto)
-        else:
-            margem = (cfg or {}).get("veredito", {}).get("margem_seguranca", 0.15)
-            a.vmin = a.intrinseco_motor * (1.0 - margem)
-            a.vmax = a.intrinseco_motor * (1.0 + margem)
-        a.banda_do_motor = True
-        a.divergencia_ativa, a.divergencia_razao = comparables.divergencia_entre_lentes(
-            a.intrinseco_motor, contraponto
-        )
-        if a.divergencia_ativa:
-            a.divergencia_hipotese = _hipotese_divergencia(
-                a.arquetipo, a.intrinseco_motor, contraponto, a.divergencia_razao
-            )
-    elif a.motor != "ddm" and a.vmin is not None and a.vmax is not None:
-        # CR-01: o motor do arquétipo degradou (intrínseco None) MAS o DDM sobreviveu.
-        # A banda vmin/vmax exibida é 100% do DDM (contraponto), não do motor — então
-        # `banda_do_motor` PERMANECE False (o rótulo cai para "Intrínseco (DDM)" e o
-        # markdown não chama o DDM de "lente", pois é a ÚNICA e primária avaliação). Sem
-        # esta ramificação o veredito/rótulo seriam DDM-derivados exibidos sob o nome do
-        # motor, sem qualquer aviso — violação direta do Core Value. Alerta honesto:
-        a.alertas.append(
-            f"Motor '{a.motor}' ({a.motor_rotulo or a.motor}) degradou; a faixa exibida "
-            "vem do DDM (contraponto), não do motor do arquétipo."
-        )
-
-    # --- Veredito de preço (VER-01): árvore SUB/NO INTERVALO/SOBRE ÚNICA p/ ddm e não-ddm ---
-    # A suspensão D-06 (`if a.motor != "ddm": → VERIFICAR`) foi SUBSTITUÍDA: a banda do motor
-    # (ensemble, acima) já alimenta vmin/vmax, então a MESMA comparação preço×banda que o DDM
-    # usava passa a servir também os arquétipos não-DDM — o selo consome o motor CERTO, não o
-    # DDM fixo (VER-01). As flags de risco (VULC3) continuam vetando "SUBAVALIADA" e emitindo
-    # "possível divergência de modelo" TAMBÉM no caminho do motor. Ramo terminal de degradação:
-    # motor != "ddm" SEM banda (intrínseco None E DDM suprimido) → prefixo VERIFICAR (selo
-    # suprime faixa, selo.py:119), nunca faixa falsa. motor == "ddm": comportamento inalterado.
+    # --- Veredito de preço (ENG-01): árvore SUB/NO INTERVALO/SOBRE sobre a banda do RIM único ---
+    # A banda vmin/vmax é a região da MS sobre o intrínseco do RIM único. As flags de risco (VULC3)
+    # continuam vetando "SUBAVALIADA" e emitindo "possível divergência de modelo". Sem banda (RIM
+    # degradou → intrínseco None, ou sem preço) → prefixo VERIFICAR (selo suprime faixa, selo.py:119),
+    # nunca faixa falsa.
     if a.vmin is not None and a.vmax is not None and a.preco_atual:
         if a.preco_atual < a.vmin:
             # DDM-FIX-05 (caso VULC3): não rotular "SUBAVALIADA" quando flags de risco
             # contradizem a tese de desconto. Preço abaixo do intrínseco + payout>100% ou
-            # DY>15% costuma ser divergência de modelo / armadilha, não barganha. Preservado
-            # também no caminho do motor (test_vulc3_regressao).
+            # DY>15% costuma ser divergência de modelo / armadilha, não barganha.
             if flag_payout or flag_dy or flag_div_prejuizo:
                 motivos = []
                 if flag_payout:
@@ -575,18 +401,10 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             a.veredito = f"SOBREAVALIADA — preço R$ {_br(a.preco_atual)} acima do intervalo intrínseco R$ {_br(a.vmin)}–{_br(a.vmax)}"
         else:
             a.veredito = f"NO INTERVALO — preço R$ {_br(a.preco_atual)} dentro de R$ {_br(a.vmin)}–{_br(a.vmax)}"
-        # Alerta honesto: onde o MOTOR do arquétipo alimenta o veredito, o DDM é a lente
-        # conservadora (contraponto), não o motor deste perfil (VER-01). motor == "ddm" não
-        # emite este alerta (banda_do_motor False) — TAEE11 idêntica.
-        if a.banda_do_motor:
-            a.alertas.append(
-                f"Motor primário do arquétipo = {a.motor_rotulo or a.motor}; o DDM é exibido "
-                f"como lente conservadora (contraponto), não como o motor deste perfil (VER-01)."
-            )
-    elif a.motor != "ddm":
-        # Degradação honesta: motor não-DDM sem banda de preço (intrínseco None E DDM suprimido,
-        # ou sem preço atual). Reusa o prefixo VERIFICAR — selo.montar_selo (selo.py:119) suprime
-        # faixa/rótulo → nunca estampa faixa falsa, sem tocar selo.py.
+    else:
+        # Degradação honesta: sem banda de preço (RIM degradou → intrínseco None, ou sem preço
+        # atual). Reusa o prefixo VERIFICAR — selo.montar_selo (selo.py:119) suprime faixa/rótulo
+        # → nunca estampa faixa falsa, sem tocar selo.py.
         if a.intrinseco_motor is not None:
             a.veredito = (
                 f"VERIFICAR — arquétipo {a.arquetipo}: referência primária pelo intrínseco ≈ "
@@ -594,21 +412,12 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
             )
         else:
             a.veredito = (
-                f"VERIFICAR — motor '{a.motor}' ({a.motor_rotulo or a.motor}) não pôde estimar "
-                f"preço-alvo para o arquétipo {a.arquetipo}."
+                f"VERIFICAR — o RIM único não pôde estimar preço-alvo para o arquétipo {a.arquetipo}."
             )
         a.alertas.append(
-            f"Roteamento: {a.arquetipo} → motor '{a.motor}'. Banda de preço indisponível "
-            f"(motor e DDM degradaram); veredito de preço suspenso sem estampar faixa falsa."
+            f"Roteamento: {a.arquetipo} → RIM único. Banda de preço indisponível "
+            f"(intrínseco degradou); veredito de preço suspenso sem estampar faixa falsa."
         )
-
-    # --- Guarda-corpo anti-aberração SAN-01 (Plan 03-02) ---
-    # Roda DEPOIS de a cadeia de veredito estar montada e ANTES de `montar_selo` (abaixo), de
-    # modo que o selo consuma o veredito JÁ reetiquetado. No funil single-stock não há regressão
-    # de pares ajustada → `valor_pares=None` (degradação D-04): o gate cai para as 2 condições
-    # (ROE E corte de payout) e NUNCA puxa rede (custo-zero). Se disparar, o prefixo do veredito
-    # reetiquetado não casa `selo.faixa_do_veredito` → o selo não estampa "Evitar".
-    _guarda_san01(a, c, cfg, valor_pares=None)
 
     # --- Alertas / armadilhas de dividendos (Cap. 6) ---
     if flag_dy:
@@ -756,45 +565,6 @@ _MATRIZ_LEITURA: Dict[tuple, str] = {
 }
 
 
-# --------------------------------------------------------------------------- #
-# Hipótese de divergência motor × contraponto DDM (Fase 3 v2.2, ENS-01/D-03)
-# --------------------------------------------------------------------------- #
-# Copy CURADA por (arquétipo, sinal da divergência) — mesmo padrão do _MATRIZ_LEITURA acima e
-# do _MATRIZ do selo.py: dicionário-curado por tupla-chave, estável e testável por golden. O
-# "porquê" da bandeira (brief ENS-01) é exibido, nunca escondido cravando o pior número. Sinal:
-# "motor_acima" quando o intrínseco do motor > contraponto DDM; "motor_abaixo" caso contrário.
-_HIPOTESE_DIVERGENCIA: Dict[tuple, str] = {
-    ("financeira", "motor_acima"):
-        "compounder subvalorizado pelo DDM (o Ke alto comprime o DDM de estágio único; o RIM "
-        "captura o excesso de ROE sobre o Ke que o DDM não enxerga).",
-    ("ciclica", "motor_abaixo"):
-        "possível topo de ciclo (o lucro do ano corrente está acima do lucro mid-cycle "
-        "normalizado, inflando o DDM acima do valor do motor).",
-    ("crescimento", "motor_acima"):
-        "crescimento subestimado pelo DDM de estágio único (o DCF multi-estágio precifica o "
-        "reinvestimento de alto ROE que o DDM não captura).",
-}
-
-
-def _hipotese_divergencia(
-    arquetipo: str,
-    intrinseco_motor: Optional[float],
-    contraponto: Optional[float],
-    razao: Optional[float],
-) -> str:
-    """Frase curada por (arquétipo, sinal da divergência); fallback genérico quando a tupla não
-    resolve (D-03). Puro/read-only — não toca a rede nem recalcula método."""
-    if intrinseco_motor is None or contraponto is None:
-        sinal = ""
-    else:
-        sinal = "motor_acima" if intrinseco_motor > contraponto else "motor_abaixo"
-    frase = _HIPOTESE_DIVERGENCIA.get((arquetipo, sinal))
-    if frase:
-        return frase
-    r = razao if razao is not None else 0.0
-    return f"modelos divergem ~{r:.1f}× — ver as duas referências (motor × DDM)."
-
-
 def _veredito_token(veredito: str) -> str:
     """Token líder do veredito DDM (read-only). '' se o DDM não calculou."""
     for t in ("SUBAVALIADA", "SOBREAVALIADA", "NO INTERVALO"):
@@ -898,30 +668,23 @@ def relatorio_markdown(c: CompanyData, a: AnaliseAcao, cfg: dict) -> str:
     L.append(f"- Beta: **{_num(a.beta)}**  |  Ke (CAPM): **{_pct(a.ke)}**")
     L.append("")
 
-    # Intrínseco pelo MOTOR do arquétipo (Fase 2 v2.2, D-06): onde o motor não é o DDM, o
-    # intrínseco do motor certo é a referência PRIMÁRIA e o DDM abaixo vira lente conservadora.
-    # Só EXIBIÇÃO (render mínimo, Open Question 2): não toca cálculo nem bandeira de divergência.
-    # CR-01: o DDM só é "lente conservadora" quando a banda vem de fato do motor do
-    # arquétipo (ensemble). Se o motor degradou e a banda é 100% DDM (banda_do_motor
-    # False), o DDM é a avaliação PRIMÁRIA exibida — não pode ser rotulado de "lente".
-    ddm_e_lente = a.motor != "ddm" and a.banda_do_motor
-    if ddm_e_lente and a.intrinseco_motor is not None:
+    # Intrínseco pelo RIM único (ENG-01): a referência PRIMÁRIA de valor. O DDM abaixo é display
+    # SECUNDÁRIO (não é o motor deste arquétipo). Só EXIBIÇÃO (render mínimo, o Plano 04 formaliza).
+    motor_exibe = a.intrinseco_motor is not None
+    if motor_exibe:
         L.append(f"## Valuation pelo motor do arquétipo ({a.arquetipo})")
         L.append(f"- **{a.motor_rotulo or a.motor}: R$ {_num(a.intrinseco_motor)}** (motor do arquétipo)")
-        # WR-03: alinhar a representação do intrínseco com o app (que exibe a FAIXA do
-        # veredito, não um ponto). A faixa do ensemble combina o motor e o DDM contraponto —
-        # exibir a mesma faixa aqui elimina a inconsistência de superfície (CLI ponto × app faixa).
-        if a.banda_do_motor and a.vmin is not None and a.vmax is not None:
+        # A faixa do veredito é a região da margem de segurança sobre o intrínseco do RIM.
+        if a.vmin is not None and a.vmax is not None:
             L.append(
-                f"- Faixa do veredito (motor × DDM contraponto): "
-                f"R$ {_num(a.vmin)}–{_num(a.vmax)}"
+                f"- Faixa do veredito (margem de segurança): R$ {_num(a.vmin)}–{_num(a.vmax)}"
             )
         L.append("")
 
-    # DDM
+    # DDM (referência secundária — não é o motor deste arquétipo)
     L.append("## Valuation por Desconto de Dividendos (Cap. 13-17)")
-    if ddm_e_lente:
-        L.append("_(lente conservadora — não é o motor deste arquétipo)_")
+    if motor_exibe:
+        L.append("_(referência secundária — o motor deste arquétipo é o RIM acima)_")
         L.append("")
     if a.ddm_inaplicavel:
         # Achado 2 / SAN-01: o DDM rodou mas devolveu faixa negativa/zero — inaplicável a este
@@ -963,49 +726,6 @@ def relatorio_markdown(c: CompanyData, a: AnaliseAcao, cfg: dict) -> str:
     # Veredito
     L.append("## Veredito")
     L.append(f"**{a.veredito or 'Indeterminado'}**")
-    # Guarda-corpo anti-aberração SAN-01 (Plan 03-02): nota honesta quando o veredito "evitar"
-    # foi reetiquetado — o número acima é do motor primário do arquétipo; o DDM de estágio único
-    # é conservador demais para este perfil (reetiqueta, não supressão).
-    if a.san01_reetiquetado:
-        L.append("")
-        L.append(
-            "_Guarda-corpo anti-aberração (SAN-01): veredito reetiquetado — a referência "
-            "primária é o motor do arquétipo (número acima); o DDM de estágio único é "
-            "conservador demais para este perfil._"
-        )
-    # Classificação incerta (VER-02, caso-fronteira): quando a Fase 1 marcou conflito real de
-    # sinais, o veredito assume a dúvida — LISTA cada candidato e seu intrínseco + a bandeira
-    # "classificação incerta entre X e Y" + o range [menor..maior]. Conteúdo EXIBIDO, não selo
-    # cravado (o prefixo VERIFICAR já suprime a faixa). Sem fronteiriço, nenhum bloco é emitido.
-    if a.arquetipo_incerto:
-        L.append("")
-        L.append("### Classificação incerta (caso-fronteira)")
-        if a.candidatos_intrinsecos:
-            for cand, val in a.candidatos_intrinsecos:
-                L.append(f"- {cand}: R$ {_num(val)} (motor do arquétipo {cand})")
-            primeiro = a.candidatos_intrinsecos[0][0]
-            ultimo = a.candidatos_intrinsecos[-1][0]
-            L.append("")
-            L.append(f"Classificação incerta entre {primeiro} e {ultimo} — a ferramenta assume a dúvida em vez de cravar um selo.")
-            if a.veredito_range is not None:
-                menor, maior = a.veredito_range
-                L.append(f"Range do intrínseco conforme o arquétipo assumido: R$ {_num(menor)}–{_num(maior)}.")
-        else:
-            L.append("Os motores dos arquétipos candidatos não estimaram preço-alvo confiável.")
-
-    # Bandeira de divergência (ENS-01): quando o motor e o contraponto DDM discordam além do
-    # limiar (2×), EXIBIR os dois números + o "porquê" — divergência é informação mostrada,
-    # nunca escondida cravando o pior. Sem divergência ativa, nenhum bloco é emitido (render limpo).
-    if a.divergencia_ativa:
-        L.append("")
-        L.append("### Bandeira de divergência")
-        L.append(
-            f"As lentes divergem ~{_num(a.divergencia_razao, 1)}×: "
-            f"**{a.motor_rotulo or a.motor} R$ {_num(a.intrinseco_motor)}** "
-            f"× DDM (lente conservadora) R$ {_num(a.contraponto_valor)}."
-        )
-        if a.divergencia_hipotese:
-            L.append(f"Hipótese: {a.divergencia_hipotese}")
     if a.alertas:
         L.append("")
         L.append("### Alertas")
