@@ -107,19 +107,21 @@ graus_de_liberdade:
 user_control:
 
   veredito.margem_seguranca:
-    valor: 0.15
+    valor: 0.05
     # ELA MULTIPLICA O `V`. De fato, seria um 4o grau de liberdade — e o mais perigoso de
     # todos, porque nao mora em nenhum bloco de valuation e por isso escaparia do escopo.
     #
     # NAO E' UM GRAU DE LIBERDADE, E' UM CONTROLE DO USUARIO. O livro e' explicito:
-    # "se 5%, 10% ou qualquer outro valor, e' VOCE quem decide". ENG-06 (Fase 13) a
-    # transforma em controle explicito na UI. Ate la', fica CONGELADA aqui.
+    # "se 5%, 10% ou qualquer outro valor, e' VOCE quem decide". ENG-06 (Fase 13) FECHOU
+    # este item: o default passou de 0.15 para 5% simetrico — a MS do livro (Cap. 17), que
+    # usa +-5% no caso-exemplo. O co-change config+lock e' o caminho SANCIONADO (mesmo commit).
     #
     # NUNCA calibrar contra dispersao, contra preco de mercado ou contra taxa de compra.
     # Uma margem de seguranca calibrada para produzir mais recomendacoes de compra nao e'
     # uma margem de seguranca — e' uma alavanca de marketing. E' assim que a Armadilha 4
-    # morre POR CONSTRUCAO: ela esta escrita aqui, com nome e valor, e o teste a le.
-    ate: "ENG-06 (Fase 13) — vira controle do usuario"
+    # morre POR CONSTRUCAO: ela esta escrita aqui, com nome e valor, e o teste a le. O 5% e'
+    # fidelidade ao livro (escolha do usuario), NAO ajuste do modelo contra dispersao/preco.
+    ate: "ENG-06 (Fase 13) — CUMPRIDO: default 5% simetrico (MS do livro, controle do usuario)"
 
 # --------------------------------------------------------------------------- #
 # CONGELADOS — as outras 21 folhas do escopo (24 - 3 graus de liberdade).
