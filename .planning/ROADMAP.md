@@ -83,7 +83,7 @@ quarentenados/deletados; **isso é a correção, não regressão.**
 - [x] **Phase 11: Crescimento / `g` (GROW)** - `g_cap = (1+π_ciclo)(1+PIB_real)−1 = 7,28%`; metade da Doença 1 (o `g`) — o teste de invariância (BLIND-02) só vira verde na Fase 12, quando o `ke_teto` sai (completed 2026-07-17)
 - [x] **Phase 12: Custo de capital / `Ke` (KE)** - ERP único 4,5%, beta setorial + Blume, `ke_teto`/`ke_piso` deletados; **separada da Fase 11 de propósito** (completed 2026-07-17)
 - [x] **Phase 13: Motores + contrato de saída (ENG)** - os 4 motores colapsam num RIM único com políticas de input; contrato do livro (tríade + MS do usuário + matriz Ke×g); `motores:` ~20 → ≤5 chaves (completed 2026-07-20)
-- [ ] **Phase 14: Validação honesta (VAL)** - **o caso do livro passa (V ≈ R$ 37,22)**; hold-out roda uma vez, 3 graus de liberdade, distribuição + jackknife
+- [x] **Phase 14: Validação honesta (VAL)** - **o caso do livro passa (V ≈ R$ 37,22)**; hold-out roda uma vez, 3 graus de liberdade, distribuição + jackknife (completed 2026-07-20)
 
 ## Phase Details
 
@@ -316,10 +316,10 @@ Plans:
 - [x] 14-02-PLAN.md — VAL-05: LIMIAR_JACKKNIFE_PP(n) derivado de null neutro (Monte-Carlo seed-fixo) + teste que o valida; substitui a constante [ASSUMIDO]
 
 **Wave 3** *(blocked on Wave 2)*
-- [ ] 14-03-PLAN.md — VAL-02/03/05: montador determinístico da cesta (eh_concessionaria replicado) + Commit 1 (holdout_v24.yaml só fair_value Graham+Bazin) + teste de composição
+- [x] 14-03-PLAN.md — VAL-02/03/05: montador determinístico da cesta (eh_concessionaria replicado) + Commit 1 (holdout_v24.yaml só fair_value Graham+Bazin) + teste de composição
 
 **Wave 4** *(blocked on Wave 3)*
-- [ ] 14-04-PLAN.md — VAL-03/04/05: Commit 2 (v_modelo rodado) + jackknife acorda + prova de ordem por git blame + PASS por execução (D-11)
+- [x] 14-04-PLAN.md — VAL-03/04/05: Commit 2 (v_modelo rodado) + jackknife acorda + prova de ordem por git blame + PASS por execução (D-11)
 
 ## Progress
 
@@ -337,7 +337,7 @@ Fases 11 (`g`) e 12 (`Ke`) **não podem ser fundidas** (regra dura A).
 | 11. Crescimento / g (GROW) | v2.4 | 3/3 | Complete   | 2026-07-17 |
 | 12. Custo de capital / Ke (KE) | v2.4 | 4/4 | Complete    | 2026-07-17 |
 | 13. Motores + contrato de saída (ENG) | v2.4 | 7/7 | Complete    | 2026-07-20 |
-| 14. Validação honesta (VAL) | v2.4 | 2/4 | In Progress|  |
+| 14. Validação honesta (VAL) | v2.4 | 4/4 | Complete   | 2026-07-20 |
 
 ## Requirement Coverage (v2.4)
 

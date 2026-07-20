@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Fidelidade do Valuation
-status: executing
-stopped_at: Completed 14-03-PLAN.md
-last_updated: "2026-07-20T14:56:00.086Z"
+status: verifying
+stopped_at: Completed 14-04-PLAN.md (marco v2.4 fechado)
+last_updated: "2026-07-20T16:40:07.049Z"
 last_activity: 2026-07-20
 progress:
   total_phases: 8
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 38
-  completed_plans: 36
-  percent: 95
+  completed_plans: 38
+  percent: 100
 ---
 
 # Project State
@@ -34,22 +34,21 @@ MS ±5%). **Hoje o app entrega R$ 16,13.**
 Milestone: v2.4 — Fidelidade do Valuation (Phases 7–14)
 Phase: 14 (valida-o-honesta-val) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-20
 
-Progress: [██████████] 95%
+Progress: [██████████] 100%
 
-**Suíte:** `468 passed, 1 skipped, 18 deselected, 0 failed, 0 xfailed, 0 XPASS` (pós-13-06: −17 vs 485 = 16
-testes de `test_ranking_freio` [freio/ARQUETIPO_MOTOR/divergencia_entre_lentes deletados] + 1 straggler
-`test_cli_rank_consistencia` [rank não roda mais analisar_acao]; nenhum knob tocado. Pós-13-05: o
-knob-cut motores 7→5 e a MS 0.15→0.05 são co-change config+lock coeso, não movem a suíte — a partição do
-orçamento segue 3 graus; pós-13-04: +7 invariante da ponte P/B + 3 contrato de saída; pós-13-03 o RIM único
-matou o ensemble e 42 testes do método antigo foram delete/rewrite na onda 3, com a classificacao no mesmo
-diff). `-m golden_nivel` **18 passed, 0 CLASSIFICACAO ORFA**.
+**Suíte:** `473 passed, 0 skipped, 18 deselected, 0 failed, 0 xfailed, 0 XPASS` (pós-14-04: +2 vs 471 =
+o jackknife `test_nenhum_ticker_e_load_bearing` ACORDOU como pass, +1 `test_holdout_ordem_git`; **0
+skipped agora** — não sobra mais nenhum. Nenhum knob tocado; fronteira config/lock VAZIA). `-m
+golden_nivel` **18 passed, 0 CLASSIFICACAO ORFA**.
 **AS DUAS DOENÇAS DO v2.4 ESTÃO CURADAS** (BLIND-03 na Fase 10, BLIND-02b no 12-02): `xfail_estritos()`
 == **0**; a guarda de seleção foi reconciliada à cura (0 pendentes é válido; as ex-doenças rodam como
-invariantes selecionadas). Sobra só **1 skipped** = jackknife (Fase 14). **PRIM-05 cumprido: o golden
-ITUB4=32,88 NÃO existe mais no repo** (DELETADO — critério de saída da Fase 10).
+invariantes selecionadas). **O jackknife (Fase 14) ACORDOU e passou** — não há mais skips. **PRIM-05
+cumprido: o golden ITUB4=32,88 NÃO existe mais no repo** (DELETADO — critério de saída da Fase 10).
+**MARCO v2.4 FECHADO por execução** (14-04): hold-out honesto PASSOU (VAL-01 + jackknife robusto +
+zero exceção), mediana V/FairValue 0,65 reportada como detector, 3 graus intactos.
 
 **12-03 (commit de knob SANCIONADO):** `config.yaml` + `calibracao.lock.yaml` mudaram JUNTOS —
 `capm.erp_local` 0,06 → **0,045** (ERP unificado) e as folhas do clamp (`erp_banco`/`ke_piso`/`ke_teto`)
@@ -155,10 +154,38 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 | Phase 14 P01 | 18min | 3 tasks | 7 files |
 | Phase 14 P02 | 20min | 2 tasks | 3 files |
 | Phase 14 P03 | 25min | 2 tasks | 5 files |
+| Phase 14 P04 | 30min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
 ### Decisions (v2.4)
+
+- **VAL-03/04/05 (Fase 14 / plano 14-04) — O MARCO v2.4 FECHADO POR EXECUÇÃO; o Commit 2 do hold-out
+  (D-09) e o phase gate honesto.** O modelo rodou **UMA vez** sobre a cesta cravada no Commit 1:
+  `v_modelo` = `report.analisar_acao(c, cfg).intrinseco_motor` (V do RIM, **FONTE ÚNICA**, fórmula
+  não reimplementada), inserido **cirurgicamente** por `scripts/montar_cesta_holdout.py --fill-v-modelo`
+  (antes um stub que recusava) — **34 linhas novas, `fair_value` byte-a-byte intocado** (`git diff` =
+  **34 add / 0 del**). **A ORDEM É PROVADA POR git blame:** `test_holdout_ordem_git.py` roda
+  `git blame --line-porcelain`, extrai `author-time` por linha e assere `max(fair_value*)=1784559251 <
+  min(v_modelo)=1784565219` — os fair values foram cravados ANTES do modelo, não olhando o resultado.
+  **NÃO** usa grep de mensagem (falso positivo com commits `13-0x`); **skip** em shallow clone com
+  instrução `fetch-depth: 0`. **O jackknife ACORDOU** (`test_nenhum_ticker_e_load_bearing`, não mais
+  `skipped`) e passou: desvio normalizado **0,0579 MADs ≤ LIMIAR 0,164** (n=34) — **nenhum ticker
+  load-bearing** (D-11). **Mediana V/FairValue pooled = 0,65** (por estrato: ciclica 0,44, concessao
+  0,61 [isolado], crescimento 0,86, financeira 0,72, pagadora 0,68): o RIM é ~35% mais conservador que
+  Graham+Bazin — **DETECTOR de viés reportado como ALERTA, JAMAIS alvo; NENHUM knob tocado** para
+  aproximá-la de 1. **Degradação (never-raise, D-03):** sem `v_modelo` (sem dado de mercado→sem Ke):
+  TIMS3/CSAN3/BRKM5; sem `fair_value`: AZUL4 — todos fora do jackknife automaticamente. **PASS do D-11
+  provado por EXECUÇÃO** (não por suíte verde): (1) VAL-01 soberano (ITUB4∈[35,39]) + (2) jackknife
+  robusto + (3) zero `excecao_nota` viva (`src/`=0, fixture=0; as menções restantes são só o GUARD que
+  PROÍBE o token). **Desvio (Rule 3 - transição de fase):** a clausula de ausência de `v_modelo` da
+  composição (Plano 03) foi removida — a ordem agora é provada por HISTÓRIA (git blame), não por
+  ausência de conteúdo; a clausula `excecao_nota` (VAL-06) ficou **intacta**, nada afrouxado. **Desvio
+  (Rule 1 - higiene):** o token `--grep` vazou para o docstring → parafraseado antes do commit.
+  **Fronteira VAZIA** (`git diff config.yaml calibracao.lock.yaml`) — orçamento em 3 graus intacto.
+  Suíte default **473 passed, 0 skipped, 18 deselected, 0 failed** (o jackknife acordou como pass +1, o
+  teste de ordem +1; 0 skipped agora); `-m golden_nivel` **18 passed, 0 ORFA**. Commits: `37c0b3b`
+  (Commit 2 — v_modelo), `ba05828` (prova de ordem por git blame).
 
 - **VAL-02 (Fase 14 / plano 14-03) — o COMMIT 1 do hold-out (D-09): a cesta estratificada nasce SÓ
   com `fair_value`, ANTES do modelo.** `scripts/montar_cesta_holdout.py` (montador determinístico,
@@ -914,8 +941,8 @@ Fila de triagem e varredor AST: `07-VERIFICATION.md` (apêndice).
 
 ## Session Continuity
 
-Last session: 2026-07-20T14:55:36.972Z
-Stopped at: Completed 14-02-PLAN.md
+Last session: 2026-07-20T16:40:07.044Z
+Stopped at: Completed 14-04-PLAN.md (marco v2.4 fechado)
 Resume file: None
 
 ## Operator Next Steps

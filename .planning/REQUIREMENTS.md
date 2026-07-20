@@ -235,10 +235,10 @@ prova que a ordem importa: consertar o `Ke` antes do `g` **piora** (ITUB4 0,75 �
 - [x] **VAL-02**: Cesta estratificada (≥ 6 por arquétipo + **10 "difíceis" deliberados**: P/B < 1,
   prejuízo recente, payout > 100%, book pequeno). Sem os difíceis, valida-se só o meio da
   distribuição — que é onde o modelo já funcionava.
-- [ ] **VAL-03**: Fair values **commitados ANTES** de rodar o modelo. O `git log` prova a ordem.
+- [x] **VAL-03**: Fair values **commitados ANTES** de rodar o modelo. O `git log` prova a ordem.
   Hoje não prova.
-- [ ] **VAL-04**: Hold-out roda **uma única vez**. Se falhar, **re-arquiteta-se — não recalibra**.
-- [ ] **VAL-05**: A métrica é `V/FairValue`, **nunca** `V/preço`. Um modelo com mediana `V/preço` = 1,00
+- [x] **VAL-04**: Hold-out roda **uma única vez**. Se falhar, **re-arquiteta-se — não recalibra**.
+- [x] **VAL-05**: A métrica é `V/FairValue`, **nunca** `V/preço`. Um modelo com mediana `V/preço` = 1,00
   é um espelho do mercado e não serve para nada.
 - [x] **VAL-06**: **Nenhuma regra de exceção pode salvar um ticker.** O `excecao_nota` do v2.3 é uma
   *lavanderia de overfit*: com quórum 3/4 + "exceção documentada passa", **o gate não pode reprovar**.
@@ -328,9 +328,9 @@ provada por simulação sobre os 104 tickers — ver `.planning/ROADMAP.md`.
 | ENG-11 | Phase 13 | Complete |
 | VAL-01 | Phase 14 | Complete |
 | VAL-02 | Phase 14 | Complete |
-| VAL-03 | Phase 14 | Pending |
-| VAL-04 | Phase 14 | Pending |
-| VAL-05 | Phase 14 | Pending |
+| VAL-03 | Phase 14 | Complete |
+| VAL-04 | Phase 14 | Complete |
+| VAL-05 | Phase 14 | Complete |
 | VAL-06 | Phase 14 | Complete |
 | VAL-07 | Phase 14 | Complete |
 
