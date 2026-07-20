@@ -58,25 +58,6 @@ ARQUETIPO_ANCORA_ROE = {
     HOLDING: "nav_piso",
 }
 
-# Registry arquétipo → motor primário (ENG-01). A Fase 2 plugou os 4 motores que faltavam
-# (RIM/lucro normalizado/DCF/NAV do core/motores.py) — registry 5/5 preenchido. Os ids batem
-# 1:1 com o dispatch no funil (report.analisar_acao) e com o predicado de suspensão do veredito
-# (motor != "ddm"): o selo ainda consome só o DDM até VER-01/Fase 3, então onde o motor do
-# arquétipo não é o DDM o veredito de preço segue SUSPENSO (D-06) para não regredir o ITUB4.
-# LEGADO — a remover no Plano 06 (com o último consumidor, freio.motor_pendente). Mantido VIVO
-# só para não quebrar `freio.motor_pendente` entre as ondas: AMBOS os herdeiros do antigo
-# regulada (PAGADORA_MADURA e CONCESSAO_FINITA) mapeiam para "ddm", espelhando o antigo
-# rótulo regulada → "ddm". Assim `ARQUETIPO_MOTOR.get(arq.chave) != "ddm"` segue idêntico.
-ARQUETIPO_MOTOR = {
-    FINANCEIRA: "rim",
-    PAGADORA_MADURA: "ddm",
-    CONCESSAO_FINITA: "ddm",
-    CICLICA: "normalizado",
-    CRESCIMENTO: "dcf",
-    HOLDING: "nav",
-}
-
-
 @dataclass
 class ResultadoArquetipo:
     """Veredito do classificador. `chave` é a rota primária; `fronteirico`/`candidatos`

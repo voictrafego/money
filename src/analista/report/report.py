@@ -307,7 +307,7 @@ def analisar_acao(c: CompanyData, cfg: dict) -> AnaliseAcao:
     a.arquetipo = arq.chave
     a.arquetipo_candidatos = arq.candidatos
     # ENG-01 (Fase 13): caminho ÚNICO de valor — TODO arquétipo roda o RIM (a política do arquétipo
-    # só varia o insumo). NÃO consome ARQUETIPO_MOTOR (legado; morre no Plano 06); a.motor é sempre
+    # só varia o insumo). O registry legado arquétipo→motor foi deletado (Plano 06); a.motor é sempre
     # "rim" (a rota própria de seguradora e os rótulos ddm/normalizado/dcf/nav morreram, junto com o
     # ensemble motor×contraponto e as guardas-cicatriz).
     a.motor = "rim"

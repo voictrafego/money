@@ -78,35 +78,6 @@ LIMIAR_R2 = 0.5
 # fora do suporte, não é uma tese de −98%. O Ranking marca esse alvo como não-confiável em vez de
 # estampá-lo como preço-alvo cravado. Constante de módulo (sem config.yaml novo, padrão LIMIAR_*).
 LIMIAR_UPSIDE_ABSURDO = -0.90
-# Limiar de DIVERGÊNCIA entre as duas lentes da MESMA ação (Achado 4 — SINALIZAÇÃO, NÃO
-# reconciliação): sinaliza quando a lente maior > 2× a menor (WEGE3 ~3×, ITUB4 ~2,2×). Coerente
-# com o limiar de divergência da Fase 3 do roadmap. Const de módulo (padrão LIMIAR_*, sem config).
-LIMIAR_DIVERGENCIA = 2.0
-
-
-def divergencia_entre_lentes(
-    v_a: Number, v_b: Number, limiar: float = LIMIAR_DIVERGENCIA
-) -> tuple:
-    """Sinaliza (Achado 4) divergência entre duas estimativas da MESMA ação (helper PURO).
-
-    As duas lentes medem coisas diferentes — intrínseco ABSOLUTO por dividendos (DDM) vs. P/L
-    justo RELATIVO a pares (regressão) — e podem divergir legitimamente. Este helper apenas
-    AVISA quando divergem além de `limiar`: devolve `(divergiu: bool, razao = maior/menor)`.
-
-    IMPORTANTE — isto é SINALIZAÇÃO, não RECONCILIAÇÃO. O ensemble/reconciliação real (DDM ×
-    motor do arquétipo) depende dos motores da Fase 2 e é escopo da Fase 3; aqui não se inventa
-    nenhum número reconciliado, só se sinaliza a discordância honestamente.
-
-    Dado ausente/inválido em QUALQUER lente (None, zero ou negativo) → `(False, 1.0)`: não se
-    inventa divergência sobre dado que não existe (evita ZeroDivision/comparação espúria).
-    """
-    if v_a is None or v_b is None or v_a <= 0 or v_b <= 0:
-        return (False, 1.0)
-    maior, menor = max(v_a, v_b), min(v_a, v_b)
-    razao = maior / menor
-    return (razao >= limiar, razao)
-
-
 @dataclass
 class RegressaoPL:
     coeficientes: np.ndarray   # [intercepto, b_DP, b_ROE]

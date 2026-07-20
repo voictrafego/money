@@ -15,7 +15,7 @@ import pytest
 import yaml
 
 from analista.core.arquetipo import (
-    ARQUETIPO_MOTOR,
+    ARQUETIPO_ANCORA_ROE,
     CICLICA,
     CONCESSAO_FINITA,
     CRESCIMENTO,
@@ -109,7 +109,7 @@ def test_concessionaria_vira_concessao_finita():
     r = classificar(c, _cfg())
     assert r.chave == CONCESSAO_FINITA
     assert r.confianca == "alta"
-    assert ARQUETIPO_MOTOR[r.chave] == "ddm"  # motor legado (Plano 06 remove); freio intacto
+    assert r.chave in ARQUETIPO_ANCORA_ROE  # concessão tem política de âncora (RIM carve-out)
 
 
 def test_petroleo_concessionaria_nao_vira_concessao_finita():
@@ -270,11 +270,11 @@ def test_sinais_none_degrada_sem_typeerror():
     c = CompanyData(ticker="VAZIA3", anos=[2024])
     r = classificar(c, _cfg())  # não deve levantar
     assert isinstance(r.chave, str)
-    assert r.chave in ARQUETIPO_MOTOR
+    assert r.chave in ARQUETIPO_ANCORA_ROE
 
 
 def test_bloco_config_ausente_nao_quebra():
     # T-01-02: sem bloco arquetipo: o classificador degrada por defaults, nunca KeyError.
     c = _empresa("BANK5", "Bancos", [1000] * 10)
     r = classificar(c, {})  # não deve levantar
-    assert r.chave in ARQUETIPO_MOTOR
+    assert r.chave in ARQUETIPO_ANCORA_ROE

@@ -19,7 +19,6 @@ from plotly.subplots import make_subplots
 
 from analista import grafico
 from analista.core import comparables as cmp
-from analista.core import freio
 from analista.core import indicators
 from analista.core import lentes
 from analista.core import multiples as mult

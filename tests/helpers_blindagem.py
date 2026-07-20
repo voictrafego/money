@@ -58,7 +58,6 @@ MODULOS_VALUATION = (
     "selo",
     "multiples",
     "screening",
-    "freio",
     "arquetipo",
     "backtest",
 )

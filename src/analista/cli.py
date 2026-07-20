@@ -16,11 +16,9 @@ from typing import List, Optional
 
 import yaml
 
-from .core import arquetipo
 from .core import comparables as cmp
 from .core import multiples as mult
 from .core import screening as sc
-from .core.freio import alvo_regressao_confiavel, motor_pendente as _motor_pendente
 from .ingest import build, macro
 from .report import report
 
@@ -41,12 +39,6 @@ def _tickers(args) -> List[str]:
         with open(args.tickers_file, encoding="utf-8") as f:
             return [l.strip().upper() for l in f if l.strip() and not l.startswith("#")]
     return []
-
-
-# O freio do Ranking (motor_pendente + alvo_regressao_confiavel) vive em core/freio.py — fonte
-# única compartilhada com app.py (Streamlit). Importado acima e re-exportado aqui (o alias
-# `_motor_pendente` preserva a superfície de import de tests/test_ranking_freio.py e o uso em
-# cmd_rank). Ver quick-260712-p6r.
 
 
 def _montar(tickers: List[str], cfg: dict):
