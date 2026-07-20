@@ -27,12 +27,10 @@ import yaml
 
 import helpers_blindagem as h
 
-LIMIAR_JACKKNIFE_PP = 0.01
-    # [ASSUMIDO] — 1 pp. NAO e' um numero medido: NAO EXISTE DADO PARA MEDI-LO HOJE. E'
-    # FIXADO NA FASE 14 (VAL-02), com a distribuicao real da cesta estratificada na mao.
-    # Fixa-lo agora seria calibrar um knob contra dado inexistente — exatamente o que este
-    # marco combate. Enquanto o fixture nao existir, o teste que o usa SKIPa; ninguem toma
-    # decisao com base neste numero.
+# O limiar do jackknife e' agora `h.LIMIAR_JACKKNIFE_PP(n)` — uma FUNCAO de `n`, derivada de um
+# null neutro por Monte-Carlo com seed fixo (helpers_blindagem, Plano 14-02, Wave 2), pre-registrada
+# ANTES de existir qualquer valor do modelo (Plano 04). A constante magica `0.01` (que nunca foi
+# medida) morreu: fixa-la olhando a cesta seria calibrar um knob contra o resultado.
 
 # A metrica e' `V / FairValue` (VAL-05) — o modelo contra uma referencia INDEPENDENTE.
 # NUNCA o modelo contra o preco de mercado: um modelo cuja mediana bate o mercado e' um
@@ -129,6 +127,49 @@ def test_mediana_jackknife_e_robusta_por_construcao():
         h.mediana_jackknife([1.0, 3.0])  # jackknife sobre 2 pontos e' vazio
 
 
+@pytest.mark.invariante
+def test_limiar_jackknife_mede_o_que_promete():
+    """D-10: prova que `LIMIAR_JACKKNIFE_PP(n)` separa sample saudavel de sample load-bearing.
+
+    Espelha `test_mediana_jackknife_e_robusta_por_construcao`, mas sobre o par
+    (estatistico normalizado, limiar). Nenhum ticker aqui — numeros puros. Duas verdades:
+
+      1. SAMPLE SAUDAVEL (homogeneo, sem ponto load-bearing) -> o desvio do jackknife
+         NORMALIZADO (em MADs) fica ABAIXO de `LIMIAR_JACKKNIFE_PP(n)`. Nenhum ponto e'
+         load-bearing: o gate nao acusa nada. E' o estado saudavel.
+
+      2. SAMPLE COM PONTO LOAD-BEARING (ponte: uma unica observacao no centro, entre dois
+         grupos afastados) -> o desvio normalizado EXCEDE `LIMIAR_JACKKNIFE_PP(n)`. O gate
+         reprova corretamente — e' a forma exata da doenca do v2.3 (a calibracao apoiada num
+         ponto so').
+
+    O limiar e' derivado de um null NEUTRO (seed fixo), NAO destes samples: por isso um
+    saudavel qualquer fica abaixo e uma ponte deliberada fica acima. Determinismo herdado da
+    funcao (seed literal) mantem o teste estavel.
+    """
+    n = 31
+    limiar = h.LIMIAR_JACKKNIFE_PP(n)
+    assert 0.0 < limiar < 1.0, (
+        f"para uma cesta de n={n} o limiar deveria ser uma fracao de MAD em (0,1); "
+        f"veio {limiar}"
+    )
+
+    saudavel = [10.0 + 0.1 * i for i in range(n)]  # distribuicao suave, sem ponto influente
+    desvio_saudavel = h.desvio_jackknife_normalizado(saudavel)
+    assert desvio_saudavel < limiar, (
+        f"um sample saudavel nao deveria disparar o gate: desvio normalizado "
+        f"{desvio_saudavel:.4f} >= limiar {limiar:.4f}"
+    )
+
+    ponte = [0.0] * 15 + [10.0] + [100.0] * 15  # o 10.0 sozinho decide a mediana
+    desvio_ponte = h.desvio_jackknife_normalizado(ponte)
+    assert desvio_ponte > limiar, (
+        f"o gate NAO detectou o ponto load-bearing: desvio normalizado {desvio_ponte:.4f} "
+        f"<= limiar {limiar:.4f} numa amostra em que uma unica observacao decide a mediana. "
+        f"Sem isso, o LIMIAR nao reprova a doenca do v2.3."
+    )
+
+
 @pytest.mark.contrato
 def test_nenhum_ticker_e_load_bearing():
     """BLIND-04b (o veredito): nenhum ticker sozinho pode mover a mediana da cesta.
@@ -148,8 +189,9 @@ def test_nenhum_ticker_e_load_bearing():
     fair_value}`. A metrica e' a razao `v_modelo / fair_value` (VAL-05): o modelo contra uma
     referencia INDEPENDENTE, jamais contra o preco de mercado.
 
-    NA FASE 14: fixar `LIMIAR_JACKKNIFE_PP` com a distribuicao real na mao (hoje ele e'
-    [ASSUMIDO]) e remover este paragrafo.
+    O limiar e' `h.LIMIAR_JACKKNIFE_PP(len(razoes))` (funcao de `n`, Plano 14-02) e o desvio
+    observado e' NORMALIZADO pela mesma escala (`desvio_jackknife_normalizado`) — os dois lados na
+    MESMA unidade (desvio em MADs), nunca a constante magica de antes.
     """
     if not h.HOLDOUT_V24.exists():
         pytest.skip(
@@ -164,10 +206,12 @@ def test_nenhum_ticker_e_load_bearing():
         if d.get("v_modelo") and d.get("fair_value")
     ]
 
-    mediana, desvio_max = h.mediana_jackknife(razoes)
-    assert desvio_max <= LIMIAR_JACKKNIFE_PP, (
+    mediana, _ = h.mediana_jackknife(razoes)
+    desvio_norm = h.desvio_jackknife_normalizado(razoes)
+    limiar = h.LIMIAR_JACKKNIFE_PP(len(razoes))
+    assert desvio_norm <= limiar, (
         f"um unico ticker e' LOAD-BEARING: remove-lo move a mediana de V/FairValue em "
-        f"{desvio_max:.4f} (mediana {mediana:.4f}), acima do limiar de "
-        f"{LIMIAR_JACKKNIFE_PP:.4f}. A calibracao esta apoiada NUM TICKER, nao na "
+        f"{desvio_norm:.4f} MADs (mediana {mediana:.4f}), acima do limiar de {limiar:.4f} "
+        f"para n = {len(razoes)}. A calibracao esta apoiada NUM TICKER, nao na "
         f"distribuicao — e' a doenca do v2.3 se repetindo."
     )
